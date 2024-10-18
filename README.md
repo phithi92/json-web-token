@@ -56,39 +56,6 @@ The project uses the following dependencies (defined in `composer.json`):
 
 - **PHPUnit**: Used for unit testing to ensure robustness.
 
-## Supported Algorithms
-
-The `JsonWebToken` class supports a variety of cryptographic algorithms for both JSON Web Signature (JWS) and JSON Web Encryption (JWE). Below are the lists of supported algorithms:
-
-###### JSON Web Signature (JWS) Algorithms
-
-| **Algorithm** | **Description**              | **Support** |
-| ------------- | ---------------------------- | ----------- |
-| `HS256`       | HMAC with SHA-256            | ✅           |
-| `HS384`       | HMAC with SHA-384            | ✅           |
-| `HS512`       | HMAC with SHA-512            | ✅           |
-| `RS256`       | RSA Signature with SHA-256   | ✅           |
-| `RS384`       | RSA Signature with SHA-384   | ✅           |
-| `RS512`       | RSA Signature with SHA-512   | ✅           |
-| `ES256`       | ECDSA Signature with SHA-256 | ✅           |
-| `ES384`       | ECDSA Signature with SHA-384 | ✅           |
-| `ES512`       | ECDSA Signature with SHA-512 | ✅           |
-
-###### JSON Web Encryption (JWE) Algorithms
-
-| **Algorithm**      | **Description**                                                                               | **Support** |
-| ------------------ | --------------------------------------------------------------------------------------------- | ----------- |
-| `RSA-OAEP`         | RSA with Optimal Asymmetric Encryption Padding                                                | ✅           |
-| `RSA-OAEP+A192GCM` | RSA-OAEP for key encryption with AES Galois/Counter Mode (GCM) encryption using a 192-bit key | ✅           |
-| `RSA-OAEP+A256GCM` | RSA-OAEP for key encryption with AES Galois/Counter Mode (GCM) encryption using a 256-bit key | ✅           |
-| `RSA1_5`           | RSAES-PKCS1-v1_5: RSA Encryption Scheme using PKCS#1 v1.5 padding                             | ✅           |
-| `A128KW`           | AES Key Wrap with 128-bit key                                                                 | ❌           |
-| `A192KW`           | AES Key Wrap with 192-bit key                                                                 | ❌           |
-| `A256KW`           | AES Key Wrap with 256-bit key                                                                 | ❌           |
-| `A128GCM`          | AES in Galois/Counter Mode with 128-bit key                                                   | ❌           |
-| `A192GCM`          | AES in Galois/Counter Mode with 192-bit key                                                   | ❌           |
-| `A256GCM`          | AES in Galois/Counter Mode with 256-bit key                                                   | ❌           |
-
 ## Usage Guide
 
 #### Generating a JSON Web Token (JWT)
@@ -152,6 +119,39 @@ try {
     // Handle unsupported algorithm
 }
 ```
+
+## Supported Algorithms
+
+The `JsonWebToken` class supports a variety of cryptographic algorithms for both JSON Web Signature (JWS) and JSON Web Encryption (JWE). Below are the lists of supported algorithms:
+
+###### JSON Web Signature (JWS) Algorithms
+
+| **Algorithm** | **Description**              | **Support** |
+| ------------- | ---------------------------- | ----------- |
+| `HS256`       | HMAC with SHA-256            | ✅           |
+| `HS384`       | HMAC with SHA-384            | ✅           |
+| `HS512`       | HMAC with SHA-512            | ✅           |
+| `RS256`       | RSA Signature with SHA-256   | ✅           |
+| `RS384`       | RSA Signature with SHA-384   | ✅           |
+| `RS512`       | RSA Signature with SHA-512   | ✅           |
+| `ES256`       | ECDSA Signature with SHA-256 | ✅           |
+| `ES384`       | ECDSA Signature with SHA-384 | ✅           |
+| `ES512`       | ECDSA Signature with SHA-512 | ✅           |
+
+###### JSON Web Encryption (JWE) Algorithms
+
+| **Algorithm**      | **Description**                                                                               | **Support** |
+| ------------------ | --------------------------------------------------------------------------------------------- | ----------- |
+| `RSA-OAEP`         | RSA with Optimal Asymmetric Encryption Padding                                                | ✅           |
+| `RSA-OAEP+A192GCM` | RSA-OAEP for key encryption with AES Galois/Counter Mode (GCM) encryption using a 192-bit key | ✅           |
+| `RSA-OAEP+A256GCM` | RSA-OAEP for key encryption with AES Galois/Counter Mode (GCM) encryption using a 256-bit key | ✅           |
+| `RSA1_5`           | RSAES-PKCS1-v1_5: RSA Encryption Scheme using PKCS#1 v1.5 padding                             | ✅           |
+| `A128KW`           | AES Key Wrap with 128-bit key                                                                 | ❌           |
+| `A192KW`           | AES Key Wrap with 192-bit key                                                                 | ❌           |
+| `A256KW`           | AES Key Wrap with 256-bit key                                                                 | ❌           |
+| `A128GCM`          | AES in Galois/Counter Mode with 128-bit key                                                   | ❌           |
+| `A192GCM`          | AES in Galois/Counter Mode with 192-bit key                                                   | ❌           |
+| `A256GCM`          | AES in Galois/Counter Mode with 256-bit key                                                   | ❌           |
 
 This allows for proper error handling and ensures your application can respond appropriately to invalid or unsupported tokens.
 
