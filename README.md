@@ -21,7 +21,7 @@ For more details, please refer to the full text of the MIT License [here](https:
 
 Before using this library, ensure your environment meets the following requirements:
 
-- **PHP Version**: 8.0 or higher
+- **PHP Version**: 8.1 or higher
 - **PHP Extensions**: `openssl`
 - **Composer**: For managing dependencies
 
