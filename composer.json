@@ -1,0 +1,22 @@
+{
+    "name": "phithi92/json-web-token",
+    "description": "Handles the generation of JSON Web Tokens (JWT), including both JWS (JSON Web Signature) and JWE (JSON Web Encryption). Provides methods for creating and validating tokens.",
+    "type": "library",
+    "license": "MIT",
+    "version": "0.1.0",
+    "authors": [
+        {
+            "name": "Phillip Thiele",
+            "email": "development@phillip-thiele.de"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require-dev": {
+        "phpunit/phpunit": "^11.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Phithi92\\JsonWebToken\\": "src/"
+         }
+    }
+}

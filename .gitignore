@@ -1,0 +1,27 @@
+# Ignore node_modules, vendor, and dependency directories
+/node_modules/
+/vendor/
+
+# Ignore PHPUnit cache files
+.phpunit.cache
+.phpunit.result.cache
+
+# Ignore environment variable files
+.env
+
+# Ignore IDE-specific files
+/nbproject/
+/.vscode/
+/.idea/
+
+# Ignore OS-generated files
+.DS_Store
+*.DS_Store
+
+# Ignore Windows-generated files
+Thumbs.db
+
+# Optional: General log and temp files
+*.log
+*.tmp
+*.cache
