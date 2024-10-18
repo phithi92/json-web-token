@@ -3,9 +3,8 @@
 ---
 
 # JsonWebToken PHP Library
-[![Latest Version](http://img.shields.io/packagist/v/phithi92/json-web-token.svg?style=flat-square)](https://github.com/phithi92/json-web-token/releases) [![Build Status](https://img.shields.io/github/actions/workflow/status/phithi92/json-web-token/php.yml?branch=main)](https://github.com/phithi92/json-web-token/actions) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE) [![Total Downloads](https://img.shields.io/packagist/dt/phithi92/json-web-token.svg?style=flat-square)](https://packagist.org/packages/phithi92/json-web-token)
 
-*Version: v0.1.0*
+[![Latest Version](http://img.shields.io/packagist/v/phithi92/json-web-token.svg?style=flat-square)](https://github.com/phithi92/json-web-token/releases) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE) [![Total Downloads](https://img.shields.io/packagist/dt/phithi92/json-web-token.svg?style=flat-square)](https://packagist.org/packages/phithi92/json-web-token) [![Latest Version](https://img.shields.io/github/issues/phithi92/json-web-token.svg)](https://github.com/phithi92/json-web-token/issues) [![Build Status](https://img.shields.io/github/actions/workflow/status/phithi92/json-web-token/php.yml?branch=main)](https://github.com/phithi92/json-web-token/actions)
 
 The `JsonWebToken` class is a PHP library that facilitates the creation, signing, and validation of JSON Web Tokens (JWT), supporting both JSON Web Signature (JWS) and JSON Web Encryption (JWE). It provides a secure framework for generating tokens using various cryptographic algorithms to ensure data integrity and confidentiality.
 
@@ -19,7 +18,7 @@ This project is licensed under the MIT License. This means you are free to use, 
 For more details, please refer to the full text of the MIT License [here](https://github.com/phithi92/json-web-token/blob/develop/LICENSE).
 
 ## Prerequisites
- 
+
 Before using this library, ensure your environment meets the following requirements:
 
 - **PHP Version**: 8.1 or higher
@@ -106,8 +105,6 @@ The `JsonWebToken` class supports a variety of cryptographic algorithms for both
 #### Generating a JSON Web Token (JWT)
 
 To generate a JWT, instantiate the `JsonWebToken` class and call the `create()` method. This method can generate either a signed (JWS) or encrypted (JWE) token.
-
-
 
 ```php
 use Phithi92\JsonWebToken\JsonWebToken;
