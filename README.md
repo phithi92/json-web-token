@@ -4,18 +4,9 @@
 
 # JsonWebToken PHP Library
 
-[![Latest Version](http://img.shields.io/packagist/v/phithi92/json-web-token.svg?style=flat-square)](https://github.com/phithi92/json-web-token/releases) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE) [![Total Downloads](https://img.shields.io/packagist/dt/phithi92/json-web-token.svg?style=flat-square)](https://packagist.org/packages/phithi92/json-web-token) [![Latest Version](https://img.shields.io/github/issues/phithi92/json-web-token.svg)](https://github.com/phithi92/json-web-token/issues) [![Build Status](https://img.shields.io/github/actions/workflow/status/phithi92/json-web-token/php.yml?branch=main)](https://github.com/phithi92/json-web-token/actions)
+[![Latest Version](http://img.shields.io/packagist/v/phithi92/json-web-token.svg?style=for-the-badge)](https://github.com/phithi92/json-web-token/releases) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=for-the-badge)](LICENSE) [![Issues](https://img.shields.io/github/issues/phithi92/json-web-token.svg?style=for-the-badge)](https://github.com/phithi92/json-web-token/issues) ![Build](https://img.shields.io/github/actions/workflow/status/phithi92/json-web-token/php.yml?branch=main&style=for-the-badge) [![Total Downloads](https://img.shields.io/packagist/dt/phithi92/json-web-token.svg?style=for-the-badge)](https://packagist.org/packages/phithi92/json-web-token)
 
 The `JsonWebToken` class is a PHP library that facilitates the creation, signing, and validation of JSON Web Tokens (JWT), supporting both JSON Web Signature (JWS) and JSON Web Encryption (JWE). It provides a secure framework for generating tokens using various cryptographic algorithms to ensure data integrity and confidentiality.
-
-## License
-
-This project is licensed under the MIT License. This means you are free to use, modify, distribute, and even sublicense the code for personal and commercial use. However, the following conditions must be met:
-
-- The original license must be included with all copies or substantial portions of the software.
-- The software is provided "as is", without any warranties or guarantees, express or implied, including but not limited to the implied warranties of merchantability and fitness for a particular purpose.
-
-For more details, please refer to the full text of the MIT License [here](https://github.com/phithi92/json-web-token/blob/develop/LICENSE).
 
 ## Prerequisites
 
@@ -33,8 +24,6 @@ For **token encryption** (JWE), the payload is encrypted using algorithms like A
 
 You can find more information about the JWT RFC [here](https://datatracker.ietf.org/doc/html/rfc7519).
 
-## 
-
 ## Installation
 
 To integrate this library into your project, clone the repository or download the necessary files. It is recommended to use Composer for managing dependencies.
@@ -47,7 +36,7 @@ Clone the project to your local environment:
 git clone https://github.com/phithi92/json-web-token.git
 ```
 
-or 
+or
 
 You can install the library directly through Composer by running:
 
@@ -74,7 +63,7 @@ The `JsonWebToken` class supports a variety of cryptographic algorithms for both
 ###### JSON Web Signature (JWS) Algorithms
 
 | **Algorithm** | **Description**              | **Support** |
-|:-------------:| ---------------------------- |:-----------:|
+| ------------- | ---------------------------- | ----------- |
 | `HS256`       | HMAC with SHA-256            | ✅           |
 | `HS384`       | HMAC with SHA-384            | ✅           |
 | `HS512`       | HMAC with SHA-512            | ✅           |
@@ -88,7 +77,7 @@ The `JsonWebToken` class supports a variety of cryptographic algorithms for both
 ###### JSON Web Encryption (JWE) Algorithms
 
 | **Algorithm**      | **Description**                                                                               | **Support** |
-|:------------------:| --------------------------------------------------------------------------------------------- |:-----------:|
+| ------------------ | --------------------------------------------------------------------------------------------- | ----------- |
 | `RSA-OAEP`         | RSA with Optimal Asymmetric Encryption Padding                                                | ✅           |
 | `RSA-OAEP+A192GCM` | RSA-OAEP for key encryption with AES Galois/Counter Mode (GCM) encryption using a 192-bit key | ✅           |
 | `RSA-OAEP+A256GCM` | RSA-OAEP for key encryption with AES Galois/Counter Mode (GCM) encryption using a 256-bit key | ✅           |
@@ -175,3 +164,10 @@ vendor/bin/phpunit
 ```
 
 All test cases are located in the `tests/` directory and ensure that the class functions correctly under various scenarios.
+
+## Donation
+
+Donations are a great way to support creators and their work. Every contribution helps sustain projects and shows appreciation for their efforts, making a real difference.
+
+| [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R414XGWN) | ![image](https://storage.ko-fi.com/cdn/useruploads/R6R414XGWN/qrcode.png?v=40dee069-2316-462f-8c3f-29825e00fa10?v=2) |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
