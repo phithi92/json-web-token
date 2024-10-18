@@ -3,7 +3,7 @@
 ---
 
 # JsonWebToken PHP Library
-[![Latest Version](http://img.shields.io/packagist/v/phithi92/json-web-token.svg?style=flat-square)](https://github.com/phithi92/json-web-token/releases) [![Build Status](https://img.shields.io/github/workflow/status/phithi92/json-web-token/CI/master)](https://github.com/phithi92/json-web-token/actions) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md) [![Total Downloads](https://img.shields.io/packagist/dt/phithi92/json-web-token.svg?style=flat-square)](https://packagist.org/packages/phithi92/json-web-token)
+[![Latest Version](http://img.shields.io/packagist/v/phithi92/json-web-token.svg?style=flat-square)](https://github.com/phithi92/json-web-token/releases) [![Build Status](https://img.shields.io/github/workflow/status/phithi92/json-web-token/CI/master)](https://github.com/phithi92/json-web-token/actions) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE) [![Total Downloads](https://img.shields.io/packagist/dt/phithi92/json-web-token.svg?style=flat-square)](https://packagist.org/packages/phithi92/json-web-token)
 
 *Version: v0.1.0*
 
