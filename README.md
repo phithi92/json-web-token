@@ -1,8 +1,9 @@
-⚠️ ⚠️ ⚠️ **Attention:** This project is still in **active development**. Unexpected changes and errors may occur.
+⚠️ **Attention:** This project is still in **active development**. Unexpected changes and errors may occur. ⚠️
 
 ---
 
 # JsonWebToken PHP Library
+[![Latest Version](http://img.shields.io/packagist/v/phithi92/json-web-token.svg?style=flat-square)](https://github.com/phithi92/json-web-token/releases) [![Build Status](https://img.shields.io/github/workflow/status/phithi92/json-web-token/CI/master)](https://github.com/phithi92/json-web-token/actions) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md) [![Total Downloads](https://img.shields.io/packagist/dt/phithi92/json-web-token.svg?style=flat-square)](https://packagist.org/packages/phithi92/json-web-token)
 
 *Version: v0.1.0*
 
@@ -18,7 +19,7 @@ This project is licensed under the MIT License. This means you are free to use, 
 For more details, please refer to the full text of the MIT License [here](https://github.com/phithi92/json-web-token/blob/develop/LICENSE).
 
 ## Prerequisites
-
+ 
 Before using this library, ensure your environment meets the following requirements:
 
 - **PHP Version**: 8.1 or higher
@@ -106,22 +107,43 @@ The `JsonWebToken` class supports a variety of cryptographic algorithms for both
 
 To generate a JWT, instantiate the `JsonWebToken` class and call the `create()` method. This method can generate either a signed (JWS) or encrypted (JWE) token.
 
+
+
 ```php
 use Phithi92\JsonWebToken\JsonWebToken;
+use Phithi92\JsonWebToken\PayloadBuilder;
+use Phithi92\JsonWebToken\Security\Openssl;
+```
 
+For RSA Algorithm
+
+```php
+$payload = (new PayloadBuilder())
+    ->setExpiration('+15min')
+    ->setIssuer('issuer')
+    ->setAudience('audience')
+    ->addField('your-field', 'your-data');
+
+$openssl = (new Openssl())
+    ->setPrivateKey('your-private-key')
+    ->setPublicKey('your-public-key');
+
+$jwt = new JsonWebToken($openssl);
+$jwtToken = $jwt->create($payload, '', 'JWE', 'RSA-OAEP+A128KW');
+```
+
+For Hmac Algorithm
+
+```php
 $payload = (new PayloadBuilder())
     ->setExpiration('+15min')
     ->setIssuer('issuer')
     ->setAudience('audience')
     ->addField('custom', 'dont.know');
 
-$jwt = new JsonWebToken();
-$token = $jwt->create($payload, $key, $algorithm);
+$jwt = new JsonWebToken(new Openssl());
+$jwtToken = $jwt->create($payload, $secret,'JWS', 'HS256');
 ```
-
-- **`$payload`**: The data you wish to encode into the token (as an array).
-- **`$key`**: The secret or key used for signing or encryption.
-- **`$algorithm`**: The cryptographic algorithm (e.g., `HS256`, `RS256`, etc.).
 
 ## Error Handling
 
