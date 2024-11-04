@@ -21,5 +21,8 @@
         "psr-4": {
             "Phithi92\\JsonWebToken\\": "src/"
          }
+    },
+    "scripts": {
+        "test": "phpunit --configuration phpunit.xml"
     }
 }
