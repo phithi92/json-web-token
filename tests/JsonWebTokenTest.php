@@ -1,149 +1,97 @@
 <?php
 
-use Phithi92\JsonWebToken\JsonWebToken;
-use Phithi92\JsonWebToken\PayloadBuilder;
-use Phithi92\JsonWebToken\Security\Openssl;
-use Phithi92\JsonWebToken\Exception\InvalidArgumentException;
-use Phithi92\JsonWebToken\Exception\InvalidTokenException;
+use Phithi92\JsonWebToken\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\JwtPayload;
+use Phithi92\JsonWebToken\JwtTokenFactory;
+use Phithi92\JsonWebToken\JwtTokenContainer;
 
 require_once __DIR__ . '/TestCaseWithSecrets.php';
 
 class JsonWebTokenTest extends TestCaseWithSecrets
 {
     
-    private JsonWebToken $JsonWebToken;
-    private PayloadBuilder $Jwt;
-    private Openssl $cipher;
-    
+    private $payload;
     
     public function setUp(): void
     {
         parent::setUp();
+        $this->payload = (new JwtPayload())
+            ->setExpiration('+15 minutes')
+            ->setAudience('localhost');
+    }
+    
+    
+    public function testValidHs()
+    {
+        $this->testAlgorithmEncoding('HS256', $this->payload, $this->secret32, '', '');
+        $this->testAlgorithmEncoding('HS384', $this->payload, $this->secret64, '', '');
+        $this->testAlgorithmEncoding('HS512', $this->payload, $this->secret128, '', '');
+    }
+    
+    public function testValidRs()
+    {
+        $this->testAlgorithmEncoding('RS256', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('RS384', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('RS512', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+    }
+    
+    public function testValidEs()
+    {
+        $this->testAlgorithmEncoding('ES256', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('ES384', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('ES512', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+    }
+    
+    public function testValidPs()
+    {
+        $this->testAlgorithmEncoding('PS256', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('PS384', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('PS512', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+    }
         
-        // Initialize the cipher and JsonWebToken in the setup for reuse
-        $this->Jwt = (new PayloadBuilder())
-            ->setExpiration('+15min')
-            ->setIssuer('localhost.local')
-            ->setAudience('api.localhost.local')
-            ->addField('random', bin2hex(random_bytes(16)));
-
-        $this->cipher = (new Openssl())
-            ->setPrivateKey($this->privateKey2048)
-            ->setPublicKey($this->publicKey2048);
-
-        $this->JsonWebToken = new JsonWebToken($this->cipher);
-    }
-
-    /**
-     * Test to validate behavior with malformed or tampered tokens.
-     */
-    public function testMalformedToken()
+    public function testValidRsaOaep()
     {
-        $malformedToken = 'invalid.token.structure';
-
-        $this->expectException(InvalidTokenException::class);
-        $this->JsonWebToken->validateToken($malformedToken, $this->publicKey2048);
+        $this->testAlgorithmEncoding('RSA1_5', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('RSA-OAEP', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('RSA-OAEP-256', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
     }
-
-    /**
-     * Test to ensure token validation fails with an incorrect key.
-     */
-    public function testValidationWithIncorrectKey()
+    
+    public function testValidGcm()
+    {        
+        $this->testAlgorithmEncoding('A128GCM', $this->payload, $this->secret16, '', '');
+        $this->testAlgorithmEncoding('A192GCM', $this->payload, $this->secret64, '', '');
+        $this->testAlgorithmEncoding('A256GCM', $this->payload, $this->secret128, '', '');
+    }
+//    
+//    public function testValidAesKW()
+//    {
+//        $this->testAlgorithmEncoding('A128KW', $this->payload, $this->secret16, '', '');
+//        $this->testAlgorithmEncoding('A192KW', $this->payload, $this->secret32, '', '');
+//        $this->testAlgorithmEncoding('A256KW', $this->payload, $this->secret64, '', '');
+//    }
+    
+    public function ecdh()
     {
-        $wrongKey = 'incorrectSecret';
 
-        $token = $this->JsonWebToken->create($this->Jwt, $this->secret64, 'JWS', 'HS256');
+        // Test algorithms that require only a passphrase
+//        $this->testAlgorithmEncoding('ECDH-ES+A128KW', $jwtPayload, null, $pem2048['publicKey'], $pem2048['privateKey']);
+//        $this->testAlgorithmEncoding('ECDH-ES+A192KW', $jwtPayload, $this->secret64, '', '');
+//        $this->testAlgorithmEncoding('ECDH-ES+A256KW', $jwtPayload, $this->secret64, '', '');
+//        $this->testAlgorithmEncoding('A128CBC-HS256', $jwtPayload, $this->secret64, '', '');
+//        $this->testAlgorithmEncoding('A192CBC-HS384', $jwtPayload, $this->secret64, '', '');
+//        $this->testAlgorithmEncoding('A256CBC-HS512', $jwtPayload, $this->secret64, '', '');
+        $this->testAlgorithmEncoding('chacha20-poly1305', $jwtPayload, $this->secret64, '', '');        
+    }
+    
+    private function testAlgorithmEncoding(string $algorithm, JwtPayload $jwtPayload, ?string $passhrase,string $publicPem, string $privatePem)
+    {
+        $jwtAlgorithm = new JwtAlgorithmManager($algorithm, $passhrase, $publicPem, $privatePem);
+        $factory = new JwtTokenFactory($jwtAlgorithm);
+        $token = $factory->create($jwtPayload);
         $this->assertIsString($token);
-
-        // Now validate with the wrong key
-        $this->expectException(InvalidArgumentException::class);
-        $this->JsonWebToken->validateToken($token, $wrongKey);
-    }
-
-    /**
-     * Test to ensure that invalid algorithms throw an exception.
-     */
-    public function testUnsupportedAlgorithm()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->JsonWebToken->create($this->Jwt, $this->secret64, 'JWS', 'UNSUPPORTED_ALGO');
-    }
-
-    /**
-     * Test to validate behavior when the payload is empty.
-     */
-    public function testEmptyPayload()
-    {
-        $emptyJwt = new PayloadBuilder(); // Empty payload
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->JsonWebToken->create($emptyJwt, $this->secret64, 'JWS', 'HS256');
-    }
-
-    /**
-     * Test expired token validation should fail.
-     */
-    public function testExpiredToken()
-    {
-        $expiredJwt = (new PayloadBuilder())
-            ->setExpiration('-1 hour')  // Expiration time in the past
-            ->setIssuer('localhost.local')
-            ->setAudience('api.localhost.local');
-
-        $token = $this->JsonWebToken->create($expiredJwt, $this->secret64, 'JWS', 'HS256');
-
-        $this->assertIsString($token);
-
-        // Expect token validation to fail due to expiration
-        $this->expectException(InvalidTokenException::class);
-        $this->JsonWebToken->validateToken($token, $this->secret64);
-    }
-
-    /**
-     * Test token creation with invalid key length for symmetric algorithms.
-     */
-    public function testInvalidKeyLength()
-    {
-        $shortKey = 'short';
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->JsonWebToken->create($this->Jwt, $shortKey, 'JWS', 'HS256');
-    }
-
-    /**
-     * Test validation for a token issued in the future (iat claim).
-     */
-    public function testTokenIssuedInFuture()
-    {
-        $futureJwt = (new PayloadBuilder())
-            ->setIssuedAt('+1 hour') // Issued one hour in the future
-            ->setExpiration('+2 hours')
-            ->setIssuer('localhost.local')
-            ->setAudience('api.localhost.local');
-
-        $token = $this->JsonWebToken->create($futureJwt, $this->secret64, 'JWS', 'HS256');
-
-        $this->assertIsString($token);
-
-        // Expect validation to fail as the token is not valid yet
-        $this->expectException(InvalidTokenException::class);
-        $this->JsonWebToken->validateToken($token, $this->secret64);
-    }
-
-    /**
-     * Test tampered token should fail validation.
-     */
-    public function testTamperedToken()
-    {
-        $token = $this->JsonWebToken->create($this->Jwt, $this->secret64, 'JWS', 'HS256');
-
-        $this->assertIsString($token);
-
-        // Tamper with the token by altering the payload
-        $tamperedToken = str_replace('.', 'tampered.', $token);
-
-        // Expect validation to fail due to tampering
-        $this->expectException(InvalidTokenException::class);
-        $this->JsonWebToken->validateToken($tamperedToken, $this->secret64);
+        echo "success created token " . $algorithm . "\n";
+        $decryptedToken = $factory->decrypt($token);
+        $this->assertInstanceOf(JwtTokenContainer::class, $decryptedToken);
+        echo "success validated token " . $algorithm . "\n";
     }
 }

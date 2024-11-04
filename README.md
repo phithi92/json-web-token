@@ -71,31 +71,27 @@ use Phithi92\JsonWebToken\Security\Openssl;
 For RSA Algorithm
 
 ```php
-$payload = (new PayloadBuilder())
-    ->setExpiration('+15min')
-    ->setIssuer('issuer')
-    ->setAudience('audience')
-    ->addField('your-field', 'your-data');
-
-$openssl = (new Openssl())
+$algorithm = (new JwtAlgorithmManager())
     ->setPrivateKey('your-private-key')
     ->setPublicKey('your-public-key');
 
-$jwt = new JsonWebToken($openssl);
-$jwtToken = $jwt->create($payload, '', 'JWE', 'RSA-OAEP+A128KW');
+$payload = (new JwtPayload())
+            ->setExpiration('+15 minutes');
+
+$token = JwtTokenFactory::createToken($algorithm, $payload);
 ```
 
 For Hmac Algorithm
 
 ```php
-$payload = (new PayloadBuilder())
-    ->setExpiration('+15min')
-    ->setIssuer('issuer')
-    ->setAudience('audience')
-    ->addField('custom', 'dont.know');
 
-$jwt = new JsonWebToken(new Openssl());
-$jwtToken = $jwt->create($payload, $secret,'JWS', 'HS256');
+$algorithm = (new JwtAlgorithmManager())
+    ->setPassphrase('passphrase');
+
+$payload = (new PayloadBuilder())
+    ->setExpiration('+15min');
+
+$token = JwtTokenFactory::createToken($algorithm, $payload);
 ```
 
 ## Error Handling
@@ -113,10 +109,13 @@ You can catch these exceptions and handle them accordingly in your application:
 ```php
 try {
     $isValid = $jwt->validateToken($token, $key);
-} catch (InvalidTokenException $e) {
+} catch (TokenException $e) {
     // Handle invalid token
-} catch (UnsupportedAlgorithmException $e) {
-    // Handle unsupported algorithm
+} catch (PayloadException $e) {
+    // Handle payload exeption
+}catch (JsonException $e) {
+    // Handle token json error
+} catch () {
 }
 ```
 
@@ -126,17 +125,20 @@ The `JsonWebToken` class supports a variety of cryptographic algorithms for both
 
 ###### JSON Web Signature (JWS) Algorithms
 
-| **Algorithm** | **Description**              | **Support** |
-| ------------- | ---------------------------- | ----------- |
-| `HS256`       | HMAC with SHA-256            | ✅           |
-| `HS384`       | HMAC with SHA-384            | ✅           |
-| `HS512`       | HMAC with SHA-512            | ✅           |
-| `RS256`       | RSA Signature with SHA-256   | ✅           |
-| `RS384`       | RSA Signature with SHA-384   | ✅           |
-| `RS512`       | RSA Signature with SHA-512   | ✅           |
-| `ES256`       | ECDSA Signature with SHA-256 | ✅           |
-| `ES384`       | ECDSA Signature with SHA-384 | ✅           |
-| `ES512`       | ECDSA Signature with SHA-512 | ✅           |
+| **Algorithm** | **Description**                   | **Support**  |
+| ------------- | --------------------------------- | ------------ |
+| `HS256`       | HMAC with SHA-256                 | ✅           |
+| `HS384`       | HMAC with SHA-384                 | ✅           |
+| `HS512`       | HMAC with SHA-512                 | ✅           |
+| `RS256`       | RSA Signature with SHA-256        | ✅           |
+| `RS384`       | RSA Signature with SHA-384        | ✅           |
+| `RS512`       | RSA Signature with SHA-512        | ✅           |
+| `ES256`       | ECDSA Signature with SHA-256      | ✅           |
+| `ES384`       | ECDSA Signature with SHA-384      | ✅           |
+| `ES512`       | ECDSA Signature with SHA-512      | ✅           |
+| `PS256`       | RSASSA-PSS Signature with SHA-256 | ✅           |
+| `PS384`       | RSASSA-PSS Signature with SHA-384 | ✅           |
+| `PS512`       | RSASSA-PSS Signature with SHA-512 | ✅           |
 
 ###### JSON Web Encryption (JWE) Algorithms
 

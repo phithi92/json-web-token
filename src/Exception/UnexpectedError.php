@@ -8,6 +8,6 @@ use Exception;
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-class HashErrorException extends Exception
+class UnexpectedError extends Exception
 {
 }

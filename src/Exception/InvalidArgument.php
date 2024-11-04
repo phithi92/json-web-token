@@ -8,6 +8,6 @@ use Exception;
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-class CipherErrorException extends Exception
+class InvalidArgument extends Exception
 {
 }

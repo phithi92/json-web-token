@@ -1,0 +1,36 @@
+name: phpcs check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        tools: composer
+
+    - name: Install dependencies
+      run: composer install --no-progress --prefer-dist
+
+    - name: Install PHP_CodeSniffer
+      run: composer global require "squizlabs/php_codesniffer=*"
+
+    - name: Add Composer Global to PATH
+      run: echo "::add-path::$(composer global config bin-dir --absolute)"
+
+    - name: Run PHP CodeSniffer (phpcs)
+      run: |
+        $(composer global config bin-dir --absolute)/phpcs --standard=PSR12 src/

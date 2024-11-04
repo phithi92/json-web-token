@@ -1,6 +1,6 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exception;
+namespace Phithi92\JsonWebToken\Exception\Token;
 
 use Exception;
 
@@ -8,6 +8,6 @@ use Exception;
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-class UnexpectedErrorException extends Exception
+class TokenException extends Exception
 {
 }
