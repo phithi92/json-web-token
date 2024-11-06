@@ -10,14 +10,14 @@
 namespace Phithi92\JsonWebToken\Exception\Payload;
 
 use Phithi92\JsonWebToken\Exception\Payload\ExceptionEnum;
-use Phithi92\JsonWebToken\Exception\Exception;
+use Phithi92\JsonWebToken\Exception\Payload\PayloadException;
 
 /**
  * Class NotBeforeOlderThanIat
  *
  * Exception thrown when the "not before" (nbf) timestamp is older than the "issued at" (iat) timestamp.
  */
-class NotBeforeOlderThanIat extends Exception
+class NotBeforeOlderThanIat extends PayloadException
 {
     /**
      * Error message indicating that "not before" is earlier than "issued at".

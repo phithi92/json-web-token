@@ -10,14 +10,14 @@
 namespace Phithi92\JsonWebToken\Exception\Payload;
 
 use Phithi92\JsonWebToken\Exception\Payload\ExceptionEnum;
-use Phithi92\JsonWebToken\Exception\Exception;
+use Phithi92\JsonWebToken\Exception\Payload\PayloadException;
 
 /**
  * Class MissingData
  *
  * Exception thrown when a required payload data field is missing.
  */
-class MissingData extends Exception
+class MissingData extends PayloadException
 {
     /**
      * MissingData constructor.

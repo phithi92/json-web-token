@@ -10,7 +10,7 @@ use Exception;
  */
 class UnsupportedAlgorithmException extends Exception
 {
-    public function __construct(string $algorithm): Exception
+    public function __construct(string $algorithm)
     {
         return parent::__construct('Unsupported Algorithm ' . $algorithm);
     }
