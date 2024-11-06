@@ -4,7 +4,7 @@ namespace Phithi92\JsonWebToken\Cryptography\HMAC;
 
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\EmptyFieldException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
-use Phithi92\JsonWebToken\Exception\AlgorithmManager\InvalidSecretLength;
+use Phithi92\JsonWebToken\Exception\AlgorithmManager\InvalidSecretLengthException;
 use Phithi92\JsonWebToken\Exception\InvalidArgumentException;
 use Phithi92\JsonWebToken\Cryptography\HMAC\AlgorithmRegistry;
 
@@ -115,7 +115,7 @@ final class CryptoManager extends AlgorithmRegistry
 
         // Check if the secret key length is sufficient.
         if (strlen($secret) < $blockSize) {
-            throw new InvalidSecretLength(strlen($secret), $blockSize);
+            throw new InvalidSecretLengthException(strlen($secret), $blockSize);
         }
         $this->throwIfTrue(
             strlen($secret) < $blockSize,

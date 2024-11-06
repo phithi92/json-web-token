@@ -3,8 +3,7 @@
 namespace Phithi92\JsonWebToken\Exception;
 
 use Phithi92\JsonWebToken\Exception\ErrorMessages;
-use Phithi92\JsonWebToken\Exception\EmptyFieldException;
-use Exception;
+use Phithi92\JsonWebToken\Exception\Exception;
 
 /**
  * Class EmptyValueException

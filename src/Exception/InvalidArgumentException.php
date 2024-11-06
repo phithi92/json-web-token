@@ -2,7 +2,7 @@
 
 namespace Phithi92\JsonWebToken\Exception;
 
-use Exception;
+use Phithi92\JsonWebToken\Exception\Exception;
 
 /**
  *
