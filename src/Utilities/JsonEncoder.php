@@ -6,17 +6,33 @@ use Phithi92\JsonWebToken\Exception\Json\DecodingException;
 use Phithi92\JsonWebToken\Exception\Json\EncodingException;
 
 /**
- * Description of JsonEncoder
+ * Class JsonEncoder
  *
- * @author phillip
+ * Provides static methods for encoding arrays to JSON strings and decoding JSON strings to arrays.
+ * Handles errors by throwing DecodingException and EncodingException, which both extend JsonException.
+ *
+ * Methods:
+ * - decode(string $json): Decodes a JSON string into an associative array. Throws DecodingException on failure.
+ * - encode(array $array): Encodes an associative array into a JSON string. Throws EncodingException on failure.
+ *
+ * @package json-web-token\Utilities
+ * @author Phillip Thiele <development@phillip-thiele.de>
+ * @version 1.0.0
+ * @since 1.0.0
+ * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
+ * @link https://github.com/phithi92/json-web-token Project on GitHub
  */
 class JsonEncoder
 {
     /**
+     * Decodes a JSON-encoded string into an associative array.
      *
-     * @param  string $json
-     * @return array
-     * @throws InvalidToken
+     * Uses json_decode to parse the JSON string. If decoding fails, it throws
+     * a DecodingException to indicate an error.
+     *
+     * @param  string $json The JSON-encoded string to decode.
+     * @return array The decoded associative array.
+     * @throws DecodingException if the JSON string cannot be decoded.
      */
     public static function decode(string $json): array
     {
@@ -27,6 +43,16 @@ class JsonEncoder
         return $decoded;
     }
 
+    /**
+     * Encodes an associative array into a JSON string.
+     *
+     * Uses json_encode to convert the array to JSON. If encoding fails,
+     * it throws an EncodingException to indicate an error.
+     *
+     * @param  array $array The associative array to encode.
+     * @return string The JSON-encoded string.
+     * @throws EncodingException if the array cannot be encoded to JSON.
+     */
     public static function encode(array $array): string
     {
         $encoded = json_encode($array);

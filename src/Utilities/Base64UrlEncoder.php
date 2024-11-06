@@ -3,11 +3,24 @@
 namespace Phithi92\JsonWebToken\Utilities;
 
 /**
- * Description of Base64UrlEncoder
+ * Class Base64UrlEncoder
  *
- * @author phillip
+ * Provides methods for encoding and decoding data in a Base64 URL-safe format,
+ * compliant with the RFC 7515 standard. This class is useful for encoding data
+ * that needs to be included in URLs, ensuring compatibility by using URL-safe
+ * characters and omitting padding characters.
+ *
+ * - `encode(string $string): string`: Encodes data to a Base64 URL-safe string.
+ * - `decode(string $string, bool $padding = false): string`: Decodes a Base64 URL-safe
+ *   string back to its original form, with optional padding for compatibility.
+ *
+ * @package json-web-token\Utilities
+ * @author Phillip Thiele <development@phillip-thiele.de>
+ * @version 1.0.0
+ * @since 1.0.0
+ * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
+ * @link https://github.com/phithi92/json-web-token Project on GitHub
  */
-
 class Base64UrlEncoder
 {
     /**
