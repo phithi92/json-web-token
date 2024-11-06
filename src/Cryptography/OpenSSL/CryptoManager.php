@@ -9,7 +9,6 @@ use Phithi92\JsonWebToken\Exception\AlgorithmManager\EncryptionVerificationExcep
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\EncryptionSignException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\EncryptionDecryptionException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\EncryptionException;
-
 use Phithi92\JsonWebToken\Exception\EmptyFieldException;
 use Phithi92\JsonWebToken\Exception\InvalidArgumentException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
@@ -19,7 +18,6 @@ use OpenSSLAsymmetricKey;
 
 use function openssl_decrypt;
 use function openssl_encrypt;
-use function openssl_error_string;
 use function openssl_private_decrypt;
 use function openssl_pkey_get_details;
 use function openssl_get_cipher_methods;
