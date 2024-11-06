@@ -249,7 +249,6 @@ class SignatureToken
     private function processSignature(
         string $algorithmType,
         string $signatureData,
-        string $secret,
         string $hashAlgorithm,
         ?string $decodedSignature = null,
         ?string &$signature = null
