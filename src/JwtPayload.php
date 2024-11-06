@@ -166,10 +166,7 @@ class JwtPayload
     public function validateIssuer(string $expectedIssuer): void
     {
         $issuer = $this->getField('iss');
-        if ($issuer === null) {
-            throw new Exception\Payload\MissingData('iss');
-        }
-        if ($issuer !== $expectedIssuer) {
+        if ($issuer === null || $issuer !== $expectedIssuer) {
             throw new Exception\Payload\InvalidIssuer($expectedIssuer, $issuer);
         }
     }
