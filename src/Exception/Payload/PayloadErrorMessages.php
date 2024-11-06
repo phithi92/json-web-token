@@ -25,4 +25,5 @@ enum PayloadErrorMessages: string
     case PAYLOAD_EXPIRED = "Payload is expired";
     case INVALID_IAT = "invalid iat. Iat is earlier than exp";
     case INVALID_VALUE_TYPE = 'Invalid value type.';
+    case EMPTY_VALUE = "invalid value. empty value for %s";
 }
