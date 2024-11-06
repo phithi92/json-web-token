@@ -71,7 +71,7 @@ class JwtAlgorithmManager
     private static array $jweAlgorithms = [
         'RSA-OAEP', 'RSA-OAEP-256', 'RSA1_5', 'A128GCM', 'A192GCM', 'A256GCM'
     ];
-    
+
     /**
      * Constructor for symmetric or asymmetric algorithms.
      *
@@ -108,7 +108,7 @@ class JwtAlgorithmManager
     /**
      * Sets the public key for encryption.
      *
-     * This method loads and validates the provided public key. 
+     * This method loads and validates the provided public key.
      * If the key is invalid, it throws an InvalidArgument exception.
      *
      * @param string $publicKey The public key to be set.
@@ -128,7 +128,7 @@ class JwtAlgorithmManager
 
         return $this;
     }
-    
+
     /**
      * Sets the private key for decryption.
      *
@@ -152,7 +152,7 @@ class JwtAlgorithmManager
 
         return $this;
     }
-    
+
     /**
      * Retrieves supported JWS algorithms.
      *
