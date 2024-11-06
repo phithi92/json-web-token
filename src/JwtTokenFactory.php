@@ -30,23 +30,31 @@ use Phithi92\JsonWebToken\Exception\Token\FormatInvalid;
  *
  * @throws Specific exceptions provide clear messages for JWT-related issues.
  *
- * @autor Phillip Thiele <development@phillip-thiele.de>
+ * @package json-web-token
+ * @author Phillip Thiele <development@phillip-thiele.de>
+ * @version 1.0.0
+ * @since 1.0.0
+ * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
+ * @link https://github.com/phithi92/json-web-token Project on GitHub
  */
 final class JwtTokenFactory
 {
     /**
-     * Constructor that initializes the JwtAlgorithmManager used for encoding and decoding.
+     * Initializes the JwtTokenFactory with a JwtAlgorithmManager instance.
+     *
+     * @param JwtAlgorithmManager $cipher The algorithm manager for token encryption/decryption.
      */
     public function __construct(private JwtAlgorithmManager $cipher)
     {
     }
 
     /**
-     * Generates a JWT based on the given payload, selecting either JWS or JWE.
+     * Creates a JSON Web Token (JWT) using the provided payload.
      *
-     * This method uses the payload and algorithm manager to create a signed or encrypted JWT.
+     * Determines if the token should be a JWS (signed) or JWE (encrypted),
+     * and constructs the token accordingly.
      *
-     * @param  JwtPayload $payload The data for the token payload.
+     * @param  JwtPayload $payload The data to encode within the JWT payload.
      * @return string The generated JWT string.
      */
     public function create(JwtPayload $payload): string
@@ -54,7 +62,7 @@ final class JwtTokenFactory
         $token = new JwtTokenContainer($payload);
         $token->setHeader(new JwtHeader($this->cipher));
 
-        // Choose the appropriate builder for JWS or JWE
+        // Determine token type and select the appropriate builder.
         if ($token->getHeader()->getType() === 'JWS') {
             $builder = new SignatureToken($this->cipher);
         } else {
@@ -67,12 +75,11 @@ final class JwtTokenFactory
     }
 
     /**
-     * Encodes and combines the token parts into the final JWT string.
+     * Generates the final JWT string by encoding and concatenating the token parts.
      *
-     * This method assembles the token's header, payload, and optional encryption/authentication
-     * components into a standard JWT format.
+     * Uses different encoding methods depending on the token type (JWS or JWE).
      *
-     * @param  JwtTokenContainer $token The container holding the token data.
+     * @param  JwtTokenContainer $token The token container with the token's data.
      * @return string The complete JWT string.
      */
     public function generateToken(JwtTokenContainer $token): string
@@ -87,6 +94,16 @@ final class JwtTokenFactory
         endswitch;
     }
 
+    /**
+     * Decrypts a JWT string into a JwtTokenContainer object.
+     *
+     * Decrypts and verifies the JWT based on its type (JWS or JWE),
+     * throwing an exception if verification fails.
+     *
+     * @param  string $encodingToken The encoded JWT string to decrypt.
+     * @return JwtTokenContainer The decrypted token container object.
+     * @throws SignatureInvalid If the token's signature is invalid.
+     */
     public function decrypt(string $encodingToken): JwtTokenContainer
     {
         $token = $this->hydrateJwtContainerFromString($encodingToken);
@@ -95,7 +112,6 @@ final class JwtTokenFactory
             case 'JWS':
                 $manager = new SignatureToken($this->cipher);
                 break;
-
             case 'JWE':
                 $manager = new EncodingToken($this->cipher);
                 break;
@@ -110,6 +126,16 @@ final class JwtTokenFactory
         return $token;
     }
 
+    /**
+     * Refreshes an existing JWT by updating its expiration.
+     *
+     * Decrypts the token, updates its issuance and expiration times,
+     * then re-generates the JWT.
+     *
+     * @param  string $encodingToken      The encoded JWT string to refresh.
+     * @param  string $expirationInterval The interval for the new expiration time.
+     * @return string The refreshed JWT string.
+     */
     public function refreshToken(string $encodingToken, string $expirationInterval = '+1 hour'): string
     {
         $token = $this->decrypt($encodingToken);
@@ -121,11 +147,11 @@ final class JwtTokenFactory
     }
 
     /**
-     * Static method to create a JWT. Initializes a new instance and calls the create method.
+     * Static factory method to generate a JWT using a specified algorithm.
      *
-     * @param  JwtAlgorithmManager $algorithm The algorithm manager used for token generation.
-     * @param  JwtPayload          $payload   The payload data to be included in the token.
-     * @return string The generated JWT as a string.
+     * @param  JwtAlgorithmManager $algorithm The algorithm manager for encoding.
+     * @param  JwtPayload          $payload   The payload data for the token.
+     * @return string The generated JWT string.
      */
     public static function createToken(JwtAlgorithmManager $algorithm, JwtPayload $payload): string
     {
@@ -133,10 +159,10 @@ final class JwtTokenFactory
     }
 
     /**
-     * Static method to validate a JWT. Initializes a new instance and calls the validate method.
+     * Static method to validate a JWT using a specified algorithm.
      *
-     * @param  JwtAlgorithmManager $algorithm The algorithm manager used for token validation.
-     * @param  JwtPayload          $payload   The payload data to be validated in the token.
+     * @param  JwtAlgorithmManager $algorithm The algorithm manager for validation.
+     * @param  JwtPayload          $payload   The payload data to validate.
      * @return bool True if the token is valid, false otherwise.
      */
     public static function validateToken(JwtAlgorithmManager $algorithm, JwtPayload $payload): bool
@@ -144,6 +170,15 @@ final class JwtTokenFactory
         return (new self($algorithm))->validate($payload);
     }
 
+    /**
+     * Hydrates a JwtTokenContainer from an encoded JWT string.
+     *
+     * Decodes the JWT string and initializes the appropriate data for a JWS or JWE token.
+     *
+     * @param  string $encodingToken The JWT string to decode and parse.
+     * @return JwtTokenContainer The initialized JwtTokenContainer.
+     * @throws FormatInvalid If the token format is incorrect.
+     */
     private function hydrateJwtContainerFromString(string $encodingToken): JwtTokenContainer
     {
         $tokenData = explode('.', $encodingToken);
@@ -187,6 +222,12 @@ final class JwtTokenFactory
         return $token;
     }
 
+    /**
+     * Generates a JWS (signed) token string from a JwtTokenContainer.
+     *
+     * @param  JwtTokenContainer $token The container holding the token's header, payload, and signature.
+     * @return string The assembled JWS token string.
+     */
     private function generateJwsToken(JwtTokenContainer $token): string
     {
         $encodedHeader = Base64UrlEncoder::encode($token->getHeader()->toJson());
@@ -195,6 +236,12 @@ final class JwtTokenFactory
         return "$encodedHeader.$encodedPayload.$encodedSignature";
     }
 
+    /**
+     * Generates a JWE (encrypted) token string from a JwtTokenContainer.
+     *
+     * @param  JwtTokenContainer $token The container holding the token's header, encrypted parts, and auth tag.
+     * @return string The assembled JWE token string.
+     */
     private function generateJweToken(JwtTokenContainer $token): string
     {
         $encodedHeader = Base64UrlEncoder::encode($token->getHeader()->toJson());

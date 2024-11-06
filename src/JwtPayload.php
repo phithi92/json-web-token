@@ -25,13 +25,20 @@ use ErrorException;
  *   and "iss" (issuer) claims to ensure the token is intended for the correct recipient and issuer.
  * - **Serialization**: Includes methods to convert the payload into an array or JSON format.
  *
- * @package JwtPayload
- * @author  Phillip Thiele <development@phillip-thiele.de>
+ * @package json-web-token
+ * @author Phillip Thiele <development@phillip-thiele.de>
+ * @version 1.0.0
+ * @since 1.0.0
+ * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
+ * @link https://github.com/phithi92/json-web-token Project on GitHub
  */
 class JwtPayload
 {
-    private array $payload = []; // Array to store token data (JWT payload)
-    private DateTimeImmutable $dateTimeImmutable; // DateTimeImmutable object to handle date-related operations
+    // Array to store token data (JWT payload)
+    private array $payload = [];
+
+    // DateTimeImmutable object to handle date-related operations
+    private DateTimeImmutable $dateTimeImmutable;
 
     /**
      * Constructor initializes the DateTimeImmutable object.
@@ -252,6 +259,14 @@ class JwtPayload
         return $this->payload;
     }
 
+    /**
+     * Serializes the JWT payload data to a JSON-encoded string.
+     *
+     * Converts the payload properties to an array using `toArray`, then encodes them
+     * as a JSON string suitable for inclusion in a JWT.
+     *
+     * @return string The JSON-encoded representation of the JWT payload.
+     */
     public function toJson(): string
     {
         return JsonEncoder::encode($this->toArray());

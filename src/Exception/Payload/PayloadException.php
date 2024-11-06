@@ -21,8 +21,8 @@ class PayloadException extends Exception
     /**
      * PayloadException constructor.
      *
-     * @param string $message     The error message for the exception.
-     * @param string|null $field  Optional specific field related to the error.
+     * @param string      $message     The error message for the exception.
+     * @param string|null $field       Optional specific field related to the error.
      * @param string|null $secondField Another optional field related to the error.
      */
     public function __construct(string $message, ?string $field = null, ?string $secondField = null)
