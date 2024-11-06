@@ -252,7 +252,7 @@ class JwtPayload
     public function toArray(): array
     {
         if ($this->getField('exp') === null) {
-            $this->setField('iat', now());
+            $this->setField('iat', time());
         }
 
         $this->validate();
