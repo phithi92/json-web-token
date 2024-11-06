@@ -1,6 +1,6 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exception;
+namespace Phithi92\JsonWebToken\Exception\Payload;
 
 use Phithi92\JsonWebToken\Exception\ErrorMessages;
 use Phithi92\JsonWebToken\Exception\Exception;

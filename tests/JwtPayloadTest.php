@@ -270,7 +270,7 @@ class JwtPayloadTest extends TestCase
     {        
         $payload = new JwtPayload();
 
-        $this->expectException(Exception\EmptyFieldException::class);
+        $this->expectException(Exception\Payload\EmptyFieldException::class);
         
         // Should throw exception because issuer is an empty string
         $payload->setIssuer('');

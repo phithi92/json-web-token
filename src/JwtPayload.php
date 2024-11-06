@@ -355,7 +355,7 @@ class JwtPayload
     private function setField(string $key, mixed $value, bool $overwrite = false): void
     {
         if (empty($value)) {
-            throw new Exception\EmptyFieldException($key);
+            throw new Payload\EmptyFieldException($key);
         }
 
         if (!is_scalar($value) && !is_array($value)) {
