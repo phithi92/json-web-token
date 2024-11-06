@@ -2,8 +2,10 @@
 
 namespace Phithi92\JsonWebToken\Cryptography\HMAC;
 
-use Phithi92\JsonWebToken\Exception\InvalidToken;
-use Phithi92\JsonWebToken\Exception\InvalidArgument;
+use Phithi92\JsonWebToken\Exception\AlgorithmManager\EmptyFieldException;
+use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
+use Phithi92\JsonWebToken\Exception\AlgorithmManager\InvalidSecretLength;
+use Phithi92\JsonWebToken\Exception\InvalidArgumentException;
 use Phithi92\JsonWebToken\Cryptography\HMAC\AlgorithmRegistry;
 
 /**
@@ -43,9 +45,9 @@ final class CryptoManager extends AlgorithmRegistry
      * @param int    $length     The length of the hashing algorithm (e.g., 256 for SHA256).
      * @param string $secret     The secret key used to generate the HMAC signature.
      *
-     * @throws InvalidArgument If the data or secret key is empty, or if the key is too short
+     * @throws InvalidArgumentException If the data or secret key is empty, or if the key is too short
      *                                  for the specified algorithm.
-     * @throws InvalidArgument If the algorithm is not supported.
+     * @throws InvalidArgumentException If the algorithm is not supported.
      */
     public function signHmac(string $data, string $algorithm, string $secret): string
     {
@@ -75,9 +77,9 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $algorithm    The algorithm used for HMAC (e.g., sha256).
      * @param string $secret       The secret key that was used to generate the signature.
      *
-     * @return bool Returns true if the signature is valid, otherwise throws an exception.
+     * @return bool Returns true if the signature is valid and false if not.
      *
-     * @throws InvalidArgument If the data, signature, algorithm, or secret is invalid.
+     * @throws InvalidArgumentException If the data, signature, algorithm, or secret is invalid.
      */
     public function verifyHmac(string $data, string $providedHmac, string $algorithm, string $secret): bool
     {
@@ -87,32 +89,34 @@ final class CryptoManager extends AlgorithmRegistry
         $expectedHash = hash_hmac($algorithm, $data, $secret, true);
 
         // Perform a timing-safe comparison of the expected and provided signatures.
-        if (! hash_equals($expectedHash, $providedHmac)) {
-            throw InvalidToken::signatureInvalid($algorithm);
-        }
-
-        return true;
+        return hash_equals($expectedHash, $providedHmac);
     }
 
     private function validateHmacInput(string $data, string $algorithm, string $secret): void
     {
         // Ensure the data is not empty.
-        $this->throwIfTrue(empty($data), self::ERROR_DATA_EMPTY);
+        if (empty($data)) {
+            throw new EmptyFieldException('field');
+        }
 
         // Ensure the secret key is not empty.
-        $this->throwIfTrue(empty($secret), self::ERROR_SECRET_EMPTY);
+        if (empty($secret)) {
+            throw new EmptyFieldException('secret');
+        }
 
         // Determine the algorithm based on the length (e.g., sha256, sha384, sha512).
         // Ensure the algorithm is supported.
-        $this->throwIfTrue(
-            !in_array($algorithm, $this->getSupportedAlgorithms()),
-            sprintf(self::ERROR_ALGORITHM_UNSUPPORTED, $algorithm)
-        );
+        if (!in_array($algorithm, $this->getSupportedAlgorithms())) {
+            throw new UnsupportedAlgorithmException($algorithm);
+        }
 
         // Get the required block size for the selected algorithm.
         $blockSize = $this->getHmacBlockSize($algorithm);
 
         // Check if the secret key length is sufficient.
+        if (strlen($secret) < $blockSize) {
+            throw new InvalidSecretLength(strlen($secret), $blockSize);
+        }
         $this->throwIfTrue(
             strlen($secret) < $blockSize,
             sprintf(self::ERROR_SECRET_TOO_SHORT, $blockSize, strlen($secret))
@@ -130,12 +134,12 @@ final class CryptoManager extends AlgorithmRegistry
      * @param bool   $bool    The condition to evaluate. If true, an exception will be thrown.
      * @param string $message The exception message to be used if the condition is true.
      *
-     * @throws InvalidArgument If the condition evaluates to true.
+     * @throws InvalidArgumentException If the condition evaluates to true.
      */
     private function throwIfTrue(bool $bool, string $message): void
     {
         if (true === $bool) {
-            throw new InvalidArgument($message);
+            throw new InvalidArgumentException($message);
         }
     }
 
@@ -152,7 +156,7 @@ final class CryptoManager extends AlgorithmRegistry
      *
      * @return int The block size in bytes.
      *
-     * @throws InvalidArgument If the algorithm is not supported.
+     * @throws InvalidArgumentException If the algorithm is not supported.
      */
     protected function getHmacBlockSize(string $algorithm): int
     {
@@ -164,7 +168,7 @@ final class CryptoManager extends AlgorithmRegistry
             return $this->blockSizes[$algorithm];
         }
 
-        throw new InvalidArgument(sprintf(self::ERROR_ALGORITHM_UNSUPPORTED, $algorithm));
+        throw new InvalidArgumentException(sprintf(self::ERROR_ALGORITHM_UNSUPPORTED, $algorithm));
     }
 
     /**

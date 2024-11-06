@@ -2,7 +2,7 @@
 
 namespace Phithi92\JsonWebToken\Service;
 
-use Phithi92\JsonWebToken\Exception\InvalidArgument;
+use Phithi92\JsonWebToken\Exception\InvalidArgumentException;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Cryptography\OpenSSL;
 use Phithi92\JsonWebToken\JwtTokenContainer;
@@ -89,7 +89,7 @@ class EncodingToken
      * If the provided argument is not an instance of Openssl, an InvalidArgumentException is thrown.
      *
      * @param  mixed $cipher The cipher object, expected to be an instance of Openssl.
-     * @throws InvalidArgument If the provided argument is not an instance of Openssl.
+     * @throws InvalidArgumentException If the provided argument is not an instance of Openssl.
      */
     public function __construct(JwtAlgorithmManager $cipher)
     {

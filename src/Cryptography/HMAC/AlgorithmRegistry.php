@@ -15,8 +15,6 @@ namespace Phithi92\JsonWebToken\Cryptography\HMAC;
  */
 abstract class AlgorithmRegistry
 {
-    protected const ERROR_ALGORITHM_UNSUPPORTED = "Unsupported HMAC algorithm: %s";
-
     // Supported HMAC algorithms as constants for better readability and consistency.
     protected const ALGO_SHA256 = 'sha256';
     protected const ALGO_SHA384 = 'sha384';

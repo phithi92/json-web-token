@@ -8,7 +8,7 @@ use Phithi92\JsonWebToken\JwtTokenContainer;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\JwtHeader;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
-use Phithi92\JsonWebToken\Exception\Token\SignatureInvalid;
+use Phithi92\JsonWebToken\Exception\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
 
 /**
@@ -89,7 +89,7 @@ class SignatureToken
     {
 
         if (! $this->verify($token)) {
-            throw new SignatureInvalid();
+            throw new InvalidSignatureException();
         }
 
         return $token;

@@ -8,6 +8,6 @@ use Exception;
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-class UnexpectedError extends Exception
+class InvalidArgumentException extends Exception
 {
 }

@@ -2,7 +2,8 @@
 
 namespace Phithi92\JsonWebToken\Cryptography\OpenSSL;
 
-use Phithi92\JsonWebToken\Exception\InvalidArgument;
+use Phithi92\JsonWebToken\Exception\EmptyFieldException;
+use Phithi92\JsonWebToken\Exception\InvalidArgumentException;
 use Phithi92\JsonWebToken\Exception\OpensslError;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Cryptography\OpenSSL\AlgorithmRegistry;
@@ -113,7 +114,7 @@ final class CryptoManager extends AlgorithmRegistry
      *
      * @param  string $key The public key in string format.
      * @return self
-     * @throws InvalidArgument if the provided key is invalid.
+     * @throws InvalidArgumentException if the provided key is invalid.
      */
     public function setPublicKey(OpenSSLAsymmetricKey $key): self
     {
@@ -139,7 +140,7 @@ final class CryptoManager extends AlgorithmRegistry
      *
      * @param  string $key The private key in string format.
      * @return self
-     * @throws InvalidArgument if the provided key is invalid.
+     * @throws InvalidArgumentException if the provided key is invalid.
      */
     public function setPrivateKey(OpenSSLAsymmetricKey $key): self
     {
@@ -183,7 +184,7 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string      $iv              The initialization vector used in encryption.
      * @param string|null $tag             (Optional) The authentication tag for verifying integrity.
      *
-     * @throws InvalidArgument if IV length is incorrect.
+     * @throws InvalidArgumentException if IV length is incorrect.
      * @throws OpensslError if decryption fails.
      */
     public function decryptWithPassphrase(
@@ -220,7 +221,7 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string &$tag         Reference to the authentication tag generated
      *                             for integrity.
      *
-     * @throws InvalidArgument if any argument is empty.
+     * @throws InvalidArgumentException if any argument is empty.
      * @throws OpensslError if encryption fails.
      */
     public function encryptWithPassphrase(
@@ -257,13 +258,13 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $private_pem     The private key in PEM format.
      * @param int    $padding         The padding algorithm used during encryption.
      *
-     * @throws InvalidArgument if the private key is invalid.
+     * @throws InvalidArgumentException if the private key is invalid.
      * @throws OpensslError if decryption fails.
      */
     public function rsaDecryptWithPrivateKey(string $data, int $padding): string
     {
         if (empty($data)) {
-            throw new InvalidArgument(self::ERROR_EMPTY_DATA);
+            throw new EmptyFieldException('data');
         }
 
         // Retrieve the private key from PEM string
@@ -294,13 +295,13 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $public_pem      The public key in PEM format.
      * @param int    $padding         The padding algorithm used during encryption.
      *
-     * @throws InvalidArgument if the public key is invalid.
+     * @throws InvalidArgumentException if the public key is invalid.
      * @throws OpensslError if encryption fails.
      */
     public function rsaEncryptWithPublicKey(string $data, int $padding): string
     {
         if (empty($data)) {
-            throw new InvalidArgument(self::ERROR_EMPTY_DATA);
+            throw new EmptyFieldException('data');
         }
 
         $encrypted_data = '';
@@ -603,7 +604,7 @@ final class CryptoManager extends AlgorithmRegistry
      * @param int|null $padding     Optional padding parameter for algorithms like RSA-PSS.
      *
      * @throws OpensslError If there are issues with the private key or the signing process.
-     * @throws InvalidArgument If the key length is invalid.
+     * @throws InvalidArgumentException If the key length is invalid.
      */
     public function signWithAlgorithm(
         string $data,
@@ -618,7 +619,7 @@ final class CryptoManager extends AlgorithmRegistry
         // Get key details
         $key_details = openssl_pkey_get_details($private_key);
         if (!$key_details || !isset($key_details['bits'])) {
-            throw new InvalidArgument(self::ERROR_INVALID_PRIVATE_KEY_DETAILS);
+            throw new InvalidArgumentException(self::ERROR_INVALID_PRIVATE_KEY_DETAILS);
         }
 
         [$type, $length] = $this->extractAlgorithmComponents($algorithm);
@@ -626,7 +627,7 @@ final class CryptoManager extends AlgorithmRegistry
         // Validate key length
         $key_length = $key_details['bits'] / 8;
         if ($key_length > $length) {
-            throw new InvalidArgument(sprintf(self::ERROR_INVALID_KEY_LENGTH, $key_length, $length));
+            throw new InvalidArgumentException(sprintf(self::ERROR_INVALID_KEY_LENGTH, $key_length, $length));
         }
 
         // Directly sign the data using the private key and algorithm
@@ -691,7 +692,7 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $algorithm  The algorithm used for signing (e.g., 'SHA256', 'RSA-PSS').
      *
      * @throws OpensslError If there are issues with the public key or the verification process.
-     * @throws InvalidArgument If the input data or key is invalid.
+     * @throws InvalidArgumentException If the input data or key is invalid.
      *
      * @return bool True if the signature is valid, false otherwise.
      */
@@ -699,7 +700,7 @@ final class CryptoManager extends AlgorithmRegistry
     {
         // Validate inputs (data and signature should not be empty)
         if (empty($data) || empty($signature)) {
-            throw new InvalidArgument(self::ERROR_EMPTY_DATA);
+            throw new InvalidArgumentException(self::ERROR_EMPTY_DATA);
         }
 
         if (!$this->isSupportedDigestAlgorithm($algorithm)) {
@@ -710,7 +711,7 @@ final class CryptoManager extends AlgorithmRegistry
         $verification_result = openssl_verify($data, $signature, $this->getPublicKey(), $algorithm);
 
         if (false === is_int($verification_result)) {
-            throw new InvalidArgument(openssl_error_string());
+            throw new InvalidArgumentException(openssl_error_string());
         }
 
         // Return true if the signature is valid, otherwise false
@@ -727,7 +728,7 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $algorithm The hashing algorithm used for signing (e.g., 'SHA256').
      *
      * @throws OpensslError If there are issues with the public key or the verification process.
-     * @throws InvalidArgument If the input data or key is invalid.
+     * @throws InvalidArgumentException If the input data or key is invalid.
      *
      * @return bool True if the signature is valid, false otherwise.
      */
@@ -747,7 +748,7 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $algorithm  The hashing algorithm used for signing (e.g., 'SHA256').
      *
      * @throws OpensslError If there are issues with the public key or the verification process.
-     * @throws InvalidArgument If the input data or key is invalid.
+     * @throws InvalidArgumentException If the input data or key is invalid.
      *
      * @return bool True if the signature is valid, false otherwise.
      */
@@ -767,7 +768,7 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $algorithm  The hashing algorithm used for signing (e.g., 'SHA256').
      *
      * @throws OpensslError If there are issues with the public key or the verification process.
-     * @throws InvalidArgument If the input data or key is invalid.
+     * @throws InvalidArgumentException If the input data or key is invalid.
      *
      * @return bool True if the signature is valid, false otherwise.
      */
@@ -817,16 +818,16 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $data   The input data to be encrypted or decrypted.
      * @param string $output The output variable that will store the result. Must be empty.
      *
-     * @throws InvalidArgument If the input data is empty or the output is not empty.
+     * @throws InvalidArgumentException If the input data is empty or the output is not empty.
      */
     private function validateInputOutputData(string $data, string $output): void
     {
         if (empty($data)) {
-            throw new InvalidArgument(self::ERROR_EMPTY_DATA);
+            throw new InvalidArgumentException(self::ERROR_EMPTY_DATA);
         }
 
         if (! empty($output)) {
-            throw new InvalidArgument(self::ERROR_INVALID_OUTPUT);
+            throw new InvalidArgumentException(self::ERROR_INVALID_OUTPUT);
         }
     }
 
@@ -841,7 +842,7 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $passphrase The passphrase (key) used for encryption or decryption.
      * @param string $iv         The initialization vector (IV) used for the selected cipher.
      *
-     * @throws InvalidArgument If the cipher is not valid or supported, if the passphrase
+     * @throws InvalidArgumentException If the cipher is not valid or supported, if the passphrase
      *                                  does not match the required length for the cipher, or if the IV
      *                                  length is incorrect for the selected cipher.
      */
@@ -855,7 +856,7 @@ final class CryptoManager extends AlgorithmRegistry
             openssl_cipher_iv_length($cipher) > 0 && empty($passphrase)
             || strlen($passphrase) !== openssl_cipher_key_length($cipher)
         ) {
-            throw new InvalidArgument(
+            throw new InvalidArgumentException(
                 sprintf(
                     self::ERROR_INVALID_PASSPHRASE,
                     openssl_cipher_key_length($cipher),
@@ -865,7 +866,7 @@ final class CryptoManager extends AlgorithmRegistry
         }
 
         if (empty($iv) || strlen($iv) !== openssl_cipher_iv_length($cipher)) {
-            throw new InvalidArgument(
+            throw new InvalidArgumentException(
                 sprintf(
                     self::ERROR_INVALID_IV,
                     openssl_cipher_iv_length($cipher),

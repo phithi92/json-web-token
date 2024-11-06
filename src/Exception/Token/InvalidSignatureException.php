@@ -3,16 +3,16 @@
 namespace Phithi92\JsonWebToken\Exception\Token;
 
 use Phithi92\JsonWebToken\Exception\Token\TokenException;
+use Phithi92\JsonWebToken\Exception\Token\TokenErrorMessages;
 
 /**
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-class SignatureInvalid extends TokenException
+class InvalidSignatureException extends TokenException
 {
-    //put your code here
     public function __construct(): Exception
     {
-        return parent::__construct('Signature verification failed: The JWT signature is invalid or has been altered.');
+        return parent::__construct(TokenErrorMessages::INVALID_SIGNATURE->getMessage());
     }
 }

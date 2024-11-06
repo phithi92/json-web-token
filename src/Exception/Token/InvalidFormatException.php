@@ -3,16 +3,16 @@
 namespace Phithi92\JsonWebToken\Exception\Token;
 
 use Phithi92\JsonWebToken\Exception\Token\TokenException;
+use Phithi92\JsonWebToken\Exception\Token\TokenErrorMessages;
 
 /**
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-class FormatInvalid extends TokenException
+class InvalidFormatException extends TokenException
 {
-    //put your code here
     public function __construct(): Exception
     {
-        return parent::__construct('Invalid JWT format: The provided string does not meet the expected JWT structure.');
+        return parent::__construct(TokenErrorMessages::INVALID_FORMAT->getMessage());
     }
 }

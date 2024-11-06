@@ -1,7 +1,7 @@
 <?php
 
-use Phithi92\JsonWebToken\Exception\InvalidArgument;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Exception\InvalidArgumentException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
 
 require_once __DIR__ . '/TestCaseWithSecrets.php';
@@ -20,14 +20,14 @@ class JwtAlgorithmManagerTest extends \TestCaseWithSecrets
 
     public function testConstructorThrowsExceptionWithoutPassphraseOrKeys()
     {
-        $this->expectException(InvalidArgument::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new JwtAlgorithmManager('HS256');
     }
 
     public function testConstructorWithIncompleteAsymmetricKeys()
     {
-        $this->expectException(InvalidArgument::class);
+        $this->expectException(InvalidArgumentException::class);
 
         new JwtAlgorithmManager('RS256', null, $this->publicKey2048, null);
     }
@@ -61,13 +61,13 @@ class JwtAlgorithmManagerTest extends \TestCaseWithSecrets
 
     public function testEmptyPublicKeyWithAsymmetricAlgorithm()
     {
-        $this->expectException(InvalidArgument::class);
+        $this->expectException(InvalidArgumentException::class);
         new JwtAlgorithmManager('RS256', null, '', 'privateKey');
     }
 
     public function testEmptyPrivateKeyWithAsymmetricAlgorithm()
     {
-        $this->expectException(InvalidArgument::class);
+        $this->expectException(InvalidArgumentException::class);
         new JwtAlgorithmManager('RS256', null, 'publicKey', '');
     }
 }

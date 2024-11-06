@@ -2,7 +2,7 @@
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Exception\InvalidArgument;
+use Phithi92\JsonWebToken\Exception\InvalidArgumentException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Service\SignatureToken;
 use Phithi92\JsonWebToken\Service\EncodingToken;
@@ -82,7 +82,7 @@ class JwtAlgorithmManager
      * @param string|null $publicKey  Optional public key for asymmetric algorithms.
      * @param string|null $privateKey Optional private key for asymmetric algorithms.
      *
-     * @throws InvalidArgument If both passphrase and keys are missing.
+     * @throws InvalidArgumentException If both passphrase and keys are missing.
      */
     public function __construct(
         string $algorithm,
@@ -91,7 +91,7 @@ class JwtAlgorithmManager
         ?string $privateKey = null
     ) {
         if ($passphrase === null && ($publicKey === null || $privateKey === null)) {
-            throw new InvalidArgument('passphrase or public and private key needed');
+            throw new InvalidArgumentException('passphrase or public and private key needed');
         }
 
         if ($passphrase !== null) {
@@ -113,7 +113,7 @@ class JwtAlgorithmManager
      *
      * @param string $publicKey The public key to be set.
      * @return self Returns the current instance for method chaining.
-     * @throws InvalidArgument If the public key is invalid.
+     * @throws InvalidArgumentException If the public key is invalid.
      */
     private function setPublicKey(string $publicKey): self
     {
@@ -121,7 +121,7 @@ class JwtAlgorithmManager
 
         // Check if the key was successfully loaded
         if ($keyResource === false) {
-            throw new InvalidArgument('invalid public key');
+            throw new InvalidArgumentException('invalid public key');
         }
 
         $this->publicKey = $keyResource;
@@ -137,7 +137,7 @@ class JwtAlgorithmManager
      *
      * @param string $privateKey The private key to be set.
      * @return self Returns the current instance for method chaining.
-     * @throws InvalidArgument If the private key is invalid.
+     * @throws InvalidArgumentException If the private key is invalid.
      */
     private function setPrivateKey(string $privateKey): self
     {
@@ -145,7 +145,7 @@ class JwtAlgorithmManager
 
         // Check if the key was successfully loaded
         if ($keyResource === false) {
-            throw new InvalidArgument('invalid private key');
+            throw new InvalidArgumentException('invalid private key');
         }
 
         $this->privateKey = $keyResource;

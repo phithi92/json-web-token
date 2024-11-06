@@ -17,10 +17,10 @@ use Phithi92\JsonWebToken\Exception\AlgorithmManager\AlgorithmErrorMessage;
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
  * @link https://github.com/phithi92/json-web-token Project on GitHub
  */
-class UnsupportedAlgorithmException extends AlgorithmException
+class EmptyFieldException extends AlgorithmException
 {
-    public function __construct(string $algorithm)
+    public function __construct(string $field)
     {
-        parent::__construct(AlgorithmErrorMessage::UNSUPPORTED->getMessage($algorithm));
+        parent::__construct(AlgorithmErrorMessage::EMPTY_FIELD->getMessage($field));
     }
 }

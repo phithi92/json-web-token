@@ -2,8 +2,9 @@
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Exception;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
+use Phithi92\JsonWebToken\Exception\Payload;
+use Phithi92\JsonWebToken\Exception\EmptyFieldException;
 use DateTimeImmutable;
 use DateMalformedStringException;
 use ErrorException;
@@ -149,7 +150,7 @@ class JwtPayload
         $requiredFields = ['exp']; // Only check basic required claims (exclude 'iss' and 'aud' for now)
         foreach ($requiredFields as $field) {
             if (!$this->hasField($field)) {
-                throw new Exception\Payload\MissingData($field);
+                throw new Payload\ValueNotFoundException($field);
             }
         }
 
@@ -167,7 +168,7 @@ class JwtPayload
     {
         $issuer = $this->getField('iss');
         if ($issuer === null || $issuer !== $expectedIssuer) {
-            throw new Exception\Payload\InvalidIssuer($expectedIssuer, $issuer);
+            throw new Payload\InvalidIssuerException($expectedIssuer, $issuer);
         }
     }
 
@@ -182,7 +183,7 @@ class JwtPayload
         $audience = $this->getField('aud');
 
         if ($audience === null) {
-            throw new Exception\Payload\MissingData('aud');
+            throw new Payload\InvalidAudienceException();
         }
 
         // Ensure both variables are arrays for consistent processing
@@ -191,10 +192,9 @@ class JwtPayload
 
         // Check if there's any overlap between expected and actual audience
         if (empty(array_intersect($expectedAudience, $audience))) {
-            throw new Exception\Payload\AudienceInvalid();
+            throw new Payload\InvalidAudienceException();
         }
     }
-
 
     /**
      * Creates a new instance of JwtPayload from a JSON string.
@@ -284,28 +284,29 @@ class JwtPayload
 
         // Check if "iat" is earlier than "exp"
         if ($iat && $exp && $iat > $exp) {
-            throw new Exception\Payload\Expired();
+            throw new Payload\IatEarlierThanExpException();
         }
 
         // Check if "nbf" is earlier than "exp"
         if ($nbf && $exp && $nbf > $exp) {
-            throw new Exception\Payload\NotBeforeOlderThanExp();
+            throw new Payload\NotBeforeOlderThanExpException();
         }
 
         // Check if "nbf" is later than or equal to "iat"
         if ($iat && $nbf && $nbf < $iat) {
-            throw new Exception\Payload\NotBeforeOlderThanIat();
+            throw new Payload\NotBeforeOlderThanIatException();
         }
 
         // Validate if the token is valid based on the current time
         if ($exp && $now >= $exp) {
-            throw new Exception\Payload\Expired();
+            throw new Payload\ExpiredPayloadException();
         }
 
         if ($nbf && $now < $nbf) {
-            throw new Exception\Payload\NotYetValid();
+            throw new Payload\NotYetValidException();
         }
     }
+
     /**
      * Checks whether a specific field exists in the token data (JWT payload).
      *
@@ -331,12 +332,12 @@ class JwtPayload
             $dateTimeImmutable = $this->dateTimeImmutable->modify($dateTime);
 
             if (!$dateTimeImmutable) {
-                throw new Exception\Payload\InvalidDateTime($dateTime);
+                throw new Payload\InvalidDateTimeException($dateTime);
             }
         } catch (DateMalformedStringException $e) {
-            throw new Exception\Payload\InvalidDateTime($dateTime);
+            throw new Payload\InvalidDateTimeException($dateTime);
         } catch (ErrorException $e) {
-            throw new Exception\Payload\InvalidDateTime($dateTime);
+            throw new Payload\InvalidDateTimeException($dateTime);
         }
 
         $this->setField($key, $dateTimeImmutable->getTimestamp(), true);
@@ -355,11 +356,11 @@ class JwtPayload
     private function setField(string $key, mixed $value, bool $overwrite = false): void
     {
         if (empty($value)) {
-            throw new Exception\Payload\EmptyValueException($key);
+            throw new EmptyFieldException($key);
         }
 
         if (!is_scalar($value) && !is_array($value)) {
-            throw new Exception\Payload\InvalidValue();
+            throw new Payload\InvalidValueTypeException();
         }
 
         // Nur überschreiben, wenn $overwrite true ist oder das Feld noch nicht existiert

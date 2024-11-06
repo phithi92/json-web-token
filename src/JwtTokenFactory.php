@@ -7,8 +7,8 @@ use Phithi92\JsonWebToken\Service\EncodingToken;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
-use Phithi92\JsonWebToken\Exception\Token\SignatureInvalid;
-use Phithi92\JsonWebToken\Exception\Token\FormatInvalid;
+use Phithi92\JsonWebToken\Exception\Token\InvalidSignatureException;
+use Phithi92\JsonWebToken\Exception\Token\InvalidFormatException;
 
 /**
  * JsonWebToken is a final class responsible for creating, validating,
@@ -102,7 +102,7 @@ final class JwtTokenFactory
      *
      * @param  string $encodingToken The encoded JWT string to decrypt.
      * @return JwtTokenContainer The decrypted token container object.
-     * @throws SignatureInvalid If the token's signature is invalid.
+     * @throws InvalidSignatureException If the token's signature is invalid.
      */
     public function decrypt(string $encodingToken): JwtTokenContainer
     {
@@ -120,7 +120,7 @@ final class JwtTokenFactory
         $manager->decrypt($token);
 
         if (! $manager->verify($token, $manager)) {
-            throw new SignatureInvalid();
+            throw new InvalidSignatureException();
         }
 
         return $token;
@@ -177,14 +177,14 @@ final class JwtTokenFactory
      *
      * @param  string $encodingToken The JWT string to decode and parse.
      * @return JwtTokenContainer The initialized JwtTokenContainer.
-     * @throws FormatInvalid If the token format is incorrect.
+     * @throws InvalidFormatException If the token format is incorrect.
      */
     private function hydrateJwtContainerFromString(string $encodingToken): JwtTokenContainer
     {
         $tokenData = explode('.', $encodingToken);
 
         if (count($tokenData) < 3) {
-            throw new FormatInvalid();
+            throw new InvalidFormatException();
         }
 
         $headerDecoded = Base64UrlEncoder::decode($tokenData[0]);
@@ -195,7 +195,7 @@ final class JwtTokenFactory
 
         if ($type === 'JWS') {
             if (count($tokenData) !== 3) {
-                throw new FormatInvalid();
+                throw new InvalidFormatException();
             }
             $payloadDecoded = Base64UrlEncoder::decode($tokenData[1]);
             $signatureDecoded = Base64UrlEncoder::decode($tokenData[2]);
@@ -204,7 +204,7 @@ final class JwtTokenFactory
                 ->setSignature($signatureDecoded);
         } elseif ($type === 'JWE') {
             if (count($tokenData) !== 5) {
-                throw new FormatInvalid();
+                throw new InvalidFormatException();
             }
             $ivDecoded = Base64UrlEncoder::decode($tokenData[1]);
             $encryptedKeyDecoded = Base64UrlEncoder::decode($tokenData[2]);
@@ -216,7 +216,7 @@ final class JwtTokenFactory
                 ->setEncryptedPayload($encryptedPayloadDecoded)
                 ->setAuthTag($authTagDecoded);
         } else {
-            throw new FormatInvalid();
+            throw new InvalidFormatException();
         }
 
         return $token;

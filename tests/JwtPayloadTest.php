@@ -1,15 +1,7 @@
 <?php
 
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Scripting/PHPClass.php to edit this template
- */
-
-namespace Phithi92\JsonWebToken;
-
 use Phithi92\JsonWebToken\JwtPayload;
-use DateTimeImmutable;
-use DateTime;
+use Phithi92\JsonWebToken\Exception;
 
 /**
  * Description of JwtPayloadTest
@@ -76,7 +68,7 @@ class JwtPayloadTest extends TestCase
 
     public function testValidateThrowsExceptionIfExpirationMissing()
     {
-        $this->expectException(Exception\Payload\MissingData::class);
+        $this->expectException(Exception\Payload\ValueNotFoundException::class);
         
         $payload = new JwtPayload();
         $payload->validate();
@@ -95,7 +87,7 @@ class JwtPayloadTest extends TestCase
 
     public function testValidateIssuerThrowsExceptionIfIssuerInvalid()
     {
-        $this->expectException(Exception\Payload\InvalidIssuer::class);
+        $this->expectException(Exception\Payload\InvalidIssuerException::class);
         
         $payload = new JwtPayload();
         $payload->setIssuer('wrongIssuer');
@@ -104,7 +96,7 @@ class JwtPayloadTest extends TestCase
 
     public function testValidateAudienceStringThrowsExceptionIfAudienceInvalid()
     {
-        $this->expectException(Exception\Payload\AudienceInvalid::class);
+        $this->expectException(Exception\Payload\InvalidAudienceException::class);
         
         $payload = new JwtPayload();
         $payload->setAudience('wrongAudience');
@@ -113,7 +105,7 @@ class JwtPayloadTest extends TestCase
     
     public function testValidateAudienceArrayThrowsExceptionIfAudienceInvalid()
     {
-        $this->expectException(Exception\Payload\AudienceInvalid::class);
+        $this->expectException(Exception\Payload\InvalidAudienceException::class);
         
         $payload = new JwtPayload();
         $payload->setAudience([
@@ -176,7 +168,7 @@ class JwtPayloadTest extends TestCase
 
     public function testValidateAudienceNoMatchThrowsException()
     {
-        $this->expectException(Exception\Payload\AudienceInvalid::class);
+        $this->expectException(Exception\Payload\InvalidAudienceException::class);
         
         $payload = new JwtPayload();
         $payload->setAudience(['wrongAudience']);
@@ -198,7 +190,7 @@ class JwtPayloadTest extends TestCase
 
     public function testValidateIssuerNoMatchThrowsException()
     {
-        $this->expectException(Exception\Payload\InvalidIssuer::class);
+        $this->expectException(Exception\Payload\InvalidIssuerException::class);
         
         $payload = new JwtPayload();
         $payload->setIssuer('wrongIssuer');
@@ -209,7 +201,7 @@ class JwtPayloadTest extends TestCase
 
     public function testMissingAudienceThrowsException()
     {
-        $this->expectException(Exception\Payload\MissingData::class);
+        $this->expectException(Exception\Payload\InvalidAudienceException::class);
         
         $payload = new JwtPayload();
         // Audience is not set, so this should throw a MissingData exception
@@ -268,7 +260,7 @@ class JwtPayloadTest extends TestCase
         $payload = new JwtPayload();
         $payload->setAudience(['aud1', 'aud2']);
         
-        $this->expectException(Exception\Payload\AudienceInvalid::class);
+        $this->expectException(Exception\Payload\InvalidAudienceException::class);
         
         // Should throw exception because expected audience is empty
         $payload->validateAudience([]);
@@ -278,7 +270,7 @@ class JwtPayloadTest extends TestCase
     {        
         $payload = new JwtPayload();
 
-        $this->expectException(Exception\Payload\EmptyValueException::class);
+        $this->expectException(Exception\EmptyFieldException::class);
         
         // Should throw exception because issuer is an empty string
         $payload->setIssuer('');
@@ -290,7 +282,7 @@ class JwtPayloadTest extends TestCase
         $payload->setExpiration('+45 minutes');
         $payload->setNotBefore('+30 minutes');
         
-        $this->expectException(Exception\Payload\NotYetValid::class);
+        $this->expectException(Exception\Payload\NotYetValidException::class);
 
         // This should throw an exception because the `nbf` is set in the future
         $payload->validate();
@@ -303,7 +295,7 @@ class JwtPayloadTest extends TestCase
             ->setExpiration('+45 minutes')
             ->setNotBefore('-1 hour');
         
-        $this->expectException(Exception\Payload\NotBeforeOlderThanIat::class);
+        $this->expectException(Exception\Payload\NotBeforeOlderThanIatException::class);
 
         // This should succeed because the `nbf` is set in the past
         $payload->validate();
@@ -327,7 +319,7 @@ class JwtPayloadTest extends TestCase
         $pastDate = (new DateTimeImmutable('-1 hour'))->format(DateTime::ATOM);
         $payload->setExpiration($pastDate);
 
-        $this->expectException(Exception\Payload\Expired::class);
+        $this->expectException(Exception\Payload\ExpiredPayloadException::class);
         
         // This should throw an exception because the `exp` is set in the past
         $payload->validate();
@@ -359,7 +351,7 @@ class JwtPayloadTest extends TestCase
         $payload->setNotBefore($pastDate);
         $payload->setExpiration($expiredDate);
 
-        $this->expectException(Exception\Payload\Expired::class);
+        $this->expectException(Exception\Payload\ExpiredPayloadException::class);
         
         // This should throw an `Expired` exception because `exp` is in the past
         $payload->validate();
@@ -372,7 +364,7 @@ class JwtPayloadTest extends TestCase
         $payload->setIssuedAt('-1 hour');
         $payload->setNotBefore('-1 hour');
         
-        $this->expectException(Exception\Payload\MissingData::class);
+        $this->expectException(Exception\Payload\ValueNotFoundException::class);
 
         // This should throw a MissingData exception because `exp` is not set
         $payload->validate();
@@ -389,7 +381,7 @@ class JwtPayloadTest extends TestCase
 
     public function testSetNotBeforeWithInvalidDateThrowsException()
     {
-        $this->expectException(Exception\Payload\InvalidDateTime::class);
+        $this->expectException(Exception\Payload\InvalidDateTimeException::class);
 
         $payload = new JwtPayload();
         $payload->setNotBefore('invalid-date-format');
