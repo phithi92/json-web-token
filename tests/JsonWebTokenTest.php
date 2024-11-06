@@ -62,7 +62,7 @@ class JsonWebTokenTest extends TestCaseWithSecrets
         $this->testAlgorithmEncoding('A192GCM', $this->payload, $this->secret64, '', '');
         $this->testAlgorithmEncoding('A256GCM', $this->payload, $this->secret128, '', '');
     }
-//    
+    
 //    public function testValidAesKW()
 //    {
 //        $this->testAlgorithmEncoding('A128KW', $this->payload, $this->secret16, '', '');
@@ -70,18 +70,18 @@ class JsonWebTokenTest extends TestCaseWithSecrets
 //        $this->testAlgorithmEncoding('A256KW', $this->payload, $this->secret64, '', '');
 //    }
     
-    public function ecdh()
-    {
-
-        // Test algorithms that require only a passphrase
+//    public function ecdh()
+//    {
+//
+//        // Test algorithms that require only a passphrase
 //        $this->testAlgorithmEncoding('ECDH-ES+A128KW', $jwtPayload, null, $pem2048['publicKey'], $pem2048['privateKey']);
 //        $this->testAlgorithmEncoding('ECDH-ES+A192KW', $jwtPayload, $this->secret64, '', '');
 //        $this->testAlgorithmEncoding('ECDH-ES+A256KW', $jwtPayload, $this->secret64, '', '');
 //        $this->testAlgorithmEncoding('A128CBC-HS256', $jwtPayload, $this->secret64, '', '');
 //        $this->testAlgorithmEncoding('A192CBC-HS384', $jwtPayload, $this->secret64, '', '');
 //        $this->testAlgorithmEncoding('A256CBC-HS512', $jwtPayload, $this->secret64, '', '');
-        $this->testAlgorithmEncoding('chacha20-poly1305', $jwtPayload, $this->secret64, '', '');        
-    }
+//        $this->testAlgorithmEncoding('chacha20-poly1305', $jwtPayload, $this->secret64, '', '');        
+//    }
     
     private function testAlgorithmEncoding(string $algorithm, JwtPayload $jwtPayload, ?string $passhrase,string $publicPem, string $privatePem)
     {
@@ -89,9 +89,7 @@ class JsonWebTokenTest extends TestCaseWithSecrets
         $factory = new JwtTokenFactory($jwtAlgorithm);
         $token = $factory->create($jwtPayload);
         $this->assertIsString($token);
-        echo "success created token " . $algorithm . "\n";
         $decryptedToken = $factory->decrypt($token);
         $this->assertInstanceOf(JwtTokenContainer::class, $decryptedToken);
-        echo "success validated token " . $algorithm . "\n";
     }
 }
