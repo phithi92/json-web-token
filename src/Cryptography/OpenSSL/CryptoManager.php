@@ -9,8 +9,8 @@ use Phithi92\JsonWebToken\Exception\AlgorithmManager\EncryptionVerificationExcep
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\EncryptionSignException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\EncryptionDecryptionException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\EncryptionException;
-use Phithi92\JsonWebToken\Exception\EmptyFieldException;
-use Phithi92\JsonWebToken\Exception\InvalidArgumentException;
+use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnexpectedOutputException;
+use Phithi92\JsonWebToken\Exception\AlgorithmManager\EmptyFieldException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Cryptography\OpenSSL\AlgorithmRegistry;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
@@ -49,10 +49,6 @@ use function openssl_cipher_key_length;
  */
 final class CryptoManager extends AlgorithmRegistry
 {
-    // Error messages for various encryption and decryption failure scenarios
-    private const ERROR_INVALID_OUTPUT = 'Output variable need to be empty';
-    private const ERROR_EMPTY_DATA = 'The data cannot be empty.';
-
     private ?OpenSSLAsymmetricKey $publicKey = null;
     private ?OpenSSLAsymmetricKey $privateKey = null;
     private string $passphrase = '';
@@ -112,7 +108,6 @@ final class CryptoManager extends AlgorithmRegistry
      *
      * @param  string $key The public key in string format.
      * @return self
-     * @throws InvalidArgumentException if the provided key is invalid.
      */
     public function setPublicKey(OpenSSLAsymmetricKey $key): self
     {
@@ -138,7 +133,6 @@ final class CryptoManager extends AlgorithmRegistry
      *
      * @param  string $key The private key in string format.
      * @return self
-     * @throws InvalidArgumentException if the provided key is invalid.
      */
     public function setPrivateKey(OpenSSLAsymmetricKey $key): self
     {
@@ -182,7 +176,6 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string      $iv              The initialization vector used in encryption.
      * @param string|null $tag             (Optional) The authentication tag for verifying integrity.
      *
-     * @throws InvalidArgumentException if IV length is incorrect.
      * @throws EncryptionDecryptionException if decryption fails.
      */
     public function decryptWithPassphrase(
@@ -219,7 +212,6 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string &$tag         Reference to the authentication tag generated
      *                             for integrity.
      *
-     * @throws InvalidArgumentException if any argument is empty.
      * @throws EncryptionException if encryption fails.
      */
     public function encryptWithPassphrase(
@@ -256,7 +248,6 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $private_pem     The private key in PEM format.
      * @param int    $padding         The padding algorithm used during encryption.
      *
-     * @throws InvalidArgumentException if the private key is invalid.
      * @throws EncryptionDecryptionException if decryption fails.
      */
     public function rsaDecryptWithPrivateKey(string $data, int $padding): string
@@ -599,8 +590,6 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string   $algorithm   The algorithm to use for signing (e.g., 'SHA256', 'RSA-PSS').
      * @param string   $private_pem The private key in PEM format.
      * @param int|null $padding     Optional padding parameter for algorithms like RSA-PSS.
-     *
-     * @throws InvalidArgumentException If the key length is invalid.
      */
     public function signWithAlgorithm(
         string $data,
@@ -687,15 +676,17 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $public_pem The public key in PEM format.
      * @param string $algorithm  The algorithm used for signing (e.g., 'SHA256', 'RSA-PSS').
      *
-     * @throws InvalidArgumentException If the input data or key is invalid.
-     *
      * @return bool True if the signature is valid, false otherwise.
      */
     public function verifyWithAlgorithm(string $data, string $signature, string $algorithm): bool
     {
         // Validate inputs (data and signature should not be empty)
-        if (empty($data) || empty($signature)) {
-            throw new InvalidArgumentException(self::ERROR_EMPTY_DATA);
+        if (empty($data)) {
+            throw new EmptyFieldException('data');
+        }
+
+        if (empty($signature)) {
+            throw new EmptyFieldException('signature');
         }
 
         if (!$this->isSupportedDigestAlgorithm($algorithm)) {
@@ -722,8 +713,6 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $signature The signature that needs to be verified.
      * @param string $algorithm The hashing algorithm used for signing (e.g., 'SHA256').
      *
-     * @throws InvalidArgumentException If the input data or key is invalid.
-     *
      * @return bool True if the signature is valid, false otherwise.
      */
     public function verifyRsa(string $data, string $signature, string $algorithm): bool
@@ -741,8 +730,6 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $public_pem The public ECDSA key in PEM format.
      * @param string $algorithm  The hashing algorithm used for signing (e.g., 'SHA256').
      *
-     * @throws InvalidArgumentException If the input data or key is invalid.
-     *
      * @return bool True if the signature is valid, false otherwise.
      */
     public function verifyEcdsa(string $data, string $signature, string $algorithm): bool
@@ -759,8 +746,6 @@ final class CryptoManager extends AlgorithmRegistry
      * @param string $signature  The signature that needs to be verified.
      * @param string $public_pem The public RSA-PSS key in PEM format.
      * @param string $algorithm  The hashing algorithm used for signing (e.g., 'SHA256').
-     *
-     * @throws InvalidArgumentException If the input data or key is invalid.
      *
      * @return bool True if the signature is valid, false otherwise.
      */
@@ -808,17 +793,15 @@ final class CryptoManager extends AlgorithmRegistry
      *
      * @param string $data   The input data to be encrypted or decrypted.
      * @param string $output The output variable that will store the result. Must be empty.
-     *
-     * @throws InvalidArgumentException If the input data is empty or the output is not empty.
      */
     private function validateInputOutputData(string $data, string $output): void
     {
         if (empty($data)) {
-            throw new InvalidArgumentException(self::ERROR_EMPTY_DATA);
+            throw new EmptyFieldException('data');
         }
 
         if (! empty($output)) {
-            throw new InvalidArgumentException(self::ERROR_INVALID_OUTPUT);
+            throw new UnexpectedOutputException();
         }
     }
 

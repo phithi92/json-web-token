@@ -4,7 +4,6 @@ namespace Phithi92\JsonWebToken;
 
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use Phithi92\JsonWebToken\Exception\Payload;
-use Phithi92\JsonWebToken\Exception\EmptyFieldException;
 use DateTimeImmutable;
 use DateMalformedStringException;
 use ErrorException;
@@ -356,7 +355,7 @@ class JwtPayload
     private function setField(string $key, mixed $value, bool $overwrite = false): void
     {
         if (empty($value)) {
-            throw new EmptyFieldException($key);
+            throw new Exception\EmptyFieldException($key);
         }
 
         if (!is_scalar($value) && !is_array($value)) {

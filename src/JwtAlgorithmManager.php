@@ -2,7 +2,9 @@
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Exception\InvalidArgumentException;
+use Phithi92\JsonWebToken\Exception\AlgorithmManager\MissingKeysException;
+use Phithi92\JsonWebToken\Exception\AlgorithmManager\MissingPassphraseException;
+use Phithi92\JsonWebToken\Exception\AlgorithmManager\InvalidAsymetricKeyException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Service\SignatureToken;
 use Phithi92\JsonWebToken\Service\EncodingToken;
@@ -82,7 +84,8 @@ class JwtAlgorithmManager
      * @param string|null $publicKey  Optional public key for asymmetric algorithms.
      * @param string|null $privateKey Optional private key for asymmetric algorithms.
      *
-     * @throws InvalidArgumentException If both passphrase and keys are missing.
+     * @throws MissingPassphraseException
+     * @throws MissingKeysException
      */
     public function __construct(
         string $algorithm,
@@ -90,8 +93,12 @@ class JwtAlgorithmManager
         ?string $publicKey = null,
         ?string $privateKey = null
     ) {
+        if ($passphrase === null && $publicKey === null && $privateKey === null) {
+            throw new MissingPassphraseException();
+        }
+
         if ($passphrase === null && ($publicKey === null || $privateKey === null)) {
-            throw new InvalidArgumentException('passphrase or public and private key needed');
+            throw new MissingKeysException();
         }
 
         if ($passphrase !== null) {
@@ -113,7 +120,7 @@ class JwtAlgorithmManager
      *
      * @param string $publicKey The public key to be set.
      * @return self Returns the current instance for method chaining.
-     * @throws InvalidArgumentException If the public key is invalid.
+     * @throws InvalidAsymetricKeyException If the public key is invalid.
      */
     private function setPublicKey(string $publicKey): self
     {
@@ -121,7 +128,7 @@ class JwtAlgorithmManager
 
         // Check if the key was successfully loaded
         if ($keyResource === false) {
-            throw new InvalidArgumentException('invalid public key');
+            throw new InvalidAsymetricKeyException();
         }
 
         $this->publicKey = $keyResource;
@@ -137,7 +144,7 @@ class JwtAlgorithmManager
      *
      * @param string $privateKey The private key to be set.
      * @return self Returns the current instance for method chaining.
-     * @throws InvalidArgumentException If the private key is invalid.
+     * @throws InvalidAsymetricKeyException If the private key is invalid.
      */
     private function setPrivateKey(string $privateKey): self
     {
@@ -145,7 +152,7 @@ class JwtAlgorithmManager
 
         // Check if the key was successfully loaded
         if ($keyResource === false) {
-            throw new InvalidArgumentException('invalid private key');
+            throw new InvalidAsymetricKeyException();
         }
 
         $this->privateKey = $keyResource;

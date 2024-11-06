@@ -24,4 +24,7 @@ enum AlgorithmErrorMessage: string
     case DECRYPTION_FAILED = 'Decryption failed: %s';
     case ENCRYPTION_FAILED = 'Encryption failed: %s';
     case SIGN_FAILED = 'Signin failed: %s';
+    case UNEXPECTED_OUTPUT = 'Invalid input: An empty string is required';
+    case MISSING_KEYS = 'Both public and private keys are required if no passphrase is provided.';
+    case MISSING_PASSPHRASE = 'A passphrase is required if no public and private keys are provided.';
 }
