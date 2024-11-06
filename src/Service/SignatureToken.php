@@ -47,7 +47,7 @@ use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmExcepti
  */
 class SignatureToken
 {
-    private JwtAlgorithmManager $cipher;
+    private JwtAlgorithmManager $algorithmManager;
     private CryptoManager $openssl;
 
     public const ALGO_HS256 = 'HS256';
@@ -63,10 +63,10 @@ class SignatureToken
     public const ALGO_PS384 = 'PS384';
     public const ALGO_PS512 = 'PS512';
 
-    public function __construct(JwtAlgorithmManager $cipher)
+    public function __construct(JwtAlgorithmManager $manager)
     {
-        $this->cipher = $cipher;
-        $this->openssl = new CryptoManager($cipher);
+        $this->algorithmManager = $manager;
+        $this->openssl = new CryptoManager($manager);
     }
 
     public function getOpenssl(): CryptoManager
@@ -110,7 +110,7 @@ class SignatureToken
      */
     public function create(JwtTokenContainer $token): JwtTokenContainer
     {
-        $token->setHeader(new JwtHeader($this->cipher));
+        $token->setHeader(new JwtHeader($this->algorithmManager));
 
         [$algorithmType, $length] = $this->extractAlgorithmComponents($token->getHeader()->getAlgorithm());
 
@@ -121,25 +121,13 @@ class SignatureToken
         $signature = '';
         $shaAlgo = 'sha' . $length;
 
-        if ($algorithmType === 'HS') {
-            $this->processSignature(
-                $algorithmType,
-                $signatureData,
-                $this->cipher->getPassphrase(),
-                $shaAlgo,
-                null,
-                $signature
-            );
-        } else {
-            $this->processSignature(
-                $algorithmType,
-                $signatureData,
-                $this->cipher->getPrivateKey(),
-                $shaAlgo,
-                null,
-                $signature
-            );
-        }
+        $this->processSignature(
+            $algorithmType,
+            $signatureData,
+            $shaAlgo,
+            null,
+            $signature
+        );
 
         $token->setSignature($signature);
 
@@ -217,7 +205,7 @@ class SignatureToken
                     $signatureData,
                     $token->getSignature(),
                     $hashAlgorithm,
-                    $this->cipher->getPassphrase()
+                    $this->algorithmManager->getPassphrase()
                 );
 
             default:
@@ -263,7 +251,11 @@ class SignatureToken
                 break;
 
             case CryptoManager::HMAC:
-                $signature = (new HMAC\CryptoManager())->signHmac($signatureData, $hashAlgorithm, $secret);
+                $signature = (new HMAC\CryptoManager())->signHmac(
+                    $signatureData,
+                    $hashAlgorithm,
+                    $this->algorithmManager->getPassphrase()
+                );
                 break;
 
             default:
