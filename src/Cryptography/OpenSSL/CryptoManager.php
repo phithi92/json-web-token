@@ -56,7 +56,7 @@ final class CryptoManager extends AlgorithmRegistry
 
     private ?OpenSSLAsymmetricKey $publicKey = null;
     private ?OpenSSLAsymmetricKey $privateKey = null;
-    private string $passphrase;
+    private string $passphrase = '';
 
     private ?array $digestAlgorithms = null;
     private ?array $cipherAlgorithms = null;
@@ -64,7 +64,7 @@ final class CryptoManager extends AlgorithmRegistry
     public function __construct(JwtAlgorithmManager $manager)
     {
 
-        if ($manager->getPassphrase() === null) {
+        if (empty($manager->getPassphrase())) {
             $this->setPrivateKey($manager->getPrivateKey());
             $this->setPublicKey($manager->getPublicKey());
         } else {
@@ -115,18 +115,10 @@ final class CryptoManager extends AlgorithmRegistry
      * @return self
      * @throws InvalidArgument if the provided key is invalid.
      */
-    public function setPublicKey(string $key): self
+    public function setPublicKey(OpenSSLAsymmetricKey $key): self
     {
-        // Attempt to load the public key using OpenSSL
-        $publicKey = openssl_pkey_get_public($key);
-
-        // If the key is invalid, throw an exception
-        if (!$publicKey) {
-            throw OpensslError::opensslPrivateKeyInvalid();
-        }
-
         // Store the public key in the class property
-        $this->publicKey = $publicKey;
+        $this->publicKey = $key;
 
         return $this;
     }
@@ -149,18 +141,10 @@ final class CryptoManager extends AlgorithmRegistry
      * @return self
      * @throws InvalidArgument if the provided key is invalid.
      */
-    public function setPrivateKey(string $key): self
+    public function setPrivateKey(OpenSSLAsymmetricKey $key): self
     {
-        // Attempt to load the private key using OpenSSL
-        $privateKey = openssl_pkey_get_private($key);
-
-        // If the key is invalid, throw an exception
-        if (!$privateKey) {
-            throw OpensslError::opensslPrivateKeyInvalid();
-        }
-
         // Store the private key in the class property
-        $this->privateKey = $privateKey;
+        $this->privateKey = $key;
 
         return $this;
     }

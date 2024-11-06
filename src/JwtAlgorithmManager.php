@@ -94,10 +94,13 @@ class JwtAlgorithmManager
             throw new InvalidArgument('passphrase or public and private key needed');
         }
 
-        $this->algorithm = $algorithm;
-        $this->passphrase = $passphrase;
-        $this->publicKey = $publicKey;
-        $this->privateKey = $privateKey;
+        if ($passphrase !== null) {
+            $this->passphrase = $passphrase;
+        } elseif ($publicKey !== null && $privateKey !== null) {
+            $this->setPublicKey($publicKey);
+            $this->setPrivateKey($privateKey);
+        }
+
         $this->tokenType = $this->determineTokenType($algorithm);
         $this->algorithm = $algorithm;
     }
