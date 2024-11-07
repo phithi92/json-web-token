@@ -13,6 +13,6 @@ class InvalidSignatureException extends TokenException
 {
     public function __construct(): Exception
     {
-        return parent::__construct(TokenErrorMessages::INVALID_SIGNATURE->getMessage());
+        parent::__construct(TokenErrorMessages::INVALID_SIGNATURE->getMessage());
     }
 }

@@ -13,6 +13,6 @@ class InvalidFormatException extends TokenException
 {
     public function __construct(): Exception
     {
-        return parent::__construct(TokenErrorMessages::INVALID_FORMAT->getMessage());
+        parent::__construct(TokenErrorMessages::INVALID_FORMAT->getMessage());
     }
 }

@@ -23,6 +23,6 @@ class EncodingException extends JsonException
 {
     public function __construct()
     {
-        return parent::__construct(JsonErrorMessage::DecodingFailed->getMessage(json_last_error_msg()));
+        parent::__construct(JsonErrorMessage::DecodingFailed->getMessage(json_last_error_msg()));
     }
 }
