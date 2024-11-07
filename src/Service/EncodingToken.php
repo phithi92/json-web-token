@@ -101,22 +101,23 @@ class EncodingToken
         $algorithmInfo = $this->extractJweAlgorithmComponents($token->getHeader()->getAlgorithm());
         $tokenType = $algorithmInfo['key_management']['name'];
 
-        switch ($tokenType) {
-            case self::ALGO_RSA_OAEP_256:
-            case self::ALGO_RSA_OAEP:
-            case self::ALGO_RSA1_5:
-                $algo = $algorithmInfo['key_management']['hash_algorithm'];
-                return $this->openssl->verifyRsa($token->getPayload()->toJson(), $token->getAuthTag(), $algo);
-
-            // these algorithm need no seperate verify
-            case self::ALGO_A128GCM:
-            case self::ALGO_A192GCM:
-            case self::ALGO_A256GCM:
-            case self::ALGO_DIR:
-                return true;
-
-            default:
-                throw new UnsupportedAlgorithmException($algo);
+        if (
+            $tokenType === self::ALGO_RSA_OAEP_256
+            || $tokenType === self::ALGO_RSA_OAEP
+            || $tokenType === self::ALGO_RSA1_5
+        ) {
+            $algo = $algorithmInfo['key_management']['hash_algorithm'];
+            return $this->openssl->verifyRsa($token->getPayload()->toJson(), $token->getAuthTag(), $algo);
+        } elseif (
+            $tokenType === self::ALGO_A128GCM
+            || $tokenType === self::ALGO_A192GCM
+            || $tokenType === self::ALGO_A256GCM
+            || $tokenType === self::ALGO_DIR
+        ) {
+            // Diese Algorithmen benötigen keine separate Verifizierung
+            return true;
+        } else {
+            throw new UnsupportedAlgorithmException($tokenType);
         }
     }
 
@@ -218,49 +219,48 @@ class EncodingToken
      */
     private function processEncryptionAlgorithm(JwtTokenContainer $token, array $algorithm): string
     {
-        switch ($algorithm['name']) {
-            case self::ALGO_RSA_OAEP_256:
-            case self::ALGO_RSA_OAEP:
-            case self::ALGO_RSA1_5:
-                return $this->openssl->rsaEncryptWithPublicKey($token->getCek(), OPENSSL_PKCS1_OAEP_PADDING);
-                break;
-
-            case self::ALGO_A128KW:
-            case self::ALGO_A192KW:
-            case self::ALGO_A256KW:
-                return $this->openssl->aesKeyWrapEncrypt($token->getCek(), $algorithm['bit_length']);
-                break;
-
-        //            case self::ALGO_ECDH_ES_P521:
-        //                return $this->openssl->encryptWithECDH_ES_P521(
-        //                $token->getRecipientPublicKey(),
-        //                $token->getCek());
-        //                break;
-        //
-        //            case self::ALGO_ECDH_ES:
-        //            case self::ALGO_ECDH_ES_A128KW:
-        //            case self::ALGO_ECDH_ES_A192KW:
-        //            case self::ALGO_ECDH_ES_A256KW:
-        //                return $this->openssl->ecdhEsKeyAgreement();
-        //                break;
-        //
-        //            case self::ALGO_PBES2_HS256:
-        //            case self::ALGO_PBES2_HS384:
-        //            case self::ALGO_PBES2_HS512:
-        //                return $this->openssl->pbes2EncryptKey(
-        //                $token->getCek(),
-        //                $algorithm['bit_length']);
-        //                break;
-
-            case self::ALGO_A128GCM:
-            case self::ALGO_A192GCM:
-            case self::ALGO_A256GCM:
-            case self::ALGO_DIR:
-                return $token->getCek();
-                break;
-
-            default:
-                throw new UnsupportedAlgorithmException($algorithm);
+        if (
+            $algorithm['name'] === self::ALGO_RSA_OAEP_256 ||
+            $algorithm['name'] === self::ALGO_RSA_OAEP ||
+            $algorithm['name'] === self::ALGO_RSA1_5
+        ) {
+            return $this->openssl->rsaEncryptWithPublicKey($token->getCek(), OPENSSL_PKCS1_OAEP_PADDING);
+        } elseif (
+            $algorithm['name'] === self::ALGO_A128KW ||
+                  $algorithm['name'] === self::ALGO_A192KW ||
+                  $algorithm['name'] === self::ALGO_A256KW
+        ) {
+            return $this->openssl->aesKeyWrapEncrypt($token->getCek(), $algorithm['bit_length']);
+        } elseif ($algorithm['name'] === self::ALGO_ECDH_ES_P521) {
+            return $this->openssl->encryptWithECDH_ES_P521(
+                $token->getRecipientPublicKey(),
+                $token->getCek()
+            );
+        } elseif (
+            $algorithm['name'] === self::ALGO_ECDH_ES ||
+                  $algorithm['name'] === self::ALGO_ECDH_ES_A128KW ||
+                  $algorithm['name'] === self::ALGO_ECDH_ES_A192KW ||
+                  $algorithm['name'] === self::ALGO_ECDH_ES_A256KW
+        ) {
+            return $this->openssl->ecdhEsKeyAgreement();
+        } elseif (
+            $algorithm['name'] === self::ALGO_PBES2_HS256 ||
+                  $algorithm['name'] === self::ALGO_PBES2_HS384 ||
+                  $algorithm['name'] === self::ALGO_PBES2_HS512
+        ) {
+            return $this->openssl->pbes2EncryptKey(
+                $token->getCek(),
+                $algorithm['bit_length']
+            );
+        } elseif (
+            $algorithm['name'] === self::ALGO_A128GCM ||
+                  $algorithm['name'] === self::ALGO_A192GCM ||
+                  $algorithm['name'] === self::ALGO_A256GCM ||
+                  $algorithm['name'] === self::ALGO_DIR
+        ) {
+            return $token->getCek();
+        } else {
+            throw new UnsupportedAlgorithmException($algorithm);
         }
     }
 
@@ -274,37 +274,41 @@ class EncodingToken
      */
     private function processDecryptionAlgorithm(JwtTokenContainer $token, array $algorithm): string
     {
-        switch ($algorithm['name']) {
-            case self::ALGO_RSA_OAEP_256:
-            case self::ALGO_RSA_OAEP:
-            case self::ALGO_RSA1_5:
-                return $this->openssl->rsaDecryptWithPrivateKey($token->getEncryptedKey(), OPENSSL_PKCS1_OAEP_PADDING);
-
-            case self::ALGO_A128KW:
-            case self::ALGO_A192KW:
-            case self::ALGO_A256KW:
-                return $this->openssl->aesKeyWrapDecrypt($token->getEncryptedKey(), $algorithm['bit_length']);
-
-        //            case self::ALGO_ECDH_ES_P521:
-        //                return $this->openssl->decryptWithECDH_ES_P521(
-        //                $token->getEncryptedKey(),
-        //                $token->getRecipientPrivateKey());
-        //
-        //            case self::ALGO_PBES2_HS256:
-        //            case self::ALGO_PBES2_HS384:
-        //            case self::ALGO_PBES2_HS512:
-        //                return $this->openssl->pbes2DecryptKey(
-        //                $token->getEncryptedKey(),
-        //                $algorithm['bit_length']);
-
-            case self::ALGO_A128GCM:
-            case self::ALGO_A192GCM:
-            case self::ALGO_A256GCM:
-            case self::ALGO_DIR:
-                return $token->getEncryptedKey();
-
-            default:
-                throw new UnsupportedAlgorithmException($algorithm['name']);
+        if (
+            $algorithm['name'] === self::ALGO_RSA_OAEP_256 ||
+            $algorithm['name'] === self::ALGO_RSA_OAEP ||
+            $algorithm['name'] === self::ALGO_RSA1_5
+        ) {
+            return $this->openssl->rsaDecryptWithPrivateKey($token->getEncryptedKey(), OPENSSL_PKCS1_OAEP_PADDING);
+        } elseif (
+            $algorithm['name'] === self::ALGO_A128KW ||
+                  $algorithm['name'] === self::ALGO_A192KW ||
+                  $algorithm['name'] === self::ALGO_A256KW
+        ) {
+            return $this->openssl->aesKeyWrapDecrypt($token->getEncryptedKey(), $algorithm['bit_length']);
+        } elseif ($algorithm['name'] === self::ALGO_ECDH_ES_P521) {
+            return $this->openssl->decryptWithECDH_ES_P521(
+                $token->getEncryptedKey(),
+                $token->getRecipientPrivateKey()
+            );
+        } elseif (
+            $algorithm['name'] === self::ALGO_PBES2_HS256 ||
+                  $algorithm['name'] === self::ALGO_PBES2_HS384 ||
+                  $algorithm['name'] === self::ALGO_PBES2_HS512
+        ) {
+            return $this->openssl->pbes2DecryptKey(
+                $token->getEncryptedKey(),
+                $algorithm['bit_length']
+            );
+        } elseif (
+            $algorithm['name'] === self::ALGO_A128GCM ||
+                  $algorithm['name'] === self::ALGO_A192GCM ||
+                  $algorithm['name'] === self::ALGO_A256GCM ||
+                  $algorithm['name'] === self::ALGO_DIR
+        ) {
+            return $token->getEncryptedKey();
+        } else {
+            throw new UnsupportedAlgorithmException($algorithm['name']);
         }
     }
 
@@ -333,33 +337,33 @@ class EncodingToken
         string $contentAlgorithm,
         ?int $contentBits = null
     ): string {
-        switch ($contentAlgorithm) {
-            case self::ALGO_A128KW:
-            case self::ALGO_A192KW:
-            case self::ALGO_A256KW:
-                return $this->openssl->aesKeyWrapEncrypt(
-                    $token->getEncryptedKey(),
-                    $contentBits
-                );
-
-            case self::ALGO_A128GCM:
-            case self::ALGO_A192GCM:
-            case self::ALGO_A256GCM:
-                $authTag = '';
-                $encrypted = $this->openssl->aesGcmEncrypt(
-                    $token->getPayload()->toJson(),
-                    $contentBits,
-                    $token->getIv(),
-                    $authTag
-                );
-                $token->setAuthTag($authTag);
-                return $encrypted;
-
-            case self::ALGO_DIR:
-                return $token->getPayload()->toJson();
-
-            default:
-                throw new UnsupportedAlgorithmException($contentAlgorithm);
+        if (
+            $contentAlgorithm === self::ALGO_A128KW ||
+            $contentAlgorithm === self::ALGO_A192KW ||
+            $contentAlgorithm === self::ALGO_A256KW
+        ) {
+            return $this->openssl->aesKeyWrapEncrypt(
+                $token->getEncryptedKey(),
+                $contentBits
+            );
+        } elseif (
+            $contentAlgorithm === self::ALGO_A128GCM ||
+                  $contentAlgorithm === self::ALGO_A192GCM ||
+                  $contentAlgorithm === self::ALGO_A256GCM
+        ) {
+            $authTag = '';
+            $encrypted = $this->openssl->aesGcmEncrypt(
+                $token->getPayload()->toJson(),
+                $contentBits,
+                $token->getIv(),
+                $authTag
+            );
+            $token->setAuthTag($authTag);
+            return $encrypted;
+        } elseif ($contentAlgorithm === self::ALGO_DIR) {
+            return $token->getPayload()->toJson();
+        } else {
+            throw new UnsupportedAlgorithmException($contentAlgorithm);
         }
     }
 
@@ -372,32 +376,28 @@ class EncodingToken
         $macBitLength = $algorithmInfo['mac_bit_length'] ?? null;
         $decryptedPayload = null;
 
-
-        switch ($contentAlgorithm) {
-            case self::ALGO_A128GCM:
-            case self::ALGO_A192GCM:
-            case self::ALGO_A256GCM:
-                // GCM-Modus entschlüsseln
-                $decryptedPayload = $this->openssl->aesGcmDecrypt(
-                    $token->getEncryptedPayload(),
-                    $bitLength,
-                    $token->getIv(),
-                    $token->getAuthTag()
-                );
-                break;
-
-            case self::ALGO_A128CBC_HS256:
-            case self::ALGO_A192CBC_HS384:
-            case self::ALGO_A256CBC_HS512:
-                $decryptedPayload = aesCbcHmacDecrypt($ciphertext, $decryptedKey, $bitLength, $iv);
-                break;
-
-            case self::ALGO_DIR:
-                $decryptedPayload = $token->getEncryptedPayload();
-                break;
-
-            default:
-                throw new UnsupportedAlgorithmException($contentAlgorithm);
+        if (
+            $contentAlgorithm === self::ALGO_A128GCM ||
+            $contentAlgorithm === self::ALGO_A192GCM ||
+            $contentAlgorithm === self::ALGO_A256GCM
+        ) {
+            // GCM-Modus entschlüsseln
+            $decryptedPayload = $this->openssl->aesGcmDecrypt(
+                $token->getEncryptedPayload(),
+                $bitLength,
+                $token->getIv(),
+                $token->getAuthTag()
+            );
+        } elseif (
+            $contentAlgorithm === self::ALGO_A128CBC_HS256 ||
+                  $contentAlgorithm === self::ALGO_A192CBC_HS384 ||
+                  $contentAlgorithm === self::ALGO_A256CBC_HS512
+        ) {
+            $decryptedPayload = aesCbcHmacDecrypt($ciphertext, $decryptedKey, $bitLength, $iv);
+        } elseif ($contentAlgorithm === self::ALGO_DIR) {
+            $decryptedPayload = $token->getEncryptedPayload();
+        } else {
+            throw new UnsupportedAlgorithmException($contentAlgorithm);
         }
 
         $token->setPayload(JwtPayload::fromJson($decryptedPayload));

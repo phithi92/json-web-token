@@ -194,22 +194,21 @@ class SignatureToken
         // Combine the header and payload to form the signature input
         $signatureData = "$encodedHeader.$encodedPayload";
 
-        switch ($algorithmType) {
-            case CryptoManager::ECDSA:
-            case CryptoManager::RSA_PSS:
-            case CryptoManager::RSA:
-                return $openssl->verifyWithAlgorithm($signatureData, $token->getSignature(), $hashAlgorithm);
-
-            case CryptoManager::HMAC:
-                return (new HMAC\CryptoManager())->verifyHmac(
-                    $signatureData,
-                    $token->getSignature(),
-                    $hashAlgorithm,
-                    $this->algorithmManager->getPassphrase()
-                );
-
-            default:
-                throw new UnsupportedAlgorithmException($algorithmType);
+        if (
+            $algorithmType === CryptoManager::ECDSA
+            || $algorithmType === CryptoManager::RSA_PSS
+            || $algorithmType === CryptoManager::RSA
+        ) {
+            return $openssl->verifyWithAlgorithm($signatureData, $token->getSignature(), $hashAlgorithm);
+        } elseif ($algorithmType === CryptoManager::HMAC) {
+            return (new HMAC\CryptoManager())->verifyHmac(
+                $signatureData,
+                $token->getSignature(),
+                $hashAlgorithm,
+                $this->algorithmManager->getPassphrase()
+            );
+        } else {
+            throw new UnsupportedAlgorithmException($algorithmType);
         }
     }
 
@@ -243,23 +242,20 @@ class SignatureToken
     ): void {
         $openssl = $this->getOpenssl();
 
-        switch ($algorithmType) {
-            case CryptoManager::ECDSA:
-            case CryptoManager::RSA_PSS:
-            case CryptoManager::RSA:
-                $openssl->signWithAlgorithm($signatureData, $signature, $hashAlgorithm);
-                break;
-
-            case CryptoManager::HMAC:
-                $signature = (new HMAC\CryptoManager())->signHmac(
-                    $signatureData,
-                    $hashAlgorithm,
-                    $this->algorithmManager->getPassphrase()
-                );
-                break;
-
-            default:
-                throw new UnsupportedAlgorithmException($algorithmType);
+        if (
+            $algorithmType === CryptoManager::ECDSA
+            || $algorithmType === CryptoManager::RSA_PSS
+            || $algorithmType === CryptoManager::RSA
+        ) {
+            $openssl->signWithAlgorithm($signatureData, $signature, $hashAlgorithm);
+        } elseif ($algorithmType === CryptoManager::HMAC) {
+            $signature = (new HMAC\CryptoManager())->signHmac(
+                $signatureData,
+                $hashAlgorithm,
+                $this->algorithmManager->getPassphrase()
+            );
+        } else {
+            throw new UnsupportedAlgorithmException($algorithmType);
         }
     }
 }

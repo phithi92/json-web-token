@@ -62,14 +62,9 @@ final class JwtTokenFactory
         $token = new JwtTokenContainer($payload);
         $token->setHeader(new JwtHeader($this->cipher));
 
-        // Determine token type and select the appropriate builder.
-        if ($token->getHeader()->getType() === 'JWS') {
-            $builder = new SignatureToken($this->cipher);
-        } else {
-            $builder = new EncodingToken($this->cipher);
-        }
+        $manager = $this->initializeTokenManager($token, $this->cipher);
 
-        $tokenContainer = $builder->create($token);
+        $tokenContainer = $manager->create($token);
 
         return $this->generateToken($tokenContainer);
     }
@@ -86,12 +81,13 @@ final class JwtTokenFactory
     {
         $type = $token->getHeader()->getType();
 
-        switch ($type) :
-            case 'JWS':
-                return $this->generateJwsToken($token);
-            case 'JWE':
-                return $this->generateJweToken($token);
-        endswitch;
+        if ($type === 'JWS') {
+            return $this->generateJwsToken($token);
+        } elseif ($type === 'JWE') {
+            return $this->generateJweToken($token);
+        } else {
+            throw new UnsupportedTokenTypeException($type);
+        }
     }
 
     /**
@@ -108,18 +104,11 @@ final class JwtTokenFactory
     {
         $token = $this->hydrateJwtContainerFromString($encodingToken);
 
-        switch ($token->getHeader()->getType()) :
-            case 'JWS':
-                $manager = new SignatureToken($this->cipher);
-                break;
-            case 'JWE':
-                $manager = new EncodingToken($this->cipher);
-                break;
-        endswitch;
+        $manager = $this->initializeTokenManager($token, $this->cipher);
 
         $manager->decrypt($token);
 
-        if (! $manager->verify($token, $manager)) {
+        if (! $manager->verify($token)) {
             throw new InvalidSignatureException();
         }
 
@@ -136,7 +125,7 @@ final class JwtTokenFactory
      * @param  string $expirationInterval The interval for the new expiration time.
      * @return string The refreshed JWT string.
      */
-    public function refreshToken(string $encodingToken, string $expirationInterval = '+1 hour'): string
+    public function refresh(string $encodingToken, string $expirationInterval = '+1 hour'): string
     {
         $token = $this->decrypt($encodingToken);
 
@@ -144,6 +133,23 @@ final class JwtTokenFactory
         $token->getPayload()->setExpiration($expirationInterval);
 
         return $this->create($token->getPayload());
+    }
+
+    /**
+     * Static method to refresh a JWT token with a new expiration interval.
+     *
+     * This method creates a new instance of the class using the specified
+     * JWT algorithm manager and calls the instance method `refresh`.
+     * It returns a refreshed JWT with an updated expiration interval.
+     *
+     * @param  JwtAlgorithmManager $algorithm          The algorithm manager for handling token operations.
+     * @param  string              $encodingToken      The existing encoded JWT token to be refreshed.
+     * @param  string              $expirationInterval The new expiration interval for the refreshed token.
+     * @return string                                  The refreshed JWT token with updated expiration.
+     */
+    public static function refreshToken(JwtAlgorithmManager $algorithm, string $encodingToken, string $expirationInterval)
+    {
+        return (new self($algorithm))->refresh($encodingToken, $expirationInterval);
     }
 
     /**
@@ -162,24 +168,25 @@ final class JwtTokenFactory
      * Static factory method to generate a JWT using a specified algorithm.
      *
      * @param  JwtAlgorithmManager $algorithm The algorithm manager for encoding.
-     * @param  JwtPayload          $payload   The payload data for the token.
+     * @param  string              $encodedToken   The encoded token string.
      * @return string The generated JWT string.
      */
-    public static function decryptToken(JwtAlgorithmManager $algorithm, string $token): JwtTokenContainer
+    public static function decryptToken(JwtAlgorithmManager $algorithm, string $encodedToken): JwtTokenContainer
     {
-        return (new self($algorithm))->decrypt($token);
+        return (new self($algorithm))->decrypt($encodedToken);
     }
 
-    /**
-     * Static method to validate a JWT using a specified algorithm.
-     *
-     * @param  JwtAlgorithmManager $algorithm The algorithm manager for validation.
-     * @param  JwtPayload          $payload   The payload data to validate.
-     * @return bool True if the token is valid, false otherwise.
-     */
-    public static function validateToken(JwtAlgorithmManager $algorithm, JwtPayload $payload): bool
+    private function initializeTokenManager(JwtTokenContainer $token, JwtAlgorithmManager $manager)
     {
-        return (new self($algorithm))->validate($payload);
+        $type = $token->getHeader()->getType();
+
+        if ($type === 'JWS') {
+            return new SignatureToken($manager);
+        } elseif ($type === 'JWE') {
+            return new EncodingToken($manager);
+        } else {
+            throw new Exception\Token\InvalidFormatException();
+        }
     }
 
     /**
