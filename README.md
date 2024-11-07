@@ -1,12 +1,8 @@
-⚠️ **Attention:** This project is still in **active development**. Unexpected changes and errors may occur. ⚠️
+# Json-Web-Token
 
----
+[![PHP Version](https://img.shields.io/packagist/php-v/phithi92/json-web-token.svg?style=for-the-badge)](https://packagist.org/packages/phithi92/json-web-token) [![Latest Version](https://img.shields.io/packagist/v/phithi92/json-web-token.svg?style=for-the-badge)](https://github.com/phithi92/json-web-token/releases) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=for-the-badge)](LICENSE) [![Issues](https://img.shields.io/github/issues/phithi92/json-web-token.svg?style=for-the-badge)](https://github.com/phithi92/json-web-token/issues) [![Build](https://img.shields.io/github/actions/workflow/status/phithi92/json-web-token/php.yml?branch=main&style=for-the-badge)](https://github.com/phithi92/json-web-token/actions) [![Total Downloads](https://img.shields.io/packagist/dt/phithi92/json-web-token.svg?style=for-the-badge)](https://packagist.org/packages/phithi92/json-web-token)
 
-# JsonWebToken PHP Library
-
-[![PHP Version](https://img.shields.io/packagist/php-v/phithi92/json-web-token.svg?style=for-the-badge)](https://packagist.org/packages/phithi92/json-web-token) [![Latest Version](http://img.shields.io/packagist/v/phithi92/json-web-token.svg?style=for-the-badge)](https://github.com/phithi92/json-web-token/releases) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=for-the-badge)](LICENSE) [![Issues](https://img.shields.io/github/issues/phithi92/json-web-token.svg?style=for-the-badge)](https://github.com/phithi92/json-web-token/issues) [![Build](https://img.shields.io/github/actions/workflow/status/phithi92/json-web-token/php.yml?branch=main&style=for-the-badge)](https://github.com/phithi92/json-web-token/actions) [![Total Downloads](https://img.shields.io/packagist/dt/phithi92/json-web-token.svg?style=for-the-badge)](https://packagist.org/packages/phithi92/json-web-token)
-
-The `JsonWebToken` class is a PHP library that facilitates the creation, signing, and validation of JSON Web Tokens (JWT), supporting both JSON Web Signature (JWS) and JSON Web Encryption (JWE). It provides a secure framework for generating tokens using various cryptographic algorithms to ensure data integrity and confidentiality.
+The `JsonWebToken` PHP library enables seamless creation, signing, and validation of JSON Web Tokens (JWT) with support for JSON Web Signature (JWS) and JSON Web Encryption (JWE). Designed with a focus on security, it utilizes various cryptographic algorithms to ensure data integrity and confidentiality.
 
 ## Prerequisites
 
@@ -16,13 +12,19 @@ Before using this library, ensure your environment meets the following requireme
 - **PHP Extensions**: `openssl`
 - **Composer**: For managing dependencies
 
-## How the Library Works
+## Overview
 
-This library operates according to key standards such as [**RFC 7519**](https://datatracker.ietf.org/doc/html/rfc7519) (JWT), [**RFC 7515**](https://datatracker.ietf.org/doc/html/rfc7515) (JWS), and [**RFC 7516**](https://datatracker.ietf.org/doc/html/rfc7516) (JWE). During **token signing** (JWS), the library uses the HMAC algorithm (e.g., HS256) to create a signature by combining the token's header and payload with a secret key. This signature ensures the token's integrity, following the specifications in [**RFC 7515**](https://datatracker.ietf.org/doc/html/rfc7515).
+This library adheres to the standards in [**RFC 7519**](https://datatracker.ietf.org/doc/html/rfc7519) (JWT), [**RFC 7515**](https://datatracker.ietf.org/doc/html/rfc7515) (JWS), and [**RFC 7516**](https://datatracker.ietf.org/doc/html/rfc7516) (JWE). It uses HMAC algorithms like HS256 for **token signing** (JWS) and AES-based methods for **token encryption** (JWE), ensuring both data integrity and confidentiality.
 
-For **token encryption** (JWE), the payload is encrypted using algorithms like AES, as defined in [**RFC 7516**](https://datatracker.ietf.org/doc/html/rfc7516), ensuring that only authorized recipients can decrypt and access the token's data. The entire process relies on **Base64URL encoding** ([**RFC 4648**](https://datatracker.ietf.org/doc/html/rfc4648)) to safely transmit the token over the web.
+More about JWT standards can be found in [**RFC 7519**](https://datatracker.ietf.org/doc/html/rfc7519).
 
-You can find more information about the JWT RFC [here](https://datatracker.ietf.org/doc/html/rfc7519).
+## Security Considerations
+
+When working with JWTs, consider the following best practices:
+
+- **Store keys securely**: Ensure private keys are stored securely and are not hardcoded in your application code.
+- **Use HTTPS**: Always transmit tokens over HTTPS to prevent interception.
+- **Set expiration times**: Limit token lifespans by setting expiration times to reduce risk in case of token compromise.
 
 ## Installation
 
@@ -36,9 +38,7 @@ Clone the project to your local environment:
 git clone https://github.com/phithi92/json-web-token.git
 ```
 
-or
-
-You can install the library directly through Composer by running:
+Or, install the library directly via Composer:
 
 ```bash
 composer require phithi92/json-web-token
@@ -46,76 +46,100 @@ composer require phithi92/json-web-token
 
 ### Step 2: Install Dependencies
 
-Ensure [Composer](https://getcomposer.org/) is installed, and run the following command to install the required dependencies:
+Ensure [Composer](https://getcomposer.org/) is installed, and then run:
 
 ```bash
-composer install
+composer update
 ```
 
 The project uses the following dependencies (defined in `composer.json`):
 
-- **PHPUnit**: Used for unit testing to ensure robustness.
+**PHPUnit**: Used for unit testing to ensure robustness.
 
 ## Usage Guide
 
-#### Generating a JSON Web Token (JWT)
+### Generate a Token
 
-To generate a JWT, instantiate the `JsonWebToken` class and call the `create()` method. This method can generate either a signed (JWS) or encrypted (JWE) token.
-
-```php
-use Phithi92\JsonWebToken\JsonWebToken;
-use Phithi92\JsonWebToken\PayloadBuilder;
-use Phithi92\JsonWebToken\Security\Openssl;
-```
-
-For RSA Algorithm
+To create a JWT, set up the signing algorithm and payload, then generate the token.
 
 ```php
-$algorithm = (new JwtAlgorithmManager())
-    ->setPrivateKey('your-private-key')
-    ->setPublicKey('your-public-key');
+use Phithi92\JsonWebToken\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\JwtPayload;
+use Phithi92\JsonWebToken\JwtTokenFactory;
+
+$manager = new JwtAlgorithmManager(
+    'RS256',        // Specify the algorithm
+    null,           // Passphrase for symmetric algorithms (optional for asymmetric)
+    'public-key',  // Private key for asymmetric algorithms
+    'private-key'    // Public key for asymmetric algorithms
+);
 
 $payload = (new JwtPayload())
-            ->setExpiration('+15 minutes');
+    ->setIssuer('https://myapp.com')
+    ->setAudience('https://myapi.com')
+    ->setNotBefore('+3 minutes')
+    ->setExpiration('+15 minutes');
 
-$token = JwtTokenFactory::createToken($algorithm, $payload);
+$token = JwtTokenFactory::createToken($manager, $payload);
 ```
 
-For Hmac Algorithm
+### Validate a Token
+
+To validate and decrypt a JWT, configure the algorithm manager and retrieve the payload.
 
 ```php
+use Phithi92\JsonWebToken\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\JwtTokenFactory;
 
-$algorithm = (new JwtAlgorithmManager())
-    ->setPassphrase('passphrase');
+$manager = new JwtAlgorithmManager(
+    'RS256',        // Specify the algorithm
+    null,           // Passphrase for symmetric algorithms (optional for asymmetric)
+    'public-key',  // Private key for asymmetric algorithms
+    'private-key'    // Public key for asymmetric algorithms
+);
 
-$payload = (new PayloadBuilder())
-    ->setExpiration('+15min');
-
-$token = JwtTokenFactory::createToken($algorithm, $payload);
+$token = JwtTokenFactory::decryptToken($manager,$encodedToken);
+$payload = $token->getPayload();
 ```
 
-## Error Handling
+### Refresh Token
 
-When using the library, several exceptions may be thrown in cases of invalid input, such as:
-
-- **InvalidTokenException**: Thrown when the token provided is malformed or invalid, as per the JWT specifications in [**RFC 7519**](https://datatracker.ietf.org/doc/html/rfc7519).
-- **InvalidArgumentException**: Raised when an invalid argument is passed to one of the methods, such as an unsupported algorithm or an empty payload.
-- **HashErrorException**: Triggered when an issue occurs during the HMAC signing process, ensuring that hashing operations conform to [**RFC 7515**](https://datatracker.ietf.org/doc/html/rfc7515).
-- **UnexpectedErrorException**: A general exception that is raised when an unexpected error occurs during encoding, decoding, or encryption processes.
-- **CipherErrorException**: Raised when a problem occurs during token encryption or decryption, ensuring compliance with the JWE standard in [**RFC 7516**](https://datatracker.ietf.org/doc/html/rfc7516).
-
-You can catch these exceptions and handle them accordingly in your application:
+Refresh an existing JWT by extending its expiration.
 
 ```php
+use Phithi92\JsonWebToken\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\JwtTokenFactory;
+
+$manager = new JwtAlgorithmManager(
+    'RS256',        // Specify the algorithm
+    null,           // Passphrase for symmetric algorithms (optional for asymmetric)
+    'public-key',  // Private key for asymmetric algorithms
+    'private-key'    // Public key for asymmetric algorithms
+);
+
+$token = JwtTokenFactory::refreshToken($manager,$encodedToken,'+15 minutes');
+```
+
+### Error Handling
+
+Handle exceptions for robust error management in your application:
+
+```php
+use Phithi92\JsonWebToken\Exception\Json\JsonException;
+use Phithi92\JsonWebToken\Exception\Token\TokenException;
+use Phithi92\JsonWebToken\Exception\Payload\PayloadException;
+use Phithi92\JsonWebToken\Exception\AlgorithmManager\AlgorithmException;
+
 try {
-    $isValid = $jwt->validateToken($token, $key);
-} catch (TokenException $e) {
-    // Handle invalid token
+    // ...   
+} catch (JsonException $e) {
+    // JSON errors during JWT processing
 } catch (PayloadException $e) {
-    // Handle payload exeption
-}catch (JsonException $e) {
-    // Handle token json error
-} catch () {
+    // Errors with the JWT payload
+} catch (AlgorithmException $e) {
+    // Issues with the signing algorithm
+} catch (TokenException $e) {
+    // General token error
 }
 ```
 
@@ -123,51 +147,68 @@ try {
 
 The `JsonWebToken` class supports a variety of cryptographic algorithms for both JSON Web Signature (JWS) and JSON Web Encryption (JWE). Below are the lists of supported algorithms:
 
-###### JSON Web Signature (JWS) Algorithms
+**JSON Web Signature (JWS) Algorithmen:**
 
-| **Algorithm** | **Description**                   | **Support**  |
-| ------------- | --------------------------------- | ------------ |
-| `HS256`       | HMAC with SHA-256                 | ✅           |
-| `HS384`       | HMAC with SHA-384                 | ✅           |
-| `HS512`       | HMAC with SHA-512                 | ✅           |
-| `RS256`       | RSA Signature with SHA-256        | ✅           |
-| `RS384`       | RSA Signature with SHA-384        | ✅           |
-| `RS512`       | RSA Signature with SHA-512        | ✅           |
-| `ES256`       | ECDSA Signature with SHA-256      | ✅           |
-| `ES384`       | ECDSA Signature with SHA-384      | ✅           |
-| `ES512`       | ECDSA Signature with SHA-512      | ✅           |
-| `PS256`       | RSASSA-PSS Signature with SHA-256 | ✅           |
-| `PS384`       | RSASSA-PSS Signature with SHA-384 | ✅           |
-| `PS512`       | RSASSA-PSS Signature with SHA-512 | ✅           |
+`HS256`, `HS384`, `HS512`, `RS256`, `RS384`, `RS512`, `ES256`, `ES384`, `ES512`, `PS256`, `PS384`, `PS512`
 
-###### JSON Web Encryption (JWE) Algorithms
+**JSON Web Encryption (JWE) Algorithmen:**
 
-| **Algorithm**      | **Description**                                                                               | **Support** |
-| ------------------ | --------------------------------------------------------------------------------------------- | ----------- |
-| `RSA-OAEP`         | RSA with Optimal Asymmetric Encryption Padding                                                | ✅           |
-| `RSA-OAEP+A192GCM` | RSA-OAEP for key encryption with AES Galois/Counter Mode (GCM) encryption using a 192-bit key | ✅           |
-| `RSA-OAEP+A256GCM` | RSA-OAEP for key encryption with AES Galois/Counter Mode (GCM) encryption using a 256-bit key | ✅           |
-| `RSA1_5`           | RSAES-PKCS1-v1_5: RSA Encryption Scheme using PKCS#1 v1.5 padding                             | ✅           |
-| `A128KW`           | AES Key Wrap with 128-bit key                                                                 | ❌           |
-| `A192KW`           | AES Key Wrap with 192-bit key                                                                 | ❌           |
-| `A256KW`           | AES Key Wrap with 256-bit key                                                                 | ❌           |
-| `A128GCM`          | AES in Galois/Counter Mode with 128-bit key                                                   | ❌           |
-| `A192GCM`          | AES in Galois/Counter Mode with 192-bit key                                                   | ❌           |
-| `A256GCM`          | AES in Galois/Counter Mode with 256-bit key                                                   | ❌           |
+`RSA-OAEP`, `RSA-OAEP+A192GCM`, `RSA-OAEP+A256GCM`, `RSA1_5`, `A128GCM`, `A192GCM`, `A256GCM`
 
-This allows for proper error handling and ensures your application can respond appropriately to invalid or unsupported tokens.
+## Running Tests and Benchmarks
 
-## Running Tests
+This project includes both unit tests and benchmarks to ensure reliability and performance.
 
-Unit tests are included in the project to ensure the reliability of the library. These tests cover token creation, validation, and error handling. To run the tests, execute the following command:
+### Unit Tests
+
+Unit tests are included to verify the functionality of the library. These tests cover token creation, validation, and error handling. To run the unit tests, use the following command:
 
 ```bash
-vendor/bin/phpunit
+composer test
 ```
 
-All test cases are located in the `tests/` directory and ensure that the class functions correctly under various scenarios.
+All PHPUnit test cases are located in the tests/phpunit directory and ensure that the library functions correctly across various scenarios.
 
-## Donation
+### Benchmarks
+
+Benchmarks are included to measure the performance of different algorithms and operations within the library. To run the benchmarks, use the following command:
+
+```bash
+composer benchmark
+```
+
+#### Results
+
+**System Specifications**
+
+The benchmarks were conducted on the following system:
+
+- **Device**: MacBook Air (2020)
+- **Processor**: Apple M1 Chip (8-Core CPU)
+- **RAM**: 16 GB
+- **Operating System**: macOS Sequoia (Version 15.x)
+- 
+
+| subject  | memory  | min       | max      | mode      | rstdev | stdev   |
+| -------- | ------- | --------- | -------- | --------- | ------ | ------- |
+| HS256    | 1.747mb | 41.203μs  | 42.662μs | 41.403μs  | ±1.38% | 0.575μs |
+| HS384    | 1.747mb | 41.615μs  | 42.633μs | 42.213μs  | ±0.88% | 0.371μs |
+| HS512    | 1.747mb | 41.868μs  | 42.680μs | 42.523μs  | ±0.74% | 0.312μs |
+| RS256    | 1.747mb | 992.166μs | 1.010ms  | 1.001ms   | ±0.58% | 5.820μs |
+| RS384    | 1.747mb | 996.938μs | 1.010ms  | 1.009ms   | ±0.53% | 5.355μs |
+| RS512    | 1.747mb | 990.179μs | 1.005ms  | 1.003ms   | ±0.55% | 5.504μs |
+| ES256    | 1.747mb | 988.590μs | 1.005ms  | 998.615μs | ±0.61% | 6.054μs |
+| ES384    | 1.747mb | 992.057μs | 1.009ms  | 1.004ms   | ±0.64% | 6.401μs |
+| ES512    | 1.747mb | 990.365μs | 1.010ms  | 1.009ms   | ±0.76% | 7.672μs |
+| PS256    | 1.747mb | 991.279μs | 1.010ms  | 994.852μs | ±0.81% | 8.109μs |
+| PS384    | 1.747mb | 992.116μs | 1.015ms  | 995.140μs | ±0.94% | 9.390μs |
+| PS512    | 1.747mb | 989.058μs | 1.009ms  | 997.819μs | ±0.67% | 6.738μs |
+| RSA-OAEP | 1.747mb | 1.551ms   | 1.572ms  | 1.557ms   | ±0.53% | 8.275μs |
+| A128GCM  | 1.747mb | 80.575μs  | 82.702μs | 81.990μs  | ±0.87% | 0.708μs |
+| A192GCM  | 1.747mb | 80.537μs  | 81.802μs | 80.735μs  | ±0.65% | 0.530μs |
+| A256GCM  | 1.747mb | 80.365μs  | 82.659μs | 82.102μs  | ±0.96% | 0.786μs |
+
+## Support
 
 Donations are a great way to support creators and their work. Every contribution helps sustain projects and shows appreciation for their efforts, making a real difference.
 
