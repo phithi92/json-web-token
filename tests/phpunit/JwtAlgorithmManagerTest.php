@@ -1,14 +1,14 @@
 <?php
 
+require_once __DIR__ . '/TestCaseWithSecrets.php';
+
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\MissingPassphraseException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\MissingKeysException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\InvalidAsymetricKeyException;
 
-require_once __DIR__ . '/TestCaseWithSecrets.php';
-
-class JwtAlgorithmManagerTest extends \TestCaseWithSecrets
+class JwtAlgorithmManagerTest extends TestCaseWithSecrets
 {    
     public function testConstructorWithSymmetricAlgorithmAndPassphrase()
     {
@@ -31,7 +31,7 @@ class JwtAlgorithmManagerTest extends \TestCaseWithSecrets
     {
         $this->expectException(MissingKeysException::class);
 
-        new JwtAlgorithmManager('RS256', null, $this->publicKey2048, null);
+        new JwtAlgorithmManager('RS256', null, $this->getPublicKey(2048), null);
     }
     
     public function testDetermineTokenTypeJWS()
@@ -42,7 +42,7 @@ class JwtAlgorithmManagerTest extends \TestCaseWithSecrets
 
     public function testDetermineTokenTypeJWE()
     {
-        $manager = new JwtAlgorithmManager('RSA-OAEP', null, $this->publicKey2048, $this->privateKey2048);
+        $manager = new JwtAlgorithmManager('RSA-OAEP', null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
         $this->assertEquals('JWE', $manager->getTokenType());
     }
 

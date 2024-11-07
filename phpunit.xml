@@ -6,7 +6,7 @@
     colors="true">  
     <testsuites>
         <testsuite name="Application Test Suite">
-            <directory>./tests</directory>
+            <directory>./tests/phpunit</directory>
         </testsuite>
     </testsuites>
     <source>

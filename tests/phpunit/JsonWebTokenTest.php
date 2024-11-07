@@ -1,11 +1,11 @@
 <?php
 
+require_once __DIR__ . '/TestCaseWithSecrets.php';
+
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtTokenFactory;
 use Phithi92\JsonWebToken\JwtTokenContainer;
-
-require_once __DIR__ . '/TestCaseWithSecrets.php';
 
 class JsonWebTokenTest extends TestCaseWithSecrets
 {
@@ -30,30 +30,30 @@ class JsonWebTokenTest extends TestCaseWithSecrets
     
     public function testValidRs()
     {
-        $this->testAlgorithmEncoding('RS256', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
-        $this->testAlgorithmEncoding('RS384', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
-        $this->testAlgorithmEncoding('RS512', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('RS256', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
+        $this->testAlgorithmEncoding('RS384', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
+        $this->testAlgorithmEncoding('RS512', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
     }
     
     public function testValidEs()
     {
-        $this->testAlgorithmEncoding('ES256', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
-        $this->testAlgorithmEncoding('ES384', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
-        $this->testAlgorithmEncoding('ES512', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('ES256', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
+        $this->testAlgorithmEncoding('ES384', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
+        $this->testAlgorithmEncoding('ES512', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
     }
     
     public function testValidPs()
     {
-        $this->testAlgorithmEncoding('PS256', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
-        $this->testAlgorithmEncoding('PS384', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
-        $this->testAlgorithmEncoding('PS512', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('PS256', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
+        $this->testAlgorithmEncoding('PS384', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
+        $this->testAlgorithmEncoding('PS512', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
     }
         
     public function testValidRsaOaep()
     {
-        $this->testAlgorithmEncoding('RSA1_5', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
-        $this->testAlgorithmEncoding('RSA-OAEP', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
-        $this->testAlgorithmEncoding('RSA-OAEP-256', $this->payload, null, $this->publicKey2048, $this->privateKey2048);
+        $this->testAlgorithmEncoding('RSA1_5', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
+        $this->testAlgorithmEncoding('RSA-OAEP', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
+        $this->testAlgorithmEncoding('RSA-OAEP-256', $this->payload, null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
     }
     
     public function testValidGcm()

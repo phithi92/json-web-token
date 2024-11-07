@@ -1,11 +1,9 @@
 <?php
 
-use Phithi92\JsonWebToken\Service\SignatureToken;
 use Phithi92\JsonWebToken\JwtTokenContainer;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtTokenFactory;
-use Phithi92\JsonWebToken\JwtHeader;
 
 /**
  * Description of JwtTokenFactoryTest
@@ -32,7 +30,12 @@ final class JwtTokenFactoryTest extends \TestCaseWithSecrets
         $this->cipherSymmetric = new JwtAlgorithmManager('HS256', $this->secret32);
         
         // Initialize Algorithm Manager for asymmetric algorithm
-        $this->cipherAsymmetric = new JwtAlgorithmManager('RS256', null, $this->publicKey2048, $this->privateKey2048);
+        $this->cipherAsymmetric = new JwtAlgorithmManager(
+            'RS256', 
+            null, 
+            $this->getPublicKey(2048),
+            $this->getPrivateKey(2048)
+        );
         
         $this->payload = (new JwtPayload())
                 ->addField('sub', 1234567890)
@@ -87,7 +90,7 @@ final class JwtTokenFactoryTest extends \TestCaseWithSecrets
         $token = $this->jwtTokenFactorySymmetric->create($this->payload);
 
         // Refreshes the token and checks if the expiration was updated
-        $refreshedToken = $this->jwtTokenFactorySymmetric->refreshToken($token, '+2 hours');
+        $refreshedToken = $this->jwtTokenFactorySymmetric->refresh($token, '+2 hours');
         
         $decryptedToken = $this->jwtTokenFactorySymmetric->decrypt($refreshedToken);
 
