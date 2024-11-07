@@ -13,15 +13,15 @@ namespace Phithi92\JsonWebToken\Cryptography\HMAC;
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-abstract class AlgorithmRegistry
+trait AlgorithmRegistry
 {
     // Supported HMAC algorithms as constants for better readability and consistency.
-    protected const ALGO_SHA256 = 'sha256';
-    protected const ALGO_SHA384 = 'sha384';
-    protected const ALGO_SHA512 = 'sha512';
+    public const ALGO_SHA256 = 'sha256';
+    public const ALGO_SHA384 = 'sha384';
+    public const ALGO_SHA512 = 'sha512';
 
     // Block sizes for different HMAC algorithms (in bytes).
-    protected array $blockSizes = [
+    public array $blockSizes = [
         self::ALGO_SHA256 => 32,
         self::ALGO_SHA384 => 64,
         self::ALGO_SHA512 => 128

@@ -20,7 +20,7 @@ namespace Phithi92\JsonWebToken\Cryptography\OpenSSL;
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-abstract class AlgorithmRegistry
+trait AlgorithmRegistry
 {
     // Constants representing different signature algorithms
     public const ECDSA = 'ES';   // Elliptic Curve Digital Signature Algorithm (ECDSA)
@@ -29,14 +29,14 @@ abstract class AlgorithmRegistry
     public const HMAC = 'HS';     // HMAC-based Signature Algorithm
 
     // Array that maps hash algorithms to their recommended key lengths in bits
-    protected array $key_length = [
+    public array $key_length = [
         OPENSSL_ALGO_SHA256 => 2048, // bits
         OPENSSL_ALGO_SHA384 => 3072, // bits
         OPENSSL_ALGO_SHA512 => 4096, // bits
     ];
 
     // Array that defines padding overhead for different OpenSSL padding schemes
-    protected array $padding_length = [
+    public array $padding_length = [
         OPENSSL_PKCS1_PADDING => 11,          // PKCS#1 padding adds 11 bytes
         OPENSSL_PKCS1_OAEP_PADDING => 42,     // PKCS#1 OAEP padding typically adds 42 bytes
         OPENSSL_NO_PADDING => 0               // No padding adds 0 bytes

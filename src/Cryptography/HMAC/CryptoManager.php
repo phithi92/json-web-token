@@ -6,6 +6,7 @@ use Phithi92\JsonWebToken\Exception\AlgorithmManager\EmptyFieldException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\InvalidSecretLengthException;
 use Phithi92\JsonWebToken\Cryptography\HMAC\AlgorithmRegistry;
+use Phithi92\JsonWebToken\Cryptography\CryptographyManager;
 
 /**
  * Hmac class for generating and verifying HMAC signatures and tags.
@@ -23,8 +24,10 @@ use Phithi92\JsonWebToken\Cryptography\HMAC\AlgorithmRegistry;
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-final class CryptoManager extends AlgorithmRegistry
+final class CryptoManager extends CryptographyManager
 {
+    use AlgorithmRegistry;
+
     // Error messages for different failure scenarios.
     private const ERROR_DATA_EMPTY = "Data cannot be empty.";
     private const ERROR_SECRET_EMPTY = "Secret cannot be empty.";

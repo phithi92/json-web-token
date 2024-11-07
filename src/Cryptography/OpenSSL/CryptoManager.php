@@ -13,6 +13,7 @@ use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnexpectedOutputException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\EmptyFieldException;
 use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Cryptography\OpenSSL\AlgorithmRegistry;
+use Phithi92\JsonWebToken\Cryptography\CryptographyManager;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use OpenSSLAsymmetricKey;
 
@@ -47,8 +48,10 @@ use function openssl_cipher_key_length;
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-final class CryptoManager extends AlgorithmRegistry
+final class CryptoManager extends CryptographyManager
 {
+    use AlgorithmRegistry;
+
     private ?OpenSSLAsymmetricKey $publicKey = null;
     private ?OpenSSLAsymmetricKey $privateKey = null;
     private string $passphrase = '';
@@ -58,7 +61,6 @@ final class CryptoManager extends AlgorithmRegistry
 
     public function __construct(JwtAlgorithmManager $manager)
     {
-
         if (empty($manager->getPassphrase())) {
             $this->setPrivateKey($manager->getPrivateKey());
             $this->setPublicKey($manager->getPublicKey());
