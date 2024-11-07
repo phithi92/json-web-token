@@ -159,6 +159,18 @@ final class JwtTokenFactory
     }
 
     /**
+     * Static factory method to generate a JWT using a specified algorithm.
+     *
+     * @param  JwtAlgorithmManager $algorithm The algorithm manager for encoding.
+     * @param  JwtPayload          $payload   The payload data for the token.
+     * @return string The generated JWT string.
+     */
+    public static function decryptToken(JwtAlgorithmManager $algorithm, string $token): JwtTokenContainer
+    {
+        return (new self($algorithm))->decrypt($token);
+    }
+
+    /**
      * Static method to validate a JWT using a specified algorithm.
      *
      * @param  JwtAlgorithmManager $algorithm The algorithm manager for validation.
