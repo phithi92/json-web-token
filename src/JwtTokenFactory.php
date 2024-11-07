@@ -147,8 +147,11 @@ final class JwtTokenFactory
      * @param  string              $expirationInterval The new expiration interval for the refreshed token.
      * @return string                                  The refreshed JWT token with updated expiration.
      */
-    public static function refreshToken(JwtAlgorithmManager $algorithm, string $encodingToken, string $expirationInterval)
-    {
+    public static function refreshToken(
+        JwtAlgorithmManager $algorithm,
+        string $encodingToken,
+        string $expirationInterval
+    ): string {
         return (new self($algorithm))->refresh($encodingToken, $expirationInterval);
     }
 
