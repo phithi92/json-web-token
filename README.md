@@ -8,7 +8,7 @@ The `JsonWebToken` PHP library enables seamless creation, signing, and validatio
 
 Before using this library, ensure your environment meets the following requirements:
 
-- **PHP Version**: 8.1 or higher
+- **PHP Version**: 8.2 or higher
 - **PHP Extensions**: `openssl`
 - **Composer**: For managing dependencies
 
