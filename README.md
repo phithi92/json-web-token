@@ -4,19 +4,33 @@
 
 The `JsonWebToken` PHP library enables seamless creation, signing, and validation of JSON Web Tokens (JWT) with support for JSON Web Signature (JWS) and JSON Web Encryption (JWE). Designed with a focus on security, it utilizes various cryptographic algorithms to ensure data integrity and confidentiality.
 
-## Prerequisites
+---
 
-Before using this library, ensure your environment meets the following requirements:
+## Table of Contents
 
-- **PHP Version**: 8.2 or higher
-- **PHP Extensions**: `openssl`
-- **Composer**: For managing dependencies
+- [Overview](#overview)
+- [Security Considerations](#security-considerations)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage Guide](#usage-guide)
+  - [Generate a Token](#generate-a-token)
+  - [Validate a Token](#validate-a-token)
+  - [Refresh a Token](#refresh-a-token)
+  - [Error Handling](#error-handling)
+- [Supported Algorithms](#supported-algorithms)
+- [Running Tests and Benchmarks](#running-tests-and-benchmarks)
+  - [PHPUnit Tests](#phpunit-tests)
+  - [PHPBench Tests](#phpbench-tests)
+- [Benchmark](#benchmark)
+- [Support](#support)
+
+---
 
 ## Overview
 
 This library adheres to the standards in [**RFC 7519**](https://datatracker.ietf.org/doc/html/rfc7519) (JWT), [**RFC 7515**](https://datatracker.ietf.org/doc/html/rfc7515) (JWS), and [**RFC 7516**](https://datatracker.ietf.org/doc/html/rfc7516) (JWE). It uses HMAC algorithms like HS256 for **token signing** (JWS) and AES-based methods for **token encryption** (JWE), ensuring both data integrity and confidentiality.
 
-More about JWT standards can be found in [**RFC 7519**](https://datatracker.ietf.org/doc/html/rfc7519).
+---
 
 ## Security Considerations
 
@@ -25,6 +39,18 @@ When working with JWTs, consider the following best practices:
 - **Store keys securely**: Ensure private keys are stored securely and are not hardcoded in your application code.
 - **Use HTTPS**: Always transmit tokens over HTTPS to prevent interception.
 - **Set expiration times**: Limit token lifespans by setting expiration times to reduce risk in case of token compromise.
+
+---
+
+## Prerequisites
+
+Before using this library, ensure your environment meets the following requirements:
+
+- **PHP Version**: 8.2 or higher
+- **PHP Extensions**: `openssl`
+- **Composer**: For managing dependencies
+
+---
 
 ## Installation
 
@@ -55,6 +81,9 @@ composer update
 The project uses the following dependencies (defined in `composer.json`):
 
 **PHPUnit**: Used for unit testing to ensure robustness.
+**PHPBench**: Used for benchmark to ensure efficiency.
+
+---
 
 ## Usage Guide
 
@@ -102,7 +131,7 @@ $token = JwtTokenFactory::decryptToken($manager,$encodedToken);
 $payload = $token->getPayload();
 ```
 
-### Refresh Token
+### Refresh a Token
 
 Refresh an existing JWT by extending its expiration.
 
@@ -143,6 +172,8 @@ try {
 }
 ```
 
+---
+
 ## Supported Algorithms
 
 The `JsonWebToken` class supports a variety of cryptographic algorithms for both JSON Web Signature (JWS) and JSON Web Encryption (JWE). Below are the lists of supported algorithms:
@@ -155,11 +186,13 @@ The `JsonWebToken` class supports a variety of cryptographic algorithms for both
 
 `RSA-OAEP`, `RSA-OAEP+A192GCM`, `RSA-OAEP+A256GCM`, `RSA1_5`, `A128GCM`, `A192GCM`, `A256GCM`
 
+---
+
 ## Running Tests and Benchmarks
 
 This project includes both unit tests and benchmarks to ensure reliability and performance.
 
-### Unit Tests
+### PHPUnit Tests
 
 Unit tests are included to verify the functionality of the library. These tests cover token creation, validation, and error handling. To run the unit tests, use the following command:
 
@@ -169,7 +202,7 @@ composer test
 
 All PHPUnit test cases are located in the tests/phpunit directory and ensure that the library functions correctly across various scenarios.
 
-### Benchmarks
+### PHPBench Tests
 
 Benchmarks are included to measure the performance of different algorithms and operations within the library. To run the benchmarks, use the following command:
 
@@ -177,17 +210,11 @@ Benchmarks are included to measure the performance of different algorithms and o
 composer benchmark
 ```
 
-#### Results
+---
 
-**System Specifications**
+## Benchmark
 
-The benchmarks were conducted on the following system:
-
-- **Device**: MacBook Air (2020)
-- **Processor**: Apple M1 Chip (8-Core CPU)
-- **RAM**: 16 GB
-- **Operating System**: macOS Sequoia (Version 15.x)
-- 
+**System Specifications**: Apple MacBook Air 2020 with 16 GB RAM. Each test was repeated 1000 times across 5 iterations.
 
 | subject  | memory  | min       | max      | mode      | rstdev | stdev   |
 | -------- | ------- | --------- | -------- | --------- | ------ | ------- |
@@ -207,6 +234,8 @@ The benchmarks were conducted on the following system:
 | A128GCM  | 1.747mb | 80.575μs  | 82.702μs | 81.990μs  | ±0.87% | 0.708μs |
 | A192GCM  | 1.747mb | 80.537μs  | 81.802μs | 80.735μs  | ±0.65% | 0.530μs |
 | A256GCM  | 1.747mb | 80.365μs  | 82.659μs | 82.102μs  | ±0.96% | 0.786μs |
+
+---
 
 ## Support
 
