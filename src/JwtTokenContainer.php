@@ -47,7 +47,6 @@ class JwtTokenContainer
     public function __construct(?JwtPayload $payload = null)
     {
         if ($payload !== null) {
-            
             $this->setPayload($payload);
         }
     }

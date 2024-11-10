@@ -11,8 +11,8 @@ use Phithi92\JsonWebToken\JwtAlgorithmManager;
  * management of JWT algorithms through an instance of JwtAlgorithmManager
  * and cryptographic operations via a Provider instance.
  *
- * This class initializes the algorithm manager through the constructor and 
- * offers access to both the algorithm manager and provider instances via 
+ * This class initializes the algorithm manager through the constructor and
+ * offers access to both the algorithm manager and provider instances via
  * `getManager()` and `getProvider()` methods.
  *
  * @package Phithi92\JsonWebToken\Processors
