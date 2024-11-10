@@ -53,13 +53,12 @@ final class JwtTokenFactory
      */
     public function create(JwtPayload $payload): string
     {
-        $manager = $this->getManager();
-        $jwtHeader = new JwtHeader($manager);
+        $jwtHeader = new JwtHeader($this->getManager());
 
         $token = new JwtTokenContainer($payload);
         $token->setHeader($jwtHeader);
 
-        $tokenContainer = $manager->getProcessor()->encrypt($token);
+        $tokenContainer = $this->getManager()->getProcessor()->encrypt($token);
 
         return $this->generateToken($tokenContainer);
     }
@@ -88,11 +87,10 @@ final class JwtTokenFactory
      */
     public function decrypt(string $encodingToken): JwtTokenContainer
     {
-        $processor = $this->manager->getProcessor();
-        $decodedToken = $processor->parse($encodingToken);
+        $decodedToken = $this->getManager()->getProcessor()->parse($encodingToken);
 
-        $token = $processor->decrypt($decodedToken);
-        $processor->verify($token);
+        $token = $this->getManager()->getProcessor()->decrypt($decodedToken);
+        $this->getManager()->getProcessor()->verify($token);
 
         return $token;
     }
@@ -110,12 +108,12 @@ final class JwtTokenFactory
     public function refresh(string $encodingToken, string $expirationInterval = '+1 hour'): string
     {
         $token = $this->decrypt($encodingToken);
-        $payload = $token->getPayload();
 
-        $payload->setIssuedAt($expirationInterval)
+        $token->getPayload()
+                ->setIssuedAt($expirationInterval)
                 ->setExpiration($expirationInterval);
 
-        return $this->create($payload);
+        return $this->create($token->getPayload());
     }
 
     /**

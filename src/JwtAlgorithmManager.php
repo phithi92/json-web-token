@@ -8,7 +8,7 @@ use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidAsymetricKeyException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Processors\SignatureProcessor;
 use Phithi92\JsonWebToken\Processors\EncodingProcessor;
-use Phithi92\JsonWebToken\Processors\ProcessorInterface;
+use Phithi92\JsonWebToken\Processors\Processor;
 use OpenSSLAsymmetricKey;
 
 /**
@@ -46,7 +46,7 @@ final class JwtAlgorithmManager
 
     // The processor responsible for handling token creation, signing, or encryption
     // based on the token type
-    private readonly ProcessorInterface $processor;
+    private readonly Processor $processor;
 
     // List of supported JWS algorithms
     private static array $jwsAlgorithms = [
@@ -88,7 +88,7 @@ final class JwtAlgorithmManager
         $this->initializeTokenTypeAndProcessor();
     }
 
-    public function getProcessor(): ProcessorInterface
+    public function getProcessor(): Processor
     {
         return $this->processor;
     }
@@ -149,7 +149,7 @@ final class JwtAlgorithmManager
      * @param ProcessorInterface $processor The processor to set.
      * @return self Returns the current instance for method chaining.
      */
-    private function setProcessor(ProcessorInterface $processor): self
+    private function setProcessor(Processor $processor): self
     {
         $this->processor = $processor;
         return $this;

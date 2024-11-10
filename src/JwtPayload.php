@@ -153,7 +153,7 @@ class JwtPayload
         }
 
         // Ensure $audience is an array for consistent processing
-        $actualAudience = is_array($audience) ? $audience : [$audience];
+        $actualAudience = is_array($audience) ? array_flip($audience) : [$audience];
 
         // Convert $expectedAudience to an array if it’s a string
         $expectedAudiences = is_array($expectedAudience) ? $expectedAudience : [$expectedAudience];
@@ -161,7 +161,7 @@ class JwtPayload
         // Use a loop to check for any overlap between expected and actual audiences
         $isValid = false;
         foreach ($expectedAudiences as $expected) {
-            if (in_array($expected, $actualAudience)) {
+            if (isset($actualAudience[$expected])) {
                 $isValid = true;
                 break; // Exit the loop as soon as a match is found
             }
@@ -467,7 +467,7 @@ class JwtPayload
             if ($dateTimeImmutable === false) {
                 throw new InvalidDateTimeException($dateTime);
             }
-        } catch (Exception $e) {
+        } catch (Exception) {
             throw new InvalidDateTimeException($dateTime);
         }
 

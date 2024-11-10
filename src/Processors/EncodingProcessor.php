@@ -6,8 +6,6 @@ use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Cryptographys\OpenSSL;
-use Phithi92\JsonWebToken\Cryptographys\ProdviderInterface;
-use Phithi92\JsonWebToken\Cryptographys\Provider;
 use Phithi92\JsonWebToken\Processors\Processor;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\JwtTokenContainer;
@@ -43,8 +41,6 @@ use Phithi92\JsonWebToken\JwtAlgorithmManager;
  */
 class EncodingProcessor extends Processor
 {
-    private readonly Provider $provider;
-
     // Direkte Schlüsselverschlüsselung
     public const ALGO_DIR = 'dir';
 
@@ -96,12 +92,7 @@ class EncodingProcessor extends Processor
     public function __construct(JwtAlgorithmManager $manager)
     {
         parent::__construct($manager);
-        $this->provider = new OpenSSL\CryptographyProvider($manager);
-    }
-
-    private function getProvider(): Provider
-    {
-        return $this->provider;
+        $this->setProvider(new OpenSSL\CryptographyProvider($manager));
     }
 
         /**

@@ -4,7 +4,6 @@ namespace Phithi92\JsonWebToken\Processors;
 
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
-use Phithi92\JsonWebToken\Cryptographys\Provider;
 use Phithi92\JsonWebToken\Cryptographys\OpenSSL\CryptographyProvider;
 use Phithi92\JsonWebToken\Cryptographys\HMAC;
 use Phithi92\JsonWebToken\Processors\Processor;
@@ -25,33 +24,11 @@ use Phithi92\JsonWebToken\JwtPayload;
  * - Decoding the Base64 URL-encoded header and payload of the token.
  * - Signing a payload with a specified algorithm and key to create a JWS token.
  *
- * Supported algorithms:
- * - HS256, HS384, HS512 (HMAC with SHA-256/384/512)
- * - RS256, RS384, RS512 (RSA with SHA-256/384/512)
- * - ES256, ES384, ES512 (ECDSA with SHA-256/384/512)
- * - PS256, PS384, PS512 (RSASSA-PSS with SHA-256/384/512)
- *
- * ### Implemented Standards:
- * 1. **RFC 7519 - JSON Web Token (JWT)**:
- *    - This class conforms to the JWT specification as outlined in
- *      [RFC 7519]( https://datatracker.ietf.org/doc/rfc7519 ).
- *    - JWT is a compact, URL-safe means of representing claims to be transferred between two parties.
- *
- * 2. **RFC 7515 - JSON Web Signature (JWS)**:
- *    - The class implements the JWS standard, as defined in [RFC 7515]( https://datatracker.ietf.org/doc/rfc7515 ),
- *      which describes mechanisms for integrity protection through digital signatures and HMACs.
- *
- * 3. **RFC 4648 - Base64 URL encoding**:
- *    - The tokens are encoded and decoded using Base64 URL encoding as
- *      described in [RFC 4648]( https://datatracker.ietf.org/doc/rfc4648 ),
- *      ensuring URL-safe transmission of the token's header, payload, and signature.
- *
+ * @package Phithi92\JsonWebToken\Processors
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
 class SignatureProcessor extends Processor
 {
-    private readonly CryptographyProvider $provider;
-
     public const ALGO_HS256 = 'HS256';
     public const ALGO_HS384 = 'HS384';
     public const ALGO_HS512 = 'HS512';
@@ -68,12 +45,7 @@ class SignatureProcessor extends Processor
     public function __construct(JwtAlgorithmManager $manager)
     {
         parent::__construct($manager);
-        $this->provider = new CryptographyProvider($manager);
-    }
-
-    private function getProvider(): Provider
-    {
-        return $this->provider;
+        $this->setProvider(new CryptographyProvider($manager));
     }
 
     /**

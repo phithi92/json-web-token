@@ -30,7 +30,6 @@ use Phithi92\JsonWebToken\JwtHeader;
  */
 class JwtTokenContainer
 {
-    private ?string $type = null; // Type of the token (e.g., JWT, JWE)
     private JwtPayload $payload; // Payload of the JWT
     private ?string $encryptedPayload = null; // Encrypted payload, if applicable
     private JwtHeader $header; // Header of the JWT
@@ -39,34 +38,18 @@ class JwtTokenContainer
     private ?string $iv = null;  // Initialization Vector for encryption
     private ?string $authTag = null; // Authentication tag for encryption
     private string $encryptedKey = ''; // Encrypted key associated with the token
-    private bool $isEncrypted = false; // Flag to indicate if the payload is encrypted
 
     /**
      * Constructor to initialize payload and encryption status.
      *
      * @param JwtPayload|null $payload     The payload of the JWT.
-     * @param bool            $isEncrypted Indicates whether the payload is encrypted.
      */
-    public function __construct(?JwtPayload $payload = null, bool $isEncrypted = false)
+    public function __construct(?JwtPayload $payload = null)
     {
         if ($payload !== null) {
-            if ($isEncrypted) {
-                $this->setEncryptedPayload($payload);
-            } else {
-                $this->setPayload($payload);
-            }
+            
+            $this->setPayload($payload);
         }
-        $this->isEncrypted = $isEncrypted;
-    }
-
-    /**
-     * Checks if the token is of type JWE (encrypted).
-     *
-     * @return bool True if the token is encrypted, false otherwise.
-     */
-    public function isEncryptedToken(): bool
-    {
-        return $this->type === 'JWE';
     }
 
     /**
@@ -78,7 +61,6 @@ class JwtTokenContainer
     public function setEncryptedPayload(string $encryptedPayload): self
     {
         $this->encryptedPayload = $encryptedPayload;
-        $this->isEncrypted = true;
         return $this;
     }
 
@@ -101,7 +83,6 @@ class JwtTokenContainer
     public function setHeader(JwtHeader $header): self
     {
         $this->header = $header;
-        $this->type = $this->header->getType();
         return $this;
     }
 
@@ -113,16 +94,6 @@ class JwtTokenContainer
     public function getHeader(): JwtHeader
     {
         return $this->header;
-    }
-
-    /**
-     * Retrieves the JWT type.
-     *
-     * @return string The JWT type.
-     */
-    public function getType(): ?string
-    {
-        return $this->type;
     }
 
     /**
@@ -202,7 +173,6 @@ class JwtTokenContainer
     public function setEncryptedKey(string $encryptedKey): self
     {
         $this->encryptedKey = $encryptedKey;
-        $this->isEncrypted = true;
         return $this;
     }
 
@@ -256,49 +226,5 @@ class JwtTokenContainer
     public function getIv(): ?string
     {
         return $this->iv;
-    }
-
-    /**
-     * Checks if the token payload is encrypted.
-     *
-     * @return bool True if the payload is encrypted, false otherwise.
-     */
-    public function isEncrypted(): bool
-    {
-        return $this->isEncrypted;
-    }
-
-    /**
-     * Converts the token to an associative array.
-     *
-     * @return array The token represented as an associative array.
-     */
-    public function toArray(): array
-    {
-        return [
-            'type' => $this->getType(),
-            'payload' => $this->isEncrypted() ? $this->getEncryptedPayload() : $this->getPayload()->toArray(),
-            'header' => $this->getHeader()->toArray(),
-            'signature' => $this->getSignature(),
-            'cek' => $this->getCek(),
-            'iv' => $this->getIv(),
-            'encrypted_key' => $this->getEncryptedKey(),
-            'isEncrypted' => $this->isEncrypted(),
-        ];
-    }
-
-    /**
-     * Converts the token to a JSON string.
-     *
-     * @return string The token represented as a JSON string.
-     */
-    public function __toString(): string
-    {
-        return JsonEncoder::encode(
-            [
-            'header' => $this->getHeader()->toJson(),
-            'payload' => $this->getPayload()->toJson(),
-            ]
-        );
     }
 }
