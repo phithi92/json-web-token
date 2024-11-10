@@ -2,13 +2,13 @@
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Exception\AlgorithmManager\MissingKeysException;
-use Phithi92\JsonWebToken\Exception\AlgorithmManager\MissingPassphraseException;
-use Phithi92\JsonWebToken\Exception\AlgorithmManager\InvalidAsymetricKeyException;
-use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
-use Phithi92\JsonWebToken\Service\SignatureToken;
-use Phithi92\JsonWebToken\Service\EncodingToken;
-use ReflectionClass;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\MissingKeysException;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\MissingPassphraseException;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidAsymetricKeyException;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
+use Phithi92\JsonWebToken\Processors\SignatureProcessor;
+use Phithi92\JsonWebToken\Processors\EncodingProcessor;
+use Phithi92\JsonWebToken\Processors\ProcessorInterface;
 use OpenSSLAsymmetricKey;
 
 /**
@@ -20,25 +20,6 @@ use OpenSSLAsymmetricKey;
  * tokens or `JWE` for encrypted tokens) based on the chosen algorithm and provides
  * access to supported algorithms for each token type.
  *
- * The class uses optional passphrases or key pairs, depending on the algorithm:
- * - Symmetric algorithms require a passphrase.
- * - Asymmetric algorithms require both a public and a private key.
- *
- * This class also includes utility methods for retrieving supported algorithms
- * for JWS and JWE tokens.
- *
- * Key Properties:
- * - `$algorithm`: The algorithm name, such as 'HS256' or 'RS256'.
- * - `$tokenType`: The token type, either 'JWS' or 'JWE'.
- * - `$passphrase`: Optional passphrase for symmetric algorithms.
- * - `$publicKey` and `$privateKey`: Optional keys for asymmetric algorithms.
- *
- * Key Methods:
- * - getAlgorithm(): Returns the name of the algorithm.
- * - getTokenType(): Returns the token type (`JWS` or `JWE`).
- * - getJwsAlgorithms(): Returns an array of supported JWS algorithms.
- * - getJweAlgorithms(): Returns an array of supported JWE algorithms.
- *
  * @package json-web-token
  * @author Phillip Thiele <development@phillip-thiele.de>
  * @version 1.0.0
@@ -46,22 +27,26 @@ use OpenSSLAsymmetricKey;
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
  * @link https://github.com/phithi92/json-web-token Project on GitHub
  */
-class JwtAlgorithmManager
+final class JwtAlgorithmManager
 {
     // The algorithm name (e.g., HS256, RS256, RSA-OAEP)
-    private string $algorithm;
+    private readonly string $algorithm;
 
     // The type of token (either 'JWS' for signed or 'JWE' for encrypted)
-    private string $tokenType;
+    private readonly string $type;
 
     // The passphrase for symmetric algorithms (optional)
-    private ?string $passphrase = null;
+    private readonly ?string $passphrase;
 
     // The public key for asymmetric algorithms (optional)
-    private ?OpenSSLAsymmetricKey $publicKey = null;
+    private readonly ?OpenSSLAsymmetricKey $publicKey;
 
     // The private key for asymmetric algorithms (optional)
-    private ?OpenSSLAsymmetricKey $privateKey = null;
+    private readonly ?OpenSSLAsymmetricKey $privateKey;
+
+    // The processor responsible for handling token creation, signing, or encryption
+    // based on the token type
+    private readonly ProcessorInterface $processor;
 
     // List of supported JWS algorithms
     private static array $jwsAlgorithms = [
@@ -84,6 +69,7 @@ class JwtAlgorithmManager
      * @param string|null $publicKey  Optional public key for asymmetric algorithms.
      * @param string|null $privateKey Optional private key for asymmetric algorithms.
      *
+     * @throws UnsupportedAlgorithmException
      * @throws MissingPassphraseException
      * @throws MissingKeysException
      */
@@ -93,23 +79,80 @@ class JwtAlgorithmManager
         ?string $publicKey = null,
         ?string $privateKey = null
     ) {
-        if ($passphrase === null && $publicKey === null && $privateKey === null) {
-            throw new MissingPassphraseException();
+        if ($this->isSupportedAlgorithm($algorithm) === false) {
+            throw new UnsupportedAlgorithmException($algorithm);
         }
+        $this->setAlgorithm($algorithm);
 
-        if ($passphrase === null && ($publicKey === null || $privateKey === null)) {
-            throw new MissingKeysException();
-        }
+        $this->initializeKeys($passphrase, $publicKey, $privateKey);
+        $this->initializeTokenTypeAndProcessor();
+    }
 
-        if ($passphrase !== null) {
-            $this->passphrase = $passphrase;
-        } elseif ($publicKey !== null && $privateKey !== null) {
-            $this->setPublicKey($publicKey);
-            $this->setPrivateKey($privateKey);
-        }
+    public function getProcessor(): ProcessorInterface
+    {
+        return $this->processor;
+    }
 
-        $this->tokenType = $this->determineTokenType($algorithm);
-        $this->algorithm = $algorithm;
+    /**
+     * Gets the algorithm name.
+     *
+     * @return string The algorithm name.
+     */
+    public function getAlgorithm(): string
+    {
+        return $this->algorithm;
+    }
+
+    /**
+     * Gets the passphrase for symmetric algorithms.
+     *
+     * @return string|null The passphrase, if available.
+     */
+    public function getPassphrase(): string
+    {
+        return $this->passphrase;
+    }
+
+    /**
+     * Gets the public key for asymmetric algorithms.
+     *
+     * @return string|null The public key, if available.
+     */
+    public function getPublicKey(): ?OpenSSLAsymmetricKey
+    {
+        return $this->publicKey ?? null;
+    }
+
+    /**
+     * Gets the private key for asymmetric algorithms.
+     *
+     * @return string|null The private key, if available.
+     */
+    public function getPrivateKey(): ?OpenSSLAsymmetricKey
+    {
+        return $this->privateKey ?? null;
+    }
+
+    /**
+     * Retrieves the type of token (either 'JWS' or 'JWE').
+     *
+     * @return string The token type.
+     */
+    public function getTokenType(): string
+    {
+        return $this->type;
+    }
+
+    /**
+     * Sets the processor instance.
+     *
+     * @param ProcessorInterface $processor The processor to set.
+     * @return self Returns the current instance for method chaining.
+     */
+    private function setProcessor(ProcessorInterface $processor): self
+    {
+        $this->processor = $processor;
+        return $this;
     }
 
     /**
@@ -161,99 +204,116 @@ class JwtAlgorithmManager
     }
 
     /**
-     * Retrieves supported JWS algorithms.
+     * Sets the passphrase for encryption or decryption operations.
      *
-     * @return array An array of supported JWS algorithms.
+     * @param string $passphrase The passphrase to set.
+     * @return self Returns the current instance for chaining.
      */
-    public static function getJwsAlgorithms(): array
+    private function setPassphrase(string $passphrase): self
     {
-        if (empty(self::$jwsAlgorithms)) {
-            self::$jwsAlgorithms = (new ReflectionClass(SignatureToken::class))->getConstants();
-        }
-
-        return self::$jwsAlgorithms;
+        $this->passphrase = $passphrase;
+        return $this;
     }
 
     /**
-     * Retrieves supported JWE algorithms.
+     * Sets the token type for the current instance.
      *
-     * @return array An array of supported JWE algorithms.
+     * @param string $type The token type to set.
+     * @return self Returns the current instance for chaining.
      */
-    public function getJweAlgorithms(): array
+    private function setTokenType(string $type): self
     {
-        if (empty(self::$jweAlgorithms)) {
-            self::$jweAlgorithms = (new ReflectionClass(EncodingToken::class))->getConstants();
-        }
-
-        return self::$jweAlgorithms;
+        $this->type = $type;
+        return $this;
     }
 
     /**
-     * Determines the token type (JWS or JWE) based on the algorithm.
+     * Sets the algorithm to be used for cryptographic operations.
      *
-     * Uses the list of supported algorithms to identify if the token is a JWS or JWE.
-     *
-     * @param  string $algorithm The algorithm used.
-     * @return string The token type ('JWS' for signed or 'JWE' for encrypted).
+     * @param string $algorithm The algorithm to set.
+     * @return self Returns the current instance for chaining.
      */
-    private function determineTokenType(string $algorithm): string
+    private function setAlgorithm(string $algorithm): self
     {
-        if (in_array($algorithm, self::getJwsAlgorithms())) {
-            return 'JWS'; // Signed token
-        } elseif (in_array($algorithm, self::getJweAlgorithms())) {
-            return 'JWE'; // Encrypted token
+        $this->algorithm = $algorithm;
+        return $this;
+    }
+
+    private function initializeTokenTypeAndProcessor(): void
+    {
+        if (in_array($this->getAlgorithm(), self::$jwsAlgorithms)) {
+            $this->setTokenType('JWS');
+            $this->setProcessor(new SignatureProcessor($this));
+        } elseif (in_array($this->getAlgorithm(), self::$jweAlgorithms)) {
+            $this->setTokenType('JWE');
+            $this->setProcessor(new EncodingProcessor($this));
         } else {
-            throw new UnsupportedAlgorithmException($algorithm);
+            throw new UnsupportedAlgorithmException($this->getAlgorithm());
         }
     }
 
     /**
-     * Gets the algorithm name.
+     * Checks if the specified algorithm is supported.
      *
-     * @return string The algorithm name.
+     * This method verifies whether the given algorithm is present in the list of
+     * supported algorithms for cryptographic operations.
+     *
+     * @param string $algorithm The algorithm to check for support.
+     * @return bool Returns `true` if the algorithm is supported, otherwise `false`.
      */
-    public function getAlgorithm(): string
+    private static function isSupportedAlgorithm(string $algorithm): bool
     {
-        return $this->algorithm;
+        return isset(self::getSupportedAlgorithms()[$algorithm]);
     }
 
     /**
-     * Gets the passphrase for symmetric algorithms.
+     * Retrieves a combined list of supported algorithms.
      *
-     * @return string|null The passphrase, if available.
+     * This method returns an array where each supported algorithm is a key. It
+     * combines algorithms from both JWS and JWE algorithm lists.
+     *
+     * @return array An associative array of supported algorithms, where each key is an algorithm name.
      */
-    public function getPassphrase(): ?string
+    private static function getSupportedAlgorithms(): array
     {
-        return $this->passphrase;
+        return array_flip(array_merge(self::$jwsAlgorithms, self::$jweAlgorithms));
     }
 
     /**
-     * Gets the public key for asymmetric algorithms.
+     * Initializes cryptographic keys and passphrase for secure operations.
      *
-     * @return string|null The public key, if available.
+     * This method checks that at least one of the required parameters (passphrase, public key, or private key)
+     * is provided. It throws an exception if all parameters are `null` or if a public-private key pair
+     * is incomplete when no passphrase is given. Depending on the parameters provided, it sets either the
+     * passphrase or the public-private key pair.
+     *
+     * @param string|null $passphrase The passphrase for encryption/decryption operations, or `null`.
+     * @param string|null $publicKey The public key for encryption, or `null`.
+     * @param string|null $privateKey The private key for decryption, or `null`.
+     *
+     * @throws MissingPassphraseException If all parameters are `null`.
+     * @throws MissingKeysException If both a public and private key are not provided when the passphrase is `null`.
+     *
+     * @return void
      */
-    public function getPublicKey(): ?OpenSSLAsymmetricKey
-    {
-        return $this->publicKey;
-    }
+    private function initializeKeys(
+        ?string $passphrase,
+        ?string $publicKey,
+        ?string $privateKey
+    ): void {
+        if ($passphrase === null && $publicKey === null && $privateKey === null) {
+            throw new MissingPassphraseException();
+        }
 
-    /**
-     * Gets the private key for asymmetric algorithms.
-     *
-     * @return string|null The private key, if available.
-     */
-    public function getPrivateKey(): ?OpenSSLAsymmetricKey
-    {
-        return $this->privateKey;
-    }
+        if ($passphrase === null && ($publicKey === null || $privateKey === null)) {
+            throw new MissingKeysException();
+        }
 
-    /**
-     * Retrieves the type of token (either 'JWS' or 'JWE').
-     *
-     * @return string The token type.
-     */
-    public function getTokenType(): string
-    {
-        return $this->tokenType;
+        if ($passphrase === null) {
+            $this->setPublicKey($publicKey);
+            $this->setPrivateKey($privateKey);
+        } else {
+            $this->setPassphrase($passphrase);
+        }
     }
 }

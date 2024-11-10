@@ -5,16 +5,7 @@ use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtTokenFactory;
 
-/**
- * Description of JwtTokenFactoryTest
- *
- * @author phillip
- */
-
 require_once __DIR__ . '/TestCaseWithSecrets.php';
-
-
-use PHPUnit\Framework\TestCase;
 
 final class JwtTokenFactoryTest extends \TestCaseWithSecrets
 {

@@ -2,12 +2,12 @@
 
 namespace Phithi92\JsonWebToken;
 
+use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtHeader;
-use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
 /**
- * Class Token
+ * JwtTokenContainer
  *
  * This class is responsible for managing the creation and validation of tokens,
  * which may represent either a JSON Web Signature (JWS) or a JSON Web Encryption (JWE).
@@ -20,11 +20,6 @@ use Phithi92\JsonWebToken\Utilities\JsonEncoder;
  * - Signature: Holds the digital signature for JWS tokens.
  * - CEK: The content encryption key used in encryption for JWE tokens.
  * - IV: The initialization vector for encryption processes.
- *
- * The `build` method facilitates token generation by delegating the construction
- * process to appropriate services depending on the type of the token (JWS or JWE).
- * The class also includes basic validation functionality to ensure the token's
- * components are correctly initialized before generating the final token string.
  *
  * @package json-web-token
  * @author Phillip Thiele <development@phillip-thiele.de>

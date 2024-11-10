@@ -20,7 +20,6 @@ class JsonWebTokenTest extends TestCaseWithSecrets
             ->setAudience('localhost');
     }
     
-    
     public function testValidHs()
     {
         $this->testAlgorithmEncoding('HS256', $this->payload, $this->secret32, '', '');

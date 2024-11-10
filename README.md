@@ -112,25 +112,6 @@ $payload = (new JwtPayload())
 $token = JwtTokenFactory::createToken($manager, $payload);
 ```
 
-### Validate a Token
-
-To validate and decrypt a JWT, configure the algorithm manager and retrieve the payload.
-
-```php
-use Phithi92\JsonWebToken\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\JwtTokenFactory;
-
-$manager = new JwtAlgorithmManager(
-    'RS256',        // Specify the algorithm
-    null,           // Passphrase for symmetric algorithms (optional for asymmetric)
-    'public-key',  // Private key for asymmetric algorithms
-    'private-key'    // Public key for asymmetric algorithms
-);
-
-$token = JwtTokenFactory::decryptToken($manager,$encodedToken);
-$payload = $token->getPayload();
-```
-
 ### Refresh a Token
 
 Refresh an existing JWT by extending its expiration.
@@ -149,6 +130,41 @@ $manager = new JwtAlgorithmManager(
 $token = JwtTokenFactory::refreshToken($manager,$encodedToken,'+15 minutes');
 ```
 
+### Validate a Token
+
+To validate and decrypt a JWT, configure the algorithm manager and retrieve the payload.  
+**Note:** This validation covers only time-based claims (such as `exp`, `nbf`, and `iat`).  
+Validation of `audience` and `issuer` claims can be performed manually if required.
+
+```php
+use Phithi92\JsonWebToken\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\JwtTokenFactory;
+
+$manager = new JwtAlgorithmManager(
+    'RS256',        // Specify the algorithm
+    null,           // Passphrase for symmetric algorithms (optional for asymmetric)
+    'public-key',   // Private key for asymmetric algorithms
+    'private-key'   // Public key for asymmetric algorithms
+);
+
+$token = JwtTokenFactory::decryptToken($manager, $encodedToken);
+$payload = $token->getPayload();
+```
+
+### Validate Payload
+
+**Validate Issuer**
+
+```php
+$token->getPayload()->validateIssuer($issuer);
+```
+
+**Validate Audience**
+
+```php
+$token->getPayload()->validateAudience($audience);
+```
+
 ### Error Handling
 
 Handle exceptions for robust error management in your application:
@@ -157,7 +173,7 @@ Handle exceptions for robust error management in your application:
 use Phithi92\JsonWebToken\Exception\Json\JsonException;
 use Phithi92\JsonWebToken\Exception\Token\TokenException;
 use Phithi92\JsonWebToken\Exception\Payload\PayloadException;
-use Phithi92\JsonWebToken\Exception\AlgorithmManager\AlgorithmException;
+use Phithi92\JsonWebToken\Exception\Cryptography\CryptographyException;
 
 try {
     // ...   
@@ -165,7 +181,7 @@ try {
     // JSON errors during JWT processing
 } catch (PayloadException $e) {
     // Errors with the JWT payload
-} catch (AlgorithmException $e) {
+} catch (CryptographyException $e) {
     // Issues with the signing algorithm
 } catch (TokenException $e) {
     // General token error
@@ -214,26 +230,26 @@ composer benchmark
 
 ## Benchmark
 
-**System Specifications**: Apple MacBook Air 2020 with 16 GB RAM. Each test was repeated 1000 times across 5 iterations.
+**System Specifications**: Apple MacBook Air 2020 with 16 GB RAM. Each test was repeated 1000 times across 5 iterations. Use opcache.
 
-| subject  | memory  | min       | max      | mode      | rstdev | stdev   |
-| -------- | ------- | --------- | -------- | --------- | ------ | ------- |
-| HS256    | 1.747mb | 41.203μs  | 42.662μs | 41.403μs  | ±1.38% | 0.575μs |
-| HS384    | 1.747mb | 41.615μs  | 42.633μs | 42.213μs  | ±0.88% | 0.371μs |
-| HS512    | 1.747mb | 41.868μs  | 42.680μs | 42.523μs  | ±0.74% | 0.312μs |
-| RS256    | 1.747mb | 992.166μs | 1.010ms  | 1.001ms   | ±0.58% | 5.820μs |
-| RS384    | 1.747mb | 996.938μs | 1.010ms  | 1.009ms   | ±0.53% | 5.355μs |
-| RS512    | 1.747mb | 990.179μs | 1.005ms  | 1.003ms   | ±0.55% | 5.504μs |
-| ES256    | 1.747mb | 988.590μs | 1.005ms  | 998.615μs | ±0.61% | 6.054μs |
-| ES384    | 1.747mb | 992.057μs | 1.009ms  | 1.004ms   | ±0.64% | 6.401μs |
-| ES512    | 1.747mb | 990.365μs | 1.010ms  | 1.009ms   | ±0.76% | 7.672μs |
-| PS256    | 1.747mb | 991.279μs | 1.010ms  | 994.852μs | ±0.81% | 8.109μs |
-| PS384    | 1.747mb | 992.116μs | 1.015ms  | 995.140μs | ±0.94% | 9.390μs |
-| PS512    | 1.747mb | 989.058μs | 1.009ms  | 997.819μs | ±0.67% | 6.738μs |
-| RSA-OAEP | 1.747mb | 1.551ms   | 1.572ms  | 1.557ms   | ±0.53% | 8.275μs |
-| A128GCM  | 1.747mb | 80.575μs  | 82.702μs | 81.990μs  | ±0.87% | 0.708μs |
-| A192GCM  | 1.747mb | 80.537μs  | 81.802μs | 80.735μs  | ±0.65% | 0.530μs |
-| A256GCM  | 1.747mb | 80.365μs  | 82.659μs | 82.102μs  | ±0.96% | 0.786μs |
+| subject | revs | its | mem_peak | mode      | rstdev |
+| ------- | ---- | --- | -------- | --------- | ------ |
+| HS256   | 1000 | 5   | 1.289mb  | 37.771μs  | ±0.25% |
+| HS384   | 1000 | 5   | 1.289mb  | 37.605μs  | ±0.33% |
+| HS512   | 1000 | 5   | 1.289mb  | 37.646μs  | ±0.25% |
+| RS256   | 1000 | 5   | 2.678mb  | 977.509μs | ±0.12% |
+| RS384   | 1000 | 5   | 2.678mb  | 976.921μs | ±0.13% |
+| RS512   | 1000 | 5   | 2.678mb  | 976.448μs | ±0.12% |
+| ES256   | 1000 | 5   | 2.678mb  | 976.973μs | ±0.31% |
+| ES384   | 1000 | 5   | 2.678mb  | 976.124μs | ±0.07% |
+| ES512   | 1000 | 5   | 2.678mb  | 976.461μs | ±0.31% |
+| PS256   | 1000 | 5   | 2.678mb  | 976.106μs | ±0.06% |
+| PS384   | 1000 | 5   | 2.678mb  | 977.260μs | ±0.10% |
+| PS512   | 1000 | 5   | 2.678mb  | 976.912μs | ±0.08% |
+| RsaOaep | 1000 | 5   | 2.678mb  | 1.557ms   | ±0.08% |
+| A128GCM | 1000 | 5   | 1.289mb  | 35.945μs  | ±0.67% |
+| A192GCM | 1000 | 5   | 1.289mb  | 36.046μs  | ±0.92% |
+| A256GCM | 1000 | 5   | 1.289mb  | 35.753μs  | ±1.83% |
 
 ---
 

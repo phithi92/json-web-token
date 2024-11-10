@@ -2,8 +2,8 @@
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
+use Phithi92\JsonWebToken\JwtAlgorithmManager;
 
 /**
  * Represents the header of a JWT (JSON Web Token).
@@ -15,16 +15,6 @@ use Phithi92\JsonWebToken\Utilities\JsonEncoder;
  *
  * The class allows initialization via a JwtAlgorithmManager instance, which sets the
  * appropriate algorithm and token type based on the manager's configuration.
- *
- * Key Methods:
- * - `setType` and `getType`: Manage the token type, such as 'JWT' or 'JWS'.
- * - `setAlgorithm` and `getAlgorithm`: Define and retrieve the algorithm identifier.
- * - `setEnc` and `getEnc`: Define and retrieve the encryption method, if any.
- * - `toArray` and `toJson`: Convert the header to an associative array or JSON format for encoding.
- * - `fromJson`: Static method to create a JwtHeader instance from a JSON string.
- *
- * This class provides a flexible interface for working with JWT headers in both
- * signed (JWS) and encrypted (JWE) tokens, supporting a variety of encoding and decoding needs.
  *
  * @package json-web-token
  * @author Phillip Thiele <development@phillip-thiele.de>
@@ -168,19 +158,19 @@ class JwtHeader
     {
         $header = JsonEncoder::decode($json);
 
-        $self = new self();
+        $instance = new self();
 
         if (isset($header['enc'])) {
-            $self->setEnc($header['enc']);
+            $instance->setEnc($header['enc']);
         }
 
         if (isset($header['alg'])) {
-            $self->setAlgorithm($header['alg']);
+            $instance->setAlgorithm($header['alg']);
         }
         if (isset($header['typ'])) {
-            $self->setType($header['typ']);
+            $instance->setType($header['typ']);
         }
 
-        return $self;
+        return $instance;
     }
 }

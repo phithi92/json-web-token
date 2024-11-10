@@ -2,8 +2,8 @@
 
 namespace Phithi92\JsonWebToken\Utilities;
 
-use Phithi92\JsonWebToken\Exception\Json\DecodingException;
-use Phithi92\JsonWebToken\Exception\Json\EncodingException;
+use Phithi92\JsonWebToken\Exceptions\Json\DecodingException;
+use Phithi92\JsonWebToken\Exceptions\Json\EncodingException;
 
 /**
  * Class JsonEncoder

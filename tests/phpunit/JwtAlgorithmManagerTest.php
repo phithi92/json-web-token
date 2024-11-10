@@ -3,10 +3,10 @@
 require_once __DIR__ . '/TestCaseWithSecrets.php';
 
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\Exception\AlgorithmManager\MissingPassphraseException;
-use Phithi92\JsonWebToken\Exception\AlgorithmManager\MissingKeysException;
-use Phithi92\JsonWebToken\Exception\AlgorithmManager\UnsupportedAlgorithmException;
-use Phithi92\JsonWebToken\Exception\AlgorithmManager\InvalidAsymetricKeyException;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\MissingPassphraseException;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\MissingKeysException;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidAsymetricKeyException;
 
 class JwtAlgorithmManagerTest extends TestCaseWithSecrets
 {    

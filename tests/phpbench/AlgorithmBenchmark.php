@@ -135,19 +135,19 @@ class AlgorithmBenchmark
     
     public function benchStaticEncryptionDecryptionA128GCM()
     {
-        $manager = self::setupAlgorithmManager('A128GCM');
+        $manager = self::setupAlgorithmManager('A128GCM', self::$SECRET32);
         self::createAndDecryptWithStaticFunctions($manager, self::createPayload());
     }
     
     public function benchStaticEncryptionDecryptionA192GCM()
     {
-        $manager = self::setupAlgorithmManager('A192GCM');
+        $manager = self::setupAlgorithmManager('A192GCM',self::$SECRET64);
         self::createAndDecryptWithStaticFunctions($manager, self::createPayload());
     }
     
     public function benchStaticEncryptionDecryptionA256GCM()
     {
-        $manager = self::setupAlgorithmManager('A256GCM');
+        $manager = self::setupAlgorithmManager('A256GCM',self::$SECRET32);
         self::createAndDecryptWithStaticFunctions($manager, self::createPayload());
     }
 }

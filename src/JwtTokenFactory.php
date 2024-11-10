@@ -2,13 +2,8 @@
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Service\SignatureToken;
-use Phithi92\JsonWebToken\Service\EncodingToken;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
-use Phithi92\JsonWebToken\Exception\Token\InvalidSignatureException;
-use Phithi92\JsonWebToken\Exception\Token\InvalidFormatException;
 
 /**
  * JsonWebToken is a final class responsible for creating, validating,
@@ -39,13 +34,12 @@ use Phithi92\JsonWebToken\Exception\Token\InvalidFormatException;
  */
 final class JwtTokenFactory
 {
-    /**
-     * Initializes the JwtTokenFactory with a JwtAlgorithmManager instance.
-     *
-     * @param JwtAlgorithmManager $cipher The algorithm manager for token encryption/decryption.
-     */
-    public function __construct(private JwtAlgorithmManager $cipher)
+    // JwtAlgorithmManager $cipher The algorithm manager for token encryption/decryption.
+    private readonly JwtAlgorithmManager $manager;
+
+    public function __construct(JwtAlgorithmManager $manager)
     {
+        $this->manager = $manager;
     }
 
     /**
@@ -59,12 +53,13 @@ final class JwtTokenFactory
      */
     public function create(JwtPayload $payload): string
     {
+        $manager = $this->getManager();
+        $jwtHeader = new JwtHeader($manager);
+
         $token = new JwtTokenContainer($payload);
-        $token->setHeader(new JwtHeader($this->cipher));
+        $token->setHeader($jwtHeader);
 
-        $manager = $this->initializeTokenManager($token, $this->cipher);
-
-        $tokenContainer = $manager->create($token);
+        $tokenContainer = $manager->getProcessor()->encrypt($token);
 
         return $this->generateToken($tokenContainer);
     }
@@ -79,15 +74,7 @@ final class JwtTokenFactory
      */
     public function generateToken(JwtTokenContainer $token): string
     {
-        $type = $token->getHeader()->getType();
-
-        if ($type === 'JWS') {
-            return $this->generateJwsToken($token);
-        } elseif ($type === 'JWE') {
-            return $this->generateJweToken($token);
-        } else {
-            throw new UnsupportedTokenTypeException($type);
-        }
+        return $this->getManager()->getProcessor()->assemble($token);
     }
 
     /**
@@ -98,19 +85,14 @@ final class JwtTokenFactory
      *
      * @param  string $encodingToken The encoded JWT string to decrypt.
      * @return JwtTokenContainer The decrypted token container object.
-     * @throws InvalidSignatureException If the token's signature is invalid.
      */
     public function decrypt(string $encodingToken): JwtTokenContainer
     {
-        $token = $this->hydrateJwtContainerFromString($encodingToken);
+        $processor = $this->manager->getProcessor();
+        $decodedToken = $processor->parse($encodingToken);
 
-        $manager = $this->initializeTokenManager($token, $this->cipher);
-
-        $manager->decrypt($token);
-
-        if (! $manager->verify($token)) {
-            throw new InvalidSignatureException();
-        }
+        $token = $processor->decrypt($decodedToken);
+        $processor->verify($token);
 
         return $token;
     }
@@ -128,11 +110,12 @@ final class JwtTokenFactory
     public function refresh(string $encodingToken, string $expirationInterval = '+1 hour'): string
     {
         $token = $this->decrypt($encodingToken);
+        $payload = $token->getPayload();
 
-        $token->getPayload()->setIssuedAt($expirationInterval);
-        $token->getPayload()->setExpiration($expirationInterval);
+        $payload->setIssuedAt($expirationInterval)
+                ->setExpiration($expirationInterval);
 
-        return $this->create($token->getPayload());
+        return $this->create($payload);
     }
 
     /**
@@ -179,98 +162,8 @@ final class JwtTokenFactory
         return (new self($algorithm))->decrypt($encodedToken);
     }
 
-    private function initializeTokenManager(JwtTokenContainer $token, JwtAlgorithmManager $manager)
+    private function getManager(): JwtAlgorithmManager
     {
-        $type = $token->getHeader()->getType();
-
-        if ($type === 'JWS') {
-            return new SignatureToken($manager);
-        } elseif ($type === 'JWE') {
-            return new EncodingToken($manager);
-        } else {
-            throw new Exception\Token\InvalidFormatException();
-        }
-    }
-
-    /**
-     * Hydrates a JwtTokenContainer from an encoded JWT string.
-     *
-     * Decodes the JWT string and initializes the appropriate data for a JWS or JWE token.
-     *
-     * @param  string $encodingToken The JWT string to decode and parse.
-     * @return JwtTokenContainer The initialized JwtTokenContainer.
-     * @throws InvalidFormatException If the token format is incorrect.
-     */
-    private function hydrateJwtContainerFromString(string $encodingToken): JwtTokenContainer
-    {
-        $tokenData = explode('.', $encodingToken);
-
-        if (count($tokenData) < 3) {
-            throw new InvalidFormatException();
-        }
-
-        $headerDecoded = Base64UrlEncoder::decode($tokenData[0]);
-        $jwtHeader = JwtHeader::fromJson($headerDecoded);
-
-        $token = (new JwtTokenContainer())->setHeader($jwtHeader);
-        $type = $token->getHeader()->getType();
-
-        if ($type === 'JWS') {
-            if (count($tokenData) !== 3) {
-                throw new InvalidFormatException();
-            }
-            $payloadDecoded = Base64UrlEncoder::decode($tokenData[1]);
-            $signatureDecoded = Base64UrlEncoder::decode($tokenData[2]);
-
-            $token->setPayload(JwtPayload::fromJson($payloadDecoded))
-                ->setSignature($signatureDecoded);
-        } elseif ($type === 'JWE') {
-            if (count($tokenData) !== 5) {
-                throw new InvalidFormatException();
-            }
-            $ivDecoded = Base64UrlEncoder::decode($tokenData[1]);
-            $encryptedKeyDecoded = Base64UrlEncoder::decode($tokenData[2]);
-            $encryptedPayloadDecoded = Base64UrlEncoder::decode($tokenData[3]);
-            $authTagDecoded = Base64UrlEncoder::decode($tokenData[4]);
-
-            $token->setIv($ivDecoded)
-                ->setEncryptedKey($encryptedKeyDecoded)
-                ->setEncryptedPayload($encryptedPayloadDecoded)
-                ->setAuthTag($authTagDecoded);
-        } else {
-            throw new InvalidFormatException();
-        }
-
-        return $token;
-    }
-
-    /**
-     * Generates a JWS (signed) token string from a JwtTokenContainer.
-     *
-     * @param  JwtTokenContainer $token The container holding the token's header, payload, and signature.
-     * @return string The assembled JWS token string.
-     */
-    private function generateJwsToken(JwtTokenContainer $token): string
-    {
-        $encodedHeader = Base64UrlEncoder::encode($token->getHeader()->toJson());
-        $encodedPayload = Base64UrlEncoder::encode($token->getPayload()->toJson());
-        $encodedSignature = Base64UrlEncoder::encode($token->getSignature());
-        return "$encodedHeader.$encodedPayload.$encodedSignature";
-    }
-
-    /**
-     * Generates a JWE (encrypted) token string from a JwtTokenContainer.
-     *
-     * @param  JwtTokenContainer $token The container holding the token's header, encrypted parts, and auth tag.
-     * @return string The assembled JWE token string.
-     */
-    private function generateJweToken(JwtTokenContainer $token): string
-    {
-        $encodedHeader = Base64UrlEncoder::encode($token->getHeader()->toJson());
-        $encodedIv = Base64UrlEncoder::encode($token->getIv() ?? '');
-        $encodedCek = Base64UrlEncoder::encode($token->getEncryptedKey() ?? $token->getCek());
-        $encodedPayload = Base64UrlEncoder::encode($token->getEncryptedPayload());
-        $encodedAuthTag = Base64UrlEncoder::encode($token->getAuthTag());
-        return "$encodedHeader.$encodedIv.$encodedCek.$encodedPayload.$encodedAuthTag";
+        return $this->manager;
     }
 }
