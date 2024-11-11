@@ -44,12 +44,32 @@ final class JwtTokenFactory
     // based on the token type
     private readonly Processor $processor;
 
+    /**
+     * Constructor for initializing with a JwtAlgorithmManager.
+     *
+     * This constructor accepts a JwtAlgorithmManager, sets it using the
+     * `setManager` method, and then initializes the processor based on the
+     * algorithm supported by the manager.
+     *
+     * @param JwtAlgorithmManager $manager The JwtAlgorithmManager to initialize the object with.
+     */
     public function __construct(JwtAlgorithmManager $manager)
     {
         $this->setManager($manager);
         $this->initializeProcessor();
     }
 
+    /**
+     * Initializes the Processor based on the current algorithm.
+     *
+     * This method checks the algorithm provided by the manager and initializes
+     * the appropriate processor. It sets the processor to either a SignatureProcessor
+     * or an EncodingProcessor based on algorithm support, or throws an exception
+     * if the algorithm is unsupported.
+     *
+     * @throws UnsupportedAlgorithmException If the algorithm is not supported.
+     * @return void
+     */
     private function initializeProcessor(): void
     {
         if (SignatureProcessor::isSupported($this->getManager()->getAlgorithm())) {
@@ -117,7 +137,7 @@ final class JwtTokenFactory
         $token = $this->decrypt($encryptedToken);
 
         $token->getPayload()
-                ->setIssuedAt($expirationInterval)
+                ->setIssuedAt('now')
                 ->setExpiration($expirationInterval);
 
         return $this->create($token->getPayload());
@@ -160,18 +180,30 @@ final class JwtTokenFactory
      *
      * @param  JwtAlgorithmManager $algorithm The algorithm manager for encoding.
      * @param  string              $encryptedToken   The encoded token string.
-     * @return string The generated JWT string.
+     * @return JwtTokenContainer
      */
     public static function decryptToken(JwtAlgorithmManager $algorithm, string $encryptedToken): JwtTokenContainer
     {
         return (new self($algorithm))->decrypt($encryptedToken);
     }
 
+    /**
+     * Returns the JwtAlgorithmManager.
+     *
+     * @return JwtAlgorithmManager The manager for JWT algorithms.
+     */
     private function getManager(): JwtAlgorithmManager
     {
         return $this->manager;
     }
 
+    /**
+     * Returns the Processor.
+     *
+     * This method returns the current processor responsible for processing JWTs.
+     *
+     * @return Processor The processor for JWT processing.
+     */
     public function getProcessor(): Processor
     {
         return $this->processor;
@@ -189,6 +221,14 @@ final class JwtTokenFactory
         return $this;
     }
 
+    /**
+     * Sets the JwtAlgorithmManager.
+     *
+     * This method sets the manager responsible for handling JWT algorithms.
+     *
+     * @param JwtAlgorithmManager $manager The manager to set.
+     * @return self The current instance for method chaining.
+     */
     private function setManager(JwtAlgorithmManager $manager): self
     {
         $this->manager = $manager;

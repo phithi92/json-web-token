@@ -43,17 +43,11 @@ class JwtHeader
      */
     public function __construct(?string $algorithm = null, ?string $type = null)
     {
-        if (
-            is_string($algorithm) === true
-            && empty($algorithm) === false
-        ) {
+        if (empty($algorithm) === false) {
             $this->setAlgorithm($algorithm);
         }
 
-        if (
-            is_string($type) === true
-            && empty($type) === false
-        ) {
+        if (empty($type) === false) {
             $this->setType($type);
         }
     }

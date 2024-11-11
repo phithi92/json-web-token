@@ -3,7 +3,7 @@
     "description": "Handles the generation of JSON Web Tokens (JWT), including both JWS (JSON Web Signature) and JWE (JSON Web Encryption). Provides methods for creating and validating tokens.",
     "type": "library",
     "license": "MIT",
-    "version": "0.2.4",
+    "version": "0.2.5",
     "authors": [
         {
             "name": "Phillip Thiele",
@@ -25,6 +25,6 @@
     },
     "scripts": {
         "test": "phpunit --configuration phpunit.xml",
-        "benchmark": "phpbench run tests/phpbench/* --report=default"
+        "benchmark": "phpbench run tests/phpbench/* --report=benchmark"
     }
 }

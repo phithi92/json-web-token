@@ -78,7 +78,11 @@ final class JwtTokenFactoryTest extends \TestCaseWithSecrets
 
     public function testRefreshTokenWithSymmetricCipher(): void
     {
-        $token = $this->jwtTokenFactorySymmetric->create($this->payload);
+        $payload = (new JwtPayload())
+                ->setIssuedAt('-5 minutes')
+                ->setExpiration('+5 seconds');
+        
+        $token = $this->jwtTokenFactorySymmetric->create($payload);
 
         // Refreshes the token and checks if the expiration was updated
         $refreshedToken = $this->jwtTokenFactorySymmetric->refresh($token, '+2 hours');
@@ -86,6 +90,6 @@ final class JwtTokenFactoryTest extends \TestCaseWithSecrets
         $decryptedToken = $this->jwtTokenFactorySymmetric->decrypt($refreshedToken);
 
         // Verifies that the refreshed token has a newer "iat" time
-        $this->assertGreaterThan($this->payload->getField('iat'), $decryptedToken->getPayload()->getField('iat'));
+        $this->assertGreaterThan($payload->getIssuedAt(), $decryptedToken->getPayload()->getIssuedAt());
     }
 }

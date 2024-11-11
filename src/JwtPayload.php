@@ -61,23 +61,19 @@ class JwtPayload
     }
 
     /**
-     * Validates the JWT (JSON Web Token) payload fields to ensure they adhere to the
-     * required conditions based on issuance, expiration, and not-before timestamps.
+     * Validates JWT payload fields ('iat', 'nbf', 'exp') for correct issuance, expiration, and validity.
      *
-     * Steps:
-     * - Retrieves the 'iat' (issued at), 'nbf' (not before), and 'exp' (expiration) fields.
-     * - Ensures mandatory fields 'iat' and 'exp' are present.
-     * - Validates that 'iat' is not later than 'exp', indicating the token was issued before its expiration.
-     * - Checks 'nbf' to confirm it is not later than 'exp', ensuring the token's validity window is logical.
-     * - Confirms that 'nbf' is not set earlier than 'iat', maintaining temporal consistency.
-     * - Validates the token’s expiration and activation times based on the current time:
+     * Ensures:
+     * - 'iat' and 'exp' are present and 'iat' is not later than 'exp'.
+     * - 'nbf' is within valid bounds relative to 'iat' and 'exp'.
+     * - Validates the token's activation and expiration times.
      *
-     * @see getField() Used to retrieve the 'aud' claim from the payload.
+     * @see getField() for retrieving the 'aud' claim.
      * @throws ValueNotFoundException if 'iat' or 'exp' is missing.
      * @throws IatEarlierThanExpException if 'iat' is after 'exp'.
      * @throws NotBeforeOlderThanExpException if 'nbf' is after 'exp'.
      * @throws NotBeforeOlderThanIatException if 'nbf' is before 'iat'.
-     * @throws ExpiredPayloadException if the token has expired.
+     * @throws ExpiredPayloadException if the token is expired.
      * @throws NotYetValidException if the token is not yet valid.
      */
     public function validate(): void

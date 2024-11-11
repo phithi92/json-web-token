@@ -213,6 +213,14 @@ final class JwtAlgorithmManager
         return $this;
     }
 
+    /**
+     * Initializes the token type based on the algorithm and sets the corresponding processor.
+     *
+     * Determines whether the algorithm supports JWS (JSON Web Signature) or JWE (JSON Web Encryption),
+     * and sets the token type accordingly. Throws an exception if the algorithm is unsupported.
+     *
+     * @throws UnsupportedAlgorithmException If the algorithm is not supported.
+     */
     private function initializeTokenTypeAndProcessor(): void
     {
         if (SignatureProcessor::isSupported($this->getAlgorithm())) {
