@@ -8,17 +8,27 @@ use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidAsymetricKeyException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Processors\SignatureProcessor;
 use Phithi92\JsonWebToken\Processors\EncodingProcessor;
-use Phithi92\JsonWebToken\Processors\Processor;
 use OpenSSLAsymmetricKey;
 
 /**
- * Manages algorithms for JWT signing and encryption.
+ * Manages JWT cryptographic operations for symmetric and asymmetric algorithms.
  *
- * The JwtAlgorithmManager class handles initialization and configuration
- * for JWT algorithms, supporting both symmetric (e.g., HS256) and asymmetric
- * (e.g., RS256) cryptographic operations. It manages the token type (`JWS` for signed
- * tokens or `JWE` for encrypted tokens) based on the chosen algorithm and provides
- * access to supported algorithms for each token type.
+ * This class facilitates the initialization and management of JWT algorithms,
+ * supporting both symmetric (e.g., HS256) and asymmetric (e.g., RS256) cryptographic
+ * operations. It provides methods to set and retrieve the necessary keys and passphrase,
+ * while ensuring that the selected algorithm and token type (either 'JWS' for signed tokens
+ * or 'JWE' for encrypted tokens) are compatible.
+ *
+ * Asymmetric keys (public and private) are validated upon setting, and an
+ * exception will be thrown if the keys are invalid. This validation ensures the
+ * integrity and security of cryptographic operations, and prevents the use of
+ * unsupported or malformed keys.
+ *
+ * Dependencies include SignatureProcessor and EncodingProcessor classes to verify algorithm support.
+ *
+ * Usage example:
+ * - For symmetric algorithms, provide an algorithm name and an optional passphrase.
+ * - For asymmetric algorithms, provide the algorithm name and a valid public-private key pair.
  *
  * @package json-web-token
  * @author Phillip Thiele <development@phillip-thiele.de>
@@ -44,21 +54,6 @@ final class JwtAlgorithmManager
     // The private key for asymmetric algorithms (optional)
     private readonly ?OpenSSLAsymmetricKey $privateKey;
 
-    // The processor responsible for handling token creation, signing, or encryption
-    // based on the token type
-    private readonly Processor $processor;
-
-    // List of supported JWS algorithms
-    private static array $jwsAlgorithms = [
-        'HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512',
-        'ES256', 'ES384', 'ES512', 'PS256', 'PS384', 'PS512'
-    ];
-
-    // List of supported JWE algorithms
-    private static array $jweAlgorithms = [
-        'RSA-OAEP', 'RSA-OAEP-256', 'RSA1_5', 'A128GCM', 'A192GCM', 'A256GCM'
-    ];
-
     /**
      * Constructor for symmetric or asymmetric algorithms.
      *
@@ -79,18 +74,9 @@ final class JwtAlgorithmManager
         ?string $publicKey = null,
         ?string $privateKey = null
     ) {
-        if ($this->isSupportedAlgorithm($algorithm) === false) {
-            throw new UnsupportedAlgorithmException($algorithm);
-        }
-        $this->setAlgorithm($algorithm);
-
         $this->initializeKeys($passphrase, $publicKey, $privateKey);
+        $this->setAlgorithm($algorithm);
         $this->initializeTokenTypeAndProcessor();
-    }
-
-    public function getProcessor(): Processor
-    {
-        return $this->processor;
     }
 
     /**
@@ -141,18 +127,6 @@ final class JwtAlgorithmManager
     public function getTokenType(): string
     {
         return $this->type;
-    }
-
-    /**
-     * Sets the processor instance.
-     *
-     * @param ProcessorInterface $processor The processor to set.
-     * @return self Returns the current instance for method chaining.
-     */
-    private function setProcessor(Processor $processor): self
-    {
-        $this->processor = $processor;
-        return $this;
     }
 
     /**
@@ -241,42 +215,13 @@ final class JwtAlgorithmManager
 
     private function initializeTokenTypeAndProcessor(): void
     {
-        if (in_array($this->getAlgorithm(), self::$jwsAlgorithms)) {
+        if (SignatureProcessor::isSupported($this->getAlgorithm())) {
             $this->setTokenType('JWS');
-            $this->setProcessor(new SignatureProcessor($this));
-        } elseif (in_array($this->getAlgorithm(), self::$jweAlgorithms)) {
+        } elseif (EncodingProcessor::isSupported($this->getAlgorithm())) {
             $this->setTokenType('JWE');
-            $this->setProcessor(new EncodingProcessor($this));
         } else {
             throw new UnsupportedAlgorithmException($this->getAlgorithm());
         }
-    }
-
-    /**
-     * Checks if the specified algorithm is supported.
-     *
-     * This method verifies whether the given algorithm is present in the list of
-     * supported algorithms for cryptographic operations.
-     *
-     * @param string $algorithm The algorithm to check for support.
-     * @return bool Returns `true` if the algorithm is supported, otherwise `false`.
-     */
-    private static function isSupportedAlgorithm(string $algorithm): bool
-    {
-        return isset(self::getSupportedAlgorithms()[$algorithm]);
-    }
-
-    /**
-     * Retrieves a combined list of supported algorithms.
-     *
-     * This method returns an array where each supported algorithm is a key. It
-     * combines algorithms from both JWS and JWE algorithm lists.
-     *
-     * @return array An associative array of supported algorithms, where each key is an algorithm name.
-     */
-    private static function getSupportedAlgorithms(): array
-    {
-        return array_flip(array_merge(self::$jwsAlgorithms, self::$jweAlgorithms));
     }
 
     /**

@@ -5,7 +5,7 @@ namespace Phithi92\JsonWebToken\Exceptions\Cryptographys;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\ErrorMessagesEnum;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\CryptographyException;
 
-class EncryptionDecryptionException extends CryptographyException
+class DecryptionException extends CryptographyException
 {
     public function __construct()
     {

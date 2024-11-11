@@ -11,7 +11,7 @@ use Phithi92\JsonWebToken\Exceptions\Token\ErrorMessagesEnum;
  */
 class InvalidFormatException extends TokenException
 {
-    public function __construct(): Exception
+    public function __construct()
     {
         parent::__construct(ErrorMessagesEnum::INVALID_FORMAT->getMessage());
     }

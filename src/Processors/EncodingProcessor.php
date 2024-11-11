@@ -80,6 +80,16 @@ class EncodingProcessor extends Processor
     public const ALGO_A192CBC_HS384 = 'A192CBC-HS384';
     public const ALGO_A256CBC_HS512 = 'A256CBC-HS512';
 
+    // List of supported JWE algorithms
+    public static array $supported = [
+        'RSA-OAEP' => [],
+        'RSA-OAEP-256' => [],
+        'RSA1_5' => [],
+        'A128GCM' => [],
+        'A192GCM' => [],
+        'A256GCM' => []
+    ];
+
     /**
      * Constructor for initializing the cipher object.
      *
@@ -95,7 +105,12 @@ class EncodingProcessor extends Processor
         $this->setProvider(new OpenSSL\CryptographyProvider($manager));
     }
 
-        /**
+    public static function isSupported(string $algorithm): bool
+    {
+        return isset(self::$supported[$algorithm]);
+    }
+
+    /**
      * Hydrates a JwtTokenContainer from an encoded JWT string.
      *
      * Decodes the JWT string and initializes the appropriate data for a JWS or JWE token.

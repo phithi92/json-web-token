@@ -2,7 +2,6 @@
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtHeader;
 

@@ -13,4 +13,5 @@ interface ProcessorInterface
     public function decrypt(JwtTokenContainer $token): JwtTokenContainer;
     public function assemble(JwtTokenContainer $token): string;
     public function parse(string|array $token): JwtTokenContainer;
+    public static function isSupported(string $algorithm): bool;
 }

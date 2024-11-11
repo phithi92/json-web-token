@@ -7,7 +7,7 @@ use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidSecretLengthException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidAsymetricKeyLength;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\EncryptionVerificationException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\EncryptionSignException;
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\EncryptionDecryptionException;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnexpectedOutputException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\EmptyFieldException;
@@ -465,7 +465,7 @@ final class CryptographyProvider extends Provider
 
         // Check for errors
         if ($plaintext === false) {
-            throw new EncryptionDecryptionException();
+            throw new DecryptionException();
         }
 
         return $plaintext;

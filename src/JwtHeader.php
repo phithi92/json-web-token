@@ -41,11 +41,20 @@ class JwtHeader
      *
      * @param JwtAlgorithmManager|null $manager Optional manager to set the algorithm and type.
      */
-    public function __construct(?JwtAlgorithmManager $manager = null)
+    public function __construct(?string $algorithm = null, ?string $type = null)
     {
-        if ($manager !== null) {
-            $this->setAlgorithm($manager->getAlgorithm());
-            $this->setType($manager->getTokenType());
+        if (
+            is_string($algorithm) === true
+            && empty($algorithm) === false
+        ) {
+            $this->setAlgorithm($algorithm);
+        }
+
+        if (
+            is_string($type) === true
+            && empty($type) === false
+        ) {
+            $this->setType($type);
         }
     }
 
@@ -160,15 +169,15 @@ class JwtHeader
 
         $instance = new self();
 
-        if (isset($header['enc'])) {
-            $instance->setEnc($header['enc']);
+        if (isset($header->enc)) {
+            $instance->setEnc($header->enc);
         }
 
-        if (isset($header['alg'])) {
-            $instance->setAlgorithm($header['alg']);
+        if (isset($header->alg)) {
+            $instance->setAlgorithm($header->alg);
         }
-        if (isset($header['typ'])) {
-            $instance->setType($header['typ']);
+        if (isset($header->typ)) {
+            $instance->setType($header->typ);
         }
 
         return $instance;

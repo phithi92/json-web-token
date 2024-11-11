@@ -16,6 +16,7 @@ use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use DateTimeImmutable;
 use Exception;
+use stdClass;
 
 /**
  * JwtPayload represents the payload segment of a JSON Web Token (JWT).
@@ -43,8 +44,8 @@ use Exception;
  */
 class JwtPayload
 {
-    // Array to store token data (JWT payload)
-    private array $payload = [];
+    // stdClass to store token data (JWT payload)
+    private stdClass $payload;
 
     // DateTimeImmutable object to handle date-related operations
     private readonly DateTimeImmutable $dateTimeImmutable;
@@ -55,6 +56,7 @@ class JwtPayload
      */
     public function __construct()
     {
+        $this->payload = new stdClass();
         $this->dateTimeImmutable = new DateTimeImmutable();
     }
 
@@ -203,7 +205,7 @@ class JwtPayload
      *                        values are the corresponding claim values.
      * @return self A populated JwtPayload instance with the provided payload data.
      */
-    public static function fromArray(array $payload): self
+    public static function fromArray(array|stdClass $payload): self
     {
         // Create a new instance of JwtPayload
         $instance = new self();
@@ -239,7 +241,7 @@ class JwtPayload
 
         $this->validate();
 
-        return $this->payload;
+        return (array) $this->payload;
     }
 
     /**
@@ -282,7 +284,7 @@ class JwtPayload
      */
     public function getField(string $field): string|array|null
     {
-        return $this->payload[$field] ?? null;
+        return $this->payload->{$field} ?? null;
     }
 
     /**
@@ -445,7 +447,7 @@ class JwtPayload
      */
     private function hasField(string $field): bool
     {
-        return isset($this->payload[$field]);
+        return isset($this->payload->{$field});
     }
 
     /**
@@ -497,7 +499,7 @@ class JwtPayload
         }
 
         if (!$this->hasField($key) || $overwrite) {
-            $this->payload[$key] = $value;
+            $this->payload->{$key} = $value;
         }
     }
 }

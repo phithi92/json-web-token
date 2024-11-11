@@ -4,6 +4,7 @@ namespace Phithi92\JsonWebToken\Utilities;
 
 use Phithi92\JsonWebToken\Exceptions\Json\DecodingException;
 use Phithi92\JsonWebToken\Exceptions\Json\EncodingException;
+use stdClass;
 
 /**
  * Class JsonEncoder
@@ -34,9 +35,9 @@ class JsonEncoder
      * @return array The decoded associative array.
      * @throws DecodingException if the JSON string cannot be decoded.
      */
-    public static function decode(string $json): array
+    public static function decode(string $json, bool $associative = false): array|stdClass
     {
-        $decoded = json_decode($json, true);
+        $decoded = json_decode($json, $associative);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new DecodingException();
         }

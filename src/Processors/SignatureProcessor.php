@@ -42,6 +42,22 @@ class SignatureProcessor extends Processor
     public const ALGO_PS384 = 'PS384';
     public const ALGO_PS512 = 'PS512';
 
+    // List of supported JWS algorithms
+    private static array $supported = [
+        'HS256' => [],
+        'HS384' => [],
+        'HS512' => [],
+        'RS256' => [],
+        'RS384' => [],
+        'RS512' => [],
+        'ES256' => [],
+        'ES384' => [],
+        'ES512' => [],
+        'PS256' => [],
+        'PS384' => [],
+        'PS512' => []
+    ];
+
     public function __construct(JwtAlgorithmManager $manager)
     {
         parent::__construct($manager);
@@ -114,7 +130,7 @@ class SignatureProcessor extends Processor
      */
     public function encrypt(JwtTokenContainer $token): JwtTokenContainer
     {
-        $token->setHeader(new JwtHeader($this->getManager()));
+        $token->setHeader(new JwtHeader($this->getManager()->getAlgorithm(), $this->getManager()->getTokenType()));
 
         [$algorithmType, $length] = $this->extractAlgorithmComponents($token->getHeader()->getAlgorithm());
 
@@ -241,5 +257,10 @@ class SignatureProcessor extends Processor
         }
 
         return [$matches[1], (int) $matches[2]];
+    }
+
+    public static function isSupported(string $algorithm): bool
+    {
+        return isset(self::$supported[$algorithm]);
     }
 }

@@ -4,6 +4,9 @@ namespace Phithi92\JsonWebToken;
 
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Processors\SignatureProcessor;
+use Phithi92\JsonWebToken\Processors\EncodingProcessor;
+use Phithi92\JsonWebToken\Processors\Processor;
 
 /**
  * JsonWebToken is a final class responsible for creating, validating,
@@ -37,9 +40,25 @@ final class JwtTokenFactory
     // JwtAlgorithmManager $cipher The algorithm manager for token encryption/decryption.
     private readonly JwtAlgorithmManager $manager;
 
+    // The processor responsible for handling token creation, signing, or encryption
+    // based on the token type
+    private readonly Processor $processor;
+
     public function __construct(JwtAlgorithmManager $manager)
     {
-        $this->manager = $manager;
+        $this->setManager($manager);
+        $this->initializeProcessor();
+    }
+
+    private function initializeProcessor(): void
+    {
+        if (SignatureProcessor::isSupported($this->getManager()->getAlgorithm())) {
+            $this->setProcessor(new SignatureProcessor($this->getManager()));
+        } elseif (EncodingProcessor::isSupported($this->getManager()->getAlgorithm())) {
+            $this->setProcessor(new EncodingProcessor($this->getManager()));
+        } else {
+            throw new UnsupportedAlgorithmException($this->getManager()->getAlgorithm());
+        }
     }
 
     /**
@@ -53,27 +72,15 @@ final class JwtTokenFactory
      */
     public function create(JwtPayload $payload): string
     {
-        $jwtHeader = new JwtHeader($this->getManager());
-
         $token = new JwtTokenContainer($payload);
-        $token->setHeader($jwtHeader);
+        $token->setHeader(new JwtHeader(
+            $this->getManager()->getAlgorithm(),
+            $this->getManager()->getTokenType()
+        ));
 
-        $tokenContainer = $this->getManager()->getProcessor()->encrypt($token);
+        $encryptedToken = $this->getProcessor()->encrypt($token);
 
-        return $this->generateToken($tokenContainer);
-    }
-
-    /**
-     * Generates the final JWT string by encoding and concatenating the token parts.
-     *
-     * Uses different encoding methods depending on the token type (JWS or JWE).
-     *
-     * @param  JwtTokenContainer $token The token container with the token's data.
-     * @return string The complete JWT string.
-     */
-    public function generateToken(JwtTokenContainer $token): string
-    {
-        return $this->getManager()->getProcessor()->assemble($token);
+        return $this->getProcessor()->assemble($encryptedToken);
     }
 
     /**
@@ -82,15 +89,15 @@ final class JwtTokenFactory
      * Decrypts and verifies the JWT based on its type (JWS or JWE),
      * throwing an exception if verification fails.
      *
-     * @param  string $encodingToken The encoded JWT string to decrypt.
+     * @param  string $encryptedToken The encoded JWT string to decrypt.
      * @return JwtTokenContainer The decrypted token container object.
      */
-    public function decrypt(string $encodingToken): JwtTokenContainer
+    public function decrypt(string $encryptedToken): JwtTokenContainer
     {
-        $decodedToken = $this->getManager()->getProcessor()->parse($encodingToken);
+        $decodedToken = $this->getProcessor()->parse($encryptedToken);
 
-        $token = $this->getManager()->getProcessor()->decrypt($decodedToken);
-        $this->getManager()->getProcessor()->verify($token);
+        $token = $this->getProcessor()->decrypt($decodedToken);
+        $this->getProcessor()->verify($token);
 
         return $token;
     }
@@ -101,13 +108,13 @@ final class JwtTokenFactory
      * Decrypts the token, updates its issuance and expiration times,
      * then re-generates the JWT.
      *
-     * @param  string $encodingToken      The encoded JWT string to refresh.
+     * @param  string $encryptedToken      The encoded JWT string to refresh.
      * @param  string $expirationInterval The interval for the new expiration time.
      * @return string The refreshed JWT string.
      */
-    public function refresh(string $encodingToken, string $expirationInterval = '+1 hour'): string
+    public function refresh(string $encryptedToken, string $expirationInterval = '+1 hour'): string
     {
-        $token = $this->decrypt($encodingToken);
+        $token = $this->decrypt($encryptedToken);
 
         $token->getPayload()
                 ->setIssuedAt($expirationInterval)
@@ -124,16 +131,16 @@ final class JwtTokenFactory
      * It returns a refreshed JWT with an updated expiration interval.
      *
      * @param  JwtAlgorithmManager $algorithm          The algorithm manager for handling token operations.
-     * @param  string              $encodingToken      The existing encoded JWT token to be refreshed.
+     * @param  string              $encryptedToken      The existing encoded JWT token to be refreshed.
      * @param  string              $expirationInterval The new expiration interval for the refreshed token.
      * @return string                                  The refreshed JWT token with updated expiration.
      */
     public static function refreshToken(
         JwtAlgorithmManager $algorithm,
-        string $encodingToken,
+        string $encryptedToken,
         string $expirationInterval
     ): string {
-        return (new self($algorithm))->refresh($encodingToken, $expirationInterval);
+        return (new self($algorithm))->refresh($encryptedToken, $expirationInterval);
     }
 
     /**
@@ -152,16 +159,39 @@ final class JwtTokenFactory
      * Static factory method to generate a JWT using a specified algorithm.
      *
      * @param  JwtAlgorithmManager $algorithm The algorithm manager for encoding.
-     * @param  string              $encodedToken   The encoded token string.
+     * @param  string              $encryptedToken   The encoded token string.
      * @return string The generated JWT string.
      */
-    public static function decryptToken(JwtAlgorithmManager $algorithm, string $encodedToken): JwtTokenContainer
+    public static function decryptToken(JwtAlgorithmManager $algorithm, string $encryptedToken): JwtTokenContainer
     {
-        return (new self($algorithm))->decrypt($encodedToken);
+        return (new self($algorithm))->decrypt($encryptedToken);
     }
 
     private function getManager(): JwtAlgorithmManager
     {
         return $this->manager;
+    }
+
+    public function getProcessor(): Processor
+    {
+        return $this->processor;
+    }
+
+    /**
+     * Sets the processor instance.
+     *
+     * @param ProcessorInterface $processor The processor to set.
+     * @return self Returns the current instance for method chaining.
+     */
+    private function setProcessor(Processor $processor): self
+    {
+        $this->processor = $processor;
+        return $this;
+    }
+
+    private function setManager(JwtAlgorithmManager $manager): self
+    {
+        $this->manager = $manager;
+        return $this;
     }
 }
