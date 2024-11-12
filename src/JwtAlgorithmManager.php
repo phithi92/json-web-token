@@ -66,9 +66,9 @@ final class JwtAlgorithmManager
      */
     public function __construct(
         string $algorithm,
-        ?string $passphrase = null,
-        ?string $publicKey = null,
-        ?string $privateKey = null
+        string $passphrase = null,
+        string $publicKey = null,
+        string $privateKey = null
     ) {
         $this->initializeKeys($passphrase, $publicKey, $privateKey);
         $this->setAlgorithm($algorithm);
@@ -98,9 +98,9 @@ final class JwtAlgorithmManager
     /**
      * Gets the public key for asymmetric algorithms.
      *
-     * @return string|null The public key, if available.
+     * @return OpenSSLAsymmetricKey|null The public key, if available.
      */
-    public function getPublicKey(): ?OpenSSLAsymmetricKey
+    public function getPublicKey(): OpenSSLAsymmetricKey|null
     {
         return $this->publicKey ?? null;
     }
@@ -108,9 +108,9 @@ final class JwtAlgorithmManager
     /**
      * Gets the private key for asymmetric algorithms.
      *
-     * @return string|null The private key, if available.
+     * @return OpenSSLAsymmetricKey|null The private key, if available.
      */
-    public function getPrivateKey(): ?OpenSSLAsymmetricKey
+    public function getPrivateKey(): OpenSSLAsymmetricKey|null
     {
         return $this->privateKey ?? null;
     }

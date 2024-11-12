@@ -32,6 +32,12 @@ final class CryptographyProdvider extends Provider
     // Cached list of supported algorithms, initialized lazily.
     private array $supportedAlgorithms;
 
+    public function __construct(JwtAlgorithmManager $manager)
+    {
+        parent::__construct($manager);
+        $this->setSupportedAlgorithms(hash_hmac_algos());
+    }
+
     /**
      * Retrieves the list of supported HMAC algorithms.
      *
@@ -42,10 +48,13 @@ final class CryptographyProdvider extends Provider
      */
     public function getSupportedAlgorithms(): array
     {
-        if (empty($this->supportedAlgorithms)) {
-            $this->supportedAlgorithms = hash_hmac_algos();
-        }
         return $this->supportedAlgorithms;
+    }
+
+    private function setSupportedAlgorithms(array $algorithms): self
+    {
+        $this->supportedAlgorithms = $algorithms;
+        return $this;
     }
 
     /**
@@ -57,8 +66,7 @@ final class CryptographyProdvider extends Provider
      * it meets the minimum block size requirements. An exception is thrown if the key is too short.
      *
      * @param string $data       The data to be signed.
-     * @param string &$signature The generated signature is stored by reference in this variable.
-     * @param int    $length     The length of the hashing algorithm (e.g., 256 for SHA256).
+     * @param string $algorithm  The algorithm
      *
      */
     public function signHmac(string $data, string $algorithm): string

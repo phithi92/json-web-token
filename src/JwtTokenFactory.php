@@ -92,11 +92,13 @@ final class JwtTokenFactory
      */
     public function create(JwtPayload $payload): string
     {
-        $token = new JwtTokenContainer($payload);
-        $token->setHeader(new JwtHeader(
+        $header = new JwtHeader(
             $this->getManager()->getAlgorithm(),
             $this->getManager()->getTokenType()
-        ));
+        );
+
+        $token = (new JwtTokenContainer($payload))
+            ->setHeader($header);
 
         $encryptedToken = $this->getProcessor()->encrypt($token);
 

@@ -181,7 +181,7 @@ class EncodingProcessor extends Processor
         }
     }
 
-    public function sign(JwtTokenContainer &$token, string $signAlgo)
+    public function sign(JwtTokenContainer &$token, string $signAlgo): void
     {
         $authTag = '';
         $payload = $token->getPayload()->toJson();

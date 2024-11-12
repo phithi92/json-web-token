@@ -78,7 +78,7 @@ class SignatureProcessor extends Processor
      * @param array  $tokenSegments Array containing the token's header, payload, and signature segments.
      * @param string $secret        Secret (HMAC) or public key (RSA) for signature verification.
      *
-     * @return array The decoded payload if verification is successful.
+     * @return JwtTokenContainer The decoded payload if verification is successful.
      *
      * @throws InvalidSignatureException If the token signature is invalid.
      * @throws InvalidTokenStructure If the token structure is invalid

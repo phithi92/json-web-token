@@ -42,7 +42,7 @@ final class JwtHeader
      * @param string|null $algorithm Optional algorithm identifier, e.g., 'HS256'.
      * @param string|null $type      Optional type of the token, e.g., 'JWT' or 'JWS'.
      */
-    public function __construct(?string $algorithm = null, ?string $type = null)
+    public function __construct(string $algorithm = null, string $type = null)
     {
         if (empty($algorithm) === false) {
             $this->setAlgorithm($algorithm);

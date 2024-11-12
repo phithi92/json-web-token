@@ -50,11 +50,11 @@ class JsonEncoder
      * Uses json_encode to convert the array to JSON. If encoding fails,
      * it throws an EncodingException to indicate an error.
      *
-     * @param  array $array The associative array to encode.
-     * @return string The JSON-encoded string.
+     * @param array $array The associative array to encode.
+     * @return false|string The JSON-encoded string.
      * @throws EncodingException if the array cannot be encoded to JSON.
      */
-    public static function encode(array $array): string
+    public static function encode(array $array): string|false
     {
         $encoded = json_encode($array);
         if (json_last_error() !== JSON_ERROR_NONE) {
