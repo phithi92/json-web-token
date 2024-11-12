@@ -23,7 +23,7 @@ class BenchHs256 extends \BenchmarkBase
     public function bench_verify_token()
     {
         $manager = self::setupAlgorithmManager('HS256', self::$SECRET32);
-        $token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXUyIsImVuYyI6IiJ9.eyJleHAiOjQ4NTUzMzU5NDcsImF1ZCI6ImxvY2FsaG9zdCIsImlhdCI6IjQ4NTUzMzU5NDcifQ.YrFe1ubMA1RKQsl-Sj6jDhMnPNyAWLgFp5WDUVyWerY';
+        $token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXUyJ9.eyJleHAiOjIwNDY5NjU4ODYsImF1ZCI6ImxvY2FsaG9zdCIsImlhdCI6MTczMTQzMzA4Nn0.xFajjciQro86i41Tzj6Jc1RfyG9pzWFXZFL6q9b7bDs';
         JwtTokenFactory::decryptToken($manager, $token);
     }
     

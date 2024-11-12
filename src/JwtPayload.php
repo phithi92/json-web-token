@@ -42,7 +42,7 @@ use stdClass;
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
  * @link https://github.com/phithi92/json-web-token Project on GitHub
  */
-class JwtPayload
+final class JwtPayload
 {
     // stdClass to store token data (JWT payload)
     private stdClass $payload;
@@ -64,13 +64,12 @@ class JwtPayload
      * Validates JWT payload fields ('iat', 'nbf', 'exp') for correct issuance, expiration, and validity.
      *
      * Ensures:
-     * - 'iat' and 'exp' are present and 'iat' is not later than 'exp'.
+     * - 'iat' and 'exp' are present, and 'iat' is not later than 'exp'.
      * - 'nbf' is within valid bounds relative to 'iat' and 'exp'.
-     * - Validates the token's activation and expiration times.
+     * - Validates the token’s activation and expiration times.
      *
-     * @see getField() for retrieving the 'aud' claim.
      * @throws ValueNotFoundException if 'iat' or 'exp' is missing.
-     * @throws IatEarlierThanExpException if 'iat' is after 'exp'.
+     * @throws IatEarlierThanExpException if 'iat' is later than 'exp'.
      * @throws NotBeforeOlderThanExpException if 'nbf' is after 'exp'.
      * @throws NotBeforeOlderThanIatException if 'nbf' is before 'iat'.
      * @throws ExpiredPayloadException if the token is expired.
@@ -83,12 +82,12 @@ class JwtPayload
         $exp = $this->getField('exp');  // Expiration
         $now = $this->dateTimeImmutable->getTimestamp(); // Current Unix timestamp
 
-        // Check if "iat" exist"
+        // Check if "iat" exists
         if ($iat === null) {
             throw new ValueNotFoundException('iat');
         }
 
-        // Check if "exp" exist"
+        // Check if "exp" exists
         if ($exp === null) {
             throw new ValueNotFoundException('exp');
         }
@@ -119,11 +118,11 @@ class JwtPayload
     }
 
     /**
-     * Optionally validates that the 'iss' (issuer) claim matches the expected issuer.
+     * Optionally validates whether the 'iss' (issuer) claim matches the expected issuer.
      *
      * @param  string $expectedIssuer The expected issuer of the JWT.
-     * @see getField() Used to retrieve the 'aud' claim from the payload.
-     * @throws InvalidIssuerException If the issuer does not match the expected value.
+     * @see getField() Used to retrieve the 'iss' claim from the payload.
+     * @throws InvalidIssuerException if the issuer does not match the expected value.
      */
     public function validateIssuer(string $expectedIssuer): void
     {
@@ -134,13 +133,11 @@ class JwtPayload
     }
 
     /**
-     * Optionally validates that the 'aud' (audience) claim matches the expected audience.
+     * Optionally validates whether the 'aud' (audience) claim matches the expected audience.
      *
      * @param  string|array $expectedAudience The expected audience(s) of the JWT.
      * @see getField() Used to retrieve the 'aud' claim from the payload.
-     * @see validateIssuer() For validating the 'iss' (issuer) claim.
-     * @see validateAudience() For validating the 'aud' (audience) claim.
-     * @throws InvalidAudienceException If the audience does not match the expected value.
+     * @throws InvalidAudienceException if the audience does not match the expected value.
      */
     public function validateAudience(string|array $expectedAudience): void
     {
@@ -231,8 +228,7 @@ class JwtPayload
     public function toArray(): array
     {
         if ($this->getField('iat') === null) {
-            $iat = $this->getField('exp') ?? $this->dateTimeImmutable->getTimestamp();
-            $this->setField('iat', $iat);
+            $this->setTimestamp('iat', 'now');
         }
 
         $this->validate();
@@ -261,15 +257,13 @@ class JwtPayload
      *
      * @param  string $key   The key of the field to add.
      * @param  mixed  $value The value to associate with the key (must be scalar or array).
-     * @see setField()
      * @return self Returns the instance to allow method chaining.
-     * @throws InvalidValueTypeException If the value type is invalid.
-     * @throws EmptyFieldException If the value is empty.
+     * @throws InvalidValueTypeException if the value type is invalid.
+     * @throws EmptyFieldException if the value is empty.
      */
     public function addField(string $key, mixed $value): self
     {
-        $this->setField($key, $value, false);
-        return $this;
+        return $this->setField($key, $value, false);
     }
 
     /**
@@ -294,8 +288,7 @@ class JwtPayload
      */
     public function setIssuer(string $issuer): self
     {
-        $this->addField('iss', $issuer);
-        return $this;
+        return $this->addField('iss', $issuer);
     }
 
     /**
@@ -324,8 +317,7 @@ class JwtPayload
      */
     public function setAudience(string|array $audience): self
     {
-        $this->addField('aud', $audience);
-        return $this;
+        return $this->addField('aud', $audience);
     }
 
     /**
@@ -354,8 +346,7 @@ class JwtPayload
      */
     public function setIssuedAt(string $dateTime): self
     {
-        $this->setTimestamp('iat', $dateTime);
-        return $this;
+        return $this->setTimestamp('iat', $dateTime);
     }
 
     /**
@@ -385,8 +376,7 @@ class JwtPayload
      */
     public function setExpiration(string $dateTime): self
     {
-        $this->setTimestamp('exp', $dateTime);
-        return $this;
+        return $this->setTimestamp('exp', $dateTime);
     }
 
     /**
@@ -404,7 +394,6 @@ class JwtPayload
         return $this->getField('exp');
     }
 
-
     /**
      * Sets the "nbf" (not before) claim in the JWT payload.
      *
@@ -417,8 +406,7 @@ class JwtPayload
      */
     public function setNotBefore(string $dateTime): self
     {
-        $this->setTimestamp('nbf', $dateTime);
-        return $this;
+        return $this->setTimestamp('nbf', $dateTime);
     }
 
     /**
@@ -453,11 +441,12 @@ class JwtPayload
      * @param  string $key      The key for the timestamp field (e.g., "iat", "nbf", "exp").
      * @param  string $dateTime The datetime string to be converted into a timestamp.
      * @see setField()
+     * @return self Returns the instance to allow method chaining.
      * @throws InvalidDateTimeException If the datetime string is in an invalid format.
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
      */
-    private function setTimestamp(string $key, string $dateTime): void
+    private function setTimestamp(string $key, string $dateTime): self
     {
         try {
             $dateTimeImmutable = $this->dateTimeImmutable->modify($dateTime);
@@ -469,33 +458,41 @@ class JwtPayload
             throw new InvalidDateTimeException($dateTime);
         }
 
-        $this->setField($key, $dateTimeImmutable->getTimestamp(), true);
+        return $this->setField($key, $dateTimeImmutable->getTimestamp(), true);
     }
 
     /**
-     * Adds or updates a field in the token data (JWT payload).
-     * If the key already exists, it will only be updated if $overwrite is set to true.
+     * Checks whether the value is invalid (null, empty string, or empty array).
      *
-     * @param  string $key       The key of the field to add or update.
-     * @param  mixed  $value     The value to associate with the key (must be scalar or array).
-     * @param  bool   $overwrite Determines whether to overwrite an existing field.
-     * @see hasField() Used to check if a key already exists in the payload.
-     * @return void
-     * @throws InvalidValueTypeException If the value type is invalid.
-     * @throws EmptyFieldException If the value is empty.
+     * @param  string $key   The key of the field.
+     * @param  mixed  $value The value being checked.
+     * @return self Returns the instance to allow method chaining.
+     * @throws EmptyFieldException if the value is empty.
+     * @throws InvalidValueTypeException if the value is neither scalar nor array.
      */
-    private function setField(string $key, mixed $value, bool $overwrite = false): void
+    private function setField(string $key, mixed $value, bool $overwrite = false): self
     {
-        if (empty($value)) {
+        // Check if the value is null
+        $isNull = $value === null;
+
+        // Check if the value is an empty string
+        $isEmptyString = is_string($value) && trim($value) === '';
+
+        // Check if the value is an empty array
+        $isEmptyArray = is_array($value) && empty($value);
+
+        if ($isNull || $isEmptyString || $isEmptyArray) {
             throw new EmptyFieldException($key);
         }
 
-        if (!is_scalar($value) && !is_array($value)) {
+        if (false === is_scalar($value) &&  false === is_array($value)) {
             throw new InvalidValueTypeException();
         }
 
-        if (!$this->hasField($key) || $overwrite) {
+        if (false === $this->hasField($key) || $overwrite) {
             $this->payload->{$key} = $value;
         }
+
+        return $this;
     }
 }

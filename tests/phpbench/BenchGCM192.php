@@ -23,7 +23,7 @@ class BenchGCM extends \BenchmarkBase
     public function bench_verify_token()
     {
         $manager = self::setupAlgorithmManager('A192GCM', self::$SECRET32);
-        $token = 'eyJhbGciOiJBMTkyR0NNIiwidHlwIjoiSldFIn0.Nf7mJOFLDjZCX5tqgvdUgArBZswkMPL3lvAwKd5uTjZktvc6nhcHcLcNsfL-zlRbonCA40ndvWEQguBXgpCzLZrN5ERpCtQsu0CONLrYR1oehlEjlS7arjcp49oI5TX3.YnY5cDlmZzQ0X0pVVWM1X1c3V2ZZWkN5WFdBcWtlemM.gz5U4TxL8Iv8tdaU0efRmU9tqY7LuJbSVg_kaba7HTzZNFpwuUYBXhEK8nLDIbAT6lIq3-nIXg.l7bxr3eHN_xxAzWYSF0jfQ';
+        $token = 'eyJhbGciOiJBMTkyR0NNIiwidHlwIjoiSldFIn0.k16TF-QIy-sbpSN5TLBtdO29RwCHFK2WSPn7wEe1mFdol4_OrmzEqFkkiY4CqNXKzuCcxsFE67ZPiyzhpBuU-wg1dDzT14OdwldUU2VBFIrNYn6LFTzPXC1LQIs4FswT.NG1oSm5pQXJjXzVMQWxuZEp4SnlHTVBDaUFFRm5jeW0.kDW7E2ttlpeQ3Ylgv5Xrsl0XTSKEYvbyFF9jl-X1tWWOcKo-m2RhL7klk30usb_gnrTREys.YQbi5AhG_FkAmhmapYasag';
         JwtTokenFactory::decryptToken($manager, $token);
     }
     

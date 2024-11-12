@@ -26,6 +26,13 @@ class JwtAlgorithmManagerTest extends TestCaseWithSecrets
 
         new JwtAlgorithmManager('HS256');
     }
+    
+    public function testConstructorThrowsExceptionWithEmptyPassphrase()
+    {
+        $this->expectException(MissingPassphraseException::class);
+
+        new JwtAlgorithmManager('HS256','');
+    }
 
     public function testConstructorWithIncompleteAsymmetricKeys()
     {

@@ -144,7 +144,7 @@ final class JwtTokenFactory
     }
 
     /**
-     * Static method to refresh a JWT token with a new expiration interval.
+     * Static method to refresh an existing JWT token with a new expiration interval.
      *
      * This method creates a new instance of the class using the specified
      * JWT algorithm manager and calls the instance method `refresh`.
@@ -164,7 +164,11 @@ final class JwtTokenFactory
     }
 
     /**
-     * Static factory method to generate a JWT using a specified algorithm.
+     * Static factory method to directly generate a JWT using a specified algorithm.
+     *
+     * This shortcut method allows creating a JWT without the need to instantiate
+     * the class directly. It initializes an instance with the specified
+     * algorithm manager and uses it to create the token.
      *
      * @param  JwtAlgorithmManager $algorithm The algorithm manager for encoding.
      * @param  JwtPayload          $payload   The payload data for the token.
@@ -176,11 +180,15 @@ final class JwtTokenFactory
     }
 
     /**
-     * Static factory method to generate a JWT using a specified algorithm.
+     * Static factory method to directly decrypt a JWT using a specified algorithm.
      *
-     * @param  JwtAlgorithmManager $algorithm The algorithm manager for encoding.
-     * @param  string              $encryptedToken   The encoded token string.
-     * @return JwtTokenContainer
+     * This shortcut method allows decrypting a JWT without instantiating the class
+     * directly. It initializes an instance with the specified algorithm manager
+     * and uses it to decrypt the token.
+     *
+     * @param  JwtAlgorithmManager $algorithm      The algorithm manager for handling token operations.
+     * @param  string              $encryptedToken The encoded token string.
+     * @return JwtTokenContainer The decrypted token container object.
      */
     public static function decryptToken(JwtAlgorithmManager $algorithm, string $encryptedToken): JwtTokenContainer
     {
@@ -204,7 +212,7 @@ final class JwtTokenFactory
      *
      * @return Processor The processor for JWT processing.
      */
-    public function getProcessor(): Processor
+    private function getProcessor(): Processor
     {
         return $this->processor;
     }
@@ -212,7 +220,7 @@ final class JwtTokenFactory
     /**
      * Sets the processor instance.
      *
-     * @param ProcessorInterface $processor The processor to set.
+     * @param Processor $processor The processor to set.
      * @return self Returns the current instance for method chaining.
      */
     private function setProcessor(Processor $processor): self

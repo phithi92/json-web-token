@@ -7,6 +7,7 @@ use Phithi92\JsonWebToken\JwtAlgorithmManager;
 
 interface ProcessorInterface
 {
+    public const JWT_TYPE = '';
     public function __construct(JwtAlgorithmManager $manager);
     public function verify(JwtTokenContainer $token): void;
     public function encrypt(JwtTokenContainer $token): JwtTokenContainer;
@@ -14,4 +15,5 @@ interface ProcessorInterface
     public function assemble(JwtTokenContainer $token): string;
     public function parse(string|array $token): JwtTokenContainer;
     public static function isSupported(string $algorithm): bool;
+    public static function getTokenType(): string;
 }

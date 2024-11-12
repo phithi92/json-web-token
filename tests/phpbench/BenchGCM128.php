@@ -22,7 +22,7 @@ class BenchGCM128 extends \BenchmarkBase
     public function bench_verify_token()
     {
         $manager = self::setupAlgorithmManager('A128GCM', self::$SECRET16);
-        $token = 'eyJhbGciOiJBMTI4R0NNIiwidHlwIjoiSldFIn0.U8LnKZ_w4LPBtpF1PO6IyOzorGtkjS9sXgpFfG6wN7o4Juhp5vN3z9CCgRQZ__COrG0Zd-v9ScyHpIvRhfbJ5Fntm9j_fdVuJpLr5rJ5NycPFMHKCaZRLOERciSG9e-8.a2ZCMkQxR3o4N3FmaDNwZ3FBSUFuQQ.MooNHuxjM3_WiB4rA__lWDoyx5UKvtzGC6aPFY9HgxiMX0Kumwr1uj5nYdGYiH-AzfpbMrw_4w.tb798VhnJLCJjlVEvWrFDg';
+        $token = 'eyJhbGciOiJBMTI4R0NNIiwidHlwIjoiSldFIn0.QlzmhUKXnrjx2o_oEZ66MGeJtSh_5ddfaJ56xys90LFwqMOdG8FMlQqY6DHMUZb0g8CVSOSchFJcPe-7bpBTYR6OOOAUUjk8fufLkjPlc9U_ZnFjQglcNb-_sH9UKssJ.eERpRDlTei1MNHpaMlgzZWNLM01jUQ.N4zbupnzTeVWiORStkZM8TSLyHFH1ilnP8OLMSccD3obj-4EWLNh6-iNPzaNg4qMH4zHnqA.ryx45U1b5H1Yai4gzqTbEA';
         JwtTokenFactory::decryptToken($manager, $token);
     }
     

@@ -17,4 +17,5 @@ enum ErrorMessagesEnum: string
     case INVALID_SIGNATURE = 'Signature verification failed: The JWT signature is invalid or has been altered.';
     case INVALID_FORMAT = 'string structure is no valid jwt';
     case INVALID_TOKEN = 'Token is not valid.';
+    case INVALID_AUTH_TAG = 'Auth Tag verification failed: The JWT signature is invalid or has been altered';
 }

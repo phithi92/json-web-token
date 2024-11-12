@@ -23,7 +23,7 @@ class BenchHs512 extends \BenchmarkBase
     public function bench_verify_token()
     {
         $manager = self::setupAlgorithmManager('HS512', self::$SECRET128);
-        $token = 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXUyIsImVuYyI6IiJ9.eyJleHAiOjQ4NTUzMzU5NDcsImF1ZCI6ImxvY2FsaG9zdCIsImlhdCI6IjQ4NTUzMzU5NDcifQ.qwktIh9seSH3zOPurLRFrNrnEqYpkNyp2kKtJlW7udMZpE23wJPhfHuM32n1yFnNIjjQBPY4ulcgMjYBcgdW5g';
+        $token = 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXUyJ9.eyJleHAiOjIwNDY5NjY0MzgsImF1ZCI6ImxvY2FsaG9zdCIsImlhdCI6MTczMTQzMzYzOH0.7axPK_7cvKXbngHfow-lNegb9_ENjUWNG5gnh_tF-KT2o8LS3ym6CGpV6oyrAwcAKJqFWdYDyBYccKV9mweNng';
         JwtTokenFactory::decryptToken($manager, $token);
     }
     

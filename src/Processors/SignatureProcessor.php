@@ -2,7 +2,8 @@
 
 namespace Phithi92\JsonWebToken\Processors;
 
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Cryptographys\OpenSSL\CryptographyProvider;
 use Phithi92\JsonWebToken\Cryptographys\HMAC;
@@ -42,6 +43,8 @@ class SignatureProcessor extends Processor
     public const ALGO_PS384 = 'PS384';
     public const ALGO_PS512 = 'PS512';
 
+    private static $type = 'JWS';
+
     // List of supported JWS algorithms
     private static array $supported = [
         'HS256' => [],
@@ -64,6 +67,11 @@ class SignatureProcessor extends Processor
         $this->setProvider(new CryptographyProvider($manager));
     }
 
+    public static function getTokenType(): string
+    {
+        return self::$type;
+    }
+
     /**
      * Verifies the structure and signature of a JWS token, and decodes its payload.
      *
@@ -72,7 +80,8 @@ class SignatureProcessor extends Processor
      *
      * @return array The decoded payload if verification is successful.
      *
-     * @throws InvalidTokenException If the token structure or signature is invalid.
+     * @throws InvalidSignatureException If the token signature is invalid.
+     * @throws InvalidTokenStructure If the token structure is invalid
      * @throws InvalidArgument If the key is empty or the token contains invalid characters.
      */
     public function decrypt(JwtTokenContainer $token): JwtTokenContainer
@@ -126,7 +135,6 @@ class SignatureProcessor extends Processor
      *
      * @throws InvalidArgument If the algorithm is unsupported, the payload is
      *         invalid, or the key is too short.
-     * @throws InvalidTokenException    If token creation fails.
      */
     public function encrypt(JwtTokenContainer $token): JwtTokenContainer
     {
@@ -196,12 +204,6 @@ class SignatureProcessor extends Processor
                 $token->getSignature(),
                 $hashAlgorithm
             );
-
-            if ($valid === false) {
-                throw new InvalidTokenException();
-            }
-
-            return;
         } elseif ($algorithmType === CryptographyProvider::HMAC) {
             $valid = (new HMAC\CryptographyProdvider($this->getManager()))->verifyHmac(
                 $verificationSignatureData,
@@ -209,14 +211,12 @@ class SignatureProcessor extends Processor
                 $hashAlgorithm,
                 $this->getManager()->getPassphrase()
             );
-
-            if ($valid === false) {
-                throw new InvalidTokenException();
-            }
-
-            return;
         } else {
             throw new UnsupportedAlgorithmException($algorithmType);
+        }
+
+        if ($valid === false) {
+            throw new InvalidSignatureException();
         }
     }
 

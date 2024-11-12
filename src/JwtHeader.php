@@ -23,23 +23,24 @@ use Phithi92\JsonWebToken\JwtAlgorithmManager;
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
  * @link https://github.com/phithi92/json-web-token Project on GitHub
  */
-class JwtHeader
+final class JwtHeader
 {
     // The type of token, typically 'JWT' or 'JWS'
-    private string $typ = '';
+    private string $typ;
 
     // The algorithm used for encoding or signing the token
-    private string $algorithm = '';
+    private string $algorithm;
 
     // The encryption method used, if applicable
-    private string $enc = '';
+    private string $enc;
 
     /**
-     * Constructor initializes the header with an optional JwtAlgorithmManager.
+     * Initializes the JWT header with optional parameters for algorithm and type.
      *
-     * Sets the algorithm and type based on the provided manager, if available.
+     * If an algorithm or type is provided, it sets these values during instantiation.
      *
-     * @param JwtAlgorithmManager|null $manager Optional manager to set the algorithm and type.
+     * @param string|null $algorithm Optional algorithm identifier, e.g., 'HS256'.
+     * @param string|null $type      Optional type of the token, e.g., 'JWT' or 'JWS'.
      */
     public function __construct(?string $algorithm = null, ?string $type = null)
     {
@@ -53,10 +54,10 @@ class JwtHeader
     }
 
     /**
-     * Sets the token type.
+     * Sets the token type in the header.
      *
      * @param  string $type The type of the token, e.g., 'JWT' or 'JWS'.
-     * @return self   Returns the instance for method chaining.
+     * @return self   Returns the instance to allow method chaining.
      */
     public function setType(string $type): self
     {
@@ -65,20 +66,20 @@ class JwtHeader
     }
 
     /**
-     * Retrieves the token type.
+     * Retrieves the token type from the header.
      *
-     * @return string The token type.
+     * @return string|null The token type if set, otherwise null.
      */
-    public function getType(): string
+    public function getType(): ?string
     {
-        return $this->typ;
+        return $this->typ ?? null;
     }
 
     /**
-     * Sets the algorithm for the token.
+     * Sets the algorithm used for signing or encoding the token.
      *
      * @param  string $algorithm The algorithm identifier, e.g., 'HS256'.
-     * @return self   Returns the instance for method chaining.
+     * @return self   Returns the instance to allow method chaining.
      */
     public function setAlgorithm(string $algorithm): self
     {
@@ -87,20 +88,20 @@ class JwtHeader
     }
 
     /**
-     * Retrieves the algorithm identifier.
+     * Retrieves the algorithm identifier from the header.
      *
-     * @return string The algorithm used for signing or encryption.
+     * @return string|null The algorithm if set, otherwise null.
      */
-    public function getAlgorithm(): string
+    public function getAlgorithm(): ?string
     {
-        return $this->algorithm;
+        return $this->algorithm ?? null;
     }
 
     /**
-     * Sets the encryption method.
+     * Sets the encryption method identifier in the header.
      *
      * @param  string $enc The encryption method identifier.
-     * @return self   Returns the instance for method chaining.
+     * @return self   Returns the instance to allow method chaining.
      */
     public function setEnc(string $enc): self
     {
@@ -108,20 +109,21 @@ class JwtHeader
         return $this;
     }
 
+
     /**
-     * Retrieves the encryption method.
+     * Retrieves the encryption method identifier from the header.
      *
-     * @return string The encryption method used, if any.
+     * @return string|null The encryption method if set, otherwise null.
      */
-    public function getEnc(): string
+    public function getEnc(): ?string
     {
-        return $this->enc;
+        return $this->enc ?? null;
     }
 
     /**
-     * Converts the header to an associative array.
+     * Converts the JWT header to an associative array.
      *
-     * Includes the 'alg' and 'typ' fields. Adds 'enc' if the type is 'JWS'.
+     * Includes 'alg' (algorithm) and 'typ' (type) fields. Adds 'enc' (encryption) if present.
      *
      * @return array The associative array representation of the header.
      */
@@ -132,7 +134,7 @@ class JwtHeader
             'typ' => $this->getType(),
         ];
 
-        if ($header['typ'] === 'JWS') {
+        if (empty($this->getEnc()) === false) {
             $header['enc'] = $this->getEnc();
         }
 
@@ -140,9 +142,12 @@ class JwtHeader
     }
 
     /**
-     * Converts the header to a JSON-encoded string.
+     * Converts the JWT header to a JSON-encoded string.
+     *
+     * Uses JsonEncoder to transform the header array into JSON format.
      *
      * @return string The JSON-encoded representation of the header.
+     * @throws DecodingException If JSON encoding fails.
      */
     public function toJson(): string
     {
@@ -150,12 +155,13 @@ class JwtHeader
     }
 
     /**
-     * Creates a JwtHeader instance from a JSON string.
+     * Creates a JwtHeader instance from a JSON-encoded string.
      *
-     * Decodes the JSON and populates the header fields if present.
+     * Parses the JSON string, assigns values to the header properties, and returns a populated instance.
      *
      * @param  string $json The JSON-encoded header string.
      * @return self   A new instance of JwtHeader with populated fields.
+     * @throws DecodingException If JSON decoding fails or data is invalid.
      */
     public static function fromJson(string $json): self
     {

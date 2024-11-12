@@ -22,7 +22,7 @@ class BenchPs256 extends \BenchmarkBase
     public function bench_verify_token()
     {
         $manager = self::setupAlgorithmManager('PS256', null, $this->getPem('private',2048),$this->getPem('public',2048));
-        $token = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXUyIsImVuYyI6IiJ9.eyJleHAiOjQ4NTUzMzU5NDcsImF1ZCI6ImxvY2FsaG9zdCIsImlhdCI6IjQ4NTUzMzU5NDcifQ.s2at2pB6dXUEl8RJHWJG4Nd2EqDr857jdB-lzYAQL7KLjhkUc2vCkgWvKFcMaCdzSJNHuo4RCz7sarNNUgu4fBwSmo_0cq0TGKzGPYs0igSG_WlxdUhjbsImJ5zrNmjtLoV_hD_m8r6zKHAAQsPnIUAzc7oSQnodL0VcJui5HDgB3TWK7cwhJoGYMz54YMGFThxsTtGLeKYfASWegZ65Kirko4expKotIgCdEsl0EvBElt-gBFJH2rt00urtgvITPqe7qUhNruKy_aEstGGLFh2n4MyQxLRIcbys-_tCLTihqDg76IIJT3dT_hTok7PJuk3fsYpmndMmIX5V_or5Zw';
+        $token = 'eyJhbGciOiJQUzI1NiIsInR5cCI6IkpXUyJ9.eyJleHAiOjIwNDY5NjY0MzgsImF1ZCI6ImxvY2FsaG9zdCIsImlhdCI6MTczMTQzMzYzOH0.lE84WlrO37ZmhCSc-d_cvJx5mmhrj0YlGSkY-gxYKix-ibdKBarZTpba4PatQf2aInGukyinYxgujYlYlSJlzQgwG-4Wa2-3V_g9gZoUnt93lyqe7v_lYm3o7iq8uJ6SdjQSUB0VusJHuMBD4Je0_wGk3H3T6kNFFQqUBCeImVpLKlgQVwbY-AyOhvM6piTLemZ0xIphrJSiVX6FJm61XR3x315qeTdS3G0kEMmZsdv0lldLgriS_WvZCZqxqbACcpbpkX-ZoKFKNyZLup9V0o9nt7cJfSQPm3rqIwrke4ezDFrwQCy2RSJptNyuYxwSAleNrTkccp8soy2QhfT50g';
         JwtTokenFactory::decryptToken($manager, $token);
     }
     

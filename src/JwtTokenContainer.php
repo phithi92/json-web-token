@@ -27,25 +27,27 @@ use Phithi92\JsonWebToken\JwtHeader;
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
  * @link https://github.com/phithi92/json-web-token Project on GitHub
  */
-class JwtTokenContainer
+final class JwtTokenContainer
 {
     private JwtPayload $payload; // Payload of the JWT
-    private ?string $encryptedPayload = null; // Encrypted payload, if applicable
+    private string $encryptedPayload; // Encrypted payload, if applicable
     private JwtHeader $header; // Header of the JWT
-    private ?string $signature = null; // Signature of the JWT
-    private ?string $cek = null; // Encrypted Content Encryption Key
-    private ?string $iv = null;  // Initialization Vector for encryption
-    private ?string $authTag = null; // Authentication tag for encryption
-    private string $encryptedKey = ''; // Encrypted key associated with the token
+    private string $signature; // Signature of the JWT
+    private string $cek; // Encrypted Content Encryption Key
+    private string $iv;  // Initialization Vector for encryption
+    private string $authTag; // Authentication tag for encryption
+    private string $encryptedKey; // Encrypted key associated with the token
 
     /**
-     * Constructor to initialize payload and encryption status.
+     * Initializes the JWT header with an optional JwtPayload instance.
      *
-     * @param JwtPayload|null $payload     The payload of the JWT.
+     * If a JwtPayload is provided, it sets this payload during instantiation.
+     *
+     * @param JwtPayload|null $payload Optional JwtPayload instance to initialize the header.
      */
-    public function __construct(?JwtPayload $payload = null)
+    public function __construct(JwtPayload $payload = null)
     {
-        if ($payload !== null) {
+        if ($payload) {
             $this->setPayload($payload);
         }
     }
@@ -65,11 +67,11 @@ class JwtTokenContainer
     /**
      * Retrieves the encrypted payload.
      *
-     * @return string The encrypted payload data.
+     * @return string|null The encrypted payload data, or null if not set.
      */
-    public function getEncryptedPayload(): string
+    public function getEncryptedPayload(): ?string
     {
-        return $this->encryptedPayload;
+        return $this->encryptedPayload ?? null;
     }
 
     /**
@@ -133,11 +135,11 @@ class JwtTokenContainer
     /**
      * Retrieves the payload.
      *
-     * @return JwtPayload The JWT payload.
+     * @return JwtPayload|null The JWT payload, or null if not set.
      */
-    public function getPayload(): JwtPayload
+    public function getPayload(): ?JwtPayload
     {
-        return $this->payload;
+        return $this->payload ?? null;
     }
 
     /**
@@ -155,11 +157,11 @@ class JwtTokenContainer
     /**
      * Retrieves the encrypted Content Encryption Key.
      *
-     * @return string The content encryption key.
+     * @return string|null The encryption key, or null if not set.
      */
-    public function getCek(): string
+    public function getCek(): ?string
     {
-        return $this->cek;
+        return $this->cek ?? null;
     }
 
     /**
@@ -177,9 +179,9 @@ class JwtTokenContainer
     /**
      * Retrieves the encrypted key.
      *
-     * @return string The encrypted key.
+     * @return string|null The encrypted key, or null if not set.
      */
-    public function getEncryptedKey(): string
+    public function getEncryptedKey(): ?string
     {
         return $this->encryptedKey;
     }
@@ -191,7 +193,7 @@ class JwtTokenContainer
      */
     public function getSignature(): ?string
     {
-        return $this->signature;
+        return $this->signature ?? null;
     }
 
     /**
@@ -213,7 +215,7 @@ class JwtTokenContainer
      */
     public function getAuthTag(): ?string
     {
-        return $this->authTag;
+        return $this->authTag ?? null;
     }
 
     /**
@@ -223,6 +225,6 @@ class JwtTokenContainer
      */
     public function getIv(): ?string
     {
-        return $this->iv;
+        return $this->iv ?? null;
     }
 }

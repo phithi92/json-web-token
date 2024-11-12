@@ -23,7 +23,7 @@ class BenchPs384 extends \BenchmarkBase
     public function bench_verify_token()
     {
         $manager = self::setupAlgorithmManager('PS384', null, $this->getPem('private',3072),$this->getPem('public',3072));
-        $token = 'eyJhbGciOiJQUzM4NCIsInR5cCI6IkpXUyIsImVuYyI6IiJ9.eyJleHAiOjQ4NTUzMzU5NDcsImF1ZCI6ImxvY2FsaG9zdCIsImlhdCI6IjQ4NTUzMzU5NDcifQ.FndHFmRhynJfuI--2czrFYKeh0yL6plHxxSGsWQn9KOWfn2tvLLYIFfDwqpdCAvmBsxsa7VN1qv2-HlLUP1pQ1HXVJ5PKNv9kQkDFYnrBvct0XY0sgAXeps2hvvbLPkJk0m4JoaM7iojKV0rtc29gfDIUulLnSKTb83jsLt7QpM4PZ4U7ogGaqJ20RYG35XNG6gyafNQE2HCXpjv9OqcwcpBZb4ufu6kLJtx7csSZ-qZniy-VS1eD7HuzAxIZSzeeAK2ztpEnrLXJhc4zRH2BZvvWsHDQ4-O0vx7Ppf4LBflkUttLgcg5NYhSeJq6lkkvvMU-eRK6Mh0hCmWQJvJyTaHIqO3GLTyhZ47ezlsPp9JyaZwNUxsMgK6kM0kOlsr-sICMknIDFCN2py0iyZ2zbt5N3bvizZU4UDgWxQlgVndfuXuN1xNg1Hjxud4vC-Qnt35yipMWMzxgo7iGDkQIPAlGog8peSONyR79YvRSuT2JaEZrc23fOzAh3ucQfkv';
+        $token = 'eyJhbGciOiJQUzM4NCIsInR5cCI6IkpXUyJ9.eyJleHAiOjIwNDY5NjY0MzgsImF1ZCI6ImxvY2FsaG9zdCIsImlhdCI6MTczMTQzMzYzOH0.Tzp0Ydtqfqdz8YUCR4OxDOsnlR647cn43Qbz_YC-k6zsHpx6cBG-OglyIOkGrVYmj63JXDtuAAlKDsQ4K9C4W09ajB0lzecOa1x2nidRHXEK-QY6Im6T_J3GD5B-n2k5itWTn-G5eLUu7mfEL9Svmrhc_JGfRgcJEtU4BQpep6YfQmQpV4XwVO_d1Wecde-JKPySbYL7LlB6YKukOyb5uRGchlBSMxSHT42w_1jrIr2a7LfpvxxwY-AIvmS1XtQRS4tQm-cYDGYBV8GVKeFngiceCImGMBEvZ23O29vRLCEZ_jb-LjTJLX-3vVi6X4B7KgoVRyEJhxhZj1M1D-9T1jqRPPV4qctsm6K1IA288n5MiqhTojaS_zHK605A-rA0oQY2qt1oV4bgFPnHVAnbC-DcAsb9jjZldrI9k7G5NSGyTTWQWjpA0fuPwUzzZwHxPvUlRrTP5hfqHzNsY2Ifzf7pW1BmkE3O0dzPF5JfOfQAsqwxqcNWVYd_nOnqpdTL';
         JwtTokenFactory::decryptToken($manager, $token);
     }
     

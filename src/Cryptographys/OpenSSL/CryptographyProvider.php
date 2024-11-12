@@ -638,10 +638,6 @@ final class CryptographyProvider extends Provider
         // Verify the signature using the public key and algorithm
         $verification_result = openssl_verify($data, $signature, $this->getPublicKey(), $algorithm);
 
-        if (false === is_int($verification_result)) {
-            throw new EncryptionVerificationException();
-        }
-
         // Return true if the signature is valid, otherwise false
         return (bool) $verification_result;
     }

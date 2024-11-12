@@ -228,28 +228,17 @@ composer benchmark
 
 ---
 
-## Benchmark
+## Benchmarking
 
-**System Specifications**: Apple MacBook Air 2020 with 16 GB RAM. Each test was repeated 1000 times across 5 iterations. Use opcache.
+This project uses automated benchmarks that run with each new commit or pull request via GitHub Actions. You can view the benchmark results in the **GitHub Actions Workflow**.
 
-| subject | revs | its | mem_peak | mode      | rstdev |
-| ------- | ---- | --- | -------- | --------- | ------ |
-| HS256   | 1000 | 5   | 1.289mb  | 37.771μs  | ±0.25% |
-| HS384   | 1000 | 5   | 1.289mb  | 37.605μs  | ±0.33% |
-| HS512   | 1000 | 5   | 1.289mb  | 37.646μs  | ±0.25% |
-| RS256   | 1000 | 5   | 2.678mb  | 977.509μs | ±0.12% |
-| RS384   | 1000 | 5   | 2.678mb  | 976.921μs | ±0.13% |
-| RS512   | 1000 | 5   | 2.678mb  | 976.448μs | ±0.12% |
-| ES256   | 1000 | 5   | 2.678mb  | 976.973μs | ±0.31% |
-| ES384   | 1000 | 5   | 2.678mb  | 976.124μs | ±0.07% |
-| ES512   | 1000 | 5   | 2.678mb  | 976.461μs | ±0.31% |
-| PS256   | 1000 | 5   | 2.678mb  | 976.106μs | ±0.06% |
-| PS384   | 1000 | 5   | 2.678mb  | 977.260μs | ±0.10% |
-| PS512   | 1000 | 5   | 2.678mb  | 976.912μs | ±0.08% |
-| RsaOaep | 1000 | 5   | 2.678mb  | 1.557ms   | ±0.08% |
-| A128GCM | 1000 | 5   | 1.289mb  | 35.945μs  | ±0.67% |
-| A192GCM | 1000 | 5   | 1.289mb  | 36.046μs  | ±0.92% |
-| A256GCM | 1000 | 5   | 1.289mb  | 35.753μs  | ±1.83% |
+### How to Find the Results
+
+1. Go to the **Actions** tab in this repository.
+2. Select the latest **Benchmark Workflow** run.
+3. Here, you’ll find detailed results for the current benchmarks.
+
+> Note: Benchmarks are updated automatically, so the latest results are always available in the most recent workflow run.
 
 ---
 

@@ -26,10 +26,6 @@ use OpenSSLAsymmetricKey;
  *
  * Dependencies include SignatureProcessor and EncodingProcessor classes to verify algorithm support.
  *
- * Usage example:
- * - For symmetric algorithms, provide an algorithm name and an optional passphrase.
- * - For asymmetric algorithms, provide the algorithm name and a valid public-private key pair.
- *
  * @package json-web-token
  * @author Phillip Thiele <development@phillip-thiele.de>
  * @version 1.0.0
@@ -46,13 +42,13 @@ final class JwtAlgorithmManager
     private readonly string $type;
 
     // The passphrase for symmetric algorithms (optional)
-    private readonly ?string $passphrase;
+    private readonly string $passphrase;
 
     // The public key for asymmetric algorithms (optional)
-    private readonly ?OpenSSLAsymmetricKey $publicKey;
+    private readonly OpenSSLAsymmetricKey $publicKey;
 
     // The private key for asymmetric algorithms (optional)
-    private readonly ?OpenSSLAsymmetricKey $privateKey;
+    private readonly OpenSSLAsymmetricKey $privateKey;
 
     /**
      * Constructor for symmetric or asymmetric algorithms.
@@ -84,9 +80,9 @@ final class JwtAlgorithmManager
      *
      * @return string The algorithm name.
      */
-    public function getAlgorithm(): string
+    public function getAlgorithm(): ?string
     {
-        return $this->algorithm;
+        return $this->algorithm ?? null;
     }
 
     /**
@@ -94,9 +90,9 @@ final class JwtAlgorithmManager
      *
      * @return string|null The passphrase, if available.
      */
-    public function getPassphrase(): string
+    public function getPassphrase(): ?string
     {
-        return $this->passphrase;
+        return $this->passphrase ?? null;
     }
 
     /**
@@ -124,9 +120,9 @@ final class JwtAlgorithmManager
      *
      * @return string The token type.
      */
-    public function getTokenType(): string
+    public function getTokenType(): ?string
     {
-        return $this->type;
+        return $this->type ?? null;
     }
 
     /**
@@ -224,9 +220,9 @@ final class JwtAlgorithmManager
     private function initializeTokenTypeAndProcessor(): void
     {
         if (SignatureProcessor::isSupported($this->getAlgorithm())) {
-            $this->setTokenType('JWS');
+            $this->setTokenType(SignatureProcessor::getTokenType());
         } elseif (EncodingProcessor::isSupported($this->getAlgorithm())) {
-            $this->setTokenType('JWE');
+            $this->setTokenType(EncodingProcessor::getTokenType());
         } else {
             throw new UnsupportedAlgorithmException($this->getAlgorithm());
         }
@@ -254,11 +250,11 @@ final class JwtAlgorithmManager
         ?string $publicKey,
         ?string $privateKey
     ): void {
-        if ($passphrase === null && $publicKey === null && $privateKey === null) {
+        if (empty($passphrase) && $publicKey === null && $privateKey === null) {
             throw new MissingPassphraseException();
         }
 
-        if ($passphrase === null && ($publicKey === null || $privateKey === null)) {
+        if (empty($passphrase) && ($publicKey === null || $privateKey === null)) {
             throw new MissingKeysException();
         }
 

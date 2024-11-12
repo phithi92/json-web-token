@@ -4,7 +4,7 @@ namespace Phithi92\JsonWebToken\Processors;
 
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidAuthTagException;
 use Phithi92\JsonWebToken\Cryptographys\OpenSSL;
 use Phithi92\JsonWebToken\Processors\Processor;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
@@ -41,6 +41,8 @@ use Phithi92\JsonWebToken\JwtAlgorithmManager;
  */
 class EncodingProcessor extends Processor
 {
+    private static $type = 'JWE';
+
     // Direkte Schlüsselverschlüsselung
     public const ALGO_DIR = 'dir';
 
@@ -103,6 +105,11 @@ class EncodingProcessor extends Processor
     {
         parent::__construct($manager);
         $this->setProvider(new OpenSSL\CryptographyProvider($manager));
+    }
+
+    public static function getTokenType(): string
+    {
+        return self::$type;
     }
 
     public static function isSupported(string $algorithm): bool
@@ -170,7 +177,7 @@ class EncodingProcessor extends Processor
         }
 
         if ($valid === false) {
-            throw new InvalidTokenException();
+            throw new InvalidAuthTagException();
         }
     }
 

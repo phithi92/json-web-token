@@ -23,7 +23,7 @@ class BenchHs384 extends \BenchmarkBase
     public function bench_verify_token()
     {
         $manager = self::setupAlgorithmManager('HS384', self::$SECRET64);
-        $token = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXUyIsImVuYyI6IiJ9.eyJleHAiOjQ4NTUzMzU5NDcsImF1ZCI6ImxvY2FsaG9zdCIsImlhdCI6IjQ4NTUzMzU5NDcifQ.HK-htJ_X060e4IBCDLD9SLT7EpaegUR84kjLs7bHB3POZaLoQbm7bsXukIq8hroW';
+        $token = 'eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXUyJ9.eyJleHAiOjIwNDY5NjY0MzgsImF1ZCI6ImxvY2FsaG9zdCIsImlhdCI6MTczMTQzMzYzOH0.HR7IDZLOZd267gbn9A8vYYAR_4bozwmhyeF_yfxZnJloy1WropA6Unv88o-7yLq7';
         JwtTokenFactory::decryptToken($manager, $token);
     }
     

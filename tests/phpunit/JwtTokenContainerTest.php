@@ -9,7 +9,7 @@ class JwtTokenContainerTest extends TestCase
 {
     public function testConstructorWithPayload()
     {
-        $payload = $this->createMock(JwtPayload::class);
+        $payload = new JwtPayload();
         $jwtToken = new JwtTokenContainer($payload);
 
         // Überprüfe, ob der Payload gesetzt wurde

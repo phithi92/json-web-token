@@ -1,0 +1,12 @@
+{
+    "$schema":"./vendor/phpbench/phpbench/phpbench.schema.json",
+    "runner.bootstrap": "./vendor/autoload.php",
+    "runner.path": "./tests/phpbench",
+    "report.outputs": {
+         "build-artifact": {
+             "renderer": "html",
+             "path": "./tests/phpbench/reports/",
+             "title": "All Your Benchmark Are Belong to Us"
+         }
+    }
+}

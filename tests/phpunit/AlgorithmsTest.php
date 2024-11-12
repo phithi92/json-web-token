@@ -15,7 +15,7 @@ class AlgorithmsTest extends TestCaseWithSecrets
     }
     
     public function testEncryptHs256(): string
-    {
+    {        
         // Gebe den Token-String zurück, um ihn im nächsten Test zu verwenden
         return $this->createToken('HS256', $this->secret32, '', '');
     }

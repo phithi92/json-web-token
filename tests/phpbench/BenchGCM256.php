@@ -22,7 +22,7 @@ class BenchGCM256 extends \BenchmarkBase
     public function bench_verify_token()
     {
         $manager = self::setupAlgorithmManager('A256GCM',  self::$SECRET64);
-        $token = 'eyJhbGciOiJBMjU2R0NNIiwidHlwIjoiSldFIn0.70z55b66lcCeXmXdMVZlz7DlJDV0lITo9LNx9RP7xLOje1XYUHQ7B7388vEOwYQoMWG0jGStAgjKcuAXG47Hs1YXjt9tLrL2VW_tdB4OA07gK-Gz-10lzxrnTxRFQhM0.RklHajBGdzRxeDlmU2tsRWFZMmJsUEFtTUpmbHN0N09uT2F5SWdDbkZWMA.zWQ6ofcpcNzjwbmFfjRk0d8j30_qFGEL0xzIZxOBZ2r7dLCqfl6weC8_qsIhRHQIw0cFDUxyZg.FG9umZIUpZ0mx2k7Z0dp7A';
+        $token = 'eyJhbGciOiJBMjU2R0NNIiwidHlwIjoiSldFIn0.yuGyXrurOmdn-lqZLSiK7VISfer36vCYv5w8YyywbNWRC6HnfNgWj0JdQkNdwz622R-lkMecmT3JUGmvuDTdjH0UZt14g6OEhc_qlMqwGgVZwxp5FGw3UNx_vEbDyvHK.UmxWdlItNENraFBzYTNXV2lzSUlaMU9aSS1XYjRQNGR6WmZCN1BQUEh3bw.GCfLdqPQjauaXXyy-9ltoytGDp90GAg1c6gPY6iEgeSM1Rq9GN16iurJrl6tt0s0ONAQOG4.GNZnFKpfTS1dQjHuQAgP8Q';
         JwtTokenFactory::decryptToken($manager, $token);
     }
     
