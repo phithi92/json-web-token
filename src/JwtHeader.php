@@ -2,6 +2,8 @@
 
 namespace Phithi92\JsonWebToken;
 
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
 /**
@@ -73,11 +75,11 @@ final class JwtHeader
 
         // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
         if (!ctype_alnum(str_replace(['-', '_'], '', $type))) {
-            throw new InvalidArgumentException("Invalid 'kid' format. Allowed characters are letters, numbers, '-', and '_'.");
+            throw new InvalidKidFormatException();
         }
 
         if (strlen($type) < $minLength || strlen($type) > $maxLength) {
-            throw new InvalidArgumentException("The 'kid' must be between $minLength and $maxLength characters.");
+            throw new InvalidKidLengthException($minLength, $maxLength);
         }
 
         $this->kid = $type;
