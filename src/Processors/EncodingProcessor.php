@@ -107,7 +107,7 @@ class EncodingProcessor extends Processor
         $this->setProvider(new OpenSSL\CryptographyProvider($manager));
     }
 
-    public static function getTokenType(): string
+    public function getTokenType(): string
     {
         return self::$type;
     }

@@ -194,7 +194,7 @@ final class JwtTokenFactory
             throw new UnsupportedAlgorithmException($algorithm);
         }
 
-        $this->getManager()->setTokenType($processor::getTokenType());
+        $this->getManager()->setTokenType($processor->getTokenType());
         $this->setProcessor($processor);
     }
 
