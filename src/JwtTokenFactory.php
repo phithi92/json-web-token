@@ -56,29 +56,7 @@ final class JwtTokenFactory
     public function __construct(JwtAlgorithmManager $manager)
     {
         $this->setManager($manager);
-        $this->initializeProcessor();
-    }
-
-    /**
-     * Initializes the Processor based on the current algorithm.
-     *
-     * This method checks the algorithm provided by the manager and initializes
-     * the appropriate processor. It sets the processor to either a SignatureProcessor
-     * or an EncodingProcessor based on algorithm support, or throws an exception
-     * if the algorithm is unsupported.
-     *
-     * @throws UnsupportedAlgorithmException If the algorithm is not supported.
-     * @return void
-     */
-    private function initializeProcessor(): void
-    {
-        if (SignatureProcessor::isSupported($this->getManager()->getAlgorithm())) {
-            $this->setProcessor(new SignatureProcessor($this->getManager()));
-        } elseif (EncodingProcessor::isSupported($this->getManager()->getAlgorithm())) {
-            $this->setProcessor(new EncodingProcessor($this->getManager()));
-        } else {
-            throw new UnsupportedAlgorithmException($this->getManager()->getAlgorithm());
-        }
+        $this->configureProcessorForAlgorithm();
     }
 
     /**
@@ -195,6 +173,74 @@ final class JwtTokenFactory
     public static function decryptToken(JwtAlgorithmManager $algorithm, string $encryptedToken): JwtTokenContainer
     {
         return (new self($algorithm))->decrypt($encryptedToken);
+    }
+
+    /**
+     * Configures the token processor based on the algorithm and sets the token type accordingly.
+     *
+     * Checks if the current algorithm supports either JWS (JSON Web Signature) or JWE (JSON Web Encryption)
+     * and sets the token type based on the appropriate processor. Throws an exception if the algorithm
+     * is unsupported.
+     *
+     * @throws UnsupportedAlgorithmException If the algorithm is not supported.
+     */
+    private function configureProcessorForAlgorithm(): void
+    {
+        $algorithm = $this->getManager()->getAlgorithm();
+
+        $processor = $this->createProcessorForAlgorithm($algorithm);
+
+        if ($processor === null) {
+            throw new UnsupportedAlgorithmException($algorithm);
+        }
+
+        $this->getManager()->setTokenType($processor::getTokenType());
+        $this->setProcessor($processor);
+    }
+
+    /**
+     * Creates and returns the appropriate processor instance based on the specified algorithm.
+     *
+     * Checks if the given algorithm is supported by either the SignatureProcessor or EncodingProcessor.
+     * If supported, it initializes and returns the corresponding processor with the current manager.
+     * Returns null if the algorithm is unsupported, indicating no suitable processor is available.
+     *
+     * @param string $algorithm The algorithm for which a processor is needed.
+     * @return ProcessorInterface|null An instance of the appropriate processor, or null if unsupported.
+     */
+    private function createProcessorForAlgorithm(string $algorithm): ?Processor
+    {
+        if (SignatureProcessor::isSupported($algorithm)) {
+            return new SignatureProcessor($this->getManager());
+        }
+
+        if (EncodingProcessor::isSupported($algorithm)) {
+            return new EncodingProcessor($this->getManager());
+        }
+
+        return null; // Falls kein unterstützter Prozessor gefunden wird
+    }
+
+    /**
+     * Sets the token type for the current instance.
+     *
+     * @param string $type The token type to set.
+     * @return self Returns the current instance for chaining.
+     */
+    public function setTokenType(string $type): self
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * Retrieves the type of token (either 'JWS' or 'JWE').
+     *
+     * @return string The token type.
+     */
+    private function getTokenType(): ?string
+    {
+        return $this->type ?? null;
     }
 
     /**

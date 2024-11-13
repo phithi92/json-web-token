@@ -17,7 +17,6 @@ class JwtAlgorithmManagerTest extends TestCaseWithSecrets
         $this->assertEquals('testpassphrase', $manager->getPassphrase());
         $this->assertNull($manager->getPublicKey());
         $this->assertNull($manager->getPrivateKey());
-        $this->assertEquals('JWS', $manager->getTokenType());
     }
 
     public function testConstructorThrowsExceptionWithoutPassphraseOrKeys()
@@ -41,18 +40,6 @@ class JwtAlgorithmManagerTest extends TestCaseWithSecrets
         new JwtAlgorithmManager('RS256', null, $this->getPublicKey(2048), null);
     }
     
-    public function testDetermineTokenTypeJWS()
-    {
-        $manager = new JwtAlgorithmManager('HS256', 'testpassphrase');
-        $this->assertEquals('JWS', $manager->getTokenType());
-    }
-
-    public function testDetermineTokenTypeJWE()
-    {
-        $manager = new JwtAlgorithmManager('RSA-OAEP', null, $this->getPublicKey(2048), $this->getPrivateKey(2048));
-        $this->assertEquals('JWE', $manager->getTokenType());
-    }
-
     public function testGettersWithOnlyPassphrase()
     {
         $manager = new JwtAlgorithmManager('HS256', 'secret');
@@ -60,12 +47,6 @@ class JwtAlgorithmManagerTest extends TestCaseWithSecrets
         $this->assertEquals('secret', $manager->getPassphrase());
         $this->assertNull($manager->getPublicKey());
         $this->assertNull($manager->getPrivateKey());
-    }
-
-    public function testInvalidAlgorithmThrowsException()
-    {
-        $this->expectException(UnsupportedAlgorithmException::class);
-        new JwtAlgorithmManager('INVALID', 'testpassphrase');
     }
 
     public function testEmptyPublicKeyWithAsymmetricAlgorithm()

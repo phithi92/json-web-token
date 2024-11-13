@@ -6,8 +6,6 @@ use Phithi92\JsonWebToken\Exceptions\Cryptographys\MissingKeysException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\MissingPassphraseException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidAsymetricKeyException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
-use Phithi92\JsonWebToken\Processors\SignatureProcessor;
-use Phithi92\JsonWebToken\Processors\EncodingProcessor;
 use OpenSSLAsymmetricKey;
 
 /**
@@ -72,7 +70,6 @@ final class JwtAlgorithmManager
     ) {
         $this->initializeKeys($passphrase, $publicKey, $privateKey);
         $this->setAlgorithm($algorithm);
-        $this->initializeTokenTypeAndProcessor();
     }
 
     /**
@@ -191,7 +188,7 @@ final class JwtAlgorithmManager
      * @param string $type The token type to set.
      * @return self Returns the current instance for chaining.
      */
-    private function setTokenType(string $type): self
+    public function setTokenType(string $type): self
     {
         $this->type = $type;
         return $this;
@@ -207,25 +204,6 @@ final class JwtAlgorithmManager
     {
         $this->algorithm = $algorithm;
         return $this;
-    }
-
-    /**
-     * Initializes the token type based on the algorithm and sets the corresponding processor.
-     *
-     * Determines whether the algorithm supports JWS (JSON Web Signature) or JWE (JSON Web Encryption),
-     * and sets the token type accordingly. Throws an exception if the algorithm is unsupported.
-     *
-     * @throws UnsupportedAlgorithmException If the algorithm is not supported.
-     */
-    private function initializeTokenTypeAndProcessor(): void
-    {
-        if (SignatureProcessor::isSupported($this->getAlgorithm())) {
-            $this->setTokenType(SignatureProcessor::getTokenType());
-        } elseif (EncodingProcessor::isSupported($this->getAlgorithm())) {
-            $this->setTokenType(EncodingProcessor::getTokenType());
-        } else {
-            throw new UnsupportedAlgorithmException($this->getAlgorithm());
-        }
     }
 
     /**
