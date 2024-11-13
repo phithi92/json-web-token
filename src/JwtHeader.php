@@ -33,6 +33,9 @@ final class JwtHeader
     // The encryption method used, if applicable
     private string $enc;
 
+    // The key identifier, used to indicate which key was used to sign or encrypt the token
+    private string $kid;
+
     /**
      * Initializes the JWT header with optional parameters for algorithm and type.
      *
@@ -50,6 +53,45 @@ final class JwtHeader
         if (empty($type) === false) {
             $this->setType($type);
         }
+    }
+
+    /**
+     * Sets the Key ID ('kid') for the JWT header.
+     *
+     * Validates that the provided Key ID consists only of alphanumeric characters,
+     * dashes, or underscores. If the format is invalid, an exception is thrown.
+     *
+     * @param string $type The Key ID to set.
+     * @return self Returns the instance for method chaining.
+     * @throws InvalidArgumentException If the provided Key ID format is invalid.
+     */
+    public function setKid(string $type): self
+    {
+        // Define min and max length constraints for the 'kid'
+        $minLength = 3;
+        $maxLength = 64;
+
+        // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
+        if (!ctype_alnum(str_replace(['-', '_'], '', $type))) {
+            throw new InvalidArgumentException("Invalid 'kid' format. Allowed characters are letters, numbers, '-', and '_'.");
+        }
+
+        if (strlen($type) < $minLength || strlen($type) > $maxLength) {
+            throw new InvalidArgumentException("The 'kid' must be between $minLength and $maxLength characters.");
+        }
+
+        $this->kid = $type;
+        return $this;
+    }
+
+    /**
+     * Retrieves the token type from the header.
+     *
+     * @return string|null The token type if set, otherwise null.
+     */
+    public function getKid(): ?string
+    {
+        return $this->kid ?? null;
     }
 
     /**
@@ -122,7 +164,8 @@ final class JwtHeader
     /**
      * Converts the JWT header to an associative array.
      *
-     * Includes 'alg' (algorithm) and 'typ' (type) fields. Adds 'enc' (encryption) if present.
+     * Includes 'alg' (algorithm) and 'typ' (type) fields. Adds 'enc' (encryption) if present,
+     * as well as 'kid' (Key ID) if it is set. The 'kid' field identifies the key used for signing or encryption.
      *
      * @return array The associative array representation of the header.
      */
@@ -135,6 +178,10 @@ final class JwtHeader
 
         if (empty($this->getEnc()) === false) {
             $header['enc'] = $this->getEnc();
+        }
+
+        if (empty($this->getEnc()) === false) {
+            $header['kid'] = $this->getEnc();
         }
 
         return $header;
@@ -175,8 +222,13 @@ final class JwtHeader
         if (isset($header->alg)) {
             $instance->setAlgorithm($header->alg);
         }
+
         if (isset($header->typ)) {
             $instance->setType($header->typ);
+        }
+
+        if (isset($header->kid)) {
+            $instance->setKid($header->kid);
         }
 
         return $instance;
