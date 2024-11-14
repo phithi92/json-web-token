@@ -21,8 +21,8 @@ use Phithi92\JsonWebToken\Exceptions\Json\ErrorMessagesEnum;
  */
 class EncodingException extends JsonException
 {
-    public function __construct()
+    public function __construct(string $message)
     {
-        parent::__construct(ErrorMessagesEnum::DecodingFailed->getMessage(json_last_error_msg()));
+        parent::__construct(ErrorMessagesEnum::DecodingFailed->getMessage($message));
     }
 }

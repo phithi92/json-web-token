@@ -18,17 +18,7 @@ use Phithi92\JsonWebToken\Processors\Processor;
  * content of the payload itself is validated only when the `toArray`
  * method of the JwtTokenContainer class is called.
  *
- * Key functionalities include:
- * - Creating JWTs (JWS or JWE) with support for various algorithms.
- * - Handling Base64URL encoding and decoding for JWT components.
- *
- * This class enforces the JWT standards RFC 7515 (JWS) and RFC 7516 (JWE),
- * and utilizes OpenSSL for cryptographic operations. It throws exceptions for
- * malformed tokens or cryptographic errors.
- *
- * @throws Specific exceptions provide clear messages for JWT-related issues.
- *
- * @package json-web-token
+ * @package Phithi92\JsonWebToken
  * @author Phillip Thiele <development@phillip-thiele.de>
  * @version 1.0.0
  * @since 1.0.0

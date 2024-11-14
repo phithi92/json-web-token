@@ -14,10 +14,7 @@ use Phithi92\JsonWebToken\Utilities\JsonEncoder;
  * It provides methods to set and retrieve these properties, ensuring consistency with
  * JWT standards.
  *
- * The class allows initialization via a JwtAlgorithmManager instance, which sets the
- * appropriate algorithm and token type based on the manager's configuration.
- *
- * @package json-web-token
+ * @package Phithi92\JsonWebToken
  * @author Phillip Thiele <development@phillip-thiele.de>
  * @version 1.0.0
  * @since 1.0.0

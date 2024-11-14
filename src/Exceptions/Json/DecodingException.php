@@ -23,8 +23,8 @@ class DecodingException extends JsonException
     /**
      * Constructs a DecodingException with a detailed error message from json_last_error_msg().
      */
-    public function __construct()
+    public function __construct(string $message)
     {
-        parent::__construct(ErrorMessagesEnum::DecodingFailed->getMessage(json_last_error_msg()));
+        parent::__construct(ErrorMessagesEnum::DecodingFailed->getMessage($message));
     }
 }

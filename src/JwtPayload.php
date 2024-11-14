@@ -27,15 +27,7 @@ use stdClass;
  * and "exp," are managed with DateTimeImmutable to ensure consistency in date-related
  * operations.
  *
- * Key Features:
- * - **Field Management**: Provides methods to add, retrieve, and set fields within the payload.
- * - **Temporal Claim Validation**: Ensures that temporal claims like "issued at" (iat),
- *   "not before" (nbf), and "expiration" (exp) are valid and consistent.
- * - **Flexible Audience and Issuer Validation**: Supports optional validation of the "aud" (audience)
- *   and "iss" (issuer) claims to ensure the token is intended for the correct recipient and issuer.
- * - **Serialization**: Includes methods to convert the payload into an array or JSON format.
- *
- * @package json-web-token
+ * @package Phithi92\JsonWebToken
  * @author Phillip Thiele <development@phillip-thiele.de>
  * @version 1.0.0
  * @since 1.0.0

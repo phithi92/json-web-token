@@ -8,9 +8,6 @@ use Phithi92\JsonWebToken\JwtHeader;
 /**
  * JwtTokenContainer
  *
- * This class is responsible for managing the creation and validation of tokens,
- * which may represent either a JSON Web Signature (JWS) or a JSON Web Encryption (JWE).
- *
  * The class provides functionality to set and retrieve key components of a token,
  * such as the header, payload, signature, content encryption key (CEK), and initialization vector (IV).
  *
@@ -20,7 +17,7 @@ use Phithi92\JsonWebToken\JwtHeader;
  * - CEK: The content encryption key used in encryption for JWE tokens.
  * - IV: The initialization vector for encryption processes.
  *
- * @package json-web-token
+ * @package Phithi92\JsonWebToken
  * @author Phillip Thiele <development@phillip-thiele.de>
  * @version 1.0.0
  * @since 1.0.0

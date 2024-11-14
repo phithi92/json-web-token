@@ -15,6 +15,8 @@ The `JsonWebToken` PHP library enables seamless creation, signing, and validatio
 - [Usage Guide](#usage-guide)
   - [Generate a Token](#generate-a-token)
   - [Validate a Token](#validate-a-token)
+    - [Verify Structure and encryption](#verify-structure-and-encryption)
+    - [Verify Payload](#verify-payload)
   - [Refresh a Token](#refresh-a-token)
   - [Error Handling](#error-handling)
 - [Supported Algorithms](#supported-algorithms)
@@ -132,13 +134,18 @@ $token = JwtTokenFactory::refreshToken($manager,$encodedToken,'+15 minutes');
 
 ### Validate a Token
 
+##### Verify Structure and encryption
+
 To validate and decrypt a JWT, configure the algorithm manager and retrieve the payload.  
 **Note:** This validation covers only time-based claims (such as `exp`, `nbf`, and `iat`).  
 Validation of `audience` and `issuer` claims can be performed manually if required.
 
 ```php
+use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
+use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\JwtTokenFactory;
+
 
 $manager = new JwtAlgorithmManager(
     'RS256',        // Specify the algorithm
@@ -147,21 +154,54 @@ $manager = new JwtAlgorithmManager(
     'private-key'   // Public key for asymmetric algorithms
 );
 
-$token = JwtTokenFactory::decryptToken($manager, $encodedToken);
-$payload = $token->getPayload();
+try {
+    $token = JwtTokenFactory::decryptToken($manager, $encodedToken);
+    $payload = $token->getPayload();
+} catch(TokenException){
+    ...
+} catch(PayloadException){
+    ...
+}
 ```
 
-### Validate Payload
+Once the token has been decrypted, further validations can be performed directly on the JwtPayload as needed. This allows for flexible, custom checks beyond the standard validation methods provided.
+
+##### Verify Payload
+
+Validation of `audience` and `issuer` claims can be performed manually if you need.
 
 **Validate Issuer**
 
 ```php
-$token->getPayload()->validateIssuer($issuer);
+use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuerException;
+
+try {
+    $token->getPayload()->validateIssuer($issuer);
+} catch(InvalidIssuerException){
+    ...
+}
 ```
 
 **Validate Audience**
 
 ```php
+use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
+
+try {
+    $token->getPayload()->validateAudience($audience);
+} catch(InvalidAudienceException){
+    ...
+}
+```
+
+The `$audience` parameter can be either a single value or an array. The validateAudience(`$audience`) method checks whether the audience value specified in the token matches the given `$audience`. If $audience is an array, the validation will pass if any one value in the array matches the audience value in the token.
+
+**Example:**
+
+Suppose the token’s payload contains the audience value "example.com", and we pass the following array to validateAudience:
+
+```php
+$audience = ["example.com", "anotherdomain.com"];
 $token->getPayload()->validateAudience($audience);
 ```
 
