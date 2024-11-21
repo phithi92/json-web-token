@@ -21,11 +21,11 @@ use OpenSSLAsymmetricKey;
  * unsupported or malformed keys.
  *
  * @package Phithi92\JsonWebToken
- * @author Phillip Thiele <development@phillip-thiele.de>
+ * @author  Phillip Thiele <development@phillip-thiele.de>
  * @version 1.0.0
- * @since 1.0.0
+ * @since   1.0.0
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
- * @link https://github.com/phithi92/json-web-token Project on GitHub
+ * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
 final class JwtAlgorithmManager
 {
@@ -124,7 +124,7 @@ final class JwtAlgorithmManager
      * This method loads and validates the provided public key.
      * If the key is invalid, it throws an InvalidArgument exception.
      *
-     * @param string $publicKey The public key to be set.
+     * @param  string $publicKey The public key to be set.
      * @return self Returns the current instance for method chaining.
      * @throws InvalidAsymetricKeyException If the public key is invalid.
      */
@@ -148,7 +148,7 @@ final class JwtAlgorithmManager
      * This method loads and validates the provided private key.
      * If the key is invalid, it throws an InvalidArgument exception.
      *
-     * @param string $privateKey The private key to be set.
+     * @param  string $privateKey The private key to be set.
      * @return self Returns the current instance for method chaining.
      * @throws InvalidAsymetricKeyException If the private key is invalid.
      */
@@ -169,7 +169,7 @@ final class JwtAlgorithmManager
     /**
      * Sets the passphrase for encryption or decryption operations.
      *
-     * @param string $passphrase The passphrase to set.
+     * @param  string $passphrase The passphrase to set.
      * @return self Returns the current instance for chaining.
      */
     private function setPassphrase(string $passphrase): self
@@ -181,7 +181,7 @@ final class JwtAlgorithmManager
     /**
      * Sets the token type for the current instance.
      *
-     * @param string $type The token type to set.
+     * @param  string $type The token type to set.
      * @return self Returns the current instance for chaining.
      */
     public function setTokenType(string $type): self
@@ -193,7 +193,7 @@ final class JwtAlgorithmManager
     /**
      * Sets the algorithm to be used for cryptographic operations.
      *
-     * @param string $algorithm The algorithm to set.
+     * @param  string $algorithm The algorithm to set.
      * @return self Returns the current instance for chaining.
      */
     private function setAlgorithm(string $algorithm): self
@@ -211,7 +211,7 @@ final class JwtAlgorithmManager
      * passphrase or the public-private key pair.
      *
      * @param string|null $passphrase The passphrase for encryption/decryption operations, or `null`.
-     * @param string|null $publicKey The public key for encryption, or `null`.
+     * @param string|null $publicKey  The public key for encryption, or `null`.
      * @param string|null $privateKey The private key for decryption, or `null`.
      *
      * @throws MissingPassphraseException If all parameters are `null`.

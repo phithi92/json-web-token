@@ -20,4 +20,5 @@ enum ErrorMessagesEnum: string
     case INVALID_AUTH_TAG = 'Auth Tag verification failed: The JWT signature is invalid or has been altered';
     case INVALID_KID_FORMAT = 'Invalid "kid" format. Allowed characters are letters, numbers, "-", and "_".';
     case INVALID_KID_LENGTH = 'The "kid" must be between %s and %s characters.';
+    case INVALID_JTI = 'The "jti" is declared as invalid.';
 }

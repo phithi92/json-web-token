@@ -15,11 +15,11 @@ use Phithi92\JsonWebToken\Utilities\JsonEncoder;
  * JWT standards.
  *
  * @package Phithi92\JsonWebToken
- * @author Phillip Thiele <development@phillip-thiele.de>
+ * @author  Phillip Thiele <development@phillip-thiele.de>
  * @version 1.0.0
- * @since 1.0.0
+ * @since   1.0.0
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
- * @link https://github.com/phithi92/json-web-token Project on GitHub
+ * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
 final class JwtHeader
 {
@@ -60,7 +60,7 @@ final class JwtHeader
      * Validates that the provided Key ID consists only of alphanumeric characters,
      * dashes, or underscores. If the format is invalid, an exception is thrown.
      *
-     * @param string $type The Key ID to set.
+     * @param  string $type The Key ID to set.
      * @return self Returns the instance for method chaining.
      * @throws InvalidArgumentException If the provided Key ID format is invalid.
      */

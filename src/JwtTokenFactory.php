@@ -2,6 +2,9 @@
 
 namespace Phithi92\JsonWebToken;
 
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
+use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
+use Phithi92\JsonWebToken\Exceptions\Payload\InvalidJti;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Processors\SignatureProcessor;
@@ -19,11 +22,11 @@ use Phithi92\JsonWebToken\Processors\Processor;
  * method of the JwtTokenContainer class is called.
  *
  * @package Phithi92\JsonWebToken
- * @author Phillip Thiele <development@phillip-thiele.de>
+ * @author  Phillip Thiele <development@phillip-thiele.de>
  * @version 1.0.0
- * @since 1.0.0
+ * @since   1.0.0
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
- * @link https://github.com/phithi92/json-web-token Project on GitHub
+ * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
 final class JwtTokenFactory
 {
@@ -54,8 +57,10 @@ final class JwtTokenFactory
      *
      * Determines if the token should be a JWS (signed) or JWE (encrypted),
      * and constructs the token accordingly.
+     * and constructs the token accordingly. The token's usage is defined
      *
      * @param  JwtPayload $payload The data to encode within the JWT payload.
+     * @param  JwtPayload $payload  The data to encode within the JWT payload.
      * @return string The generated JWT string.
      */
     public function create(JwtPayload $payload): string
@@ -84,9 +89,13 @@ final class JwtTokenFactory
      */
     public function decrypt(string $encryptedToken): JwtTokenContainer
     {
+        // Parse the encrypted token to obtain the decoded token data
         $decodedToken = $this->getProcessor()->parse($encryptedToken);
 
+        // Decrypt the parsed token to retrieve the original token data
         $token = $this->getProcessor()->decrypt($decodedToken);
+
+        // Verify the decrypted token to ensure its validity and integrity
         $this->getProcessor()->verify($token);
 
         return $token;
@@ -98,7 +107,7 @@ final class JwtTokenFactory
      * Decrypts the token, updates its issuance and expiration times,
      * then re-generates the JWT.
      *
-     * @param  string $encryptedToken      The encoded JWT string to refresh.
+     * @param  string $encryptedToken     The encoded JWT string to refresh.
      * @param  string $expirationInterval The interval for the new expiration time.
      * @return string The refreshed JWT string.
      */
@@ -107,8 +116,8 @@ final class JwtTokenFactory
         $token = $this->decrypt($encryptedToken);
 
         $token->getPayload()
-                ->setIssuedAt('now')
-                ->setExpiration($expirationInterval);
+            ->setIssuedAt('now')
+            ->setExpiration($expirationInterval);
 
         return $this->create($token->getPayload());
     }
@@ -121,7 +130,7 @@ final class JwtTokenFactory
      * It returns a refreshed JWT with an updated expiration interval.
      *
      * @param  JwtAlgorithmManager $algorithm          The algorithm manager for handling token operations.
-     * @param  string              $encryptedToken      The existing encoded JWT token to be refreshed.
+     * @param  string              $encryptedToken     The existing encoded JWT token to be refreshed.
      * @param  string              $expirationInterval The new expiration interval for the refreshed token.
      * @return string                                  The refreshed JWT token with updated expiration.
      */
@@ -195,10 +204,10 @@ final class JwtTokenFactory
      * If supported, it initializes and returns the corresponding processor with the current manager.
      * Returns null if the algorithm is unsupported, indicating no suitable processor is available.
      *
-     * @param string $algorithm The algorithm for which a processor is needed.
-     * @return ProcessorInterface|null An instance of the appropriate processor, or null if unsupported.
+     * @param  string $algorithm The algorithm for which a processor is needed.
+     * @return Processor|null An instance of the appropriate processor, or null if unsupported.
      */
-    private function createProcessorForAlgorithm(string $algorithm): ?Processor
+    private function createProcessorForAlgorithm(string $algorithm): Processor|null
     {
         if (SignatureProcessor::isSupported($algorithm)) {
             return new SignatureProcessor($this->getManager());
@@ -209,28 +218,6 @@ final class JwtTokenFactory
         }
 
         return null; // Falls kein unterstützter Prozessor gefunden wird
-    }
-
-    /**
-     * Sets the token type for the current instance.
-     *
-     * @param string $type The token type to set.
-     * @return self Returns the current instance for chaining.
-     */
-    public function setTokenType(string $type): self
-    {
-        $this->type = $type;
-        return $this;
-    }
-
-    /**
-     * Retrieves the type of token (either 'JWS' or 'JWE').
-     *
-     * @return string The token type.
-     */
-    private function getTokenType(): ?string
-    {
-        return $this->type ?? null;
     }
 
     /**
@@ -258,7 +245,7 @@ final class JwtTokenFactory
     /**
      * Sets the processor instance.
      *
-     * @param Processor $processor The processor to set.
+     * @param  Processor $processor The processor to set.
      * @return self Returns the current instance for method chaining.
      */
     private function setProcessor(Processor $processor): self
@@ -272,7 +259,7 @@ final class JwtTokenFactory
      *
      * This method sets the manager responsible for handling JWT algorithms.
      *
-     * @param JwtAlgorithmManager $manager The manager to set.
+     * @param  JwtAlgorithmManager $manager The manager to set.
      * @return self The current instance for method chaining.
      */
     private function setManager(JwtAlgorithmManager $manager): self

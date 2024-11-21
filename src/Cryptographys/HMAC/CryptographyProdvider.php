@@ -5,6 +5,7 @@ namespace Phithi92\JsonWebToken\Cryptographys\HMAC;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidSecretLengthException;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\MissingPassphraseException;
 use Phithi92\JsonWebToken\Cryptographys\HMAC\AlgorithmsTrait;
 use Phithi92\JsonWebToken\Cryptographys\Provider;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
@@ -65,9 +66,8 @@ final class CryptographyProdvider extends Provider
      * it validates that the secret key is long enough for the selected algorithm, ensuring
      * it meets the minimum block size requirements. An exception is thrown if the key is too short.
      *
-     * @param string $data       The data to be signed.
-     * @param string $algorithm  The algorithm
-     *
+     * @param string $data      The data to be signed.
+     * @param string $algorithm The algorithm
      */
     public function signHmac(string $data, string $algorithm): string
     {
@@ -100,7 +100,7 @@ final class CryptographyProdvider extends Provider
      */
     public function verifyHmac(string $data, string $providedHmac, string $algorithm): bool
     {
-        $this->validateHmacInput($data, $algorithm, $this->getPassphrase());
+        $this->validateHmacInput($data, $algorithm);
 
         // Calculate the expected HMAC signature.
         $expectedHash = hash_hmac($algorithm, $data, $this->getPassphrase(), true);
@@ -117,7 +117,7 @@ final class CryptographyProdvider extends Provider
      * key are non-empty, that the specified algorithm is supported, and that the
      * secret key length meets the minimum required block size for the algorithm.
      *
-     * @param string $data The data to be hashed using HMAC.
+     * @param string $data      The data to be hashed using HMAC.
      * @param string $algorithm The hashing algorithm to use (e.g., sha256, sha384, sha512).
      *
      * @throws EmptyFieldException If the data or secret key is empty.
@@ -128,14 +128,15 @@ final class CryptographyProdvider extends Provider
      */
     private function validateHmacInput(string $data, string $algorithm): void
     {
+
         // Ensure the data is not empty.
         if (empty($data)) {
             throw new EmptyFieldException('field');
         }
 
-        // Ensure the secret key is not empty.
+        // Ensure the secret key is not empty or null.
         if (empty($this->getPassphrase())) {
-            throw new EmptyFieldException('secret');
+            throw new MissingPassphraseException();
         }
 
         // Determine the algorithm based on the length (e.g., sha256, sha384, sha512).

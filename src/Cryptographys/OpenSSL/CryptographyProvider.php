@@ -101,7 +101,7 @@ final class CryptographyProvider extends Provider
      * This method uses OpenSSL to create a pseudorandom byte string, which
      * can be used for cryptographic purposes.
      *
-     * @param int $length The length of the random byte string to generate.
+     * @param  int $length The length of the random byte string to generate.
      * @return string A pseudorandom byte string of the specified length.
      */
     public function randomBytes(int $length): string
@@ -718,7 +718,7 @@ final class CryptographyProvider extends Provider
      * This method compares the provided algorithm against the list of
      * supported digest algorithms and returns whether it is supported.
      *
-     * @param string $algorithm The digest algorithm to check.
+     * @param  string $algorithm The digest algorithm to check.
      * @return bool Returns `true` if the algorithm is supported, otherwise `false`.
      */
     private function isSupportedDigestAlgorithm(string $algorithm): bool
@@ -732,7 +732,7 @@ final class CryptographyProvider extends Provider
      * This method compares the provided algorithm against the list of
      * supported cipher algorithms and returns whether it is supported.
      *
-     * @param mixed $algorithm The cipher algorithm to check.
+     * @param  mixed $algorithm The cipher algorithm to check.
      * @return bool Returns `true` if the algorithm is supported, otherwise `false`.
      */
     private function isSupportedCipherAlgorithm($algorithm): bool

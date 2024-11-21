@@ -24,7 +24,7 @@ abstract class Processor implements ProcessorInterface
      *
      * @var Provider
      */
-    private readonly Provider $provider;
+    private Provider $provider;
 
     /**
      * Instance of JwtAlgorithmManager used to manage JWT algorithms.
@@ -46,7 +46,7 @@ abstract class Processor implements ProcessorInterface
     /**
      * Sets the algorithm manager.
      *
-     * @param JwtAlgorithmManager $manager The instance of JwtAlgorithmManager.
+     * @param  JwtAlgorithmManager $manager The instance of JwtAlgorithmManager.
      * @return self
      */
     private function setManager(JwtAlgorithmManager $manager): self
@@ -78,7 +78,7 @@ abstract class Processor implements ProcessorInterface
     /**
      * Sets the provider instance used for cryptographic operations.
      *
-     * @param Provider $provider The instance of Provider.
+     * @param  Provider $provider The instance of Provider.
      * @return self
      */
     public function setProvider(Provider $provider): self

@@ -26,7 +26,7 @@ use Phithi92\JsonWebToken\JwtPayload;
  * - Signing a payload with a specified algorithm and key to create a JWS token.
  *
  * @package Phithi92\JsonWebToken\Processors
- * @author Phillip Thiele <development@phillip-thiele.de>
+ * @author  Phillip Thiele <development@phillip-thiele.de>
  */
 class SignatureProcessor extends Processor
 {
@@ -86,7 +86,7 @@ class SignatureProcessor extends Processor
      */
     public function decrypt(JwtTokenContainer $token): JwtTokenContainer
     {
-//        $this->verify($token);
+        //        $this->verify($token);
 
         return $token;
     }
@@ -108,17 +108,17 @@ class SignatureProcessor extends Processor
             throw new InvalidFormatException();
         }
 
-        $headerDecoded = Base64UrlEncoder::decode($tokenData[0]);
-        $payloadDecoded = Base64UrlEncoder::decode($tokenData[1]);
-        $signatureDecoded = Base64UrlEncoder::decode($tokenData[2]);
+        $headerDecoded = Base64UrlEncoder::decode($tokenData[0], true);
+        $payloadDecoded = Base64UrlEncoder::decode($tokenData[1], true);
+        $signatureDecoded = Base64UrlEncoder::decode($tokenData[2], true);
 
         $jwtHeader = JwtHeader::fromJson($headerDecoded);
         $jwtPayload = JwtPayload::fromJson($payloadDecoded);
 
         $token = (new JwtTokenContainer())
-                ->setHeader($jwtHeader)
-                ->setPayload($jwtPayload)
-                ->setSignature($signatureDecoded);
+            ->setHeader($jwtHeader)
+            ->setPayload($jwtPayload)
+            ->setSignature($signatureDecoded);
 
         return $token;
     }
@@ -174,12 +174,12 @@ class SignatureProcessor extends Processor
      * Depending on the algorithm and whether a signature is provided or not,
      * this function either signs the given data or verifies the provided signature.
      *
-     * @param string      $algorithmType    The type of algorithm to be used (ECDSA, RSA_PSS, RSA, HMAC).
-     * @param string      $verificationSignatureData    The data to be signed or verified.
-     * @param string      $secret           The secret or key for the signing/verifying process.
-     * @param string      $hashAlgorithm    The hash algorithm to use (e.g., SHA256).
-     * @param string|null $decodedSignature The signature to verify (if applicable).
-     * @param string|null &$signature       The variable to store the generated signature (if applicable).
+     * @param string      $algorithmType             The type of algorithm to be used (ECDSA, RSA_PSS, RSA, HMAC).
+     * @param string      $verificationSignatureData The data to be signed or verified.
+     * @param string      $secret                    The secret or key for the signing/verifying process.
+     * @param string      $hashAlgorithm             The hash algorithm to use (e.g., SHA256).
+     * @param string|null $decodedSignature          The signature to verify (if applicable).
+     * @param string|null &$signature                The variable to store the generated signature (if applicable).
      *
      * @throws InvalidArgument if the algorithm type is unsupported.
      */
@@ -253,7 +253,7 @@ class SignatureProcessor extends Processor
     {
         // Ensure the algorithm format is valid (e.g., 'HS256', 'RS512', etc.)
         if (!preg_match('/^(HS|RS|ES|PS)(256|384|512)$/', $algorithm, $matches)) {
-            throw UnsupportedAlgorithmException($algorithm);
+            throw new UnsupportedAlgorithmException($algorithm);
         }
 
         return [$matches[1], (int) $matches[2]];

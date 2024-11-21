@@ -8,7 +8,6 @@ use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
  * Enum for algorithm-related error messages.
  *
  * Uses `getMessage()` to format messages with dynamic details.
- *
  */
 enum ErrorMessagesEnum: string
 {

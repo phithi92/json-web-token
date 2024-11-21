@@ -13,6 +13,7 @@ use Phithi92\JsonWebToken\Exceptions\Payload\NotBeforeOlderThanExpException;
 use Phithi92\JsonWebToken\Exceptions\Payload\NotBeforeOlderThanIatException;
 use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
 use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
+use Phithi92\JsonWebToken\Exceptions\Payload\InvalidJti;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use DateTimeImmutable;
 use Exception;
@@ -28,11 +29,11 @@ use stdClass;
  * operations.
  *
  * @package Phithi92\JsonWebToken
- * @author Phillip Thiele <development@phillip-thiele.de>
+ * @author  Phillip Thiele <development@phillip-thiele.de>
  * @version 1.0.0
- * @since 1.0.0
+ * @since   1.0.0
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
- * @link https://github.com/phithi92/json-web-token Project on GitHub
+ * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
 final class JwtPayload
 {
@@ -53,19 +54,23 @@ final class JwtPayload
     }
 
     /**
-     * Validates JWT payload fields ('iat', 'nbf', 'exp') for correct issuance, expiration, and validity.
+     * Validates JWT payload fields ('iat', 'nbf', 'exp', 'usage') to ensure correct issuance,
+     * expiration, validity, and usage constraints.
      *
-     * Ensures:
-     * - 'iat' and 'exp' are present, and 'iat' is not later than 'exp'.
+     * This method performs the following checks:
+     * - 'iat' and 'exp' are present, with 'iat' occurring before or at the same time as 'exp'.
      * - 'nbf' is within valid bounds relative to 'iat' and 'exp'.
-     * - Validates the token’s activation and expiration times.
+     * - The token's activation ('nbf') and expiration ('exp') times are valid relative to the current time.
+     * - The 'usage' field, which determines if the token is intended for one-time or reusable access, is
+     *   either 'reusable' or 'one_time' if present.
      *
      * @throws ValueNotFoundException if 'iat' or 'exp' is missing.
      * @throws IatEarlierThanExpException if 'iat' is later than 'exp'.
      * @throws NotBeforeOlderThanExpException if 'nbf' is after 'exp'.
      * @throws NotBeforeOlderThanIatException if 'nbf' is before 'iat'.
-     * @throws ExpiredPayloadException if the token is expired.
+     * @throws ExpiredPayloadException if the token has expired.
      * @throws NotYetValidException if the token is not yet valid.
+     * @throws InvalidJti if the 'usage' field does not match expected values ('reusable' or 'one_time').
      */
     public function validate(): void
     {
@@ -113,7 +118,7 @@ final class JwtPayload
      * Optionally validates whether the 'iss' (issuer) claim matches the expected issuer.
      *
      * @param  string $expectedIssuer The expected issuer of the JWT.
-     * @see getField() Used to retrieve the 'iss' claim from the payload.
+     * @see    getField() Used to retrieve the 'iss' claim from the payload.
      * @throws InvalidIssuerException if the issuer does not match the expected value.
      */
     public function validateIssuer(string $expectedIssuer): void
@@ -128,7 +133,7 @@ final class JwtPayload
      * Optionally validates whether the 'aud' (audience) claim matches the expected audience.
      *
      * @param  string|array $expectedAudience The expected audience(s) of the JWT.
-     * @see getField() Used to retrieve the 'aud' claim from the payload.
+     * @see    getField() Used to retrieve the 'aud' claim from the payload.
      * @throws InvalidAudienceException if the audience does not match the expected value.
      */
     public function validateAudience(string|array $expectedAudience): void
@@ -164,8 +169,8 @@ final class JwtPayload
      * This static method parses the JSON input and populates the payload fields accordingly.
      *
      * @param  string $json A JSON-encoded string representing the JWT payload data.
-     * @uses JsonEncoder Encodes the array representation of the object into JSON.
-     * @see fromArray()
+     * @uses   JsonEncoder Encodes the array representation of the object into JSON.
+     * @see    fromArray()
      * @return self Returns an instance of JwtPayload with fields populated from the JSON data.
      * @throws InvalidArgumentException If the JSON cannot be decoded or the data is invalid.
      */
@@ -210,9 +215,9 @@ final class JwtPayload
      * Converts the token data (JWT payload) into an array.
      * Before returning the array, it validates the data.
      *
-     * @see validate() Called to ensure the payload meets required criteria.
-     * @see setField()
-     * @see getField()
+     * @see    validate() Called to ensure the payload meets required criteria.
+     * @see    setField()
+     * @see    getField()
      * @return array The complete JWT payload as an associative array.
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
@@ -234,8 +239,8 @@ final class JwtPayload
      * Converts the payload properties to an array using `toArray`, then encodes them
      * as a JSON string suitable for inclusion in a JWT.
      *
-     * @uses JsonEncoder Encodes the array representation of the object into JSON.
-     * @see toArray()
+     * @uses   JsonEncoder Encodes the array representation of the object into JSON.
+     * @see    toArray()
      * @return string The JSON-encoded representation of the JWT payload.
      */
     public function toJson(): string
@@ -273,7 +278,7 @@ final class JwtPayload
      * Sets the "iss" (issuer) claim in the JWT payload.
      *
      * @param  string $issuer The issuer of the JWT.
-     * @see addField()
+     * @see    addField()
      * @return self Returns the instance to allow method chaining.
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
@@ -290,7 +295,7 @@ final class JwtPayload
      * in the payload. The 'iss' field is expected to contain a string identifying
      * the issuer, or null if the field is not set.
      *
-     * @see getField()
+     * @see    getField()
      * @return string|null The issuer identifier as a string, or null if it is not present.
      */
     public function getIssuer(): ?string
@@ -302,7 +307,7 @@ final class JwtPayload
      * Sets the "aud" (audience) claim in the JWT payload.
      *
      * @param  string|array $audience The intended audience of the JWT. Can be a string or an array of strings.
-     * @see addField()
+     * @see    addField()
      * @return self Returns the instance to allow method chaining.
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
@@ -319,7 +324,7 @@ final class JwtPayload
      * in the payload. The 'aud' field is expected to contain a string identifying
      * the intended audience, or null if the field is not set.
      *
-     * @see getField()
+     * @see    getField()
      * @return string|null The audience identifier as a string, or null if it is not present.
      */
     public function getAudience(): ?string
@@ -332,7 +337,7 @@ final class JwtPayload
      *
      * @param  string $dateTime The issued at time, which will be parsed and stored as a Unix timestamp.
      * @return self Returns the instance to allow method chaining.
-     * @see setTimestamp()
+     * @see    setTimestamp()
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
      */
@@ -348,7 +353,7 @@ final class JwtPayload
      * in the payload. The 'iat' field is expected to contain a string representing
      * a timestamp, or null if the field is not set.
      *
-     * @see getField()
+     * @see    getField()
      * @return string|null The issued-at timestamp as a string, or null if it is not present.
      */
     public function getIssuedAt(): ?string
@@ -360,7 +365,7 @@ final class JwtPayload
      * Sets the "exp" (expiration) claim in the JWT payload.
      *
      * @param  string $dateTime The expiration time, which will be parsed and stored as a Unix timestamp.
-     * @see setTimestamp()
+     * @see    setTimestamp()
      * @return self Returns the instance to allow method chaining.
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
@@ -378,7 +383,7 @@ final class JwtPayload
      * in the payload. The 'exp' field is expected to contain a string representing
      * a timestamp, or null if the field is not set.
      *
-     * @see getField()
+     * @see    getField()
      * @return string|null The expiration timestamp as a string, or null if it is not present.
      */
     public function getExpiration(): ?string
@@ -390,7 +395,7 @@ final class JwtPayload
      * Sets the "nbf" (not before) claim in the JWT payload.
      *
      * @param  string $dateTime The not before time, which will be parsed and stored as a Unix timestamp.
-     * @see setTimestamp()
+     * @see    setTimestamp()
      * @return self Returns the instance to allow method chaining.
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
@@ -432,7 +437,7 @@ final class JwtPayload
      *
      * @param  string $key      The key for the timestamp field (e.g., "iat", "nbf", "exp").
      * @param  string $dateTime The datetime string to be converted into a timestamp.
-     * @see setField()
+     * @see    setField()
      * @return self Returns the instance to allow method chaining.
      * @throws InvalidDateTimeException If the datetime string is in an invalid format.
      * @throws InvalidValueTypeException If the value type is invalid.
