@@ -33,16 +33,16 @@ final class JwtAlgorithmManager
     private readonly string $algorithm;
 
     // The type of token (either 'JWS' for signed or 'JWE' for encrypted)
-    private readonly string $type;
+    private string $type;
 
     // The passphrase for symmetric algorithms (optional)
-    private readonly string $passphrase;
+    private readonly ?string $passphrase;
 
     // The public key for asymmetric algorithms (optional)
-    private readonly OpenSSLAsymmetricKey $publicKey;
+    private readonly ?OpenSSLAsymmetricKey $publicKey;
 
     // The private key for asymmetric algorithms (optional)
-    private readonly OpenSSLAsymmetricKey $privateKey;
+    private readonly ?OpenSSLAsymmetricKey $privateKey;
 
     /**
      * Constructor for symmetric or asymmetric algorithms.
@@ -54,7 +54,6 @@ final class JwtAlgorithmManager
      * @param string|null $publicKey  Optional public key for asymmetric algorithms.
      * @param string|null $privateKey Optional private key for asymmetric algorithms.
      *
-     * @throws UnsupportedAlgorithmException
      * @throws MissingPassphraseException
      * @throws MissingKeysException
      */
@@ -64,8 +63,22 @@ final class JwtAlgorithmManager
         string $publicKey = null,
         string $privateKey = null
     ) {
-        $this->initializeKeys($passphrase, $publicKey, $privateKey);
-        $this->setAlgorithm($algorithm);
+        $this->validateKeys($passphrase, $publicKey, $privateKey);
+
+        $this->algorithm = $algorithm;
+
+        if ($passphrase === null) {
+            $public = $this->validatePublicKey($publicKey);
+            $private = $this->validatePrivateKey($privateKey);
+
+            $this->publicKey = $public;
+            $this->privateKey = $private;
+            $this->passphrase = null;
+        } else {
+            $this->passphrase = $passphrase;
+            $this->publicKey = null;
+            $this->privateKey = null;
+        }
     }
 
     /**
@@ -73,7 +86,7 @@ final class JwtAlgorithmManager
      *
      * @return string The algorithm name.
      */
-    public function getAlgorithm(): ?string
+    public function getAlgorithm(): string|null
     {
         return $this->algorithm ?? null;
     }
@@ -83,7 +96,7 @@ final class JwtAlgorithmManager
      *
      * @return string|null The passphrase, if available.
      */
-    public function getPassphrase(): ?string
+    public function getPassphrase(): string|null
     {
         return $this->passphrase ?? null;
     }
@@ -113,7 +126,7 @@ final class JwtAlgorithmManager
      *
      * @return string The token type.
      */
-    public function getTokenType(): ?string
+    public function getTokenType(): string|null
     {
         return $this->type ?? null;
     }
@@ -125,10 +138,10 @@ final class JwtAlgorithmManager
      * If the key is invalid, it throws an InvalidArgument exception.
      *
      * @param  string $publicKey The public key to be set.
-     * @return self Returns the current instance for method chaining.
+     * @return OpenSSLAsymmetricKey
      * @throws InvalidAsymetricKeyException If the public key is invalid.
      */
-    private function setPublicKey(string $publicKey): self
+    private function validatePublicKey(string $publicKey): OpenSSLAsymmetricKey
     {
         $keyResource = openssl_pkey_get_public($publicKey);
 
@@ -137,9 +150,7 @@ final class JwtAlgorithmManager
             throw new InvalidAsymetricKeyException();
         }
 
-        $this->publicKey = $keyResource;
-
-        return $this;
+        return $keyResource;
     }
 
     /**
@@ -149,10 +160,10 @@ final class JwtAlgorithmManager
      * If the key is invalid, it throws an InvalidArgument exception.
      *
      * @param  string $privateKey The private key to be set.
-     * @return self Returns the current instance for method chaining.
+     * @return OpenSSLAsymmetricKey
      * @throws InvalidAsymetricKeyException If the private key is invalid.
      */
-    private function setPrivateKey(string $privateKey): self
+    private function validatePrivateKey(string $privateKey): OpenSSLAsymmetricKey
     {
         $keyResource = openssl_pkey_get_private($privateKey);
 
@@ -161,21 +172,7 @@ final class JwtAlgorithmManager
             throw new InvalidAsymetricKeyException();
         }
 
-        $this->privateKey = $keyResource;
-
-        return $this;
-    }
-
-    /**
-     * Sets the passphrase for encryption or decryption operations.
-     *
-     * @param  string $passphrase The passphrase to set.
-     * @return self Returns the current instance for chaining.
-     */
-    private function setPassphrase(string $passphrase): self
-    {
-        $this->passphrase = $passphrase;
-        return $this;
+        return $keyResource;
     }
 
     /**
@@ -187,18 +184,6 @@ final class JwtAlgorithmManager
     public function setTokenType(string $type): self
     {
         $this->type = $type;
-        return $this;
-    }
-
-    /**
-     * Sets the algorithm to be used for cryptographic operations.
-     *
-     * @param  string $algorithm The algorithm to set.
-     * @return self Returns the current instance for chaining.
-     */
-    private function setAlgorithm(string $algorithm): self
-    {
-        $this->algorithm = $algorithm;
         return $this;
     }
 
@@ -219,7 +204,7 @@ final class JwtAlgorithmManager
      *
      * @return void
      */
-    private function initializeKeys(
+    private function validateKeys(
         ?string $passphrase,
         ?string $publicKey,
         ?string $privateKey
@@ -230,13 +215,6 @@ final class JwtAlgorithmManager
 
         if (empty($passphrase) && ($publicKey === null || $privateKey === null)) {
             throw new MissingKeysException();
-        }
-
-        if ($passphrase === null) {
-            $this->setPublicKey($publicKey);
-            $this->setPrivateKey($privateKey);
-        } else {
-            $this->setPassphrase($passphrase);
         }
     }
 }

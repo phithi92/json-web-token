@@ -38,7 +38,7 @@ use stdClass;
 final class JwtPayload
 {
     // stdClass to store token data (JWT payload)
-    private stdClass $payload;
+    private object $payload;
 
     // DateTimeImmutable object to handle date-related operations
     private readonly DateTimeImmutable $dateTimeImmutable;
@@ -74,20 +74,21 @@ final class JwtPayload
      */
     public function validate(): void
     {
-        $iat = $this->getField('iat');  // Issued At
-        $nbf = $this->getField('nbf');  // Not Before
-        $exp = $this->getField('exp');  // Expiration
-        $now = $this->dateTimeImmutable->getTimestamp(); // Current Unix timestamp
-
         // Check if "iat" exists
-        if ($iat === null) {
+        if ($this->getField('iat') === null) {
             throw new ValueNotFoundException('iat');
         }
 
         // Check if "exp" exists
-        if ($exp === null) {
+        if ($this->getField('exp') === null) {
             throw new ValueNotFoundException('exp');
         }
+
+        $iat = (int) $this->getField('iat');  // Issued At
+        $nbf = (int) $this->getField('nbf');  // Not Before
+        $exp = (int) $this->getField('exp');  // Expiration
+        $now = $this->dateTimeImmutable->getTimestamp(); // Current Unix timestamp
+
 
         // Check if "iat" is earlier than "exp"
         if ($iat && $exp && $iat > $exp) {
@@ -172,7 +173,6 @@ final class JwtPayload
      * @uses   JsonEncoder Encodes the array representation of the object into JSON.
      * @see    fromArray()
      * @return self Returns an instance of JwtPayload with fields populated from the JSON data.
-     * @throws InvalidArgumentException If the JSON cannot be decoded or the data is invalid.
      */
     public static function fromJson(string $json): self
     {
@@ -195,7 +195,7 @@ final class JwtPayload
      *                        values are the corresponding claim values.
      * @return self A populated JwtPayload instance with the provided payload data.
      */
-    public static function fromArray(array|stdClass $payload): self
+    public static function fromArray(array|object $payload): self
     {
         // Create a new instance of JwtPayload
         $instance = new self();

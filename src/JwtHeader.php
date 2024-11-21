@@ -57,12 +57,17 @@ final class JwtHeader
     /**
      * Sets the Key ID ('kid') for the JWT header.
      *
-     * Validates that the provided Key ID consists only of alphanumeric characters,
-     * dashes, or underscores. If the format is invalid, an exception is thrown.
+     * Validates that the provided Key ID:
+     * - Consists only of alphanumeric characters, dashes (`-`), or underscores (`_`).
+     * - Falls within the allowed length range (3 to 64 characters).
      *
-     * @param  string $type The Key ID to set.
-     * @return self Returns the instance for method chaining.
-     * @throws InvalidArgumentException If the provided Key ID format is invalid.
+     * If the format or length of the Key ID is invalid, an exception is thrown.
+     *
+     * @param  string $type            The Key ID to set.
+     * @return self                    Returns the instance for method chaining.
+     *
+     * @throws InvalidKidFormatException If the Key ID contains invalid characters.
+     * @throws InvalidKidLengthException If the Key ID is shorter than 3 or longer than 64 characters.
      */
     public function setKid(string $type): self
     {
@@ -192,7 +197,6 @@ final class JwtHeader
      * Uses JsonEncoder to transform the header array into JSON format.
      *
      * @return string The JSON-encoded representation of the header.
-     * @throws DecodingException If JSON encoding fails.
      */
     public function toJson(): string
     {
@@ -206,7 +210,6 @@ final class JwtHeader
      *
      * @param  string $json The JSON-encoded header string.
      * @return self   A new instance of JwtHeader with populated fields.
-     * @throws DecodingException If JSON decoding fails or data is invalid.
      */
     public static function fromJson(string $json): self
     {

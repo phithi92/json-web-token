@@ -95,11 +95,11 @@ class EncodingProcessor extends Processor
     /**
      * Constructor for initializing the cipher object.
      *
-     * This method expects an instance of the Openssl class as a parameter.
-     * If the provided argument is not an instance of Openssl, an InvalidArgumentException is thrown.
+     * This constructor initializes the cipher object by setting the cryptographic provider.
+     * It expects an instance of `JwtAlgorithmManager` to manage the JWT algorithms.
+     * If the provided argument does not meet the expected type, an exception is thrown.
      *
-     * @param  mixed $manager The cipher object, expected to be an instance of Openssl.
-     * @throws UnsupportedAlgorithmException If the provided argument is not an instance of Openssl.
+     * @param JwtAlgorithmManager $manager The algorithm manager responsible for managing JWT algorithms.
      */
     public function __construct(JwtAlgorithmManager $manager)
     {

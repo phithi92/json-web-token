@@ -9,22 +9,19 @@ use OpenSSLAsymmetricKey;
 abstract class Provider implements ProdviderInterface
 {
     // The passphrase for symmetric algorithms (optional)
-    private readonly string $passphrase;
+    private readonly ?string $passphrase;
 
     // The public key for asymmetric algorithms (optional)
-    private readonly OpenSSLAsymmetricKey $publicKey;
+    private readonly ?OpenSSLAsymmetricKey $publicKey;
 
     // The private key for asymmetric algorithms (optional)
-    private readonly OpenSSLAsymmetricKey $privateKey;
+    private readonly ?OpenSSLAsymmetricKey $privateKey;
 
     public function __construct(JwtAlgorithmManager $manager)
     {
-        if ($manager->getPublicKey() === null) {
-            $this->passphrase = $manager->getPassphrase();
-        } else {
-            $this->publicKey = $manager->getPublicKey();
-            $this->privateKey = $manager->getPrivateKey();
-        }
+        $this->passphrase = $manager->getPublicKey() === null ? $manager->getPassphrase() : null;
+        $this->publicKey = $manager->getPublicKey();
+        $this->privateKey = $manager->getPrivateKey();
     }
 
     public function getPrivateKey(): ?OpenSSLAsymmetricKey

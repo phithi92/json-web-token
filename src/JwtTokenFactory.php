@@ -48,15 +48,22 @@ final class JwtTokenFactory
      */
     public function __construct(JwtAlgorithmManager $manager)
     {
-        $this->setManager($manager);
-        $this->configureProcessorForAlgorithm();
+        $this->manager = $manager;
+        $algorithm = $this->getManager()->getAlgorithm();
+
+        $processor = $this->createProcessorForAlgorithm($algorithm);
+        if ($processor === null) {
+            throw new UnsupportedAlgorithmException($algorithm);
+        }
+        $this->processor = $processor;
+
+        $this->getManager()->setTokenType($processor->getTokenType());
     }
 
     /**
      * Creates a JSON Web Token (JWT) using the provided payload.
      *
      * Determines if the token should be a JWS (signed) or JWE (encrypted),
-     * and constructs the token accordingly.
      * and constructs the token accordingly. The token's usage is defined
      *
      * @param  JwtPayload $payload The data to encode within the JWT payload.
@@ -69,7 +76,6 @@ final class JwtTokenFactory
             $this->getManager()->getAlgorithm(),
             $this->getManager()->getTokenType()
         );
-
         $token = (new JwtTokenContainer($payload))
             ->setHeader($header);
 
@@ -240,31 +246,5 @@ final class JwtTokenFactory
     private function getProcessor(): Processor
     {
         return $this->processor;
-    }
-
-    /**
-     * Sets the processor instance.
-     *
-     * @param  Processor $processor The processor to set.
-     * @return self Returns the current instance for method chaining.
-     */
-    private function setProcessor(Processor $processor): self
-    {
-        $this->processor = $processor;
-        return $this;
-    }
-
-    /**
-     * Sets the JwtAlgorithmManager.
-     *
-     * This method sets the manager responsible for handling JWT algorithms.
-     *
-     * @param  JwtAlgorithmManager $manager The manager to set.
-     * @return self The current instance for method chaining.
-     */
-    private function setManager(JwtAlgorithmManager $manager): self
-    {
-        $this->manager = $manager;
-        return $this;
     }
 }

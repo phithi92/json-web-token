@@ -2,11 +2,10 @@
 
 namespace Phithi92\JsonWebToken\Cryptographys\OpenSSL;
 
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidAsymetricKeyException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidInitializeVectorException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidSecretLengthException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidAsymetricKeyLength;
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\EncryptionVerificationException;
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\EncryptionSignException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnexpectedOutputException;
@@ -14,7 +13,6 @@ use Phithi92\JsonWebToken\Exceptions\Cryptographys\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Cryptographys\OpenSSL\AlgorithmsTrait;
 use Phithi92\JsonWebToken\Cryptographys\Provider;
-use OpenSSLAsymmetricKey;
 
 use function openssl_decrypt;
 use function openssl_encrypt;
@@ -53,15 +51,6 @@ final class CryptographyProvider extends Provider
 
     private array $digestAlgorithms = [];
     private array $cipherAlgorithms = [];
-
-        // The passphrase for symmetric algorithms (optional)
-    private readonly ?string $passphrase;
-
-    // The public key for asymmetric algorithms (optional)
-    private readonly ?OpenSSLAsymmetricKey $publicKey;
-
-    // The private key for asymmetric algorithms (optional)
-    private readonly ?OpenSSLAsymmetricKey $privateKey;
 
     /**
      * Retrieves the list of supported digest algorithms.
@@ -119,7 +108,7 @@ final class CryptographyProvider extends Provider
      * @param string      $iv              The initialization vector used in encryption.
      * @param string|null $tag             (Optional) The authentication tag for verifying integrity.
      *
-     * @throws EncryptionDecryptionException if decryption fails.
+     * @throws DecryptionException if decryption fails.
      */
     public function decryptWithPassphrase(
         string $data,
@@ -136,11 +125,11 @@ final class CryptographyProvider extends Provider
         // Decrypt data with AES and optional tag for integrity checking
         $decrypted_data = openssl_decrypt($data, $cipher, $passphrase, OPENSSL_RAW_DATA, $iv, $tag);
         if ($decrypted_data === false) {
-            throw new EncryptionDecryptionException();
+            throw new DecryptionException();
         }
 
         if (empty($decrypted_data)) {
-            throw new EncryptionDecryptionException();
+            throw new DecryptionException();
         }
     }
 
@@ -148,7 +137,7 @@ final class CryptographyProvider extends Provider
      * Encrypts data using a passphrase and AES cipher.
      *
      * @param string $data         The data to be encrypted.
-     * @param string &$cipher_data Reference to the output of encrypted data.
+     * @param string &$encrypted_data Reference to the output of encrypted data.
      * @param string $cipher       The encryption algorithm (e.g., AES-256-CBC).
      * @param string $passphrase   The secret key used for encryption.
      * @param string $iv           The initialization vector used in encryption.
@@ -187,11 +176,12 @@ final class CryptographyProvider extends Provider
      * Decrypts data using a private RSA key.
      *
      * @param string $data            The encrypted data to be decrypted.
-     * @param string &$decrypted_data Reference to the output of decrypted data.
-     * @param string $private_pem     The private key in PEM format.
      * @param int    $padding         The padding algorithm used during encryption.
      *
-     * @throws EncryptionDecryptionException if decryption fails.
+     * @return string                 The decrypted plaintext data.
+     *
+     * @throws EmptyFieldException    If the input data is empty.
+     * @throws DecryptionException    If decryption fails or results in empty output.
      */
     public function rsaDecryptWithPrivateKey(string $data, int $padding): string
     {
@@ -207,13 +197,13 @@ final class CryptographyProvider extends Provider
 
         // Decrypt data with RSA private key
         if (!openssl_private_decrypt($data, $decrypted_data, $private_key, $padding)) {
-            throw new EncryptionDecryptionException();
+            throw new DecryptionException();
         }
 
         // Result may be empty if decryption libary is configured incorrectly
         // or if memory allocation fails
         if (empty($decrypted_data)) {
-            throw new EncryptionDecryptionException();
+            throw new DecryptionException();
         }
 
         return $decrypted_data;
@@ -223,11 +213,12 @@ final class CryptographyProvider extends Provider
      * Encrypts data using a public RSA key.
      *
      * @param string $data            The data to be encrypted.
-     * @param string &$encrypted_data Reference to the output of encrypted data.
-     * @param string $public_pem      The public key in PEM format.
      * @param int    $padding         The padding algorithm used during encryption.
      *
-     * @throws EncryptionException if encryption fails.
+     * @return string                 The encrypted data in binary format.
+     *
+     * @throws EmptyFieldException    If the input data is empty.
+     * @throws EncryptionException    If encryption fails or results in empty output.
      */
     public function rsaEncryptWithPublicKey(string $data, int $padding): string
     {
@@ -322,7 +313,7 @@ final class CryptographyProvider extends Provider
 
         // Verify that the IV matches the original IV
         if ($ciphertextIV !== $iv) {
-            throw new Exception("Decryption failed: Integrity check failed.");
+            throw new DecryptionException();
         }
 
         // Rebuild the plaintext key from the blocks
@@ -398,7 +389,6 @@ final class CryptographyProvider extends Provider
      * Encrypts a message using AES in GCM mode.
      *
      * @param  string $plaintext The plaintext message to be encrypted
-     * @param  string $key       The symmetric encryption key
      * @param  int    $bitLength The length of the key (128, 192, or 256 bits)
      * @param  string $iv        The initialization vector (IV)
      * @param  string $authTag   The authentication tag (generated by the function)
@@ -441,12 +431,11 @@ final class CryptographyProvider extends Provider
      * Decrypts a message using AES in GCM mode.
      *
      * @param  string $ciphertext The encrypted message (ciphertext)
-     * @param  string $key        The symmetric key used for decryption
      * @param  int    $bitLength  The length of the key (128, 192, or 256 bits)
      * @param  string $iv         The initialization vector (IV)
      * @param  string $authTag    The authentication tag (to verify integrity)
      * @return string The decrypted plaintext
-     * @throws EncryptionDecryptionException If decryption fails or the authentication tag is invalid
+     * @throws DecryptionException If decryption fails or the authentication tag is invalid
      */
     public function aesGcmDecrypt(string $ciphertext, int $bitLength, string $iv, string $authTag): string
     {
@@ -522,17 +511,19 @@ final class CryptographyProvider extends Provider
     }
 
     /**
-     * Generic method to sign data using a private key.
+     * Signs data using the specified algorithm and private RSA key.
      *
-     * This method signs the given data using the specified algorithm and private key.
-     * It validates the private key, checks the key length, and applies optional padding (such as RSA-PSS)
-     * before performing the signing operation.
+     * @param string $data            The data to be signed.
+     * @param string &$signature      The variable to store the generated signature.
+     * @param string $algorithm       The signing algorithm to use (e.g., SHA256, SHA512).
      *
-     * @param string   $data        The data to be signed.
-     * @param string   &$signature  The variable to store the generated signature.
-     * @param string   $algorithm   The algorithm to use for signing (e.g., 'SHA256', 'RSA-PSS').
-     * @param string   $private_pem The private key in PEM format.
-     * @param int|null $padding     Optional padding parameter for algorithms like RSA-PSS.
+     * @return void                   The signature is returned by reference in the $signature variable.
+     *
+     * @throws EmptyFieldException          If the input data or signature variable is invalid.
+     * @throws InvalidAsymetricKeyException If the private key is invalid or its details cannot be retrieved.
+     * @throws InvalidAsymetricKeyLength    If the private key length is greater than the expected length for
+     *                                      the algorithm.
+     * @throws EncryptionException          If signing the data fails.
      */
     public function signWithAlgorithm(
         string $data,
@@ -547,7 +538,7 @@ final class CryptographyProvider extends Provider
         // Get key details
         $key_details = openssl_pkey_get_details($private_key);
         if (!$key_details || !isset($key_details['bits'])) {
-            throw new InvalidAsymetricKey();
+            throw new InvalidAsymetricKeyException();
         }
 
         [$type, $length] = $this->extractAlgorithmComponents($algorithm);
@@ -560,7 +551,7 @@ final class CryptographyProvider extends Provider
 
         // Directly sign the data using the private key and algorithm
         if (!openssl_sign($data, $signature, $private_key, $algorithm)) {
-            throw new EncryptionSignException();
+            throw new EncryptionException();
         }
     }
 
@@ -570,7 +561,6 @@ final class CryptographyProvider extends Provider
      * @param string $data        The data to be signed.
      * @param string &$signature  The variable to store the generated signature.
      * @param string $algorithm   The signing algorithm to be used.
-     * @param string $private_pem The private RSA key in PEM format.
      *
      * @see signWithAlgorithm
      */
@@ -585,7 +575,6 @@ final class CryptographyProvider extends Provider
      * @param string $data        The data to be signed.
      * @param string &$signature  The variable to store the generated signature.
      * @param string $algorithm   The signing algorithm to be used.
-     * @param string $private_pem The private RSA key in PEM format.
      *
      * @see signWithAlgorithm
      */
@@ -600,7 +589,6 @@ final class CryptographyProvider extends Provider
      * @param string $data        The data to be signed.
      * @param string &$signature  The variable to store the generated signature.
      * @param string $algorithm   The signing algorithm to be used.
-     * @param string $private_pem The private ECDSA key in PEM format.
      *
      * @see signWithAlgorithm
      */
@@ -616,7 +604,6 @@ final class CryptographyProvider extends Provider
      *
      * @param string $data       The original data that was signed.
      * @param string $signature  The signature that needs to be verified.
-     * @param string $public_pem The public key in PEM format.
      * @param string $algorithm  The algorithm used for signing (e.g., 'SHA256', 'RSA-PSS').
      *
      * @return bool True if the signature is valid, false otherwise.
@@ -665,7 +652,6 @@ final class CryptographyProvider extends Provider
      *
      * @param string $data       The original data that was signed.
      * @param string $signature  The signature that needs to be verified.
-     * @param string $public_pem The public ECDSA key in PEM format.
      * @param string $algorithm  The hashing algorithm used for signing (e.g., 'SHA256').
      *
      * @return bool True if the signature is valid, false otherwise.
@@ -682,7 +668,6 @@ final class CryptographyProvider extends Provider
      *
      * @param string $data       The original data that was signed.
      * @param string $signature  The signature that needs to be verified.
-     * @param string $public_pem The public RSA-PSS key in PEM format.
      * @param string $algorithm  The hashing algorithm used for signing (e.g., 'SHA256').
      *
      * @return bool True if the signature is valid, false otherwise.
@@ -704,8 +689,8 @@ final class CryptographyProvider extends Provider
     protected function isRsaPayloadSizeAcceptable(string $plaintext, int $lengthInBytes, string $cipher = null): bool
     {
         // Adjust key length based on padding
-        if (!is_null($cipher) && isset($this->padding[$cipher])) {
-            $lengthInBytes -= $this->padding[$cipher];
+        if (!is_null($cipher) && isset($this->paddingLength[$cipher])) {
+            $lengthInBytes -= $this->paddingLength[$cipher];
         }
 
         // Prüfen, ob der Klartext zu groß ist

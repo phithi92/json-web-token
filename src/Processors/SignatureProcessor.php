@@ -43,7 +43,7 @@ class SignatureProcessor extends Processor
     public const ALGO_PS384 = 'PS384';
     public const ALGO_PS512 = 'PS512';
 
-    private static $type = 'JWS';
+    private static string $type = 'JWS';
 
     // List of supported JWS algorithms
     private static array $supported = [
@@ -73,20 +73,19 @@ class SignatureProcessor extends Processor
     }
 
     /**
-     * Verifies the structure and signature of a JWS token, and decodes its payload.
+     * Decrypts a JWT token and verifies its structure and signature.
      *
-     * @param array  $tokenSegments Array containing the token's header, payload, and signature segments.
-     * @param string $secret        Secret (HMAC) or public key (RSA) for signature verification.
+     * This method validates the provided token's structure and signature, decodes its payload,
+     * and optionally verifies it against a secret key or public key.
+     * The verification logic is currently commented out but can be enabled as needed.
      *
-     * @return JwtTokenContainer The decoded payload if verification is successful.
+     * @param JwtTokenContainer $token The JWT token to decrypt and verify.
      *
-     * @throws InvalidSignatureException If the token signature is invalid.
-     * @throws InvalidTokenStructure If the token structure is invalid
-     * @throws InvalidArgument If the key is empty or the token contains invalid characters.
+     * @return JwtTokenContainer       The verified and decrypted JWT token container.
      */
     public function decrypt(JwtTokenContainer $token): JwtTokenContainer
     {
-        //        $this->verify($token);
+        $this->verify($token);
 
         return $token;
     }
@@ -127,14 +126,15 @@ class SignatureProcessor extends Processor
     /**
      * Signs a payload and generates a JWS token.
      *
-     * @param string $payloadJson The payload to be signed, in JSON format.
-     * @param string $secret      Secret key (HMAC) or private key (RSA) used for signing.
-     * @param string $algorithm   The signing algorithm (e.g., 'HS256', 'RS512').
+     * This method takes a JWT payload, signs it using the specified algorithm and key,
+     * and attaches the resulting signature to the token. It supports various algorithms,
+     * including RSA, ECDSA, RSA-PSS, and HMAC.
      *
-     * @return JwtTokenContainer The initialized JwtTokenContainer.
+     * @param JwtTokenContainer $token The JWT token to be signed and updated with a signature.
      *
-     * @throws InvalidArgument If the algorithm is unsupported, the payload is
-     *         invalid, or the key is too short.
+     * @return JwtTokenContainer       The signed JwtTokenContainer with updated header and signature.
+     *
+     * @throws UnsupportedAlgorithmException If the specified algorithm type is not supported.
      */
     public function encrypt(JwtTokenContainer $token): JwtTokenContainer
     {
@@ -154,11 +154,7 @@ class SignatureProcessor extends Processor
         ) {
             $processor->signWithAlgorithm($signatureData, $signature, $shaAlgo);
         } elseif ($algorithmType === CryptographyProvider::HMAC) {
-            $signature = (new HMAC\CryptographyProdvider($this->getManager()))->signHmac(
-                $signatureData,
-                $shaAlgo,
-                $this->getManager()->getPassphrase()
-            );
+            $signature = (new HMAC\CryptographyProdvider($this->getManager()))->signHmac($signatureData, $shaAlgo);
         } else {
             throw new UnsupportedAlgorithmException($algorithmType);
         }
@@ -169,19 +165,17 @@ class SignatureProcessor extends Processor
     }
 
     /**
-     * Processes the signature based on the specified algorithm type.
+     * Processes the verification of a JWT token's signature based on the specified algorithm type.
      *
-     * Depending on the algorithm and whether a signature is provided or not,
-     * this function either signs the given data or verifies the provided signature.
+     * This method verifies the signature of a JWT token by using the appropriate cryptographic algorithm.
+     * It supports various algorithms, including RSA, ECDSA, RSA-PSS, and HMAC.
      *
-     * @param string      $algorithmType             The type of algorithm to be used (ECDSA, RSA_PSS, RSA, HMAC).
-     * @param string      $verificationSignatureData The data to be signed or verified.
-     * @param string      $secret                    The secret or key for the signing/verifying process.
-     * @param string      $hashAlgorithm             The hash algorithm to use (e.g., SHA256).
-     * @param string|null $decodedSignature          The signature to verify (if applicable).
-     * @param string|null &$signature                The variable to store the generated signature (if applicable).
+     * @param JwtTokenContainer $token The JWT token to be verified.
      *
-     * @throws InvalidArgument if the algorithm type is unsupported.
+     * @return void                    Throws an exception if verification fails.
+     *
+     * @throws UnsupportedAlgorithmException If the specified algorithm type is not supported.
+     * @throws InvalidSignatureException     If the signature verification fails.
      */
     public function verify(JwtTokenContainer $token): void
     {
@@ -208,8 +202,7 @@ class SignatureProcessor extends Processor
             $valid = (new HMAC\CryptographyProdvider($this->getManager()))->verifyHmac(
                 $verificationSignatureData,
                 $token->getSignature(),
-                $hashAlgorithm,
-                $this->getManager()->getPassphrase()
+                $hashAlgorithm
             );
         } else {
             throw new UnsupportedAlgorithmException($algorithmType);
@@ -243,11 +236,17 @@ class SignatureProcessor extends Processor
     /**
      * Extracts and validates the algorithm type and bit length from the algorithm string.
      *
-     * @param string $algorithm The algorithm (e.g., 'HS256', 'RS512').
+     * This method parses a given algorithm string (e.g., 'HS256', 'RS512') to extract the algorithm
+     * type and bit length. It ensures the format adheres to supported patterns and validates
+     * compatibility with known cryptographic standards.
      *
-     * @return array An array containing the algorithm type ('HS', 'RS', etc.) and the bit length (256, 384, 512).
+     * @param string $algorithm The algorithm string to be parsed and validated.
      *
-     * @throws InvalidArgument If the algorithm format is invalid.
+     * @return array            An array containing:
+     *                          - string $type: The algorithm type ('HS', 'RS', 'ES', 'PS').
+     *                          - int $length: The bit length of the algorithm (256, 384, 512).
+     *
+     * @throws UnsupportedAlgorithmException If the algorithm format is invalid or unsupported.
      */
     private function extractAlgorithmComponents(string $algorithm): array
     {

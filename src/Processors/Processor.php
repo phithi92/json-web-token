@@ -40,19 +40,7 @@ abstract class Processor implements ProcessorInterface
      */
     public function __construct(JwtAlgorithmManager $manager)
     {
-        $this->setManager($manager);
-    }
-
-    /**
-     * Sets the algorithm manager.
-     *
-     * @param  JwtAlgorithmManager $manager The instance of JwtAlgorithmManager.
-     * @return self
-     */
-    private function setManager(JwtAlgorithmManager $manager): self
-    {
         $this->manager = $manager;
-        return $this;
     }
 
     /**

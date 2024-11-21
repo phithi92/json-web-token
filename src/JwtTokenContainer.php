@@ -66,7 +66,7 @@ final class JwtTokenContainer
      *
      * @return string|null The encrypted payload data, or null if not set.
      */
-    public function getEncryptedPayload(): ?string
+    public function getEncryptedPayload(): string|null
     {
         return $this->encryptedPayload ?? null;
     }
@@ -134,7 +134,7 @@ final class JwtTokenContainer
      *
      * @return JwtPayload|null The JWT payload, or null if not set.
      */
-    public function getPayload(): ?JwtPayload
+    public function getPayload(): JwtPayload|null
     {
         return $this->payload ?? null;
     }
@@ -156,7 +156,7 @@ final class JwtTokenContainer
      *
      * @return string|null The encryption key, or null if not set.
      */
-    public function getCek(): ?string
+    public function getCek(): string|null
     {
         return $this->cek ?? null;
     }
@@ -178,9 +178,9 @@ final class JwtTokenContainer
      *
      * @return string|null The encrypted key, or null if not set.
      */
-    public function getEncryptedKey(): ?string
+    public function getEncryptedKey(): string|null
     {
-        return $this->encryptedKey;
+        return $this->encryptedKey ?? null;
     }
 
     /**
@@ -188,7 +188,7 @@ final class JwtTokenContainer
      *
      * @return string|null The signature, or null if not set.
      */
-    public function getSignature(): ?string
+    public function getSignature(): string|null
     {
         return $this->signature ?? null;
     }
@@ -210,7 +210,7 @@ final class JwtTokenContainer
      *
      * @return string|null The authentication tag, or null if not set.
      */
-    public function getAuthTag(): ?string
+    public function getAuthTag(): string|null
     {
         return $this->authTag ?? null;
     }
@@ -220,7 +220,7 @@ final class JwtTokenContainer
      *
      * @return string|null The initialization vector, or null if not set.
      */
-    public function getIv(): ?string
+    public function getIv(): string|null
     {
         return $this->iv ?? null;
     }

@@ -5,7 +5,6 @@ namespace Phithi92\JsonWebToken\Utilities;
 use Phithi92\JsonWebToken\Exceptions\Json\DecodingException;
 use Phithi92\JsonWebToken\Exceptions\Json\EncodingException;
 use JsonException;
-use stdClass;
 
 /**
  * Class JsonEncoder
@@ -32,11 +31,11 @@ class JsonEncoder
      *
      * @param  string $json        The JSON-encoded string to decode.
      * @param  bool   $associative When true, returns an associative array; when false, returns
-     *                             an stdClass object.
+     *                             an object.
      * @param  int    $options     Additional JSON decode options (e.g., JSON_BIGINT_AS_STRING),
      *                             combined with JSON_THROW_ON_ERROR.
      * @param  int    $depth       The maximum depth for JSON decoding. Defaults to 512.
-     * @return array|stdClass The decoded data, either as an associative array or stdClass object.
+     * @return array|object The decoded data, either as an associative array or stdClass object.
      * @throws DecodingException if the JSON string cannot be decoded.
      */
     public static function decode(
@@ -44,7 +43,7 @@ class JsonEncoder
         bool $associative = false,
         int $options = 0,
         int $depth = 512
-    ): array|stdClass {
+    ): array|object {
         $flags = JSON_THROW_ON_ERROR | $options;
 
         try {
