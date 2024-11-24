@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "dd33d20d451d03e59bf9c0d0a100fdbc",
+    "content-hash": "e470c26f43bdfddd53bf5ef5a5f90f2b",
     "packages": [],
     "packages-dev": [
         {
@@ -608,12 +608,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "134bb9b0324e8f1be9d4e31cb09042fb797ed935"
+                "reference": "9648c0643e73e9e59aff0b03cd2473f469f201bc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/134bb9b0324e8f1be9d4e31cb09042fb797ed935",
-                "reference": "134bb9b0324e8f1be9d4e31cb09042fb797ed935",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9648c0643e73e9e59aff0b03cd2473f469f201bc",
+                "reference": "9648c0643e73e9e59aff0b03cd2473f469f201bc",
                 "shasum": ""
             },
             "require": {
@@ -659,7 +659,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-11-20T16:27:04+00:00"
+            "time": "2024-11-24T08:34:58+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -990,12 +990,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "72bb868cf80c167b7b76e431d1185400051e5a39"
+                "reference": "00e8e29357eba42b70feeea9987a3ab0458bec09"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/72bb868cf80c167b7b76e431d1185400051e5a39",
-                "reference": "72bb868cf80c167b7b76e431d1185400051e5a39",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/00e8e29357eba42b70feeea9987a3ab0458bec09",
+                "reference": "00e8e29357eba42b70feeea9987a3ab0458bec09",
                 "shasum": ""
             },
             "require": {
@@ -1005,7 +1005,7 @@
                 "ext-mbstring": "*",
                 "ext-xml": "*",
                 "ext-xmlwriter": "*",
-                "myclabs/deep-copy": "^1.12.0",
+                "myclabs/deep-copy": "^1.12.1",
                 "phar-io/manifest": "^2.0.4",
                 "phar-io/version": "^3.2.1",
                 "php": ">=8.1",
@@ -1083,7 +1083,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-10-31T05:51:29+00:00"
+            "time": "2024-11-21T14:43:13+00:00"
         },
         {
             "name": "psr/cache",
@@ -2527,12 +2527,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/options-resolver.git",
-                "reference": "4f69e6b9745493ea38e5ffdc937e41e7145aa04c"
+                "reference": "7da8fbac9dcfef75ffc212235d76b2754ce0cf50"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/options-resolver/zipball/4f69e6b9745493ea38e5ffdc937e41e7145aa04c",
-                "reference": "4f69e6b9745493ea38e5ffdc937e41e7145aa04c",
+                "url": "https://api.github.com/repos/symfony/options-resolver/zipball/7da8fbac9dcfef75ffc212235d76b2754ce0cf50",
+                "reference": "7da8fbac9dcfef75ffc212235d76b2754ce0cf50",
                 "shasum": ""
             },
             "require": {
@@ -2586,7 +2586,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-09-25T14:21:43+00:00"
+            "time": "2024-11-20T11:17:29+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -3061,12 +3061,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/string.git",
-                "reference": "205580699b4d3e11f7b679faf2c0f57ffca6981c"
+                "reference": "446e0d146f991dde3e73f45f2c97a9faad773c82"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/string/zipball/205580699b4d3e11f7b679faf2c0f57ffca6981c",
-                "reference": "205580699b4d3e11f7b679faf2c0f57ffca6981c",
+                "url": "https://api.github.com/repos/symfony/string/zipball/446e0d146f991dde3e73f45f2c97a9faad773c82",
+                "reference": "446e0d146f991dde3e73f45f2c97a9faad773c82",
                 "shasum": ""
             },
             "require": {
@@ -3140,7 +3140,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-10-23T06:56:12+00:00"
+            "time": "2024-11-13T13:31:26+00:00"
         },
         {
             "name": "theseer/tokenizer",
