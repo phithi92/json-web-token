@@ -20,7 +20,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1' # Set the PHP version as required
+          php-version: '8.3' # Set the PHP version as required
           extensions: mbstring, json
           tools: composer
 
@@ -31,4 +31,4 @@ jobs:
       # Run PHPStan
       - name: Run PHPStan
         run: |
-          vendor/bin/phpstan analyse --level=max --memory-limit=1G
+          vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=1G
