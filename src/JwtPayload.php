@@ -124,8 +124,8 @@ final class JwtPayload
     public function validateIssuer(string $expectedIssuer): void
     {
         $issuer = $this->getField('iss');
-        if ($issuer === null || $issuer !== $expectedIssuer) {
-            throw new InvalidIssuerException($expectedIssuer, $issuer);
+        if (!is_string($issuer) || $issuer !== $expectedIssuer) {
+            throw new InvalidIssuerException($expectedIssuer, (string) $issuer);
         }
     }
 

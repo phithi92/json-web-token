@@ -30,8 +30,12 @@ final class CryptographyProdvider extends Provider
 {
     use AlgorithmsTrait;
 
-    // Cached list of supported algorithms, initialized lazily.
-    private array $supportedAlgorithms;
+    /**
+     * Cached list of supported algorithms, initialized lazily.
+     *
+     * @var array<string> List of algorithm names indexed by integers.
+     */
+    private array $supportedAlgorithms = [];
 
     public function __construct(JwtAlgorithmManager $manager)
     {
@@ -45,13 +49,18 @@ final class CryptographyProdvider extends Provider
      * This method lazily initializes and caches the list of supported algorithms using
      * PHP's `hash_hmac_algos()` function.
      *
-     * @return array The list of supported algorithms.
+     * @return array<string> The list of supported algorithms.
      */
     public function getSupportedAlgorithms(): array
     {
         return $this->supportedAlgorithms;
     }
 
+    /**
+     *
+     * @param array<string> $algorithms
+     * @return self
+     */
     private function setSupportedAlgorithms(array $algorithms): self
     {
         $this->supportedAlgorithms = $algorithms;

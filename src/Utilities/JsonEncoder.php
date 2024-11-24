@@ -4,6 +4,7 @@ namespace Phithi92\JsonWebToken\Utilities;
 
 use Phithi92\JsonWebToken\Exceptions\Json\DecodingException;
 use Phithi92\JsonWebToken\Exceptions\Json\EncodingException;
+use Phithi92\JsonWebToken\Exceptions\Json\InvalidDepthException;
 use JsonException;
 
 /**
@@ -44,10 +45,12 @@ class JsonEncoder
         int $options = 0,
         int $depth = 512
     ): array|object {
-        $flags = JSON_THROW_ON_ERROR | $options;
+        if ($depth < 1) {
+            throw new InvalidDepthException($depth);
+        }
 
         try {
-            return json_decode($json, $associative, $depth, $flags);
+            return json_decode($json, $associative, $depth, JSON_THROW_ON_ERROR | $options);
         } catch (JsonException $e) {
             throw new DecodingException($e->getMessage());
         }
@@ -70,10 +73,12 @@ class JsonEncoder
      */
     public static function encode(array $array, int $options = 0, int $depth = 512): string
     {
-        $flags = JSON_THROW_ON_ERROR | $options;
+        if ($depth < 1) {
+            throw new InvalidDepthException($depth);
+        }
 
         try {
-            return json_encode($array, $flags, $depth);
+            return json_encode($array, JSON_THROW_ON_ERROR | $options, $depth);
         } catch (JsonException $e) {
             throw new EncodingException($e->getMessage());
         }

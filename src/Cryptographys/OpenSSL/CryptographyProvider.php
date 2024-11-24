@@ -13,6 +13,7 @@ use Phithi92\JsonWebToken\Exceptions\Cryptographys\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Cryptographys\OpenSSL\AlgorithmsTrait;
 use Phithi92\JsonWebToken\Cryptographys\Provider;
+use OpenSSLAsymmetricKey;
 
 use function openssl_decrypt;
 use function openssl_encrypt;
@@ -49,7 +50,18 @@ final class CryptographyProvider extends Provider
 {
     use AlgorithmsTrait;
 
+    /**
+     * Cached list of digest algorithms, initialized lazily.
+     *
+     * @var array<int,string> List of algorithm names indexed by integers.
+     */
     private array $digestAlgorithms = [];
+
+    /**
+     * Cached list of cipher algorithms, initialized lazily.
+     *
+     * @var array<int,string> List of algorithm names indexed by integers.
+     */
     private array $cipherAlgorithms = [];
 
     /**
@@ -58,7 +70,7 @@ final class CryptographyProvider extends Provider
      * If the list of digest algorithms is not already set, this method
      * populates it using OpenSSL's available message digest methods.
      *
-     * @return array An array of supported digest algorithm names.
+     * @return array<int,string> An array of supported digest algorithm names.
      */
     public function getDigestAlgorithms(): array
     {
@@ -74,7 +86,7 @@ final class CryptographyProvider extends Provider
      * If the list of cipher algorithms is not already set, this method
      * populates it using OpenSSL's available cipher methods.
      *
-     * @return array An array of supported cipher algorithm names.
+     * @return array<int,string> An array of supported cipher algorithm names.
      */
     public function getCipherAlgorithms(): array
     {
@@ -246,7 +258,7 @@ final class CryptographyProvider extends Provider
         return $encrypted_data;
     }
 
-    public function aesKeyWrapEncrypt(string $cek, int $length)
+    public function aesKeyWrapEncrypt(string $cek, int $length): string
     {
         $algo = "aes-$length-ecb";
 
@@ -310,13 +322,17 @@ final class CryptographyProvider extends Provider
         return $ciphertext . implode('', $blocks);
     }
 
-    public function aesKeyWrapDecrypt($ciphertextKey)
+    public function aesKeyWrapDecrypt(string $ciphertextKey): string
     {
         // Define the IV and integrity check value
         $iv = hex2bin('A6A6A6A6A6A6A6A6'); // Standard IV for AES Key Wrap
 
         // Split the ciphertext into the initial IV and blocks
         $ciphertextIV = substr($ciphertextKey, 0, 8);
+        if (! $ciphertextIV) {
+            throw new \RuntimeException();
+        }
+
         $blocks = str_split(substr($ciphertextKey, 8), 8); // 8-Byte-Blöcke erstellen
         $n = count($blocks);
 
@@ -492,7 +508,13 @@ final class CryptographyProvider extends Provider
         return $plaintext;
     }
 
-    public function encryptWithEcdhEsP521($payload, $recipientPublicKey)
+    /**
+     *
+     * @param string $payload
+     * @param string $recipientPublicKey
+     * @return array<string, string>
+     */
+    public function encryptWithEcdhEsP521(string $payload, string $recipientPublicKey): array
     {
         // Erstelle ein temporäres Schlüsselpaar (Ephemeral Key)
         $ephemeralKey = openssl_pkey_new(['curve_name' => 'P-521', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
@@ -521,8 +543,13 @@ final class CryptographyProvider extends Provider
         ];
     }
 
-    public function decryptWithEcdhEsP521($ciphertext, $iv, $tag, $ephemeralPublicKey, $recipientPrivateKey)
-    {
+    public function decryptWithEcdhEsP521(
+        string $ciphertext,
+        string $iv,
+        string $tag,
+        string $ephemeralPublicKey,
+        OpenSSLAsymmetricKey $recipientPrivateKey
+    ): string {
         // Berechne das geteilte Geheimnis zwischen dem Empfängerprivaten und dem Ephemeral-öffentlichen Schlüssel
         $sharedSecret = openssl_dh_compute_key($ephemeralPublicKey, $recipientPrivateKey);
 
@@ -826,7 +853,7 @@ final class CryptographyProvider extends Provider
      * Example: 'sha256' -> ['sha', 256].
      *
      * @param  string $algorithm The algorithm string (e.g., 'sha256').
-     * @return array An array containing the algorithm type and bit length.
+     * @return array<int, int|string> An array containing the algorithm type and bit length.
      * @throws UnsupportedAlgorithmException If the algorithm string is not supported.
      */
     public function extractAlgorithmComponents(string $algorithm): array
@@ -835,9 +862,6 @@ final class CryptographyProvider extends Provider
             throw new UnsupportedAlgorithmException($algorithm);
         }
 
-        $algorithmType = $matches[1];
-        $hashLength = (int) $matches[2];
-
-        return [$algorithmType, $hashLength];
+        return [$matches[1], (int) $matches[2]];
     }
 }

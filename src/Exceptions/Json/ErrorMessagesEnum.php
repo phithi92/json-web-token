@@ -16,4 +16,5 @@ enum ErrorMessagesEnum: string
 
     case DecodingFailed = 'JSON decoding failed: %s';
     case EncodingFailed = 'JSON encoding failed: %s';
+    case INVALID_LENGTH = 'Invalid depth. %s';
 }

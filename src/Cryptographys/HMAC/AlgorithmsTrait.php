@@ -20,7 +20,10 @@ trait AlgorithmsTrait
     public const ALGO_SHA384 = 'sha384';
     public const ALGO_SHA512 = 'sha512';
 
-    // Block sizes for different HMAC algorithms (in bytes).
+    /**
+     * Block sizes for different HMAC algorithms (in bytes).
+     * @var array<string,int>
+     */
     public array $blockSizes = [
         self::ALGO_SHA256 => 32,
         self::ALGO_SHA384 => 64,

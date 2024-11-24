@@ -28,14 +28,20 @@ trait AlgorithmsTrait
     public const RSA = 'RS';      // RSA Signature Algorithm (RSA)
     public const HMAC = 'HS';     // HMAC-based Signature Algorithm
 
-    // Array that maps hash algorithms to their recommended key lengths in bits
+    /**
+     * Array that maps hash algorithms to their recommended key lengths in bits
+     * @var array<int,int>
+     */
     public array $keyLength = [
         OPENSSL_ALGO_SHA256 => 2048, // bits
         OPENSSL_ALGO_SHA384 => 3072, // bits
         OPENSSL_ALGO_SHA512 => 4096, // bits
     ];
 
-    // Array that defines padding overhead for different OpenSSL padding schemes
+    /**
+     * Array that defines padding overhead for different OpenSSL padding schemes
+     * @var array<int,int>
+     */
     public array $paddingLength = [
         OPENSSL_PKCS1_PADDING => 11,          // PKCS#1 padding adds 11 bytes
         OPENSSL_PKCS1_OAEP_PADDING => 42,     // PKCS#1 OAEP padding typically adds 42 bytes

@@ -105,7 +105,11 @@ class SignatureProcessor extends Processor
      */
     public function parse(string|array $encodingToken): JwtTokenContainer
     {
-        $tokenData = explode('.', $encodingToken);
+        if (is_string($encodingToken)) {
+            $tokenData = explode('.', $encodingToken);
+        } else {
+            $tokenData = $encodingToken;
+        }
 
         if (count($tokenData) < 3) {
             throw new InvalidFormatException();
@@ -246,7 +250,7 @@ class SignatureProcessor extends Processor
      *
      * @param string $algorithm The algorithm string to be parsed and validated.
      *
-     * @return array <int,int|string>   An array containing:
+     * @return array{string, int}   An array containing:
      *                                  - string $type: The algorithm type ('HS', 'RS', 'ES', 'PS').
      *                                  - int $length: The bit length of the algorithm (256, 384, 512).
      *

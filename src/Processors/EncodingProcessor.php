@@ -41,7 +41,7 @@ use Phithi92\JsonWebToken\JwtAlgorithmManager;
  */
 class EncodingProcessor extends Processor
 {
-    private static $type = 'JWE';
+    private static string $type = 'JWE';
 
     // Direkte Schlüsselverschlüsselung
     public const ALGO_DIR = 'dir';
@@ -82,7 +82,11 @@ class EncodingProcessor extends Processor
     public const ALGO_A192CBC_HS384 = 'A192CBC-HS384';
     public const ALGO_A256CBC_HS512 = 'A256CBC-HS512';
 
-    // List of supported JWE algorithms
+    /**
+     * Supported signing algorithms and their configurations.
+     *
+     * @var array<string, array<mixed>> Supported algorithms with their configurations.
+     */
     public static array $supported = [
         'RSA-OAEP' => [],
         'RSA-OAEP-256' => [],
@@ -122,7 +126,7 @@ class EncodingProcessor extends Processor
      *
      * Decodes the JWT string and initializes the appropriate data for a JWS or JWE token.
      *
-     * @param  string $encodingToken The JWT string to decode and parse.
+     * @param  string|array<string> $encodingToken The JWT string to decode and parse.
      * @return JwtTokenContainer The initialized JwtTokenContainer.
      * @throws InvalidFormatException If the token format is incorrect.
      */
@@ -235,6 +239,12 @@ class EncodingProcessor extends Processor
         return "$encodedHeader.$encodedIv.$encodedCek.$encodedPayload.$encodedAuthTag";
     }
 
+    /**
+     *
+     * @param JwtTokenContainer $token
+     * @param array<string,string|int> $algorithm
+     * @return void
+     */
     private function encryptContentKey(JwtTokenContainer &$token, array $algorithm): void
     {
         $bitLength = $algorithm['bit_length'];
@@ -268,8 +278,8 @@ class EncodingProcessor extends Processor
     /**
      * Encrypts the content of the token based on the specified algorithm
      *
-     * @param  JwtTokenContainer $token
-     * @param  array             $algorithm
+     * @param  JwtTokenContainer                $token
+     * @param  array<string,string|int>         $algorithm
      * @return void
      * @throws UnsupportedAlgorithmException
      */
@@ -294,9 +304,9 @@ class EncodingProcessor extends Processor
     /**
      * Process the encryption based on the provided algorithm
      *
-     * @param  JwtTokenContainer $token
-     * @param  array             $algorithm
-     * @return string Encrypted key
+     * @param  JwtTokenContainer        $token
+     * @param  array<string,string|int> $algorithm
+     * @return string                   Encrypted key
      * @throws UnsupportedAlgorithmException
      */
     private function processEncryptionAlgorithm(JwtTokenContainer $token, array $algorithm): string
@@ -349,7 +359,7 @@ class EncodingProcessor extends Processor
      * Process the decryption based on the provided algorithm
      *
      * @param  JwtTokenContainer $token
-     * @param  array             $algorithm
+     * @param  array<string,string|int>  $algorithm
      * @return string Decrypted key
      * @throws UnsupportedAlgorithmException
      */
@@ -481,7 +491,13 @@ class EncodingProcessor extends Processor
     }
 
 
-    private function extractJweAlgorithmComponents(string $jweAlgorithm)
+    /**
+     *
+     * @param string $jweAlgorithm
+     * @return array<string, string|array<string, mixed>> The configuration structure for cryptographic algorithms.
+     * @throws UnsupportedAlgorithmException
+     */
+    private function extractJweAlgorithmComponents(string $jweAlgorithm): array
     {
         $config = $this->getJweAlgorithmConfiguration();
 
@@ -493,6 +509,10 @@ class EncodingProcessor extends Processor
         return $config[$jweAlgorithm];
     }
 
+    /**
+     *
+     * @return array<string, array<string, mixed>> The configuration structure for cryptographic algorithms.
+     */
     private function getJweAlgorithmConfiguration(): array
     {
         return [
