@@ -1,0 +1,34 @@
+name: PHPStan Static Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  phpstan:
+    name: Run PHPStan
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up PHP with required extensions and composer
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1' # Set the PHP version as required
+          extensions: mbstring, json
+          tools: composer
+
+      # Install dependencies
+      - name: Install dependencies
+        run: composer install --no-progress --no-suggest --prefer-dist
+
+      # Run PHPStan
+      - name: Run PHPStan
+        run: |
+          vendor/bin/phpstan analyse --level=max --memory-limit=1G
