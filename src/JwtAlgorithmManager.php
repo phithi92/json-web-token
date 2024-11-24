@@ -36,13 +36,13 @@ final class JwtAlgorithmManager
     private string $type;
 
     // The passphrase for symmetric algorithms (optional)
-    private readonly ?string $passphrase;
+    private readonly string|null $passphrase;
 
     // The public key for asymmetric algorithms (optional)
-    private readonly ?OpenSSLAsymmetricKey $publicKey;
+    private readonly OpenSSLAsymmetricKey|null $publicKey;
 
     // The private key for asymmetric algorithms (optional)
-    private readonly ?OpenSSLAsymmetricKey $privateKey;
+    private readonly OpenSSLAsymmetricKey|null $privateKey;
 
     /**
      * Constructor for symmetric or asymmetric algorithms.
@@ -59,9 +59,9 @@ final class JwtAlgorithmManager
      */
     public function __construct(
         string $algorithm,
-        string $passphrase = null,
-        string $publicKey = null,
-        string $privateKey = null
+        string|null $passphrase = null,
+        string|null $publicKey = null,
+        string|null $privateKey = null
     ) {
         $this->validateKeys($passphrase, $publicKey, $privateKey);
 

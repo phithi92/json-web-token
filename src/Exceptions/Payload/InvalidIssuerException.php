@@ -12,8 +12,8 @@ use Phithi92\JsonWebToken\Exceptions\Payload\ErrorMessagesEnum;
  */
 class InvalidIssuerException extends PayloadException
 {
-    public function __construct()
+    public function __construct(string $expectedIssuer, string $issuer)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_ISSUER->getMessage());
+        parent::__construct(ErrorMessagesEnum::INVALID_ISSUER->getMessage($expectedIssuer, $issuer));
     }
 }

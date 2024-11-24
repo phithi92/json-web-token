@@ -70,7 +70,6 @@ final class JwtPayload
      * @throws NotBeforeOlderThanIatException if 'nbf' is before 'iat'.
      * @throws ExpiredPayloadException if the token has expired.
      * @throws NotYetValidException if the token is not yet valid.
-     * @throws InvalidJti if the 'usage' field does not match expected values ('reusable' or 'one_time').
      */
     public function validate(): void
     {
@@ -133,7 +132,7 @@ final class JwtPayload
     /**
      * Optionally validates whether the 'aud' (audience) claim matches the expected audience.
      *
-     * @param  string|array $expectedAudience The expected audience(s) of the JWT.
+     * @param  string|array<string> $expectedAudience The expected audience(s) of the JWT.
      * @see    getField() Used to retrieve the 'aud' claim from the payload.
      * @throws InvalidAudienceException if the audience does not match the expected value.
      */
@@ -190,7 +189,7 @@ final class JwtPayload
      * from the input array is iteratively set within the instance, allowing fields
      * to be overwritten by default to ensure the payload reflects the provided data.
      *
-     * @param  array $payload An associative array containing the JWT payload data,
+     * @param  array<string,string> $payload An associative array containing the JWT payload data,
      *                        where keys are claim names (e.g., 'iss', 'aud') and
      *                        values are the corresponding claim values.
      * @return self A populated JwtPayload instance with the provided payload data.
@@ -218,7 +217,7 @@ final class JwtPayload
      * @see    validate() Called to ensure the payload meets required criteria.
      * @see    setField()
      * @see    getField()
-     * @return array The complete JWT payload as an associative array.
+     * @return array<string,string> The complete JWT payload as an associative array.
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
      */
@@ -267,7 +266,7 @@ final class JwtPayload
      * Retrieves a specific field from the token data (JWT payload).
      *
      * @param  string $field The field to retrieve.
-     * @return string|array|null The value of the specified field, or null if it does not exist.
+     * @return string|array<mixed>|null The value of the specified field, or null if it does not exist.
      */
     public function getField(string $field): string|array|null
     {
@@ -306,7 +305,7 @@ final class JwtPayload
     /**
      * Sets the "aud" (audience) claim in the JWT payload.
      *
-     * @param  string|array $audience The intended audience of the JWT. Can be a string or an array of strings.
+     * @param  string|array<string> $audience The intended audience of the JWT. Can be a string or an array of strings.
      * @see    addField()
      * @return self Returns the instance to allow method chaining.
      * @throws InvalidValueTypeException If the value type is invalid.
@@ -446,16 +445,19 @@ final class JwtPayload
     private function setTimestamp(string $key, string $dateTime): self
     {
         try {
-            $dateTimeImmutable = $this->dateTimeImmutable->modify($dateTime);
-
-            if ($dateTimeImmutable === false) {
-                throw new InvalidDateTimeException($dateTime);
-            }
+            $adjustedDateTime = $this->dateTimeImmutable->modify($dateTime);
         } catch (Exception) {
             throw new InvalidDateTimeException($dateTime);
         }
 
-        return $this->setField($key, $dateTimeImmutable->getTimestamp(), true);
+        // For PHP versions below 8.3, it is important to explicitly handle
+        // invalid DateTime values since errors are not automatically thrown.
+        // @phpstan-ignore-next-line (necessary if phpstan reports a warning)
+        if (PHP_VERSION_ID < 80300 && !$adjustedDateTime) {
+            throw new InvalidDateTimeException($dateTime);
+        }
+
+        return $this->setField($key, $adjustedDateTime->getTimestamp(), true);
     }
 
     /**

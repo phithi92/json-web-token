@@ -46,7 +46,7 @@ final class JwtTokenFactory
      *
      * @param JwtAlgorithmManager $manager The JwtAlgorithmManager to initialize the object with.
      */
-    public function __construct(JwtAlgorithmManager $manager)
+    public function __construct(JwtAlgorithmManager|null $manager)
     {
         $this->manager = $manager;
         $algorithm = $this->getManager()->getAlgorithm();
@@ -178,29 +178,6 @@ final class JwtTokenFactory
     public static function decryptToken(JwtAlgorithmManager $algorithm, string $encryptedToken): JwtTokenContainer
     {
         return (new self($algorithm))->decrypt($encryptedToken);
-    }
-
-    /**
-     * Configures the token processor based on the algorithm and sets the token type accordingly.
-     *
-     * Checks if the current algorithm supports either JWS (JSON Web Signature) or JWE (JSON Web Encryption)
-     * and sets the token type based on the appropriate processor. Throws an exception if the algorithm
-     * is unsupported.
-     *
-     * @throws UnsupportedAlgorithmException If the algorithm is not supported.
-     */
-    private function configureProcessorForAlgorithm(): void
-    {
-        $algorithm = $this->getManager()->getAlgorithm();
-
-        $processor = $this->createProcessorForAlgorithm($algorithm);
-
-        if ($processor === null) {
-            throw new UnsupportedAlgorithmException($algorithm);
-        }
-
-        $this->getManager()->setTokenType($processor->getTokenType());
-        $this->setProcessor($processor);
     }
 
     /**

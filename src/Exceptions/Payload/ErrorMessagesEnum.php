@@ -19,7 +19,7 @@ enum ErrorMessagesEnum: string
     case VALUE_NOT_FOUND = 'Payload validation failed. The %s is required in the body but was not found';
     case INVALID_DATETIME = "Invalid date %s";
     case NO_OVERWRITE = 'Cannot overwrite existing data';
-    case INVALID_ISSUER = 'Invalid issuer';
+    case INVALID_ISSUER = 'Invalid issuer. got %s, expect %s.';
     case INVALID_ISSUED_AT = 'Invalid issued at';
     case INVALID_AUDIENCE = 'Audience is not valid: %s';
     case PAYLOAD_EXPIRED = "Payload is expired";

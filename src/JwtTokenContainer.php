@@ -42,7 +42,7 @@ final class JwtTokenContainer
      *
      * @param JwtPayload|null $payload Optional JwtPayload instance to initialize the header.
      */
-    public function __construct(JwtPayload $payload = null)
+    public function __construct(JwtPayload|null $payload = null)
     {
         if ($payload) {
             $this->setPayload($payload);

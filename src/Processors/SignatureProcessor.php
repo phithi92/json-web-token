@@ -45,7 +45,11 @@ class SignatureProcessor extends Processor
 
     private static string $type = 'JWS';
 
-    // List of supported JWS algorithms
+    /**
+     * Supported signing algorithms and their configurations.
+     *
+     * @var array<string, array<mixed>> Supported algorithms with their configurations.
+     */
     private static array $supported = [
         'HS256' => [],
         'HS384' => [],
@@ -95,7 +99,7 @@ class SignatureProcessor extends Processor
      *
      * Decodes the JWT string and initializes the appropriate data for a JWS or JWE token.
      *
-     * @param  string $encodingToken The JWT string to decode and parse.
+     * @param  string|array<string> $encodingToken The JWT string to decode and parse.
      * @return JwtTokenContainer The initialized JwtTokenContainer.
      * @throws InvalidFormatException If the token format is incorrect.
      */
@@ -242,9 +246,9 @@ class SignatureProcessor extends Processor
      *
      * @param string $algorithm The algorithm string to be parsed and validated.
      *
-     * @return array            An array containing:
-     *                          - string $type: The algorithm type ('HS', 'RS', 'ES', 'PS').
-     *                          - int $length: The bit length of the algorithm (256, 384, 512).
+     * @return array <int,int|string>   An array containing:
+     *                                  - string $type: The algorithm type ('HS', 'RS', 'ES', 'PS').
+     *                                  - int $length: The bit length of the algorithm (256, 384, 512).
      *
      * @throws UnsupportedAlgorithmException If the algorithm format is invalid or unsupported.
      */

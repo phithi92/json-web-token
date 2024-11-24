@@ -43,7 +43,7 @@ final class JwtHeader
      * @param string|null $algorithm Optional algorithm identifier, e.g., 'HS256'.
      * @param string|null $type      Optional type of the token, e.g., 'JWT' or 'JWS'.
      */
-    public function __construct(string $algorithm = null, string $type = null)
+    public function __construct(string|null $algorithm = null, string|null $type = null)
     {
         if (empty($algorithm) === false) {
             $this->setAlgorithm($algorithm);
@@ -171,7 +171,7 @@ final class JwtHeader
      * Includes 'alg' (algorithm) and 'typ' (type) fields. Adds 'enc' (encryption) if present,
      * as well as 'kid' (Key ID) if it is set. The 'kid' field identifies the key used for signing or encryption.
      *
-     * @return array The associative array representation of the header.
+     * @return array<string,string> The associative array representation of the header.
      */
     public function toArray(): array
     {

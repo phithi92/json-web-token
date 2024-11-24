@@ -123,14 +123,16 @@ final class CryptographyProvider extends Provider
         $this->validateCipher($cipher, $passphrase, $iv);
 
         // Decrypt data with AES and optional tag for integrity checking
-        $decrypted_data = openssl_decrypt($data, $cipher, $passphrase, OPENSSL_RAW_DATA, $iv, $tag);
-        if ($decrypted_data === false) {
+        $decrypted = openssl_decrypt($data, $cipher, $passphrase, OPENSSL_RAW_DATA, $iv, $tag);
+        if ($decrypted === false) {
             throw new DecryptionException();
         }
 
-        if (empty($decrypted_data)) {
+        if (empty($decrypted)) {
             throw new DecryptionException();
         }
+
+        $decrypted_data = $decrypted;
     }
 
     /**
@@ -160,16 +162,18 @@ final class CryptographyProvider extends Provider
         $this->validateCipher($cipher, $passphrase, $iv);
 
         // Encrypt data with AES and generate an authentication tag
-        $encrypted_data = openssl_encrypt($data, $cipher, $passphrase, OPENSSL_RAW_DATA, $iv, $tag);
-        if ($encrypted_data === false) {
+        $encrypted = openssl_encrypt($data, $cipher, $passphrase, OPENSSL_RAW_DATA, $iv, $tag);
+        if ($encrypted === false) {
             throw new EncryptionException();
         }
 
         // Result may be empty if encryption libary is configured incorrectly
         // or if memory allocation fails
-        if (empty($encrypted_data)) {
+        if (empty($encrypted)) {
             throw new EncryptionException();
         }
+
+        $encrypted_data = $encrypted;
     }
 
     /**
@@ -248,6 +252,9 @@ final class CryptographyProvider extends Provider
 
         // Initialisierungsvektor für AES Key Wrap
         $iv = hex2bin('A6A6A6A6A6A6A6A6');
+        if ($iv === false) {
+            throw new \Exception('Invalid IV initialization.');
+        }
         $ciphertext = $iv;
 
         // CEK in 8-Byte-Blöcke unterteilen
@@ -260,14 +267,39 @@ final class CryptographyProvider extends Provider
         for ($j = 0; $j < $rounds; $j++) {
             $blockIndex = $j % $n;
 
-            // Block erzeugen und verschlüsseln
-            $block = $ciphertext ^ pack('N', $j + 1) . $blocks[$blockIndex];
+            if (!isset($blocks[$blockIndex])) {
+                throw new \Exception('Invalid block index.');
+            }
+
+            // Pack the round number
+            /** @var string $packed */
+            $packed = pack('N', $j + 1);
+
+            // XOR-Operation: Garantieren, dass beide Operanden Strings sind
+            /** @var string $xorOperand */
+            $xorOperand = $packed . $blocks[$blockIndex];
+
+            /** @var string $ciphertext */
+            if (strlen($xorOperand) !== strlen($ciphertext)) {
+                throw new \Exception(
+                    'XOR operands must have the same length. ' .
+                    'Ciphertext length: ' . strlen($ciphertext) . ', XOR operand length: ' . strlen($xorOperand)
+                );
+            }
+
+            // Perform XOR
+            $block = $ciphertext ^ $xorOperand;
+
             $encrypted = openssl_encrypt(
                 $block,
                 $algo,
                 $this->getPassphrase(),
                 OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING
             );
+
+            if ($encrypted === false) {
+                throw new \Exception('Encryption failed.');
+            }
 
             // 8-Byte IV extrahieren und Block aktualisieren
             $ciphertext = substr($encrypted, 0, 8);
@@ -356,7 +388,7 @@ final class CryptographyProvider extends Provider
     public function pbes2EncryptKey(
         string $password,
         string $key,
-        string $salt = null,
+        string|null $salt = null,
         int $iterations = 10000,
         string $algorithm = 'aes-256-cbc'
     ): string {
@@ -686,8 +718,11 @@ final class CryptographyProvider extends Provider
      *
      * @return bool True if payload size is acceptable for RSA encryption, false otherwise.
      */
-    protected function isRsaPayloadSizeAcceptable(string $plaintext, int $lengthInBytes, string $cipher = null): bool
-    {
+    protected function isRsaPayloadSizeAcceptable(
+        string $plaintext,
+        int $lengthInBytes,
+        string|null $cipher = null
+    ): bool {
         // Adjust key length based on padding
         if (!is_null($cipher) && isset($this->paddingLength[$cipher])) {
             $lengthInBytes -= $this->paddingLength[$cipher];

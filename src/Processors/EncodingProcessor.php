@@ -315,7 +315,6 @@ class EncodingProcessor extends Processor
             return $this->getProvider()->aesKeyWrapEncrypt($token->getCek(), $algorithm['bit_length']);
         } elseif ($algorithm['name'] === self::ALGO_ECDH_ES_P521) {
             return $this->getProvider()->encryptWithECDH_ES_P521(
-                $token->getRecipientPublicKey(),
                 $token->getCek()
             );
         } elseif (
@@ -342,7 +341,7 @@ class EncodingProcessor extends Processor
         ) {
             return $token->getCek();
         } else {
-            throw new UnsupportedAlgorithmException($algorithm);
+            throw new UnsupportedAlgorithmException($algorithm['name']);
         }
     }
 
@@ -374,7 +373,6 @@ class EncodingProcessor extends Processor
         } elseif ($algorithm['name'] === self::ALGO_ECDH_ES_P521) {
             return $this->getProvider()->decryptWithECDH_ES_P521(
                 $token->getEncryptedKey(),
-                $token->getRecipientPrivateKey()
             );
         } elseif (
             $algorithm['name'] === self::ALGO_PBES2_HS256
