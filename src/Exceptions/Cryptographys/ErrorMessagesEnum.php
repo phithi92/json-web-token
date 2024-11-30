@@ -17,6 +17,7 @@ enum ErrorMessagesEnum: string
     case EMPTY_FIELD = 'Empty value for %s';
     case INVALID_SECRET_LENGTH = 'Invalid secret length. Got %s byte but expect %s.';
     case INVALID_IV = 'Invalid intitialize vector length. Got %s byte but expect %s.';
+    case EMPTY_IV = 'Empty intitialize vector';
     case INVALID_ASYMETRIC_KEY_LENGTH = 'Invalid asymetric key length. Got %s byte but expect %s.';
     case INVALID_ASYMETRIC_KEY = 'Invalid asymetric key: ';
     case VERIFICATION_FAILED = 'Verification failed: %s';

@@ -132,7 +132,11 @@ class EncodingProcessor extends Processor
      */
     public function parse(string|array $encodingToken): JwtTokenContainer
     {
-        $tokenData = explode('.', $encodingToken);
+        if (is_string($encodingToken)) {
+            $tokenData = explode('.', $encodingToken);
+        } else {
+            $tokenData = $encodingToken;
+        }
 
         if (count($tokenData) !== 5) {
             throw new InvalidFormatException();
@@ -159,7 +163,7 @@ class EncodingProcessor extends Processor
     public function verify(JwtTokenContainer $token): void
     {
         $algorithmInfo = $this->extractJweAlgorithmComponents($token->getHeader()->getAlgorithm());
-        $tokenType = $algorithmInfo['key_management']['name'];
+        $tokenType = (string) $algorithmInfo['key_management']['name'];
 
         if (
             $tokenType === self::ALGO_RSA_OAEP_256
@@ -204,7 +208,7 @@ class EncodingProcessor extends Processor
         $this->encryptContent($token, $algorithmInfo['content_encryption']);
 
         if (isset($algorithmInfo['signing_algorithm'])) {
-            $signAlgo = $algorithmInfo['signing_algorithm']['hash_algorithm'];
+            $signAlgo = (string) $algorithmInfo['signing_algorithm']['hash_algorithm'];
             $this->sign($token, $signAlgo);
         }
 
@@ -247,7 +251,7 @@ class EncodingProcessor extends Processor
      */
     private function encryptContentKey(JwtTokenContainer &$token, array $algorithm): void
     {
-        $bitLength = $algorithm['bit_length'];
+        $bitLength = (int) $algorithm['bit_length'];
         $cek = $this->getProvider()->randomBytes($bitLength / 8);
         $encodedCek = Base64UrlEncoder::encode($cek);
         $token->setCek($encodedCek);
@@ -285,12 +289,13 @@ class EncodingProcessor extends Processor
      */
     private function encryptContent(JwtTokenContainer &$token, array $algorithm): void
     {
-        $contentAlgorithm = $algorithm['name'];
-        $contentBits = $algorithm['bit_length'] ?? 0;
-        $ivLength = $algorithm['iv_length'] ?? 0;
-        $macBitLength = $algorithm['mac_bit_length'] ?? 0;
+        $contentAlgorithm = (string) $algorithm['name'];
+        $contentBits = (isset($algorithm['bit_length'])) ? (int) $algorithm['bit_length'] : null;
+//        $macBitLength = $algorithm['mac_bit_length'] ?? 0;
 
-        if ($ivLength > 0) {
+        if (isset($algorithm['iv_length'])) {
+            $ivLength = (int) $algorithm['iv_length'];
+
             $iv = $this->generateIv($ivLength);
             $token->setIv($iv);
         }
@@ -311,47 +316,49 @@ class EncodingProcessor extends Processor
      */
     private function processEncryptionAlgorithm(JwtTokenContainer $token, array $algorithm): string
     {
+        $encryptionAlgorithm = (string) $algorithm['name'];
+
         if (
-            $algorithm['name'] === self::ALGO_RSA_OAEP_256
-            || $algorithm['name'] === self::ALGO_RSA_OAEP
-            || $algorithm['name'] === self::ALGO_RSA1_5
+            $encryptionAlgorithm === self::ALGO_RSA_OAEP_256
+            || $encryptionAlgorithm === self::ALGO_RSA_OAEP
+            || $encryptionAlgorithm === self::ALGO_RSA1_5
         ) {
             return $this->getProvider()->rsaEncryptWithPublicKey($token->getCek(), OPENSSL_PKCS1_OAEP_PADDING);
         } elseif (
-            $algorithm['name'] === self::ALGO_A128KW
-            || $algorithm['name'] === self::ALGO_A192KW
-            || $algorithm['name'] === self::ALGO_A256KW
+            $encryptionAlgorithm === self::ALGO_A128KW
+            || $encryptionAlgorithm === self::ALGO_A192KW
+            || $encryptionAlgorithm === self::ALGO_A256KW
         ) {
             return $this->getProvider()->aesKeyWrapEncrypt($token->getCek(), $algorithm['bit_length']);
-        } elseif ($algorithm['name'] === self::ALGO_ECDH_ES_P521) {
+        } elseif ($encryptionAlgorithm === self::ALGO_ECDH_ES_P521) {
             return $this->getProvider()->encryptWithECDH_ES_P521(
                 $token->getCek()
             );
         } elseif (
-            $algorithm['name'] === self::ALGO_ECDH_ES
-            || $algorithm['name'] === self::ALGO_ECDH_ES_A128KW
-            || $algorithm['name'] === self::ALGO_ECDH_ES_A192KW
-            || $algorithm['name'] === self::ALGO_ECDH_ES_A256KW
+            $encryptionAlgorithm === self::ALGO_ECDH_ES
+            || $encryptionAlgorithm === self::ALGO_ECDH_ES_A128KW
+            || $encryptionAlgorithm === self::ALGO_ECDH_ES_A192KW
+            || $encryptionAlgorithm === self::ALGO_ECDH_ES_A256KW
         ) {
             return $this->getProvider()->ecdhEsKeyAgreement();
         } elseif (
-            $algorithm['name'] === self::ALGO_PBES2_HS256
-            || $algorithm['name'] === self::ALGO_PBES2_HS384
-            || $algorithm['name'] === self::ALGO_PBES2_HS512
+            $encryptionAlgorithm === self::ALGO_PBES2_HS256
+            || $encryptionAlgorithm === self::ALGO_PBES2_HS384
+            || $encryptionAlgorithm === self::ALGO_PBES2_HS512
         ) {
             return $this->getProvider()->pbes2EncryptKey(
                 $token->getCek(),
                 $algorithm['bit_length']
             );
         } elseif (
-            $algorithm['name'] === self::ALGO_A128GCM
-            || $algorithm['name'] === self::ALGO_A192GCM
-            || $algorithm['name'] === self::ALGO_A256GCM
-            || $algorithm['name'] === self::ALGO_DIR
+            $encryptionAlgorithm === self::ALGO_A128GCM
+            || $encryptionAlgorithm === self::ALGO_A192GCM
+            || $encryptionAlgorithm === self::ALGO_A256GCM
+            || $encryptionAlgorithm === self::ALGO_DIR
         ) {
             return $token->getCek();
         } else {
-            throw new UnsupportedAlgorithmException($algorithm['name']);
+            throw new UnsupportedAlgorithmException($encryptionAlgorithm);
         }
     }
 
@@ -365,43 +372,45 @@ class EncodingProcessor extends Processor
      */
     private function processDecryptionAlgorithm(JwtTokenContainer $token, array $algorithm): string
     {
+
+        $decryptionAlgorithm = (string) $algorithm['name'];
         if (
-            $algorithm['name'] === self::ALGO_RSA_OAEP_256
-            || $algorithm['name'] === self::ALGO_RSA_OAEP
-            || $algorithm['name'] === self::ALGO_RSA1_5
+            $decryptionAlgorithm === self::ALGO_RSA_OAEP_256
+            || $decryptionAlgorithm === self::ALGO_RSA_OAEP
+            || $decryptionAlgorithm === self::ALGO_RSA1_5
         ) {
             return $this->getProvider()->rsaDecryptWithPrivateKey(
                 $token->getEncryptedKey(),
                 OPENSSL_PKCS1_OAEP_PADDING
             );
         } elseif (
-            $algorithm['name'] === self::ALGO_A128KW
-            || $algorithm['name'] === self::ALGO_A192KW
-            || $algorithm['name'] === self::ALGO_A256KW
+            $decryptionAlgorithm === self::ALGO_A128KW
+            || $decryptionAlgorithm === self::ALGO_A192KW
+            || $decryptionAlgorithm === self::ALGO_A256KW
         ) {
             return $this->getProvider()->aesKeyWrapDecrypt($token->getEncryptedKey(), $algorithm['bit_length']);
-        } elseif ($algorithm['name'] === self::ALGO_ECDH_ES_P521) {
+        } elseif ($decryptionAlgorithm === self::ALGO_ECDH_ES_P521) {
             return $this->getProvider()->decryptWithECDH_ES_P521(
                 $token->getEncryptedKey(),
             );
         } elseif (
-            $algorithm['name'] === self::ALGO_PBES2_HS256
-            || $algorithm['name'] === self::ALGO_PBES2_HS384
-            || $algorithm['name'] === self::ALGO_PBES2_HS512
+            $decryptionAlgorithm === self::ALGO_PBES2_HS256
+            || $decryptionAlgorithm === self::ALGO_PBES2_HS384
+            || $decryptionAlgorithm === self::ALGO_PBES2_HS512
         ) {
             return $this->getProvider()->pbes2DecryptKey(
                 $token->getEncryptedKey(),
                 $algorithm['bit_length']
             );
         } elseif (
-            $algorithm['name'] === self::ALGO_A128GCM
-            || $algorithm['name'] === self::ALGO_A192GCM
-            || $algorithm['name'] === self::ALGO_A256GCM
-            || $algorithm['name'] === self::ALGO_DIR
+            $decryptionAlgorithm === self::ALGO_A128GCM
+            || $decryptionAlgorithm === self::ALGO_A192GCM
+            || $decryptionAlgorithm === self::ALGO_A256GCM
+            || $decryptionAlgorithm === self::ALGO_DIR
         ) {
             return $token->getEncryptedKey();
         } else {
-            throw new UnsupportedAlgorithmException($algorithm['name']);
+            throw new UnsupportedAlgorithmException($decryptionAlgorithm);
         }
     }
 
@@ -464,7 +473,7 @@ class EncodingProcessor extends Processor
     {
         $algorithmInfo = $this->extractJweAlgorithmComponents($token->getHeader()->getAlgorithm());
         $algorithm = $algorithmInfo['content_encryption'];
-        $contentAlgorithm = $algorithm['name'];
+        $contentAlgorithm = (string) $algorithm['name'];
         $bitLength = $algorithm['bit_length'] ?? null;
 //        $macBitLength = $algorithmInfo['mac_bit_length'] ?? null;
         $decryptedPayload = null;
@@ -494,7 +503,7 @@ class EncodingProcessor extends Processor
     /**
      *
      * @param string $jweAlgorithm
-     * @return array<string, string|array<string, mixed>> The configuration structure for cryptographic algorithms.
+     * @return array<string, array<string, int|string>> The configuration structure for cryptographic algorithms.
      * @throws UnsupportedAlgorithmException
      */
     private function extractJweAlgorithmComponents(string $jweAlgorithm): array

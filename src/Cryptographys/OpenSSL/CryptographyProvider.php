@@ -10,6 +10,7 @@ use Phithi92\JsonWebToken\Exceptions\Cryptographys\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnexpectedOutputException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\EmptyFieldException;
+use Phithi92\JsonWebToken\Exceptions\Cryptographys\EmptyInitializeVectorException;
 use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
 use Phithi92\JsonWebToken\Cryptographys\OpenSSL\AlgorithmsTrait;
 use Phithi92\JsonWebToken\Cryptographys\Provider;
@@ -354,6 +355,10 @@ final class CryptographyProvider extends Provider
                 OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING
             );
 
+            if (!$decrypted) {
+                throw new DecryptionException();
+            }
+
             // Split the decrypted data into the IV and block
             $ciphertextIV = substr($decrypted, 0, 8) ^ pack('N', $j);
             $blocks[$blockIndex] = substr($decrypted, 8);
@@ -385,6 +390,10 @@ final class CryptographyProvider extends Provider
         // Compute the shared secret using ECDH (Elliptic Curve Diffie-Hellman)
         $sharedSecret = openssl_pkey_derive($public_key, $private_key);
 
+        if (!$sharedSecret) {
+            throw new EncryptionException();
+        }
+
         // Perform key derivation or hashing on the shared secret using the specified algorithm
         return hash($algo, $sharedSecret, true); // Example of a KDF (Key Derivation Function) step
     }
@@ -413,11 +422,20 @@ final class CryptographyProvider extends Provider
             $salt = openssl_random_pseudo_bytes(16);
         }
 
+        if ($iterations < 1) {
+            throw new EncryptionException();
+        }
+
         // Derive a key using PBKDF2 (Password-Based Key Derivation Function 2) with the given salt and iterations
         $derivedKey = hash_pbkdf2('sha256', $password, $salt, $iterations, 32, true);
 
         // Get the IV (Initialization Vector) length for the chosen algorithm
         $ivLength = openssl_cipher_iv_length($algorithm);
+
+        if (!$ivLength) {
+            throw new EmptyInitializeVectorException();
+        }
+
         // Generate a random IV for encryption
         $iv = openssl_random_pseudo_bytes($ivLength);
 
@@ -519,13 +537,27 @@ final class CryptographyProvider extends Provider
         // Erstelle ein temporäres Schlüsselpaar (Ephemeral Key)
         $ephemeralKey = openssl_pkey_new(['curve_name' => 'P-521', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
 
+        if (! $ephemeralKey) {
+            throw new EncryptionException();
+        }
+
         // Extrahiere den öffentlichen Schlüssel
         $ephemeralDetails = openssl_pkey_get_details($ephemeralKey);
+
+        if (! $ephemeralDetails) {
+            throw new EncryptionException();
+        }
+
+
         $ephemeralPublicKey = $ephemeralDetails['key'];
 
         // Berechne das geteilte Geheimnis zwischen dem temporären privaten und dem Empfängeröffentlichen Schlüssel
         openssl_pkey_export($ephemeralKey, $ephemeralPrivateKey);
         $sharedSecret = openssl_dh_compute_key($recipientPublicKey, $ephemeralKey);
+
+        if (! $sharedSecret) {
+            throw new EncryptionException();
+        }
 
         // Der sharedSecret kann jetzt mit einem symmetrischen Verschlüsselungsalgorithmus
         // verwendet werden (z.B. AES-GCM)
@@ -534,6 +566,10 @@ final class CryptographyProvider extends Provider
         // AES-GCM verwenden, um den Payload zu verschlüsseln
         $iv = openssl_random_pseudo_bytes(12);
         $ciphertext = openssl_encrypt($payload, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+
+        if (! $ciphertext) {
+            throw new EncryptionException();
+        }
 
         return [
             'ciphertext' => base64_encode($ciphertext),
@@ -553,6 +589,10 @@ final class CryptographyProvider extends Provider
         // Berechne das geteilte Geheimnis zwischen dem Empfängerprivaten und dem Ephemeral-öffentlichen Schlüssel
         $sharedSecret = openssl_dh_compute_key($ephemeralPublicKey, $recipientPrivateKey);
 
+        if (! $sharedSecret) {
+            throw new DecryptionException();
+        }
+
         // Symmetrischen Schlüssel generieren
         $key = hash('sha256', $sharedSecret, true);
 
@@ -565,6 +605,10 @@ final class CryptographyProvider extends Provider
             base64_decode($iv),
             base64_decode($tag)
         );
+
+        if (! $plaintext) {
+            throw new DecryptionException();
+        }
 
         return $plaintext;
     }
@@ -605,7 +649,7 @@ final class CryptographyProvider extends Provider
         // Validate key length
         $key_length = $key_details['bits'] / 8;
         if ($key_length > $length) {
-            throw new InvalidAsymetricKeyLength($key_length, $length);
+            throw new InvalidAsymetricKeyLength($key_length, (int) $length);
         }
 
         // Directly sign the data using the private key and algorithm
@@ -834,16 +878,30 @@ final class CryptographyProvider extends Provider
             openssl_cipher_iv_length($cipher) > 0 && empty($passphrase)
             || strlen($passphrase) !== openssl_cipher_key_length($cipher)
         ) {
+            $keyLength = openssl_cipher_key_length($cipher);
+            if (!$keyLength) {
+                $keyLength = 0;
+            }
+
             throw new InvalidSecretLengthException(
                 strlen($passphrase),
-                openssl_cipher_key_length($cipher)
+                $keyLength
             );
         }
 
-        if (empty($iv) || strlen($iv) !== openssl_cipher_iv_length($cipher)) {
+        if (! empty($iv)) {
+            $ivLength = openssl_cipher_iv_length($cipher);
+            if (! $ivLength) {
+                throw new EmptyInitializeVectorException();
+            }
+        } else {
+            throw new EmptyInitializeVectorException();
+        }
+
+        if (strlen($iv) !== $ivLength) {
             throw new InvalidInitializeVectorException(
                 strlen($passphrase),
-                openssl_cipher_iv_length($cipher)
+                $ivLength
             );
         }
     }

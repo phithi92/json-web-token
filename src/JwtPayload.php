@@ -15,6 +15,7 @@ use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
 use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidJti;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
+use Phithi92\JsonWebToken\Payload;
 use DateTimeImmutable;
 use Exception;
 use stdClass;
@@ -37,8 +38,12 @@ use stdClass;
  */
 final class JwtPayload
 {
-    // stdClass to store token data (JWT payload)
-    private object $payload;
+    /**
+     * store token data (JWT payload)
+     *
+     * @var array<string, mixed>
+     */
+    private array $payload;
 
     // DateTimeImmutable object to handle date-related operations
     private readonly DateTimeImmutable $dateTimeImmutable;
@@ -49,7 +54,6 @@ final class JwtPayload
      */
     public function __construct()
     {
-        $this->payload = new stdClass();
         $this->dateTimeImmutable = new DateTimeImmutable();
     }
 
@@ -125,7 +129,14 @@ final class JwtPayload
     {
         $issuer = $this->getField('iss');
         if (!is_string($issuer) || $issuer !== $expectedIssuer) {
-            throw new InvalidIssuerException($expectedIssuer, (string) $issuer);
+            if (is_array($issuer)) {
+                $compare = JsonEncoder::encode($issuer);
+            } elseif (is_string($issuer)) {
+                $compare = $issuer;
+            } else {
+                throw new \Exception();
+            }
+            throw new InvalidIssuerException($expectedIssuer, $compare);
         }
     }
 
@@ -189,9 +200,10 @@ final class JwtPayload
      * from the input array is iteratively set within the instance, allowing fields
      * to be overwritten by default to ensure the payload reflects the provided data.
      *
-     * @param  array<string,string> $payload An associative array containing the JWT payload data,
-     *                        where keys are claim names (e.g., 'iss', 'aud') and
-     *                        values are the corresponding claim values.
+     * @param array<int|string, mixed> $payload An associative array containing
+     *                                 the JWT payload data, where keys are claim
+     *                                 names (e.g., 'iss', 'aud') and values are
+     *                                 the corresponding claim values.
      * @return self A populated JwtPayload instance with the provided payload data.
      */
     public static function fromArray(array|object $payload): self
@@ -200,7 +212,7 @@ final class JwtPayload
         $instance = new self();
 
         // Iterate over the decoded data and set each key-value pair in the payload
-        foreach ($payload as $key => $value) {
+        foreach ((array) $payload as $key => $value) {
             $instance->setField($key, $value, true);  // true allows overwriting fields
         }
 
@@ -266,11 +278,11 @@ final class JwtPayload
      * Retrieves a specific field from the token data (JWT payload).
      *
      * @param  string $field The field to retrieve.
-     * @return string|array<mixed>|null The value of the specified field, or null if it does not exist.
+     * @return string|int|array<mixed>|null The value of the specified field, or null if it does not exist.
      */
-    public function getField(string $field): string|array|null
+    public function getField(string $field): string|int|array|null
     {
-        return $this->payload->{$field} ?? null;
+        return $this->payload[$field] ?? null;
     }
 
     /**
@@ -299,7 +311,8 @@ final class JwtPayload
      */
     public function getIssuer(): ?string
     {
-        return $this->getField('iss');
+        $issuer = $this->getField('iss');
+        return is_string($issuer) ? $issuer : null;
     }
 
     /**
@@ -326,9 +339,10 @@ final class JwtPayload
      * @see    getField()
      * @return string|null The audience identifier as a string, or null if it is not present.
      */
-    public function getAudience(): ?string
+    public function getAudience(): string|null
     {
-        return $this->getField('aud');
+        $audience = $this->getField('aud');
+        return is_string($audience) ? $audience : null;
     }
 
     /**
@@ -353,11 +367,12 @@ final class JwtPayload
      * a timestamp, or null if the field is not set.
      *
      * @see    getField()
-     * @return string|null The issued-at timestamp as a string, or null if it is not present.
+     * @return string|int|null The issued-at timestamp as a string, or null if it is not present.
      */
-    public function getIssuedAt(): ?string
+    public function getIssuedAt(): string|int|null
     {
-        return $this->getField('iat');
+        $audience = $this->getField('iat');
+        return is_string($audience) || is_int($audience) ? $audience : null;
     }
 
     /**
@@ -383,11 +398,12 @@ final class JwtPayload
      * a timestamp, or null if the field is not set.
      *
      * @see    getField()
-     * @return string|null The expiration timestamp as a string, or null if it is not present.
+     * @return string|int|null The expiration timestamp as a string, or null if it is not present.
      */
-    public function getExpiration(): ?string
+    public function getExpiration(): string|int|null
     {
-        return $this->getField('exp');
+        $expires = $this->getField('exp');
+        return is_string($expires) || is_int($expires) ? $expires : null;
     }
 
     /**
@@ -412,22 +428,23 @@ final class JwtPayload
      * in the payload. The 'nbf' field is expected to contain a string representing
      * a timestamp or null if the field is not set.
      *
-     * @return string|null The not-before timestamp as a string, or null if it is not present.
+     * @return string|int|null The not-before timestamp as a string, or null if it is not present.
      */
-    public function getNotBefore(): ?string
+    public function getNotBefore(): string|int|null
     {
-        return $this->getField('nbf');
+        $notBefore = $this->getField('nbf');
+        return is_string($notBefore) || is_int($notBefore) ? $notBefore : null;
     }
 
     /**
      * Checks whether a specific field exists in the token data (JWT payload).
      *
-     * @param  string $field The field to check.
+     * @param  string|int $field The field to check.
      * @return bool Returns true if the field exists, false otherwise.
      */
-    private function hasField(string $field): bool
+    private function hasField(string|int $field): bool
     {
-        return isset($this->payload->{$field});
+        return isset($this->payload[$field]);
     }
 
     /**
@@ -444,16 +461,17 @@ final class JwtPayload
      */
     private function setTimestamp(string $key, string $dateTime): self
     {
+
         try {
-            $adjustedDateTime = $this->dateTimeImmutable->modify($dateTime);
+            // Suppress warnings temporarily and handle them manually.
+            $adjustedDateTime = @($this->dateTimeImmutable->modify($dateTime));
         } catch (Exception) {
             throw new InvalidDateTimeException($dateTime);
         }
 
-        // For PHP versions below 8.3, it is important to explicitly handle
-        // invalid DateTime values since errors are not automatically thrown.
-        // @phpstan-ignore-next-line (necessary if phpstan reports a warning)
-        if (PHP_VERSION_ID < 80300 && !$adjustedDateTime) {
+        // Handle invalid DateTime values explicitly for PHP versions below 8.3.
+        // @phpstan-ignore-next-line
+        if (PHP_VERSION_ID < 80300 && !$adjustedDateTime instanceof DateTimeImmutable) {
             throw new InvalidDateTimeException($dateTime);
         }
 
@@ -489,7 +507,7 @@ final class JwtPayload
         }
 
         if (false === $this->hasField($key) || $overwrite) {
-            $this->payload->{$key} = $value;
+            $this->payload[$key] = $value;
         }
 
         return $this;
