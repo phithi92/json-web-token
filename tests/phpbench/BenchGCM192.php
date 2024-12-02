@@ -10,7 +10,7 @@ use Phithi92\JsonWebToken\JwtTokenFactory;
  * @Iterations(5)    // 5 Iterationen pro Benchmark
  * @Warmup(1)        // 1 Aufwärmrunde
  */
-class BenchGCM extends \BenchmarkBase
+class BenchGCM192 extends \BenchmarkBase
 {        
    
     public function bench_create_token()

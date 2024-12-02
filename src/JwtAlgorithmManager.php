@@ -51,8 +51,8 @@ final class JwtAlgorithmManager
      *
      * @param string      $algorithm  The algorithm name, e.g., HS256, RS256, RSA-OAEP.
      * @param string|null $passphrase Optional passphrase for symmetric algorithms.
-     * @param string|null $publicKey  Optional public key for asymmetric algorithms.
-     * @param string|null $privateKey Optional private key for asymmetric algorithms.
+     * @param string|null $public     Optional public key for asymmetric algorithms.
+     * @param string|null $private    Optional private key for asymmetric algorithms.
      *
      * @throws MissingPassphraseException
      * @throws MissingKeysException
@@ -60,25 +60,22 @@ final class JwtAlgorithmManager
     public function __construct(
         string $algorithm,
         string|null $passphrase = null,
-        string|null $publicKey = null,
-        string|null $privateKey = null
+        string|null $public = null,
+        string|null $private = null
     ) {
-        $this->validateKeys($passphrase, $publicKey, $privateKey);
+        $this->validateKeys($passphrase, $public, $private);
 
-        $this->algorithm = $algorithm;
+        $publicKey = $privateKey = null;
 
         if ($passphrase === null) {
-            $public = $this->validatePublicKey($publicKey);
-            $private = $this->validatePrivateKey($privateKey);
-
-            $this->publicKey = $public;
-            $this->privateKey = $private;
-            $this->passphrase = null;
-        } else {
-            $this->passphrase = $passphrase;
-            $this->publicKey = null;
-            $this->privateKey = null;
+            $publicKey = $this->validatePublicKey($public);
+            $privateKey = $this->validatePrivateKey($private);
         }
+
+        $this->passphrase = $passphrase;
+        $this->publicKey = $publicKey;
+        $this->privateKey = $privateKey;
+        $this->algorithm = $algorithm;
     }
 
     /**

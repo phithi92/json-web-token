@@ -15,10 +15,8 @@ use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
 use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidJti;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
-use Phithi92\JsonWebToken\Payload;
 use DateTimeImmutable;
-use Exception;
-use stdClass;
+use DateMalformedStringException;
 
 /**
  * JwtPayload represents the payload segment of a JSON Web Token (JWT).
@@ -461,11 +459,10 @@ final class JwtPayload
      */
     private function setTimestamp(string $key, string $dateTime): self
     {
-
         try {
             // Suppress warnings temporarily and handle them manually.
             $adjustedDateTime = @($this->dateTimeImmutable->modify($dateTime));
-        } catch (Exception) {
+        } catch (DateMalformedStringException) {
             throw new InvalidDateTimeException($dateTime);
         }
 

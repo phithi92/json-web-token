@@ -146,8 +146,6 @@ class SignatureProcessor extends Processor
      */
     public function encrypt(JwtTokenContainer $token): JwtTokenContainer
     {
-        $token->setHeader(new JwtHeader($this->getManager()->getAlgorithm(), $this->getManager()->getTokenType()));
-
         [$algorithmType, $length] = $this->extractAlgorithmComponents($token->getHeader()->getAlgorithm());
 
         $signatureData = $this->dataToSign($token);
