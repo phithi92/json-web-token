@@ -85,7 +85,7 @@ final class JwtAlgorithmManager
      */
     public function getAlgorithm(): string|null
     {
-        return $this->algorithm ?? null;
+        return $this->algorithm;
     }
 
     /**
