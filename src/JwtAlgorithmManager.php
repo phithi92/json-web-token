@@ -59,9 +59,9 @@ final class JwtAlgorithmManager
      */
     public function __construct(
         string $algorithm,
-        string|null $passphrase = null,
-        string|null $public = null,
-        string|null $private = null
+        #[SensitiveParameter] ?string $passphrase = null,
+        #[SensitiveParameter] ?string $public = null,
+        #[SensitiveParameter] ?string $private = null
     ) {
         $this->validateKeys($passphrase, $public, $private);
 
