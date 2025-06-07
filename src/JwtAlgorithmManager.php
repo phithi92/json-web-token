@@ -36,13 +36,13 @@ final class JwtAlgorithmManager
     private string $type;
 
     // The passphrase for symmetric algorithms (optional)
-    private readonly string|null $passphrase;
+    private readonly ?string $passphrase;
 
     // The public key for asymmetric algorithms (optional)
-    private readonly OpenSSLAsymmetricKey|null $publicKey;
+    private readonly ?OpenSSLAsymmetricKey $publicKey;
 
     // The private key for asymmetric algorithms (optional)
-    private readonly OpenSSLAsymmetricKey|null $privateKey;
+    private readonly ?OpenSSLAsymmetricKey $privateKey;
 
     /**
      * Constructor for symmetric or asymmetric algorithms.
@@ -93,7 +93,7 @@ final class JwtAlgorithmManager
      *
      * @return string|null The passphrase, if available.
      */
-    public function getPassphrase(): string|null
+    public function getPassphrase(): ?string
     {
         return $this->passphrase ?? null;
     }
@@ -103,7 +103,7 @@ final class JwtAlgorithmManager
      *
      * @return OpenSSLAsymmetricKey|null The public key, if available.
      */
-    public function getPublicKey(): OpenSSLAsymmetricKey|null
+    public function getPublicKey(): ?OpenSSLAsymmetricKey
     {
         return $this->publicKey ?? null;
     }
@@ -113,7 +113,7 @@ final class JwtAlgorithmManager
      *
      * @return OpenSSLAsymmetricKey|null The private key, if available.
      */
-    public function getPrivateKey(): OpenSSLAsymmetricKey|null
+    public function getPrivateKey(): ?OpenSSLAsymmetricKey
     {
         return $this->privateKey ?? null;
     }
