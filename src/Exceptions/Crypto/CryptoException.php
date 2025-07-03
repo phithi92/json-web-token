@@ -1,6 +1,6 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exceptions\Cryptographys;
+namespace Phithi92\JsonWebToken\Exceptions\Crypto;
 
 use Exception;
 
@@ -9,6 +9,6 @@ use Exception;
  *
  * Serves as a base exception for all algorithm-related issues within the application.
  */
-class CryptographyException extends Exception
+abstract class CryptoException extends Exception
 {
 }

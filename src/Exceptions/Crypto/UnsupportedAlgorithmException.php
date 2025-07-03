@@ -1,9 +1,9 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exceptions\Cryptographys;
+namespace Phithi92\JsonWebToken\Exceptions\Crypto;
 
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\CryptographyException;
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\ErrorMessagesEnum;
+use Phithi92\JsonWebToken\Exceptions\Crypto\CryptoException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\ErrorMessagesEnum;
 
 /**
  * Exception thrown when an unsupported algorithm is encountered.
@@ -17,10 +17,10 @@ use Phithi92\JsonWebToken\Exceptions\Cryptographys\ErrorMessagesEnum;
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
  * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
-class UnexpectedOutputException extends CryptographyException
+class UnsupportedAlgorithmException extends CryptoException
 {
-    public function __construct()
+    public function __construct(string $algorithm)
     {
-        parent::__construct(ErrorMessagesEnum::UNEXPECTED_OUTPUT->getMessage());
+        parent::__construct(ErrorMessagesEnum::UNSUPPORTED->getMessage($algorithm));
     }
 }

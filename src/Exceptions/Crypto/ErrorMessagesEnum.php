@@ -1,6 +1,6 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exceptions\Cryptographys;
+namespace Phithi92\JsonWebToken\Exceptions\Crypto;
 
 use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
 
@@ -14,7 +14,7 @@ enum ErrorMessagesEnum: string
     use ErrorMessageTrait;
 
     case UNSUPPORTED = 'Algorithm is unsupoorted: %s';
-    case EMPTY_FIELD = 'Empty value for %s';
+    case EMPTY_FIELD = 'Missing required value for field: "%s".';
     case INVALID_SECRET_LENGTH = 'Invalid secret length. Got %s byte but expect %s.';
     case INVALID_IV = 'Invalid intitialize vector length. Got %s byte but expect %s.';
     case EMPTY_IV = 'Empty intitialize vector';
@@ -27,4 +27,5 @@ enum ErrorMessagesEnum: string
     case UNEXPECTED_OUTPUT = 'Invalid input: An empty string is required';
     case MISSING_KEYS = 'Both public and private keys are required if no passphrase is provided.';
     case MISSING_PASSPHRASE = 'A passphrase is required if no public and private keys are provided.';
+    case INVALID_CONFIG = 'IV length must be at least %2$s bits, got %1$s byte).';
 }

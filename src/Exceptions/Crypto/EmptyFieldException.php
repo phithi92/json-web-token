@@ -2,8 +2,8 @@
 
 namespace Phithi92\JsonWebToken\Exceptions\Cryptographys;
 
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\CryptographyException;
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\ErrorMessagesEnum;
+use Phithi92\JsonWebToken\Exceptions\Crypto\CryptoException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\ErrorMessagesEnum;
 
 /**
  * Exception thrown when an unsupported algorithm is encountered.
@@ -17,7 +17,7 @@ use Phithi92\JsonWebToken\Exceptions\Cryptographys\ErrorMessagesEnum;
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
  * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
-class EmptyFieldException extends CryptographyException
+class EmptyFieldException extends CryptoException
 {
     public function __construct(string $field)
     {
