@@ -107,26 +107,8 @@ final class JwtTokenFactory
         return $token;
     }
 
-    /**
-     * Refreshes an existing JWT by updating its expiration.
-     *
-     * Decrypts the token, updates its issuance and expiration times,
-     * then re-generates the JWT.
-     *
-     * @param  string $encryptedToken     The encoded JWT string to refresh.
-     * @param  string $expirationInterval The interval for the new expiration time.
-     * @return string The refreshed JWT string.
-     */
-    public function refresh(string $encryptedToken, string $expirationInterval = '+1 hour'): string
-    {
-        $token = $this->decrypt($encryptedToken);
 
-        $token->getPayload()
-            ->setIssuedAt('now')
-            ->setExpiration($expirationInterval);
 
-        return $this->create($token->getPayload());
-    }
 
     /**
      * Static method to refresh an existing JWT token with a new expiration interval.
