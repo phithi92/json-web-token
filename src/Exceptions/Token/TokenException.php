@@ -8,6 +8,6 @@ use Exception;
  *
  * @author Phillip Thiele <development@phillip-thiele.de>
  */
-class TokenException extends Exception
+abstract class TokenException extends Exception
 {
 }

@@ -17,6 +17,6 @@ use Exception;
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
  * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
-class JsonException extends Exception
+abstract class JsonException extends Exception
 {
 }

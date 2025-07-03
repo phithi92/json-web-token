@@ -14,6 +14,7 @@ enum ErrorMessagesEnum: string
 {
     use ErrorMessageTrait;
 
+    case EXPIRED_PAYLOAD = 'Payload is expired.';
     case FUTURE_TOKEN = 'Payload is not valid yet';
     case NBF_BEFORE_IAT = "Not before (nbf) must be later than or equal to issued at (iat).";
     case VALUE_NOT_FOUND = 'Payload validation failed. The %s is required in the body but was not found';

@@ -11,8 +11,8 @@ use Phithi92\JsonWebToken\Exceptions\Token\ErrorMessagesEnum;
  */
 class InvalidSignatureException extends TokenException
 {
-    public function __construct()
+    public function __construct(string $message)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_SIGNATURE->getMessage());
+        parent::__construct(ErrorMessagesEnum::INVALID_SIGNATURE->getMessage($message));
     }
 }

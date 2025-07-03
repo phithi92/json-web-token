@@ -1,6 +1,6 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exceptions\Cryptographys;
+namespace Phithi92\JsonWebToken\Exceptions\Crypto;
 
 use Phithi92\JsonWebToken\Exceptions\Crypto\CryptoException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\ErrorMessagesEnum;

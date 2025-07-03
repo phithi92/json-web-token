@@ -9,6 +9,6 @@ use Exception;
  *
  * Base exception for payload-related errors in the phithi92/json-web-token package.
  */
-class PayloadException extends Exception
+abstract class PayloadException extends Exception
 {
 }
