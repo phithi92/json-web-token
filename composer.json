@@ -27,6 +27,12 @@
     },
     "scripts": {
         "test": "phpunit --configuration phpunit.xml",
-        "benchmark": "phpbench run tests/phpbench/* --report=benchmark"
-    }
+
+        "analyze": "@php vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=1G",
+        "style": "phpcs --standard=PSR12 src/",
+
+        "benchmark": "@php vendor/bin/phpbench run tests/phpbench/* --report=benchmark",
+
+        "generate-keys": "@php scripts/generate-keys.php"
+    }   
 }
