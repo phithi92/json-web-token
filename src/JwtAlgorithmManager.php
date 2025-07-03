@@ -2,11 +2,15 @@
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\MissingKeysException;
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\MissingPassphraseException;
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\InvalidAsymetricKeyException;
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\MissingKeysException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\MissingPassphraseException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidAsymmetricKeyException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\UnsupportedAlgorithmException;
+use Phithi92\JsonWebToken\Interfaces\JwtAlgorithmManagerInterface;
+use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
+use Phithi92\JsonWebToken\Config\DefaultAlgorithmConfiguration;
 use OpenSSLAsymmetricKey;
+use SensitiveParameter;
 
 /**
  * Manages JWT cryptographic operations for symmetric and asymmetric algorithms.
@@ -30,10 +34,11 @@ use OpenSSLAsymmetricKey;
 final class JwtAlgorithmManager
 {
     // The algorithm name (e.g., HS256, RS256, RSA-OAEP)
-    private readonly string $algorithm;
+    private string $algorithm;
 
-    // The type of token (either 'JWS' for signed or 'JWE' for encrypted)
-    private string $type;
+    // The configuration for given algorithm
+    /** @var array<string,array<string,string>> */
+    private array $config;
 
     // The passphrase for symmetric algorithms (optional)
     private readonly ?string $passphrase;
@@ -44,25 +49,37 @@ final class JwtAlgorithmManager
     // The private key for asymmetric algorithms (optional)
     private readonly ?OpenSSLAsymmetricKey $privateKey;
 
+    // The configurations of supported algorithms
+    private readonly AlgorithmConfigurationInterface $algorithmRegistry;
+
     /**
-     * Constructor for symmetric or asymmetric algorithms.
+     * Initializes the key manager for symmetric or asymmetric algorithms.
      *
-     * Initializes the manager with the necessary keys or passphrase based on the algorithm.
+     * Handles required key material (passphrase, public/private key) depending on the algorithm type.
      *
-     * @param string      $algorithm  The algorithm name, e.g., HS256, RS256, RSA-OAEP.
-     * @param string|null $passphrase Optional passphrase for symmetric algorithms.
-     * @param string|null $public     Optional public key for asymmetric algorithms.
-     * @param string|null $private    Optional private key for asymmetric algorithms.
+     * @param string        $algorithm  Algorithm name (e.g. HS256, RS256, RSA-OAEP).
+     * @param string|null   $passphrase Passphrase for symmetric algorithms (e.g. HMAC, PBES2).
+     * @param string|null   $public     Public key for asymmetric algorithms (e.g. RSA, ECDSA).
+     * @param string|null   $private    Private key for asymmetric algorithms.
+     * @param AlgorithmConfigurationInterface|null $config Optional algorithm-specific configuration.
      *
-     * @throws MissingPassphraseException
-     * @throws MissingKeysException
+     * @throws MissingPassphraseException         If a symmetric algorithm is used without passphrase.
+     * @throws MissingKeysException               If an asymmetric algorithm lacks required keys.
+     * @throws UnsupportedAlgorithmException      If the algorithm is not recognized or allowed.
      */
     public function __construct(
-        string $algorithm,
+        string $algorithm = null,
         #[SensitiveParameter] ?string $passphrase = null,
         #[SensitiveParameter] ?string $public = null,
-        #[SensitiveParameter] ?string $private = null
+        #[SensitiveParameter] ?string $private = null,
+        ?AlgorithmConfigurationInterface $config = null
     ) {
+        $this->algorithmRegistry = $config ?? new DefaultAlgorithmConfiguration();
+
+        if ($algorithm !== null) {
+            $this->setAlgorithm($algorithm);
+        }
+
         $this->validateKeys($passphrase, $public, $private);
 
         $publicKey = $privateKey = null;
@@ -75,7 +92,28 @@ final class JwtAlgorithmManager
         $this->passphrase = $passphrase;
         $this->publicKey = $publicKey;
         $this->privateKey = $privateKey;
+    }
+
+    /**
+     *
+     * @return AlgorithmConfigurationInterface
+     */
+    public function getAlgorithmConfiguration(): AlgorithmConfigurationInterface
+    {
+        return $this->algorithmRegistry;
+    }
+
+    public function setAlgorithm(string $algorithm): self
+    {
+        $config = $this->algorithmRegistry->get($algorithm);
+        if ($config === []) {
+            throw new UnsupportedAlgorithmException($algorithm);
+        }
+
         $this->algorithm = $algorithm;
+        $this->config = $config;
+
+        return $this;
     }
 
     /**
@@ -83,9 +121,17 @@ final class JwtAlgorithmManager
      *
      * @return string The algorithm name.
      */
-    public function getAlgorithm(): string|null
+    public function getAlgorithm(): string
     {
         return $this->algorithm;
+    }
+
+    /**
+     * @return array<string, string|array<string, string|class-string<object>>>
+     */
+    public function getConfiguration(): array
+    {
+        return $this->config;
     }
 
     /**
