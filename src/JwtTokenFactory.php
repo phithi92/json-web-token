@@ -2,14 +2,15 @@
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\UnsupportedAlgorithmException;
-use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
-use Phithi92\JsonWebToken\Exceptions\Payload\InvalidJti;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\Processors\SignatureProcessor;
-use Phithi92\JsonWebToken\Processors\EncodingProcessor;
-use Phithi92\JsonWebToken\Processors\Processor;
+use Phithi92\JsonWebToken\Core\HandlerResolver;
+use Phithi92\JsonWebToken\Interfaces\ContentEncryptionManagerInterface;
+use Phithi92\JsonWebToken\Interfaces\KeyManagementManagerInterface;
+use Phithi92\JsonWebToken\Interfaces\ContentEncryptionKeyManagerInterface;
+use Phithi92\JsonWebToken\Interfaces\InitializationVectorManagerInterface;
+use Phithi92\JsonWebToken\Interfaces\SignatureManagerInterface;
+use LogicException;
 
 /**
  * Factory class for creating, encrypting, decrypting, and validating JWTs.
@@ -25,180 +26,286 @@ use Phithi92\JsonWebToken\Processors\Processor;
  */
 final class JwtTokenFactory
 {
-    // JwtAlgorithmManager $cipher The algorithm manager for token encryption/decryption.
+    /**
+     * Manages algorithm selection and configuration.
+     *
+     * @var JwtAlgorithmManager
+     */
     private readonly JwtAlgorithmManager $manager;
 
-    // The processor responsible for handling token creation, signing, or encryption
-    // based on the token type
-    private readonly Processor $processor;
+    /**
+     *
+     *
+     * @var JwtValidator
+     */
+    private readonly JwtValidator $validator;
 
     /**
-     * Constructor for initializing with a JwtAlgorithmManager.
+     * Constructs the factory and resolves the appropriate processor.
      *
-     * This constructor accepts a JwtAlgorithmManager, sets it using the
-     * `setManager` method, and then initializes the processor based on the
-     * algorithm supported by the manager.
-     *
-     * @param JwtAlgorithmManager $manager The JwtAlgorithmManager to initialize the object with.
+     * @param JwtAlgorithmManager $manager The algorithm manager instance.
      */
-    public function __construct(JwtAlgorithmManager|null $manager)
-    {
+    public function __construct(
+        JwtAlgorithmManager $manager,
+        JwtValidator $validator = null
+    ) {
         $this->manager = $manager;
-        $algorithm = $this->getManager()->getAlgorithm();
+        $this->validator = $validator ?? new JwtValidator();
+    }
 
-        $processor = $this->createProcessorForAlgorithm($algorithm);
-        if ($processor === null) {
-            throw new UnsupportedAlgorithmException($algorithm);
+    /**
+     * Creates a new encrypted JWT bundle from a given payload.
+     *
+     * This method validates the payload, prepares headers,
+     * delegates CEK/key/IV/signature operations to configured handlers,
+     * encrypts the payload, and returns a complete JWT structure.
+     *
+     * @param JwtPayload $payload The payload to embed in the token.
+     * @return EncryptedJwtBundle The fully constructed and encrypted JWT.
+     * @throws LogicException If any configured handler is missing or invalid.
+     */
+    public function create(JwtPayload $payload): EncryptedJwtBundle
+    {
+        // Validate the payload claims before proceeding
+        $this->validator->assertValid($payload);
+
+        return $this->createWithoutValidation($payload);
+    }
+
+    public function createWithoutValidation(JwtPayload $payload): EncryptedJwtBundle
+    {
+        // Load the current algorithm configuration
+        $algorithmConfig = $this->manager->getConfiguration();
+
+        // Determine the primary algorithm (signing or key management)
+        $algorithmName = $algorithmConfig['alg'] ?? null;
+
+        $tokenType = $algorithmConfig['token_type'] ?? null;
+        if (! is_string($tokenType)) {
+            throw new LogicException('Invalid configuration: missing or invalid "token_type" value');
         }
-        $this->processor = $processor;
 
-        $this->getManager()->setTokenType($processor->getTokenType());
+        if (! is_string($algorithmName)) {
+            throw new LogicException('Invalid configuration: missing or invalid "alg" value');
+        }
+
+        // Initialize JWT header with type and algorithm identifiers
+        $jwtHeader = new JwtHeader();
+        $jwtHeader->setType($algorithmConfig['token_type']);
+        $jwtHeader->setAlgorithm($algorithmName);
+
+        if (is_string($algorithmConfig['enc'] ?? null)) {
+            $jwtHeader->setEnc($algorithmConfig['enc']);
+        }
+
+        // Create initial token bundle with header and payload
+        $jwtBundle = new EncryptedJwtBundle($jwtHeader, $payload);
+
+        // --- CEK HANDLING ---
+        // Delegate CEK generation or assignment to the configured handler
+        if (isset($algorithmConfig['cek']) && is_array($algorithmConfig['cek'])) {
+            /** @var ContentEncryptionKeyManagerInterface $cekHandler */
+            $cekHandler = $this->resolveHandler(
+                $algorithmConfig,
+                'cek',
+                ContentEncryptionKeyManagerInterface::class
+            );
+            $cekHandler->prepareCek($jwtBundle, $algorithmConfig['cek']);
+        }
+
+        // --- KEY MANAGEMENT ---
+        // Delegate CEK wrapping (e.g., encryption) to key management handler
+        if (isset($algorithmConfig['key_management']) && is_array($algorithmConfig['key_management'])) {
+            /** @var KeyManagementManagerInterface $keyManager */
+            $keyManager = $this->resolveHandler(
+                $algorithmConfig,
+                'key_management',
+                KeyManagementManagerInterface::class
+            );
+            $keyManager->wrapKey($jwtBundle, $algorithmConfig['key_management']);
+        }
+
+        // --- SIGNATURE ---
+        // Delegate signature generation to the configured signature handler
+        if (isset($algorithmConfig['signing_algorithm']) && is_array($algorithmConfig['signing_algorithm'])) {
+            /** @var SignatureManagerInterface $signatureManager */
+            $signatureManager = $this->resolveHandler(
+                $algorithmConfig,
+                'signing_algorithm',
+                SignatureManagerInterface::class
+            );
+            $signatureManager->computeSignature($jwtBundle, $algorithmConfig['signing_algorithm']);
+        }
+
+        // --- IV HANDLING ---
+        // Delegate IV generation to the configured initialization vector handler
+        if (isset($algorithmConfig['iv']) && is_array($algorithmConfig['iv'])) {
+            /** @var InitializationVectorManagerInterface $ivManager */
+            $ivManager = $this->resolveHandler(
+                $algorithmConfig,
+                'iv',
+                InitializationVectorManagerInterface::class
+            );
+            $ivManager->prepareIv($jwtBundle, $algorithmConfig['iv']);
+        }
+
+        // --- PAYLOAD ENCRYPTION ---
+        // Delegate encryption of the payload to the content encryption handler
+        if (isset($algorithmConfig['content_encryption']) && is_array($algorithmConfig['content_encryption'])) {
+            /** @var ContentEncryptionManagerInterface $payloadDecryptor */
+            $payloadDecryptor = $this->resolveHandler(
+                $algorithmConfig,
+                'content_encryption',
+                ContentEncryptionManagerInterface::class
+            );
+            $payloadDecryptor->encryptPayload($jwtBundle, $algorithmConfig['content_encryption']);
+        }
+
+        return $jwtBundle;
     }
 
     /**
-     * Creates a JSON Web Token (JWT) using the provided payload.
+     * Decrypts and verifies a given encrypted JWT bundle.
      *
-     * Determines if the token should be a JWS (signed) or JWE (encrypted),
-     * and constructs the token accordingly. The token's usage is defined
+     * This method delegates CEK unwrapping, IV validation, signature verification,
+     * and payload decryption to the configured handlers according to the
+     * algorithm setup derived from the token header.
      *
-     * @param  JwtPayload $payload The data to encode within the JWT payload.
-     * @param  JwtPayload $payload  The data to encode within the JWT payload.
-     * @return string The generated JWT string.
+     * @param EncryptedJwtBundle $jwtBundle The encrypted JWT bundle.
+     * @return EncryptedJwtBundle The fully decrypted and verified token bundle.
+     * @throws LogicException If any configured handler is missing or invalid.
      */
-    public function create(JwtPayload $payload): string
+    public function decrypt(EncryptedJwtBundle $jwtBundle): EncryptedJwtBundle
     {
-        $header = new JwtHeader(
-            $this->getManager()->getAlgorithm(),
-            $this->getManager()->getTokenType()
-        );
-        $token = (new JwtTokenContainer($payload))
-            ->setHeader($header);
+        $jwtBundle = $this->decryptWithoutValidation($jwtBundle);
 
-        $encryptedToken = $this->getProcessor()->encrypt($token);
+        // Final validation of the fully assembled token
+        $this->validator->assertValidBundle($jwtBundle);
 
-        return $this->getProcessor()->assemble($encryptedToken);
+        return $jwtBundle;
     }
 
-    /**
-     * Decrypts a JWT string into a JwtTokenContainer object.
-     *
-     * Decrypts and verifies the JWT based on its type (JWS or JWE),
-     * throwing an exception if verification fails.
-     *
-     * @param  string $encryptedToken The encoded JWT string to decrypt.
-     * @return JwtTokenContainer The decrypted token container object.
-     */
-    public function decrypt(string $encryptedToken): JwtTokenContainer
+    public function decryptWithoutValidation(EncryptedJwtBundle $jwtBundle): EncryptedJwtBundle
     {
-        // Parse the encrypted token to obtain the decoded token data
-        $decodedToken = $this->getProcessor()->parse($encryptedToken);
+        // Resolve algorithm name from token header
+        $algorithmName = $jwtBundle->getHeader()->getAlgorithm();
 
-        // Decrypt the parsed token to retrieve the original token data
-        $token = $this->getProcessor()->decrypt($decodedToken);
+        if ($algorithmName === null) {
+            throw new Exception('no algorithm');
+        }
 
-        // Verify the decrypted token to ensure its validity and integrity
-        $this->getProcessor()->verify($token);
+        if ($algorithmName === 'dir' && $jwtBundle->getHeader()->getEnc() !== null) {
+            $algorithmName = $jwtBundle->getHeader()->getEnc();
+        }
 
-        return $token;
+        // Apply algorithm context to internal manager
+        $this->manager->setAlgorithm($algorithmName);
+        $algorithmConfig = $this->manager->getConfiguration();
+
+        // --- KEY MANAGEMENT ---
+        // Delegate CEK unwrapping (e.g., decrypting or deriving CEK) to key management handler
+        if (isset($algorithmConfig['key_management']) && is_array($algorithmConfig['key_management'])) {
+            /** @var KeyManagementManagerInterface $keyManager */
+            $keyManager = $this->resolveHandler(
+                $algorithmConfig,
+                'key_management',
+                KeyManagementManagerInterface::class
+            );
+            $keyManager->unwrapKey($jwtBundle, $algorithmConfig['key_management']);
+        }
+
+        // --- CEK VALIDATION ---
+        // Delegate CEK validation or derivation (if needed) to the configured CEK handler
+        if (isset($algorithmConfig['cek']) && is_array($algorithmConfig['cek'])) {
+            /** @var ContentEncryptionKeyManagerInterface $cekHandler */
+            $cekHandler = $this->resolveHandler(
+                $algorithmConfig,
+                'cek',
+                ContentEncryptionKeyManagerInterface::class
+            );
+            $cekHandler->validateCek($jwtBundle, $algorithmConfig['cek']);
+        }
+
+        // --- IV VALIDATION ---
+        // Delegate IV verification to the configured initialization vector handler
+        if (isset($algorithmConfig['iv']) && is_array($algorithmConfig['iv'])) {
+            /** @var InitializationVectorManagerInterface $ivManager */
+            $ivManager = $this->resolveHandler(
+                $algorithmConfig,
+                'iv',
+                InitializationVectorManagerInterface::class
+            );
+            $ivManager->validateIv($jwtBundle, $algorithmConfig['iv']);
+        }
+
+        // --- SIGNATURE VERIFICATION ---
+        // Delegate verification of token signature to the configured signature handler
+        if (isset($algorithmConfig['signing_algorithm']) && is_array($algorithmConfig['signing_algorithm'])) {
+            /** @var SignatureManagerInterface $signatureManager */
+            $signatureManager = $this->resolveHandler(
+                $algorithmConfig,
+                'signing_algorithm',
+                SignatureManagerInterface::class
+            );
+            $signatureManager->validateSignature($jwtBundle, $algorithmConfig['signing_algorithm']);
+        }
+
+        // --- PAYLOAD DECRYPTION ---
+        // Delegate decryption of the encrypted payload to the configured content encryption handler
+        if (isset($algorithmConfig['content_encryption']) && is_array($algorithmConfig['content_encryption'])) {
+            /** @var ContentEncryptionManagerInterface $payloadDecryptor */
+            $payloadDecryptor = $this->resolveHandler(
+                $algorithmConfig,
+                'content_encryption',
+                ContentEncryptionManagerInterface::class
+            );
+            $payloadDecryptor->decryptPayload($jwtBundle, $algorithmConfig['content_encryption']);
+        }
+
+        return $jwtBundle;
     }
 
 
-
+    /**
+     * Static helper to create a token in one step.
+     *
+     * @param JwtAlgorithmManager $algorithm The algorithm manager.
+     * @param JwtPayload $payload The token payload.
+     * @return EncryptedJwtBundle The created encrypted token.
+     */
+    public static function createToken(JwtAlgorithmManager $algorithm, JwtPayload $payload, JwtValidator $validator = null): EncryptedJwtBundle
+    {
+        return (new self($algorithm, $validator))->create($payload);
+    }
 
     /**
-     * Static method to refresh an existing JWT token with a new expiration interval.
+     * Static helper to decrypt a JWT token with the given algorithm.
      *
-     * This method creates a new instance of the class using the specified
-     * JWT algorithm manager and calls the instance method `refresh`.
-     * It returns a refreshed JWT with an updated expiration interval.
-     *
-     * @param  JwtAlgorithmManager $algorithm          The algorithm manager for handling token operations.
-     * @param  string              $encryptedToken     The existing encoded JWT token to be refreshed.
-     * @param  string              $expirationInterval The new expiration interval for the refreshed token.
-     * @return string                                  The refreshed JWT token with updated expiration.
+     * @param JwtAlgorithmManager $algorithm The algorithm manager.
+     * @param EncryptedJwtBundle $jwtBundle The encrypted token to decrypt.
+     * @return EncryptedJwtBundle The decrypted and verified token.
      */
-    public static function refreshToken(
+    public static function decryptToken(
         JwtAlgorithmManager $algorithm,
-        string $encryptedToken,
-        string $expirationInterval
-    ): string {
-        return (new self($algorithm))->refresh($encryptedToken, $expirationInterval);
+        EncryptedJwtBundle $jwtBundle,
+        JwtValidator $validator = null
+    ): EncryptedJwtBundle {
+        return (new self($algorithm, $validator))->decrypt($jwtBundle);
     }
 
     /**
-     * Static factory method to directly generate a JWT using a specified algorithm.
-     *
-     * This shortcut method allows creating a JWT without the need to instantiate
-     * the class directly. It initializes an instance with the specified
-     * algorithm manager and uses it to create the token.
-     *
-     * @param  JwtAlgorithmManager $algorithm The algorithm manager for encoding.
-     * @param  JwtPayload          $payload   The payload data for the token.
-     * @return string The generated JWT string.
+     * @template T of object
+     * @param class-string<T> $interface
+     * @param array<string, array<string, string>|string> $config
+     * @return T
      */
-    public static function createToken(JwtAlgorithmManager $algorithm, JwtPayload $payload): string
+    private function resolveHandler(array $config, string $key, string $interface): object
     {
-        return (new self($algorithm))->create($payload);
-    }
-
-    /**
-     * Static factory method to directly decrypt a JWT using a specified algorithm.
-     *
-     * This shortcut method allows decrypting a JWT without instantiating the class
-     * directly. It initializes an instance with the specified algorithm manager
-     * and uses it to decrypt the token.
-     *
-     * @param  JwtAlgorithmManager $algorithm      The algorithm manager for handling token operations.
-     * @param  string              $encryptedToken The encoded token string.
-     * @return JwtTokenContainer The decrypted token container object.
-     */
-    public static function decryptToken(JwtAlgorithmManager $algorithm, string $encryptedToken): JwtTokenContainer
-    {
-        return (new self($algorithm))->decrypt($encryptedToken);
-    }
-
-    /**
-     * Creates and returns the appropriate processor instance based on the specified algorithm.
-     *
-     * Checks if the given algorithm is supported by either the SignatureProcessor or EncodingProcessor.
-     * If supported, it initializes and returns the corresponding processor with the current manager.
-     * Returns null if the algorithm is unsupported, indicating no suitable processor is available.
-     *
-     * @param  string $algorithm The algorithm for which a processor is needed.
-     * @return Processor|null An instance of the appropriate processor, or null if unsupported.
-     */
-    private function createProcessorForAlgorithm(string $algorithm): Processor|null
-    {
-        if (SignatureProcessor::isSupported($algorithm)) {
-            return new SignatureProcessor($this->getManager());
-        }
-
-        if (EncodingProcessor::isSupported($algorithm)) {
-            return new EncodingProcessor($this->getManager());
-        }
-
-        return null; // Falls kein unterstützter Prozessor gefunden wird
-    }
-
-    /**
-     * Returns the JwtAlgorithmManager.
-     *
-     * @return JwtAlgorithmManager The manager for JWT algorithms.
-     */
-    private function getManager(): JwtAlgorithmManager
-    {
-        return $this->manager;
-    }
-
-    /**
-     * Returns the Processor.
-     *
-     * This method returns the current processor responsible for processing JWTs.
-     *
-     * @return Processor The processor for JWT processing.
-     */
-    private function getProcessor(): Processor
-    {
-        return $this->processor;
+        return HandlerResolver::resolve(
+            $config,
+            $key,
+            $interface,
+            $this->manager
+        );
     }
 }
