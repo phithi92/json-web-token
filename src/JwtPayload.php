@@ -3,17 +3,8 @@
 namespace Phithi92\JsonWebToken;
 
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
-use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
-use Phithi92\JsonWebToken\Exceptions\Payload\IatEarlierThanExpException;
-use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
-use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuerException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
-use Phithi92\JsonWebToken\Exceptions\Payload\NotBeforeOlderThanExpException;
-use Phithi92\JsonWebToken\Exceptions\Payload\NotBeforeOlderThanIatException;
-use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
-use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
-use Phithi92\JsonWebToken\Exceptions\Payload\InvalidJti;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use DateTimeImmutable;
 use DateMalformedStringException;
@@ -34,8 +25,10 @@ use DateMalformedStringException;
  * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
  * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
-final class JwtPayload
+class JwtPayload
 {
+    private string $encryptedPayload;
+
     /**
      * store token data (JWT payload)
      *
@@ -50,127 +43,9 @@ final class JwtPayload
      * Constructor initializes the DateTimeImmutable object.
      * The DateTimeImmutable instance will be used for managing date-related claims (e.g., "iat", "nbf", "exp").
      */
-    public function __construct()
+    public function __construct(DateTimeImmutable $dateTime = null)
     {
-        $this->dateTimeImmutable = new DateTimeImmutable();
-    }
-
-    /**
-     * Validates JWT payload fields ('iat', 'nbf', 'exp', 'usage') to ensure correct issuance,
-     * expiration, validity, and usage constraints.
-     *
-     * This method performs the following checks:
-     * - 'iat' and 'exp' are present, with 'iat' occurring before or at the same time as 'exp'.
-     * - 'nbf' is within valid bounds relative to 'iat' and 'exp'.
-     * - The token's activation ('nbf') and expiration ('exp') times are valid relative to the current time.
-     * - The 'usage' field, which determines if the token is intended for one-time or reusable access, is
-     *   either 'reusable' or 'one_time' if present.
-     *
-     * @throws ValueNotFoundException if 'iat' or 'exp' is missing.
-     * @throws IatEarlierThanExpException if 'iat' is later than 'exp'.
-     * @throws NotBeforeOlderThanExpException if 'nbf' is after 'exp'.
-     * @throws NotBeforeOlderThanIatException if 'nbf' is before 'iat'.
-     * @throws ExpiredPayloadException if the token has expired.
-     * @throws NotYetValidException if the token is not yet valid.
-     */
-    public function validate(): void
-    {
-        // Check if "iat" exists
-        if ($this->getField('iat') === null) {
-            throw new ValueNotFoundException('iat');
-        }
-
-        // Check if "exp" exists
-        if ($this->getField('exp') === null) {
-            throw new ValueNotFoundException('exp');
-        }
-
-        $iat = (int) $this->getField('iat');  // Issued At
-        $nbf = (int) $this->getField('nbf');  // Not Before
-        $exp = (int) $this->getField('exp');  // Expiration
-        $now = $this->dateTimeImmutable->getTimestamp(); // Current Unix timestamp
-
-
-        // Check if "iat" is earlier than "exp"
-        if ($iat && $exp && $iat > $exp) {
-            throw new IatEarlierThanExpException();
-        }
-
-        // Check if "nbf" is earlier than "exp"
-        if ($nbf && $exp && $nbf > $exp) {
-            throw new NotBeforeOlderThanExpException();
-        }
-
-        // Check if "nbf" is later than or equal to "iat"
-        if ($iat && $nbf && $nbf < $iat) {
-            throw new NotBeforeOlderThanIatException();
-        }
-
-        // Validate if the token is valid based on the current time
-        if ($exp && $now >= $exp) {
-            throw new ExpiredPayloadException();
-        }
-
-        if ($nbf && $now < $nbf) {
-            throw new NotYetValidException();
-        }
-    }
-
-    /**
-     * Optionally validates whether the 'iss' (issuer) claim matches the expected issuer.
-     *
-     * @param  string $expectedIssuer The expected issuer of the JWT.
-     * @see    getField() Used to retrieve the 'iss' claim from the payload.
-     * @throws InvalidIssuerException if the issuer does not match the expected value.
-     */
-    public function validateIssuer(string $expectedIssuer): void
-    {
-        $issuer = $this->getField('iss');
-        if (!is_string($issuer) || $issuer !== $expectedIssuer) {
-            if (is_array($issuer)) {
-                $compare = JsonEncoder::encode($issuer);
-            } elseif (is_string($issuer)) {
-                $compare = $issuer;
-            } else {
-                throw new \Exception();
-            }
-            throw new InvalidIssuerException($expectedIssuer, $compare);
-        }
-    }
-
-    /**
-     * Optionally validates whether the 'aud' (audience) claim matches the expected audience.
-     *
-     * @param  string|array<string> $expectedAudience The expected audience(s) of the JWT.
-     * @see    getField() Used to retrieve the 'aud' claim from the payload.
-     * @throws InvalidAudienceException if the audience does not match the expected value.
-     */
-    public function validateAudience(string|array $expectedAudience): void
-    {
-        $audience = $this->getField('aud');
-
-        if ($audience === null) {
-            throw new InvalidAudienceException();
-        }
-
-        // Ensure $audience is an array for consistent processing
-        $actualAudience = is_array($audience) ? array_flip($audience) : [$audience];
-
-        // Convert $expectedAudience to an array if it’s a string
-        $expectedAudiences = is_array($expectedAudience) ? $expectedAudience : [$expectedAudience];
-
-        // Use a loop to check for any overlap between expected and actual audiences
-        $isValid = false;
-        foreach ($expectedAudiences as $expected) {
-            if (isset($actualAudience[$expected])) {
-                $isValid = true;
-                break; // Exit the loop as soon as a match is found
-            }
-        }
-
-        if ($isValid === false) {
-            throw new InvalidAudienceException();
-        }
+        $this->dateTimeImmutable = $dateTime ?? new DateTimeImmutable();
     }
 
     /**
@@ -214,8 +89,6 @@ final class JwtPayload
             $instance->setField($key, $value, true);  // true allows overwriting fields
         }
 
-        $instance->validate();
-
         // Return the populated JwtPayload instance
         return $instance;
     }
@@ -236,8 +109,6 @@ final class JwtPayload
         if ($this->getField('iat') === null) {
             $this->setTimestamp('iat', 'now');
         }
-
-        $this->validate();
 
         return (array) $this->payload;
     }
@@ -335,12 +206,12 @@ final class JwtPayload
      * the intended audience, or null if the field is not set.
      *
      * @see    getField()
-     * @return string|null The audience identifier as a string, or null if it is not present.
+     * @return array<string>|string|null The audience identifier as a string, or null if it is not present.
      */
-    public function getAudience(): string|null
+    public function getAudience(): string|array|null
     {
         $audience = $this->getField('aud');
-        return is_string($audience) ? $audience : null;
+        return is_string($audience) || is_array($audience) ? $audience : null;
     }
 
     /**
@@ -365,12 +236,12 @@ final class JwtPayload
      * a timestamp, or null if the field is not set.
      *
      * @see    getField()
-     * @return string|int|null The issued-at timestamp as a string, or null if it is not present.
+     * @return int|null The issued-at timestamp as a string, or null if it is not present.
      */
-    public function getIssuedAt(): string|int|null
+    public function getIssuedAt(): int|null
     {
-        $audience = $this->getField('iat');
-        return is_string($audience) || is_int($audience) ? $audience : null;
+        $audience = (int)$this->getField('iat');
+        return $audience > 0 ? $audience : null;
     }
 
     /**
@@ -396,12 +267,12 @@ final class JwtPayload
      * a timestamp, or null if the field is not set.
      *
      * @see    getField()
-     * @return string|int|null The expiration timestamp as a string, or null if it is not present.
+     * @return int|null The expiration timestamp as int, or null if it is not present.
      */
-    public function getExpiration(): string|int|null
+    public function getExpiration(): int|null
     {
-        $expires = $this->getField('exp');
-        return is_string($expires) || is_int($expires) ? $expires : null;
+        $expires = (int)$this->getField('exp');
+        return $expires > 0 ? $expires : null;
     }
 
     /**
@@ -426,12 +297,12 @@ final class JwtPayload
      * in the payload. The 'nbf' field is expected to contain a string representing
      * a timestamp or null if the field is not set.
      *
-     * @return string|int|null The not-before timestamp as a string, or null if it is not present.
+     * @return int|null The not-before timestamp as int, or null if it is not present.
      */
-    public function getNotBefore(): string|int|null
+    public function getNotBefore(): int|null
     {
-        $notBefore = $this->getField('nbf');
-        return is_string($notBefore) || is_int($notBefore) ? $notBefore : null;
+        $notBefore = (int)$this->getField('nbf');
+        return $notBefore > 0 ? $notBefore : null;
     }
 
     /**
@@ -440,7 +311,7 @@ final class JwtPayload
      * @param  string|int $field The field to check.
      * @return bool Returns true if the field exists, false otherwise.
      */
-    private function hasField(string|int $field): bool
+    public function hasField(string|int $field): bool
     {
         return isset($this->payload[$field]);
     }
@@ -508,5 +379,27 @@ final class JwtPayload
         }
 
         return $this;
+    }
+
+    /**
+     * Sets the encrypted payload.
+     *
+     * @param  string $encryptedPayload The encrypted payload data.
+     * @return self
+     */
+    public function setEncryptedPayload(string $encryptedPayload): self
+    {
+        $this->encryptedPayload = $encryptedPayload;
+        return $this;
+    }
+
+    /**
+     * Retrieves the encrypted payload.
+     *
+     * @return string|null The encrypted payload data, or null if not set.
+     */
+    public function getEncryptedPayload(): ?string
+    {
+        return $this->encryptedPayload ?? null;
     }
 }
