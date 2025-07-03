@@ -36,25 +36,6 @@ final class JwtHeader
     private string $kid;
 
     /**
-     * Initializes the JWT header with optional parameters for algorithm and type.
-     *
-     * If an algorithm or type is provided, it sets these values during instantiation.
-     *
-     * @param string|null $algorithm Optional algorithm identifier, e.g., 'HS256'.
-     * @param string|null $type      Optional type of the token, e.g., 'JWT' or 'JWS'.
-     */
-    public function __construct(?string $algorithm = null, ?string $type = null)
-    {
-        if (empty($algorithm) === false) {
-            $this->setAlgorithm($algorithm);
-        }
-
-        if (empty($type) === false) {
-            $this->setType($type);
-        }
-    }
-
-    /**
      * Sets the Key ID ('kid') for the JWT header.
      *
      * Validates that the provided Key ID:
@@ -175,18 +156,12 @@ final class JwtHeader
      */
     public function toArray(): array
     {
-        $header = [
+        $header = array_filter([
             'alg' => $this->getAlgorithm(),
             'typ' => $this->getType(),
-        ];
-
-        if (empty($this->getEnc()) === false) {
-            $header['enc'] = $this->getEnc();
-        }
-
-        if (empty($this->getEnc()) === false) {
-            $header['kid'] = $this->getEnc();
-        }
+            'enc' => $this->getEnc(),
+            'kid' => $this->getKid(),
+        ], fn($value) => $value !== null && $value !== '');
 
         return $header;
     }
@@ -213,24 +188,21 @@ final class JwtHeader
      */
     public static function fromJson(string $json): self
     {
-        $header = JsonEncoder::decode($json);
-
+        /** @var \stdClass $data */
+        $data = JsonEncoder::decode($json, false);
         $instance = new self();
 
-        if (isset($header->enc)) {
-            $instance->setEnc($header->enc);
-        }
+        $map = [
+            'alg' => 'setAlgorithm',
+            'typ' => 'setType',
+            'enc' => 'setEnc',
+            'kid' => 'setKid',
+        ];
 
-        if (isset($header->alg)) {
-            $instance->setAlgorithm($header->alg);
-        }
-
-        if (isset($header->typ)) {
-            $instance->setType($header->typ);
-        }
-
-        if (isset($header->kid)) {
-            $instance->setKid($header->kid);
+        foreach ($map as $jsonKey => $setter) {
+            if (isset($data->$jsonKey)) {
+                $instance->$setter($data->$jsonKey);
+            }
         }
 
         return $instance;
