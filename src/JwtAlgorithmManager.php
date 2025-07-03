@@ -24,14 +24,10 @@ use SensitiveParameter;
  * integrity and security of cryptographic operations, and prevents the use of
  * unsupported or malformed keys.
  *
- * @package Phithi92\JsonWebToken
  * @author  Phillip Thiele <development@phillip-thiele.de>
- * @version 1.0.0
- * @since   1.0.0
- * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
  * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
-final class JwtAlgorithmManager
+final class JwtAlgorithmManager implements JwtAlgorithmManagerInterface
 {
     // The algorithm name (e.g., HS256, RS256, RSA-OAEP)
     private string $algorithm;
@@ -165,16 +161,6 @@ final class JwtAlgorithmManager
     }
 
     /**
-     * Retrieves the type of token (either 'JWS' or 'JWE').
-     *
-     * @return string The token type.
-     */
-    public function getTokenType(): string|null
-    {
-        return $this->type ?? null;
-    }
-
-    /**
      * Sets the public key for encryption.
      *
      * This method loads and validates the provided public key.
@@ -182,15 +168,15 @@ final class JwtAlgorithmManager
      *
      * @param  string $publicKey The public key to be set.
      * @return OpenSSLAsymmetricKey
-     * @throws InvalidAsymetricKeyException If the public key is invalid.
+     * @throws InvalidAsymmetricKeyException If the public key is invalid.
      */
-    private function validatePublicKey(string $publicKey): OpenSSLAsymmetricKey
+    private function validatePublicKey(#[SensitiveParameter] string $publicKey): OpenSSLAsymmetricKey
     {
-        $keyResource = openssl_pkey_get_public($publicKey);
+        $keyResource = @openssl_pkey_get_public($publicKey);
 
         // Check if the key was successfully loaded
         if ($keyResource === false) {
-            throw new InvalidAsymetricKeyException();
+            throw new InvalidAsymmetricKeyException();
         }
 
         return $keyResource;
@@ -204,30 +190,18 @@ final class JwtAlgorithmManager
      *
      * @param  string $privateKey The private key to be set.
      * @return OpenSSLAsymmetricKey
-     * @throws InvalidAsymetricKeyException If the private key is invalid.
+     * @throws InvalidAsymmetricKeyException If the private key is invalid.
      */
-    private function validatePrivateKey(string $privateKey): OpenSSLAsymmetricKey
+    private function validatePrivateKey(#[SensitiveParameter] string $privateKey): OpenSSLAsymmetricKey
     {
-        $keyResource = openssl_pkey_get_private($privateKey);
+        $keyResource = @openssl_pkey_get_private($privateKey);
 
         // Check if the key was successfully loaded
         if ($keyResource === false) {
-            throw new InvalidAsymetricKeyException();
+            throw new InvalidAsymmetricKeyException();
         }
 
         return $keyResource;
-    }
-
-    /**
-     * Sets the token type for the current instance.
-     *
-     * @param  string $type The token type to set.
-     * @return self Returns the current instance for chaining.
-     */
-    public function setTokenType(string $type): self
-    {
-        $this->type = $type;
-        return $this;
     }
 
     /**
@@ -248,9 +222,9 @@ final class JwtAlgorithmManager
      * @return void
      */
     private function validateKeys(
-        ?string $passphrase,
-        ?string $publicKey,
-        ?string $privateKey
+        #[SensitiveParameter] ?string $passphrase,
+        #[SensitiveParameter] ?string $publicKey,
+        #[SensitiveParameter] ?string $privateKey
     ): void {
         if (empty($passphrase) && $publicKey === null && $privateKey === null) {
             throw new MissingPassphraseException();
