@@ -12,21 +12,16 @@ use Phithi92\JsonWebToken\Processors\EncodingProcessor;
 use Phithi92\JsonWebToken\Processors\Processor;
 
 /**
- * JsonWebToken is a final class responsible for creating, validating,
- * and managing JSON Web Tokens (JWTs), including JWS (JSON Web Signature)
- * and JWE (JSON Web Encryption) types. It supports token generation,
- * algorithm selection, and encoding/decoding of JWT structures.
+ * Factory class for creating, encrypting, decrypting, and validating JWTs.
  *
- * Note: The token structure is validated within this class, while the
- * content of the payload itself is validated only when the `toArray`
- * method of the JwtTokenContainer class is called.
+ * This class orchestrates the full lifecycle of JSON Web Tokens, including:
+ * - Creating JWTs with configurable algorithms and handlers.
+ * - Applying and validating encryption, signatures, IVs, and CEKs.
+ * - Decrypting and verifying existing tokens based on algorithm configuration.
+ * - Delegating responsibilities to pluggable handler interfaces.
  *
- * @package Phithi92\JsonWebToken
- * @author  Phillip Thiele <development@phillip-thiele.de>
- * @version 1.0.0
- * @since   1.0.0
- * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
- * @link    https://github.com/phithi92/json-web-token Project on GitHub
+ * Acts as a central access point to assemble or parse `EncryptedJwtBundle` objects
+ * using a configured `JwtAlgorithmManager` and optional `JwtValidator`.
  */
 final class JwtTokenFactory
 {

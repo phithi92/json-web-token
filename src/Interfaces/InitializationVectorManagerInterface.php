@@ -5,10 +5,6 @@ namespace Phithi92\JsonWebToken\Interfaces;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializeVectorException;
 
-/**
- *
- * @author phillipthiele
- */
 interface InitializationVectorManagerInterface
 {
     /**

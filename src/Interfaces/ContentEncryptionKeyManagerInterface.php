@@ -4,10 +4,6 @@ namespace Phithi92\JsonWebToken\Interfaces;
 
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 
-/**
- *
- * @author phillipthiele
- */
 interface ContentEncryptionKeyManagerInterface
 {
     /**

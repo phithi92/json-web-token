@@ -2,10 +2,6 @@
 
 namespace Phithi92\JsonWebToken\Interfaces;
 
-/**
- *
- * @author phillipthiele
- */
 interface AlgorithmConfigurationInterface
 {
     /**

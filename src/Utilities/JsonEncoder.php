@@ -12,13 +12,6 @@ use JsonException;
  *
  * Provides static methods for encoding arrays to JSON strings and decoding JSON strings to arrays.
  * Handles errors by throwing DecodingException and EncodingException, which both extend JsonException.
- *
- * @package Phithi92\JsonWebToken\Utilities
- * @author  Phillip Thiele <development@phillip-thiele.de>
- * @version 1.0.0
- * @since   1.0.0
- * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
- * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
 class JsonEncoder
 {

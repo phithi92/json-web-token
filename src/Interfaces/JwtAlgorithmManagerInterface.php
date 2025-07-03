@@ -15,13 +15,6 @@ use OpenSSLAsymmetricKey;
  * exception will be thrown if the keys are invalid. This validation ensures the
  * integrity and security of cryptographic operations, and prevents the use of
  * unsupported or malformed keys.
- *
- * @package Phithi92\JsonWebToken
- * @author  Phillip Thiele <development@phillip-thiele.de>
- * @version 1.0.0
- * @since   1.0.0
- * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
- * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
 interface JwtAlgorithmManagerInterface
 {

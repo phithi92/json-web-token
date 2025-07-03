@@ -18,13 +18,6 @@ use Phithi92\JsonWebToken\Interfaces\EncryptedJwtInterface;
  * - Signature: Holds the digital signature for JWS tokens.
  * - CEK: The content encryption key used in encryption for JWE tokens.
  * - IV: The initialization vector for encryption processes.
- *
- * @package Phithi92\JsonWebToken
- * @author  Phillip Thiele <development@phillip-thiele.de>
- * @version 1.0.0
- * @since   1.0.0
- * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
- * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
 final class EncryptedJwtBundle implements EncryptedJwtInterface
 {

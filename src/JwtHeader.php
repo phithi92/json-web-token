@@ -13,13 +13,6 @@ use Phithi92\JsonWebToken\Utilities\JsonEncoder;
  * the algorithm used for signing or encryption, and the encryption method, if applicable.
  * It provides methods to set and retrieve these properties, ensuring consistency with
  * JWT standards.
- *
- * @package Phithi92\JsonWebToken
- * @author  Phillip Thiele <development@phillip-thiele.de>
- * @version 1.0.0
- * @since   1.0.0
- * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
- * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
 final class JwtHeader
 {

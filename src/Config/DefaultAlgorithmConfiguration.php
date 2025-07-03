@@ -9,8 +9,6 @@ use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
  *
  * This class loads algorithm configurations from a PHP file and provides
  * access to individual algorithm settings.
- *
- * @author Phithi92 <development@phillip-thiele.de>
  */
 class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInterface
 {

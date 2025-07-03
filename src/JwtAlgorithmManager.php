@@ -23,9 +23,6 @@ use SensitiveParameter;
  * exception will be thrown if the keys are invalid. This validation ensures the
  * integrity and security of cryptographic operations, and prevents the use of
  * unsupported or malformed keys.
- *
- * @author  Phillip Thiele <development@phillip-thiele.de>
- * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
 final class JwtAlgorithmManager implements JwtAlgorithmManagerInterface
 {

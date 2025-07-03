@@ -7,9 +7,6 @@ namespace Phithi92\JsonWebToken;
  * including the CEK, IV, AAD, auth tag, and encrypted key if applicable.
  *
  * Serves as a value object within the JWE encryption/decryption process.
- *
- * @package Phithi92\JsonWebToken
- * @author Phithi92<development@phillip-thiele.de>
  */
 final class JwtEncryptionData
 {

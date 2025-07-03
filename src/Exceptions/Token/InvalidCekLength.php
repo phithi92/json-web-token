@@ -5,10 +5,6 @@ namespace Phithi92\JsonWebToken\Exceptions\Token;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\ErrorMessagesEnum;
 
-/**
- *
- * @author phillipthiele
- */
 class InvalidCekLength extends TokenException
 {
     public function __construct(int $length, int $expect)

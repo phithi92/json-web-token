@@ -17,13 +17,6 @@ use DateMalformedStringException;
  * and allows custom claims to be added as well. Temporal claims, such as "iat", "nbf",
  * and "exp," are managed with DateTimeImmutable to ensure consistency in date-related
  * operations.
- *
- * @package Phithi92\JsonWebToken
- * @author  Phillip Thiele <development@phillip-thiele.de>
- * @version 1.0.0
- * @since   1.0.0
- * @license https://github.com/phithi92/json-web-token/blob/main/LICENSE MIT License
- * @link    https://github.com/phithi92/json-web-token Project on GitHub
  */
 class JwtPayload
 {

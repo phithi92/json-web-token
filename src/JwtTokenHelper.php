@@ -5,8 +5,6 @@ namespace Phithi92\JsonWebToken;
 /**
  * JwtTokenHelper provides utility methods for working with JWT bundles,
  * such as refreshing issued and expiration times.
- *
- * @author Phithi92 <development@phillip-thiele.de>
  */
 class JwtTokenHelper
 {
