@@ -61,15 +61,15 @@ class JwtTokenParser
 
         $jwtBundle = new EncryptedJwtBundle($header, new JwtPayload());
         $encryption = $jwtBundle->getEncryption();
-        
-        if($header->getAlgorithm() === 'A128GCM'){
+
+        if ($header->getAlgorithm() === 'A128GCM') {
             var_dump($header);
             exit;
         }
 
         // Set CEK or Encrypted Key based on alg
         $isDirectEncryption = $header->getAlgorithm() === 'dir';
-        if ($isDirectEncryption) {            
+        if ($isDirectEncryption) {
             $encryption->setCek($key); // key ist CEK
         } else {
             $encryption->setEncryptedKey($key); // key ist verschlüsselter CEK
