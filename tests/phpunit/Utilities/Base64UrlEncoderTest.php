@@ -1,5 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
+namespace Tests\Utilities;
+
 use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
@@ -17,7 +21,7 @@ class Base64UrlEncoderTest extends TestCase
     {
         $input = 'Hello, World!';
         $expected = 'SGVsbG8sIFdvcmxkIQ';
-        
+
         $actual = Base64UrlEncoder::encode($input);
         $this->assertEquals($expected, $actual, 'The encoded string does not match the expected Base64 URL-safe string.');
     }
@@ -29,7 +33,7 @@ class Base64UrlEncoderTest extends TestCase
     {
         $input = 'SGVsbG8sIFdvcmxkIQ';
         $expected = 'Hello, World!';
-        
+
         $actual = Base64UrlEncoder::decode($input);
         $this->assertEquals($expected, $actual, 'The decoded string does not match the expected original string.');
     }
@@ -61,10 +65,10 @@ class Base64UrlEncoderTest extends TestCase
     public function testEncodeDecodeReversibility()
     {
         $input = 'Sample string for testing.';
-        
+
         $encoded = Base64UrlEncoder::encode($input);
         $decoded = Base64UrlEncoder::decode($encoded);
-        
+
         $this->assertEquals($input, $decoded, 'The decoded string does not match the original input string.');
     }
 
@@ -74,10 +78,10 @@ class Base64UrlEncoderTest extends TestCase
     public function testEncodeDecodeSpecialCharacters()
     {
         $input = 'This is a test: äöüß@€!';
-        
+
         $encoded = Base64UrlEncoder::encode($input);
         $decoded = Base64UrlEncoder::decode($encoded);
-        
+
         $this->assertEquals($input, $decoded, 'The decoded string with special characters does not match the original input string.');
     }
 
@@ -87,10 +91,10 @@ class Base64UrlEncoderTest extends TestCase
     public function testEncodeDecodeEmptyString()
     {
         $input = '';
-        
+
         $encoded = Base64UrlEncoder::encode($input);
         $decoded = Base64UrlEncoder::decode($encoded);
-        
+
         $this->assertEquals($input, $decoded, 'The decoded string for an empty input does not match the original input string.');
     }
 }

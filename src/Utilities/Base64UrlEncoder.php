@@ -14,7 +14,7 @@ namespace Phithi92\JsonWebToken\Utilities;
  * - `decode(string $string, bool $padding = false): string`: Decodes a Base64 URL-safe
  *   string back to its original form, with optional padding for compatibility.
  */
-class Base64UrlEncoder
+final class Base64UrlEncoder
 {
     /**
      * Encodes data to Base64 URL format according to the RFC 7515 standard.
