@@ -13,7 +13,7 @@ use JsonException;
  * Provides static methods for encoding arrays to JSON strings and decoding JSON strings to arrays.
  * Handles errors by throwing DecodingException and EncodingException, which both extend JsonException.
  */
-class JsonEncoder
+final class JsonEncoder
 {
     /**
      * Decodes a JSON-encoded string into an associative array or stdClass object.
@@ -29,7 +29,7 @@ class JsonEncoder
      * @param  int    $options     Additional JSON decode options (e.g., JSON_BIGINT_AS_STRING),
      *                             combined with JSON_THROW_ON_ERROR.
      * @param  int    $depth       The maximum depth for JSON decoding. Defaults to 512.
-     * @return array<int|string, mixed> The decoded data, either as an associative array or stdClass object.
+     * @return array<mixed> The decoded data, either as an associative array or stdClass object.
      * @throws DecodingException if the JSON string cannot be decoded.
      */
     public static function decode(
@@ -57,7 +57,7 @@ class JsonEncoder
      * flag ensures that any errors in encoding throw a JsonException, which is caught and rethrown
      * as an EncodingException for more specific error handling.
      *
-     * @param  array<int|string, mixed> $array   The associative array to encode.
+     * @param  array<mixed> $array   The associative array to encode.
      * @param  int   $options Additional JSON encode options (e.g., JSON_UNESCAPED_UNICODE),
      *                        combined with JSON_THROW_ON_ERROR.
      * @param  int   $depth   The maximum depth for JSON encoding. Defaults to 512.
