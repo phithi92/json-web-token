@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\Exceptions;
 

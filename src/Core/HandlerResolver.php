@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Phithi92\JsonWebToken\Core;
 
 use LogicException;
