@@ -4,52 +4,63 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Content;
 
-use Phithi92\JsonWebToken\Algorithms\Content\ContentCryptoService;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\DecryptionException;
-use Phithi92\JsonWebToken\Exceptions\Cryptographys\EncryptionException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 
 class RsaEncryptionService extends ContentCryptoService
 {
+    /**
+     * @param array<string,int|string> $config
+     *
+     * @throws DecryptionException
+     */
     public function decryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
+        $kid = $bundle->getHeader()->getKid() ?? $config['name'] ?? null;
+        if (! is_string($kid)) {
+            throw new InvalidSignatureException('No key ID (kid) provided for signature validation.');
+        }
+
         $encryptedKey = $bundle->getEncryption()->getEncryptedKey();
-        $padding = $config['padding'];
-        $privateKey = $this->manager->getPrivateKey();
-        $data = '';
+        $padding = (int) $config['padding'];
+        $privateKey = $this->manager->getPrivateKey($kid);
+        $cek = '';
 
-        // Decrypt data with RSA private key
-        if (!openssl_private_decrypt($encryptedKey, $data, $privateKey, $padding)) {
-            throw new DecryptionException();
+        if (! openssl_private_decrypt($encryptedKey, $cek, $privateKey, $padding)) {
+            throw new DecryptionException($this->getOpenSslError('decryption'));
         }
 
-        // Result may be empty if decryption libary is configured incorrectly
-        // or if memory allocation fails
-        if (empty($data)) {
-            throw new DecryptionException();
-        }
-
-        $bundle->getEncryption()->setCek($data);
+        $bundle->getEncryption()->setCek($cek);
     }
 
+    /**
+     * @param array<string,int|string> $config
+     *
+     * @throws EncryptionException
+     */
     public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
-        $data = $bundle->getEncryption()->getCek();
-        $padding = $config['padding'];
-        $publicKey = $this->manager->getPublicKey();
-        $encrypted = '';
-
-        // Encrypt data with RSA public key
-        if (!openssl_public_encrypt($data, $encrypted, $publicKey, $padding)) {
-            throw new EncryptionException();
+        $kid = $bundle->getHeader()->getKid() ?? $config['name'] ?? null;
+        if (! is_string($kid)) {
+            throw new InvalidSignatureException('No key ID (kid) provided for signature validation.');
         }
 
-        // Result may be empty if encryption libary is configured incorrectly
-        // or if memory allocation fails
-        if (empty($encrypted)) {
-            throw new EncryptionException();
+        $data = $bundle->getEncryption()->getCek();
+        $padding = (int) $config['padding'];
+        $publicKey = $this->manager->getPublicKey($kid);
+        $encrypted = '';
+
+        if (! openssl_public_encrypt($data, $encrypted, $publicKey, $padding) || empty($encrypted)) {
+            throw new EncryptionException($this->getOpenSslError('encryption'));
         }
 
         $bundle->getEncryption()->setEncryptedKey($encrypted);
+    }
+
+    private function getOpenSslError(string $context): string
+    {
+        return openssl_error_string() ?: "Unknown OpenSSL {$context} error";
     }
 }

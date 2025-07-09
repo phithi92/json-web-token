@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Crypto\Encryption;
 
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorConfigException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializeVectorException;
 use Phithi92\JsonWebToken\Interfaces\InitializationVectorManagerInterface;
-use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorConfigException;
 
 /**
  * Responsible for generating and validating the Initialization Vector (IV)
@@ -23,8 +23,8 @@ final class IvService implements InitializationVectorManagerInterface
      */
     public function prepareIv(EncryptedJwtBundle $bundle, array $config): void
     {
-        $length         = (int)$config['length'];   // IV length in bits
-        $expectedBytes  = intdiv($length, 8);
+        $length        = (int) $config['length'];   // IV length in bits
+        $expectedBytes = intdiv($length, 8);
 
         if ($expectedBytes < 1) {
             throw new InvalidInitializationVectorConfigException($expectedBytes, 8);
@@ -48,7 +48,7 @@ final class IvService implements InitializationVectorManagerInterface
      */
     public function validateIv(EncryptedJwtBundle $bundle, array $config): void
     {
-        $expectedBits = (int)($config['length']);
+        $expectedBits  = (int) ($config['length']);
         $expectedBytes = intdiv($expectedBits, 8);
 
         if ($expectedBytes < 1) {

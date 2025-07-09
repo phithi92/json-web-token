@@ -12,20 +12,25 @@ class DefaultCekHandler implements ContentEncryptionKeyManagerInterface
 {
     public function prepareCek(EncryptedJwtBundle $jwtToken, array $config): void
     {
-        $length = (int)$config['length']; // bits
-        $bytes  = intdiv($length, 8); // convert to bytes
+        $bitLength = (int) $config['length'];
+        if ($bitLength < 8) {
+            throw new \InvalidArgumentException('CEK length must be >= 8 bits.');
+        }
 
-        $cek = random_bytes($bytes);
+        // Ensure at least 1 byte; random_bytes(0) throws and a 0-byte CEK is invalid.
+        $byteLength = max(1, intdiv($bitLength, 8));
+
+        $cek = random_bytes($byteLength);
 
         $jwtToken->getEncryption()->setCek($cek);
     }
 
     public function validateCek(EncryptedJwtBundle $jwtToken, array $config): void
     {
-        $cek            = $jwtToken->getEncryption()->getCek();
-        $cekLength      = strlen($cek);
-        $expectedLength = (int)$config['length']; // bits
-        $expectedBytes  = intdiv($expectedLength, 8); // convert to bytes
+        $cek = $jwtToken->getEncryption()->getCek();
+        $cekLength = strlen($cek);
+        $expectedLength = (int) $config['length']; // bits
+        $expectedBytes = intdiv($expectedLength, 8); // convert to bytes
 
         if ($cekLength < $expectedBytes) {
             throw new InvalidCekLength($cekLength, $expectedBytes);

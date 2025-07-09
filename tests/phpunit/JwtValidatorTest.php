@@ -25,8 +25,8 @@ final class JwtValidatorTest extends TestCase
         $mock->method('getIssuedAt')->willReturn($data['iat'] ?? null);
         $mock->method('getIssuer')->willReturn($data['iss'] ?? null);
         $mock->method('getAudience')->willReturn($data['aud'] ?? null);
-        $mock->method('getField')->willReturnCallback(fn($key) => $data[$key] ?? null);
-        $mock->method('hasField')->willReturnCallback(fn($key) => isset($data[$key]));
+        $mock->method('getClaim')->willReturnCallback(fn($key) => $data[$key] ?? null);
+        $mock->method('hasClaim')->willReturnCallback(fn($key) => isset($data[$key]));
         $mock->method('toArray')->willReturnCallback(fn() => $data ?? null);
 
         return $mock;

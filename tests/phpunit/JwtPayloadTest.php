@@ -17,25 +17,25 @@ class JwtPayloadTest extends TestCase
     public function testAddField()
     {
         $payload = new JwtPayload();
-        $payload->addField('custom', 'testValue');
-        
-        $this->assertEquals('testValue', $payload->getField('custom'));
+        $payload->addClaim('custom', 'testValue');
+
+        $this->assertEquals('testValue', $payload->getClaim('custom'));
     }
 
     public function testSetIssuer()
     {
         $payload = new JwtPayload();
         $payload->setIssuer('testIssuer');
-        
-        $this->assertEquals('testIssuer', $payload->getField('iss'));
+
+        $this->assertEquals('testIssuer', $payload->getClaim('iss'));
     }
 
     public function testSetAudience()
     {
         $payload = new JwtPayload();
         $payload->setAudience(['aud1', 'aud2']);
-        
-        $this->assertEquals(['aud1', 'aud2'], $payload->getField('aud'));
+
+        $this->assertEquals(['aud1', 'aud2'], $payload->getClaim('aud'));
     }
 
     public function testSetIssuedAt()
@@ -45,7 +45,7 @@ class JwtPayloadTest extends TestCase
         $payload->setIssuedAt($dateTime);
         
         $expectedTimestamp = (new DateTimeImmutable($dateTime))->getTimestamp();
-        $this->assertEquals($expectedTimestamp, $payload->getField('iat'));
+        $this->assertEquals($expectedTimestamp, $payload->getClaim('iat'));
     }
 
     public function testSetExpiration()
@@ -55,7 +55,7 @@ class JwtPayloadTest extends TestCase
         $payload->setExpiration($dateTime);
         
         $expectedTimestamp = (new DateTimeImmutable($dateTime))->getTimestamp();
-        $this->assertEquals($expectedTimestamp, $payload->getField('exp'));
+        $this->assertEquals($expectedTimestamp, $payload->getClaim('exp'));
     }
 
     public function testSetNotBefore()
