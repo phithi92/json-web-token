@@ -1,43 +1,144 @@
 <?php
 
-require_once __DIR__ . '/../../vendor/autoload.php'; // Autoloader von Composer laden
-
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\JwtPayload;
+use Phithi92\JsonWebToken\JwtTokenFactory;
+use Phithi92\JsonWebToken\JwtTokenParser;
+use Phithi92\JsonWebToken\JwtValidator;
+
+require_once __DIR__ . '/../Helpers/KeyProvider.php';
+
+use Tests\Helpers\KeyProvider;
 
 abstract class BenchmarkBase
 {
-    public static string $SECRET16 = 'fbdc3ef88abf92b9';
-    public static string $SECRET32 = 'fbdc3ef88abf92b9424715674a5de1ae';
-    public static string $SECRET64 = 'fbdc3ef88abf92b9424715674a5de1aee3a37f05e437dd235ce67db2479da88a';
-    public static string $SECRET128 = '8d9e501e67fb2d6d53c821016630f12457829fdfb7c6b63b47e662254c33be3fd0ced44765a7ae1961a7ac6e22c420d1222565ea93de62f11e11618edff18dc5';    
+    protected array $cache;
 
-    public static function setupAlgorithmManager(
-            string $algorithm,
-            ?string $passphrase = null,
-            ?string $privatePem = null,
-            ?string $publicPem = null
-    ): JwtAlgorithmManager {
+    protected array $supportedAlgorithms;
 
-        return new JwtAlgorithmManager(
-            $algorithm,
-            $passphrase,
-            $publicPem,
-            $privatePem
-        );
+    private JwtValidator $validator;
+
+    protected JwtAlgorithmManager $manager;
+
+    public function provideAlgs(): array
+    {
+        $algs = array_keys($this->getAllProvidedKeys());
+        return array_combine($algs, array_map(fn($alg) => ['alg' => $alg], $algs));
     }
-        
-    public static function createPayload(): JwtPayload
+
+    protected function getAllProvidedKeys(): array
+    {
+        if (isset($this->supportedAlgorithms)) {
+            return $this->supportedAlgorithms;
+        }
+
+        return $this->supportedAlgorithms = KeyProvider::getAll();
+    }
+
+    protected function getExpiredToken(string $alg): string
+    {
+        if (!isset($this->cache['expired'][$alg])) {
+            $manager = $this->getManager();
+            $payload = (new JwtPayload())->fromArray([
+                'iat' => time() - 7200,
+                'exp' => time() - 3600,
+            ]);
+
+            $bundle = JwtTokenFactory::createTokenWithoutValidation($manager, $payload, $alg);
+            $token = JwtTokenParser::serialize($bundle);
+            $this->cache['expired'][$alg] = $token;
+        }
+
+        return $this->cache['expired'][$alg];
+    }
+
+    protected function getValidToken(string $alg): string
+    {
+        if (!isset($this->cache['valid'][$alg]) || is_string($this->cache['valid'][$alg]) === false) {
+            $manager = $this->getManager();
+            $payload = self::createPayload();
+
+            $additionalPayload = [
+                'iat' => time(),
+                'exp' => time() + 3600,
+            ];
+            foreach ($additionalPayload as $key => $value) {
+                $payload->addClaim($key, $value);
+            }
+
+            $bundle = JwtTokenFactory::createToken($manager, $payload, $alg);
+
+            $token = JwtTokenParser::serialize($bundle);
+
+            $this->cache['valid'][$alg] = $token;
+        }
+
+        return $this->cache['valid'][$alg];
+    }
+
+    protected function getInvalidToken(string $alg): string
+    {
+        if (!isset($this->cache['invalid'][$alg])) {
+            $valid = $this->getValidToken($alg);
+            $parts = explode('.', $valid);
+
+            if (count($parts) === 3) {
+                $parts[2] = 'invalidsig';
+            } elseif (count($parts) === 5) {
+                $parts[1] = 'invalidiv';
+                $parts[4] = 'sinvalidsig';
+            }
+
+            $token = implode('.', $parts);
+            $this->cache['invalid'][$alg] = $token;
+        }
+
+        return $this->cache['invalid'][$alg];
+    }
+
+
+    protected function getManager(): JwtAlgorithmManager
+    {
+        if (isset($this->manager)) {
+            return $this->manager;
+        }
+
+        $manager = new JwtAlgorithmManager();
+        $configArray = $this->getAllProvidedKeys();
+
+        foreach ($configArray as $algorithm => $data) {
+            if (isset($data['private'])) {
+                $manager->addPrivateKey($data['private'], $algorithm);
+            }
+
+            if (isset($data['public'])) {
+                $manager->addPublicKey($data['public'], $algorithm);
+            }
+
+            if (isset($data['passphrase'])) {
+                $manager->addPassphrase($data['passphrase'], $algorithm);
+            }
+        }
+
+        return $this->manager = $manager;
+    }
+
+    protected static function createPayload(): JwtPayload
     {
         return (new JwtPayload())
-            ->setIssuer('https://myapp.com')
-            ->setAudience('https://myapi.com')
-            ->setExpiration('+15 minutes')
-            ->addField('user_id', 123);
+            ->setIssuer('https://auth.myapp.com')
+            ->setAudience(["frontend", "mobile-app"]);
     }
-    
-    public static function getPem(string $type, int $bits)
+
+    protected function getValidator(): JwtValidator
     {
-        return file_get_contents(__DIR__ . '/../../tests/keys/'.$bits.'/'. $type .'.pem');
+        if (isset($this->validator)) {
+            return $this->validator;
+        }
+
+        return $this->validator = new JwtValidator(
+            expectedIssuer: 'https://auth.myapp.com',
+            expectedAudience: 'frontend',
+        );
     }
 }

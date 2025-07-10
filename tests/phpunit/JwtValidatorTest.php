@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace Tests;
+
 use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\JwtValidator;
 use Phithi92\JsonWebToken\JwtPayload;
@@ -62,7 +64,7 @@ final class JwtValidatorTest extends TestCase
         $now = time();
         $payload = $this->createPayloadMock([
             'nbf' => $now + 60,
-            'iat' => $now - 30
+            'iat' => $now
         ]);
 
         $validator = new JwtValidator();
@@ -123,11 +125,11 @@ final class JwtValidatorTest extends TestCase
     {
         $payload = $this->createPayloadMock(['role' => 'user']);
         $validator = new JwtValidator(null, null, 0, ['role' => 'admin']);
-        
+
         $this->expectException(InvalidPrivateClaimException::class);
         $validator->assertValid($payload);
     }
-    
+
     public function testPrivateClaimSetToEmptyStringShouldNotPassWhenValueExpected(): void
     {
         $payload = $this->createPayloadMock(['role' => '']);
@@ -135,5 +137,5 @@ final class JwtValidatorTest extends TestCase
 
         $this->expectException(InvalidPrivateClaimException::class);
         $validator->assertValid($payload);
-    }    
+    }
 }
