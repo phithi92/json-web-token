@@ -18,7 +18,8 @@
         "phpunit/phpunit": "^10.0",
         "phpbench/phpbench": "^1.0",
         "nikic/php-parser": "^5.3",
-        "phpstan/phpstan": "2.0.x-dev"
+        "phpstan/phpstan": "2.0.x-dev",
+        "nunomaduro/phpinsights": "dev-master"
     },
     "autoload": {
         "psr-4": {
@@ -34,5 +35,10 @@
         "benchmark": "@php vendor/bin/phpbench run tests/phpbench/* --report=benchmark",
 
         "generate-keys": "@php scripts/generate-keys.php"
-    }   
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
 }
