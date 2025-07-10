@@ -28,3 +28,6 @@ Thumbs.db
 
 # Ignore CI/CD-Tools
 .actrc
+
+# ignore certificates and passphrases 
+/tests/keys

@@ -10,6 +10,9 @@ jobs:
   phpstan:
     name: Run PHPStan
     runs-on: ubuntu-latest
+    
+    env:
+        KEYS_PATH: ${{ github.workspace }}/tests/keys
 
     steps:
       # Check out the code from the repository
@@ -27,6 +30,9 @@ jobs:
       # Install dependencies
       - name: Install dependencies
         run: composer install --no-progress --no-suggest --prefer-dist
+        
+      - name: Generate Keys & Passwords
+        run: php scripts/generate-keys.php
 
       # Run PHPStan
       - name: Run PHPStan

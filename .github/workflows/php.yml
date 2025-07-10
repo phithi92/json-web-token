@@ -12,6 +12,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    env:
+        KEYS_PATH: ${{ github.workspace }}/tests/keys
+
     strategy:
       matrix:
         php-version: ['8.2','8.3','8.4','8.5']
@@ -34,6 +37,9 @@ jobs:
 
     - name: Install dependencies
       run: composer install --no-progress --prefer-dist
+      
+    - name: Generate Keys & Passwords
+      run: php scripts/generate-keys.php
 
     - name: Run PHPUnit tests
       run: vendor/bin/phpunit --configuration phpunit.xml

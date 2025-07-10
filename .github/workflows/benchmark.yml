@@ -11,6 +11,10 @@ on:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
+    
+    env:
+        KEYS_PATH: ${{ github.workspace }}/tests/keys
+        
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -26,6 +30,9 @@ jobs:
     
       - name: Install Composer Dependencies
         run: composer install
+        
+      - name: Generate Keys & Passwords
+        run: php scripts/generate-keys.php
 
       - name: Run PHPBench
         run: vendor/bin/phpbench run --report=aggregate
