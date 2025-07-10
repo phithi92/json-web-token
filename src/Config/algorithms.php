@@ -12,7 +12,7 @@ return [
         'signing_algorithm' => [
             'hash_algorithm' => 'sha256',
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
-        ]
+        ],
     ],
 
     'HS384' => [
@@ -22,7 +22,7 @@ return [
         'signing_algorithm' => [
             'hash_algorithm' => 'sha384',
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
-        ]
+        ],
     ],
 
     'HS512' => [
@@ -32,7 +32,7 @@ return [
         'signing_algorithm' => [
             'hash_algorithm' => 'sha512',
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
-        ]
+        ],
     ],
 
     // RSA Signatures
@@ -45,7 +45,7 @@ return [
             'hash_algorithm' => 'sha256',
             'padding' => OPENSSL_PKCS1_PADDING,
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService::class,
-        ]
+        ],
     ],
 
     'RS384' => [
@@ -57,7 +57,7 @@ return [
             'hash_algorithm' => 'sha384',
             'padding' => OPENSSL_PKCS1_PADDING,
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService::class,
-        ]
+        ],
     ],
 
     'RS512' => [
@@ -68,7 +68,7 @@ return [
             'hash_algorithm' => 'sha512',
             'padding' => OPENSSL_PKCS1_PADDING,
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService::class,
-        ]
+        ],
     ],
 
     // ECDSA Signatures
@@ -78,7 +78,7 @@ return [
         'alg' => 'ES256',
         'signing_algorithm' => [
             'hash_algorithm' => 'sha256',
-            'signature_size' => 32, //
+            'signature_size' => 32, // bytes
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
         ],
     ],
@@ -88,7 +88,7 @@ return [
         'alg' => 'ES384',
         'signing_algorithm' => [
             'hash_algorithm' => 'sha384',
-            'signature_size' => 48, //
+            'signature_size' => 48, // bytes
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
         ],
     ],
@@ -98,7 +98,7 @@ return [
         'alg' => 'ES512',
         'signing_algorithm' => [
             'hash_algorithm' => 'sha512',
-            'signature_size' => 64, //
+            'signature_size' => 64, // bytes
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
         ],
     ],
@@ -154,7 +154,7 @@ return [
 
         'iv' => [
             'length' => 128, // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class
+            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class,
         ],
 
         'cek' => [
@@ -175,7 +175,7 @@ return [
 
         'iv' => [
             'length' => 128, // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class
+            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class,
         ],
 
         'cek' => [
@@ -208,221 +208,6 @@ return [
             'name' => 'A256GCM',
             'length' => 256, // bits
             'handler' => \Phithi92\JsonWebToken\Crypto\Content\AesGcmService::class,
-        ],
-    ],
-
-    // ECDH Key Management
-    'ECDH-ES+A128KW' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'ECDSA',
-        'key_management' => [
-            'name' => 'ECDH-ES+A128KW',
-            'bit_length' => 128,
-            'hash_algorithm' => 'sha256',
-            'encryptor' => EcdhEsA128KwEncryptor::class,
-            'decryptor' => EcdhEsA128KwDecryptor::class,
-        ],
-        'content_encryption' => [
-            'name' => 'dir',
-            'cek_length' => 128,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
-            'crypto_handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class,
-        ],
-        'signing_algorithm' => [
-            'name' => 'ES256',
-            'hash_algorithm' => 'sha256',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
-        ],
-    ],
-
-    'ECDH-ES+A192KW' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'ECDSA',
-        'key_management' => [
-            'name' => 'ECDH-ES+A192KW',
-            'bit_length' => 192,
-            'hash_algorithm' => 'sha384',
-            'encryptor' => EcdhEsA192KwEncryptor::class,
-            'decryptor' => EcdhEsA192KwDecryptor::class,
-        ],
-        'content_encryption' => [
-            'name' => 'dir',
-            'cek_length' => 192,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
-            'crypto_handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class,
-        ],
-        'signing_algorithm' => [
-            'name' => 'ES384',
-            'hash_algorithm' => 'sha384',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
-        ],
-    ],
-
-    'ECDH-ES+A256KW' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'ECDSA',
-        'key_management' => [
-            'name' => 'ECDH-ES+A256KW',
-            'bit_length' => 256,
-            'hash_algorithm' => 'sha512',
-            'encryptor' => EcdhEsA256KwEncryptor::class,
-            'decryptor' => EcdhEsA256KwDecryptor::class,
-        ],
-        'content_encryption' => [
-            'name' => 'dir',
-            'cek_length' => 256,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
-            'crypto_handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class,
-        ],
-        'signing_algorithm' => [
-            'name' => 'ES512',
-            'hash_algorithm' => 'sha512',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
-        ],
-    ],
-
-    // pbes2
-    'PBES2-HS256+A128KW' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'HMAC',
-        'key_management' => [
-            'name' => 'PBES2-HS256+A128KW',
-            'bit_length' => 128,
-            'hash_algorithm' => 'sha256',
-            'salt_length' => 16, // 16 Bytes = 128 Bit (empfohlenes Minimum)
-            'encryptor' => Pbes2Hs256Encryptor::class,
-            'decryptor' => Pbes2Hs256Decryptor::class,
-        ],
-        'content_encryption' => [
-            'name' => 'dir',
-            'cek_length' => 128,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
-            'crypto_handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class,
-        ],
-        'signing_algorithm' => [
-            'name' => 'HS256',
-            'hash_algorithm' => 'sha256',
-            'handle' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
-        ],
-    ],
-
-    'PBES2-HS384+A192KW' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'HMAC',
-        'key_management' => [
-            'name' => 'PBES2-HS384+A192KW',
-            'bit_length' => 192,
-            'hash_algorithm' => 'sha384',
-            'salt_length' => 24, // 24 Bytes = 192 Bit
-            'encryptor' => Pbes2Hs384Encryptor::class,
-            'decryptor' => Pbes2Hs384Decryptor::class,
-        ],
-        'content_encryption' => [
-            'name' => 'dir',
-            'cek_length' => 192,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
-            'crypto_handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class,
-        ],
-        'signing_algorithm' => [
-            'name' => 'HS384',
-            'hash_algorithm' => 'sha384',
-            'handle' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
-        ],
-    ],
-
-    'PBES2-HS512+A256KW' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'HMAC',
-        'key_management' => [
-            'name' => 'PBES2-HS512+A256KW',
-            'bit_length' => 256,
-            'hash_algorithm' => 'sha512',
-            'salt_length' => 32, // 32 Bytes = 256 Bit (solide Wahl, obwohl SHA-512 64 Byte ausgibt)
-            'encryptor' => Pbes2Hs512Encryptor::class,
-            'decryptor' => Pbes2Hs512Decryptor::class,
-        ],
-        'content_encryption' => [
-            'name' => 'dir',
-            'cek_length' => 256,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
-            'crypto_handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class,
-        ],
-        'signing_algorithm' => [
-            'name' => 'HS512',
-            'hash_algorithm' => 'sha512',
-            'handle' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
-        ],
-    ],
-
-    // AES Key Wrap
-    'A128KW' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'AES',
-        'key_management' => [
-            'name' => 'A128KW',
-            'bit_length' => 128,
-            'encryptor' => AesKw128Encryptor::class,
-            'decryptor' => AesKw128Decryptor::class,
-        ],
-        'content_encryption' => [
-            'name' => 'dir',
-            'iv_length' => 128,
-            'cek_length' => 128,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
-            'crypto_handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class,
-        ],
-    ],
-
-    'A192KW' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'AES',
-
-        'key_management' => [
-            'name' => 'A192KW',
-            'bit_length' => 192,
-            'encryptor' => AesKw192Encryptor::class,
-            'decryptor' => AesKw192Decryptor::class,
-        ],
-        'content_encryption' => [
-            'name' => 'dir',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class,
-        ],
-
-        'iv' => [
-            'length' => 128,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class
-        ],
-
-        'cek' => [
-            'length' => 192, // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
-        ],
-    ],
-
-    'A256KW' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'AES',
-
-        'key_management' => [
-            'name' => 'A256KW',
-            'bit_length' => 256,
-            'encryptor' => AesKw256Encryptor::class,
-            'decryptor' => AesKw256Decryptor::class,
-        ],
-
-        'content_encryption' => [
-            'name' => 'dir',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class,
-        ],
-
-        'iv' => [
-            'length' => 128,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class
-        ],
-
-        'cek' => [
-            'length' => 256, // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
         ],
     ],
 
@@ -492,89 +277,6 @@ return [
         'cek' => [
             'length' => 256, // bits
             'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
-        ],
-    ],
-
-    // ECDH ES ohne Wrap
-    'ECDH-ES-P521' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'ECDSA',
-        'key_management' => [
-            'name' => 'ECDH-ES-P521',
-            'bit_length' => 521,
-            'hash_algorithm' => 'sha512',
-            'encryptor' => EcdhEsP521Encryptor::class,
-            'decryptor' => EcdhEsP521Decryptor::class,
-        ],
-        'content_encryption' => [
-            'name' => 'dir',
-            'cek_length' => 256,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
-            'crypto_handler' => \Phithi92\JsonWebToken\Crypto\Content\DirectService::class,
-        ],
-    ],
-
-    // AES CBC + HMAC
-    'A128CBC-HS256' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'AES',
-        'content_encryption' => [
-            'name' => 'A128CBC-HS256',
-            'cek_length' => 256,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\CbcHmacCekHandler::class,
-            'bit_length' => 128,
-            'mac_bit_length' => 256,
-            'hash_algorithm' => 'sha256',
-            'iv_length' => 128,
-            'encryptor' => A128CbcHs256Encryptor::class,
-            'decryptor' => A128CbcHs256Decryptor::class,
-        ],
-        'signing_algorithm' => [
-            'name' => 'HS256',
-            'hash_algorithm' => 'sha256',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
-        ],
-    ],
-
-    'A192CBC-HS384' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'AES',
-        'content_encryption' => [
-            'name' => 'A192CBC-HS384',
-            'cek_length' => 384,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\CbcHmacCekHandler::class,
-            'bit_length' => 192,
-            'mac_bit_length' => 384,
-            'hash_algorithm' => 'sha384',
-            'iv_length' => 128,
-            'encryptor' => A192CbcHs384Encryptor::class,
-            'decryptor' => A192CbcHs384Decryptor::class,
-        ],
-        'signing_algorithm' => [
-            'name' => 'HS384',
-            'hash_algorithm' => 'sha384',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
-        ],
-    ],
-
-    'A256CBC-HS512' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'AES',
-        'content_encryption' => [
-            'name' => 'A256CBC-HS512',
-            'cek_length' => 512,
-            'cek_handler' => \Phithi92\JsonWebToken\Crypto\Cek\CbcHmacCekHandler::class,
-            'bit_length' => 256,
-            'mac_bit_length' => 512,
-            'hash_algorithm' => 'sha512',
-            'iv_length' => 128,
-            'encryptor' => A256CbcHs512Encryptor::class,
-            'decryptor' => A256CbcHs512Decryptor::class,
-        ],
-        'signing_algorithm' => [
-            'name' => 'HS512',
-            'hash_algorithm' => 'sha512',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
         ],
     ],
 ];

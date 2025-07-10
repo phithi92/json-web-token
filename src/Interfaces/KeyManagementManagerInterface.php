@@ -9,18 +9,12 @@ use Phithi92\JsonWebToken\EncryptedJwtBundle;
 interface KeyManagementManagerInterface
 {
     /**
-     *
-     * @param   EncryptedJwtBundle $bundle
-     * @param   array<string, array<string, string|class-string<object>>|string> $config
-     * @return  void
+     * @param array<string, array<string, string|class-string<object>>|string> $config
      */
     public function unwrapKey(EncryptedJwtBundle $bundle, array $config): void;
 
     /**
-     *
-     * @param   EncryptedJwtBundle $bundle
-     * @param   array<string, array<string, string|class-string<object>>|string> $config
-     * @return  void
+     * @param array<string, array<string, string|class-string<object>>|string> $config
      */
     public function wrapKey(EncryptedJwtBundle $bundle, array $config): void;
 }

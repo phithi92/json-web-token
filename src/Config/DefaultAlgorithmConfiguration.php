@@ -23,6 +23,7 @@ class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInterface
      * Loads algorithm configuration from the given PHP file.
      *
      * @param string $configFile Path to the PHP config file returning an array.
+     *
      * @throws \RuntimeException If the config file does not return an array.
      */
     public function __construct(string $configFile = __DIR__ . '/algorithms.php')

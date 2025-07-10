@@ -11,7 +11,9 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 
 class EcdsaService extends SignatureService
 {
-    /** @var array<string, OpenSSLAsymmetricKey> */
+    /**
+     * @var array<string, OpenSSLAsymmetricKey>
+     */
     private array $checkedKeys = [];
 
     /**
@@ -29,7 +31,10 @@ class EcdsaService extends SignatureService
 
         $success = openssl_sign($data, $signature, $privateKey, $algorithm);
         if (! $success) {
-            throw new SignatureComputationFailedException(openssl_error_string() ?: 'Failed to compute ECDSA signature.');
+            throw new SignatureComputationFailedException(
+                openssl_error_string()
+                ?: 'Failed to compute ECDSA signature.'
+            );
         }
 
         $bundle->setSignature($signature);
@@ -63,8 +68,6 @@ class EcdsaService extends SignatureService
     /**
      * Validates the EC key curve against the algorithm and caches the result.
      *
-     * @param callable(): OpenSSLAsymmetricKey $keyGenerator
-     *
      * @throws InvalidSignatureException
      */
     private function assertEcdsaKeyIsValid(string $kid, string $hashAlgorithm, string $role): OpenSSLAsymmetricKey
@@ -88,7 +91,9 @@ class EcdsaService extends SignatureService
         }
 
         if ($actualCurve !== $expectedCurve) {
-            throw new InvalidSignatureException("Invalid EC curve for [{$kid}]: expected [{$expectedCurve}], got [{$actualCurve}].");
+            throw new InvalidSignatureException(
+                "Invalid EC curve for [{$kid}]: expected [{$expectedCurve}], got [{$actualCurve}]."
+            );
         }
 
         $this->cacheEcdsaKeyValidation($kid, $key);

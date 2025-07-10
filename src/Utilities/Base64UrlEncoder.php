@@ -21,7 +21,8 @@ final class Base64UrlEncoder
     /**
      * Encodes data to Base64 URL format according to the RFC 7515 standard.
      *
-     * @param  string $string The data to encode.
+     * @param string $string The data to encode.
+     *
      * @return string The Base64 URL-encoded string.
      */
     public static function encode(string $string): string
@@ -34,8 +35,9 @@ final class Base64UrlEncoder
     /**
      * Decodes a Base64 URL-encoded string.
      *
-     * @param  string $string  The Base64 URL-encoded data to decode.
-     * @param  bool   $padding Optional flag to add padding characters.
+     * @param string $string  The Base64 URL-encoded data to decode.
+     * @param bool   $padding Optional flag to add padding characters.
+     *
      * @return string The decoded data.
      */
     public static function decode(string $string, bool $padding = false): string

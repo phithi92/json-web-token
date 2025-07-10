@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Exceptions\Crypto\MissingKeysException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\MissingPassphraseException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidAsymmetricKeyException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\UnsupportedAlgorithmException;
-use Phithi92\JsonWebToken\Interfaces\JwtAlgorithmManagerInterface;
-use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
-use Phithi92\JsonWebToken\Config\DefaultAlgorithmConfiguration;
 use OpenSSLAsymmetricKey;
-use SensitiveParameter;
+use Phithi92\JsonWebToken\Config\DefaultAlgorithmConfiguration;
+use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
+use Phithi92\JsonWebToken\Interfaces\KeyStoreInterface;
+use Phithi92\JsonWebToken\Interfaces\PassphraseStoreInterface;
+use Phithi92\JsonWebToken\Security\KeyStore;
+use Phithi92\JsonWebToken\Security\PassphraseStore;
 
 /**
  * Manages JWT cryptographic operations for symmetric and asymmetric algorithms.
@@ -26,211 +24,60 @@ use SensitiveParameter;
  * integrity and security of cryptographic operations, and prevents the use of
  * unsupported or malformed keys.
  */
-final class JwtAlgorithmManager implements JwtAlgorithmManagerInterface
+final class JwtAlgorithmManager
 {
-    // The algorithm name (e.g., HS256, RS256, RSA-OAEP)
-    private string $algorithm;
-
-    // The configuration for given algorithm
-    /** @var array<string,array<string,string>> */
-    private array $config;
-
-    // The passphrase for symmetric algorithms (optional)
-    private readonly ?string $passphrase;
-
-    // The public key for asymmetric algorithms (optional)
-    private readonly ?OpenSSLAsymmetricKey $publicKey;
-
-    // The private key for asymmetric algorithms (optional)
-    private readonly ?OpenSSLAsymmetricKey $privateKey;
-
     // The configurations of supported algorithms
     private readonly AlgorithmConfigurationInterface $algorithmRegistry;
 
-    /**
-     * Initializes the key manager for symmetric or asymmetric algorithms.
-     *
-     * Handles required key material (passphrase, public/private key) depending on the algorithm type.
-     *
-     * @param string        $algorithm  Algorithm name (e.g. HS256, RS256, RSA-OAEP).
-     * @param string|null   $passphrase Passphrase for symmetric algorithms (e.g. HMAC, PBES2).
-     * @param string|null   $public     Public key for asymmetric algorithms (e.g. RSA, ECDSA).
-     * @param string|null   $private    Private key for asymmetric algorithms.
-     * @param AlgorithmConfigurationInterface|null $config Optional algorithm-specific configuration.
-     *
-     * @throws MissingPassphraseException         If a symmetric algorithm is used without passphrase.
-     * @throws MissingKeysException               If an asymmetric algorithm lacks required keys.
-     * @throws UnsupportedAlgorithmException      If the algorithm is not recognized or allowed.
-     */
+    private readonly KeyStoreInterface $keyStore;
+
+    private readonly PassphraseStoreInterface $passphraseStore;
+
     public function __construct(
-        string $algorithm = null,
-        #[SensitiveParameter] ?string $passphrase = null,
-        #[SensitiveParameter] ?string $public = null,
-        #[SensitiveParameter] ?string $private = null,
-        ?AlgorithmConfigurationInterface $config = null
+        ?AlgorithmConfigurationInterface $algConfig = null,
+        ?KeyStoreInterface $keyStore = null,
+        ?PassphraseStoreInterface $passphraseStore = null
     ) {
-        $this->algorithmRegistry = $config ?? new DefaultAlgorithmConfiguration();
-
-        if ($algorithm !== null) {
-            $this->setAlgorithm($algorithm);
-        }
-
-        $this->validateKeys($passphrase, $public, $private);
-
-        $publicKey = $privateKey = null;
-
-        if ($passphrase === null) {
-            $publicKey = $this->validatePublicKey($public);
-            $privateKey = $this->validatePrivateKey($private);
-        }
-
-        $this->passphrase = $passphrase;
-        $this->publicKey = $publicKey;
-        $this->privateKey = $privateKey;
-    }
-
-    /**
-     *
-     * @return AlgorithmConfigurationInterface
-     */
-    public function getAlgorithmConfiguration(): AlgorithmConfigurationInterface
-    {
-        return $this->algorithmRegistry;
-    }
-
-    public function setAlgorithm(string $algorithm): self
-    {
-        $config = $this->algorithmRegistry->get($algorithm);
-        if ($config === []) {
-            throw new UnsupportedAlgorithmException($algorithm);
-        }
-
-        $this->algorithm = $algorithm;
-        $this->config = $config;
-
-        return $this;
-    }
-
-    /**
-     * Gets the algorithm name.
-     *
-     * @return string The algorithm name.
-     */
-    public function getAlgorithm(): string
-    {
-        return $this->algorithm;
+        $this->algorithmRegistry = $algConfig ?? new DefaultAlgorithmConfiguration();
+        $this->keyStore = $keyStore ?? new KeyStore();
+        $this->passphraseStore = $passphraseStore ?? new PassphraseStore();
     }
 
     /**
      * @return array<string, string|array<string, string|class-string<object>>>
      */
-    public function getConfiguration(): array
+    public function getConfiguration(string $algorithm): array
     {
-        return $this->config;
+        return $this->algorithmRegistry->get($algorithm);
     }
 
-    /**
-     * Gets the passphrase for symmetric algorithms.
-     *
-     * @return string|null The passphrase, if available.
-     */
-    public function getPassphrase(): ?string
+    public function addPrivateKey(string $pemContent, ?string $kid): void
     {
-        return $this->passphrase ?? null;
+        $this->keyStore->addKey($pemContent, 'private', $kid);
     }
 
-    /**
-     * Gets the public key for asymmetric algorithms.
-     *
-     * @return OpenSSLAsymmetricKey|null The public key, if available.
-     */
-    public function getPublicKey(): ?OpenSSLAsymmetricKey
+    public function addPublicKey(string $pemContent, ?string $kid): void
     {
-        return $this->publicKey ?? null;
+        $this->keyStore->addKey($pemContent, 'public', $kid);
     }
 
-    /**
-     * Gets the private key for asymmetric algorithms.
-     *
-     * @return OpenSSLAsymmetricKey|null The private key, if available.
-     */
-    public function getPrivateKey(): ?OpenSSLAsymmetricKey
+    public function getPrivateKey(string $kid): OpenSSLAsymmetricKey
     {
-        return $this->privateKey ?? null;
+        return $this->keyStore->getKey($kid, 'private');
     }
 
-    /**
-     * Sets the public key for encryption.
-     *
-     * This method loads and validates the provided public key.
-     * If the key is invalid, it throws an InvalidArgument exception.
-     *
-     * @param  string $publicKey The public key to be set.
-     * @return OpenSSLAsymmetricKey
-     * @throws InvalidAsymmetricKeyException If the public key is invalid.
-     */
-    private function validatePublicKey(#[SensitiveParameter] string $publicKey): OpenSSLAsymmetricKey
+    public function getPublicKey(string $kid): OpenSSLAsymmetricKey
     {
-        $keyResource = @openssl_pkey_get_public($publicKey);
-
-        // Check if the key was successfully loaded
-        if ($keyResource === false) {
-            throw new InvalidAsymmetricKeyException();
-        }
-
-        return $keyResource;
+        return $this->keyStore->getKey($kid, 'public');
     }
 
-    /**
-     * Sets the private key for decryption.
-     *
-     * This method loads and validates the provided private key.
-     * If the key is invalid, it throws an InvalidArgument exception.
-     *
-     * @param  string $privateKey The private key to be set.
-     * @return OpenSSLAsymmetricKey
-     * @throws InvalidAsymmetricKeyException If the private key is invalid.
-     */
-    private function validatePrivateKey(#[SensitiveParameter] string $privateKey): OpenSSLAsymmetricKey
+    public function addPassphrase(string $passphrase, ?string $kid): void
     {
-        $keyResource = @openssl_pkey_get_private($privateKey);
-
-        // Check if the key was successfully loaded
-        if ($keyResource === false) {
-            throw new InvalidAsymmetricKeyException();
-        }
-
-        return $keyResource;
+        $this->passphraseStore->addPassphrase($passphrase, $kid);
     }
 
-    /**
-     * Initializes cryptographic keys and passphrase for secure operations.
-     *
-     * This method checks that at least one of the required parameters (passphrase, public key, or private key)
-     * is provided. It throws an exception if all parameters are `null` or if a public-private key pair
-     * is incomplete when no passphrase is given. Depending on the parameters provided, it sets either the
-     * passphrase or the public-private key pair.
-     *
-     * @param string|null $passphrase The passphrase for encryption/decryption operations, or `null`.
-     * @param string|null $publicKey  The public key for encryption, or `null`.
-     * @param string|null $privateKey The private key for decryption, or `null`.
-     *
-     * @throws MissingPassphraseException If all parameters are `null`.
-     * @throws MissingKeysException If both a public and private key are not provided when the passphrase is `null`.
-     *
-     * @return void
-     */
-    private function validateKeys(
-        #[SensitiveParameter] ?string $passphrase,
-        #[SensitiveParameter] ?string $publicKey,
-        #[SensitiveParameter] ?string $privateKey
-    ): void {
-        if (empty($passphrase) && $publicKey === null && $privateKey === null) {
-            throw new MissingPassphraseException();
-        }
-
-        if (empty($passphrase) && ($publicKey === null || $privateKey === null)) {
-            throw new MissingKeysException();
-        }
+    public function getPassphrase(string $kid): string
+    {
+        return $this->passphraseStore->getPassphrase($kid);
     }
 }

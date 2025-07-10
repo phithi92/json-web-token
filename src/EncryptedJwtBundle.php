@@ -54,8 +54,7 @@ final class EncryptedJwtBundle implements EncryptedJwtInterface
     }
 
     /**
-     *
-     * @return JwtEncryptionData
+     * @return JwtEncryptionData handle token encryption data
      */
     public function getEncryption(): JwtEncryptionData
     {
@@ -65,8 +64,7 @@ final class EncryptedJwtBundle implements EncryptedJwtInterface
     /**
      * Sets the JWT signature.
      *
-     * @param  string $signature The signature of the JWT.
-     * @return self
+     * @param string $signature The signature of the JWT.
      */
     public function setSignature(string $signature): self
     {

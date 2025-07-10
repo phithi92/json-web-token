@@ -37,14 +37,16 @@ final class JwtValidatorTest extends TestCase
     public function testValidPayload(): void
     {
         $now = time();
-        $payload = $this->createPayloadMock([
+        $payload = $this->createPayloadMock(
+            [
             'exp' => $now + 3600,
             'nbf' => $now - 60,
             'iat' => $now - 120,
             'iss' => 'trusted-issuer',
             'aud' => 'my-app',
             'customClaim' => 'abc'
-        ]);
+            ]
+        );
 
         $validator = new JwtValidator('trusted-issuer', 'my-app', 30, ['customClaim' => 'abc']);
         $this->assertTrue($validator->isValid($payload));
@@ -62,10 +64,12 @@ final class JwtValidatorTest extends TestCase
     public function testNotYetValidTokenThrowsException(): void
     {
         $now = time();
-        $payload = $this->createPayloadMock([
+        $payload = $this->createPayloadMock(
+            [
             'nbf' => $now + 60,
             'iat' => $now
-        ]);
+            ]
+        );
 
         $validator = new JwtValidator();
         $this->expectException(NotYetValidException::class);
@@ -84,10 +88,12 @@ final class JwtValidatorTest extends TestCase
     public function testNbfBeforeIatThrowsException(): void
     {
         $now = time();
-        $payload = $this->createPayloadMock([
+        $payload = $this->createPayloadMock(
+            [
             'nbf' => $now - 60,
             'iat' => $now
-        ]);
+            ]
+        );
 
         $validator = new JwtValidator();
         $this->expectException(NotBeforeOlderThanIatException::class);

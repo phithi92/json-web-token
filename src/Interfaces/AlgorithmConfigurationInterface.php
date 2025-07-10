@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Phithi92\JsonWebToken\Interfaces;
 
 interface AlgorithmConfigurationInterface
@@ -8,14 +10,14 @@ interface AlgorithmConfigurationInterface
      * Returns the configuration array for the given algorithm.
      *
      * @param string $algorithm The name of the algorithm.
-     * @return array<string, mixed> The configuration array if found, or an empty array if the algorithm is not supported.
+     *
+     * @return array<string, string|array<string, string|class-string<object>>>
+     * The configuration array if found, or an empty array if the algorithm is not supported.
      */
     public function get(string $algorithm): array;
 
     /**
-     *
-     * @param string $algorithm
-     * @return bool
+     * Check if given algorithm is supported
      */
     public function isSupported(string $algorithm): bool;
 }

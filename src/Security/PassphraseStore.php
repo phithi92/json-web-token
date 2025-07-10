@@ -9,7 +9,9 @@ use RuntimeException;
 
 final class PassphraseStore implements PassphraseStoreInterface
 {
-    /** @var array<string,string> $phrases */
+    /**
+     * @var array<string,string> $phrases
+     */
     private array $phrases = [];
 
     public function addPassphrase(#[\SensitiveParameter] string $passphrase, ?string $kid): void

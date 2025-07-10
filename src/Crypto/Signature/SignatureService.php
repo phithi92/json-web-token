@@ -21,10 +21,13 @@ abstract class SignatureService implements SignatureManagerInterface
 
     public function getSigningInput(EncryptedJwtBundle $bundle): string
     {
-        return implode('.', [
-            Base64UrlEncoder::encode($bundle->getHeader()->toJson()),
-            Base64UrlEncoder::encode($bundle->getPayload()->toJson()),
-        ]);
+        return implode(
+            '.',
+            [
+                Base64UrlEncoder::encode($bundle->getHeader()->toJson()),
+                Base64UrlEncoder::encode($bundle->getPayload()->toJson()),
+            ]
+        );
     }
 
     /**

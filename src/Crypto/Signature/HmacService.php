@@ -9,6 +9,9 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 
 class HmacService extends SignatureService
 {
+    /**
+     * @var array<string, bool>
+     */
     private array $checkedHmacKeys;
 
     public function computeSignature(EncryptedJwtBundle $bundle, array $config): void

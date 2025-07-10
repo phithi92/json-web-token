@@ -39,10 +39,12 @@ abstract class BenchmarkBase
     {
         if (!isset($this->cache['expired'][$alg])) {
             $manager = $this->getManager();
-            $payload = (new JwtPayload())->fromArray([
+            $payload = (new JwtPayload())->fromArray(
+                [
                 'iat' => time() - 7200,
                 'exp' => time() - 3600,
-            ]);
+                ]
+            );
 
             $bundle = JwtTokenFactory::createTokenWithoutValidation($manager, $payload, $alg);
             $token = JwtTokenParser::serialize($bundle);

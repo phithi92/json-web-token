@@ -12,7 +12,9 @@ use Phithi92\JsonWebToken\JwtAlgorithmManager;
 
 class RsaHelperService
 {
-    /** @var array<string,array<string, callable|OpenSSLAsymmetricKey|string>> */
+    /**
+     * @var array<string, OpenSSLAsymmetricKey>
+     */
     private array $checkedKeys;
 
     private JwtAlgorithmManager $manager;

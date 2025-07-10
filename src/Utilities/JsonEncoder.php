@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Utilities;
 
+use JsonException;
 use Phithi92\JsonWebToken\Exceptions\Json\DecodingException;
 use Phithi92\JsonWebToken\Exceptions\Json\EncodingException;
 use Phithi92\JsonWebToken\Exceptions\Json\InvalidDepthException;
-use JsonException;
 
 /**
  * Class JsonEncoder
@@ -22,17 +22,19 @@ final class JsonEncoder
      *
      * This method uses json_decode with JSON_THROW_ON_ERROR and any additional flags passed
      * through the $options parameter to parse the JSON string. The JSON_THROW_ON_ERROR flag
-     * ensures that any errors in decoding throw a JsonException, which is caught and rethrown
+     * ensures that any decoding error throws a JsonException, which is caught and rethrown
      * as a DecodingException for more specific error handling.
      *
-     * @param  string $json        The JSON-encoded string to decode.
-     * @param  bool   $associative When true, returns an associative array; when false, returns
-     *                             an object.
-     * @param  int    $options     Additional JSON decode options (e.g., JSON_BIGINT_AS_STRING),
-     *                             combined with JSON_THROW_ON_ERROR.
-     * @param  int    $depth       The maximum depth for JSON decoding. Defaults to 512.
-     * @return array<mixed> The decoded data, either as an associative array or stdClass object.
-     * @throws DecodingException if the JSON string cannot be decoded.
+     * @param string $json        The JSON-encoded string to decode.
+     * @param bool   $associative When true, returns an associative array; when false, returns
+     *                            an object.
+     * @param int    $options     Additional JSON decode options (e.g., JSON_BIGINT_AS_STRING),
+     *                            combined with JSON_THROW_ON_ERROR.
+     * @param int    $depth       The maximum depth for JSON decoding. Defaults to 512.
+     *
+     * @return array<mixed>|object The decoded data, either as an associative array or stdClass object.
+     *
+     * @throws DecodingException If the JSON string cannot be decoded.
      */
     public static function decode(
         string $json,
@@ -55,15 +57,19 @@ final class JsonEncoder
      * Encodes an associative array into a JSON string.
      *
      * This method uses json_encode with JSON_THROW_ON_ERROR and any additional flags passed
-     * through the $options parameter to convert the array to JSON format. The JSON_THROW_ON_ERROR
-     * flag ensures that any errors in encoding throw a JsonException, which is caught and rethrown
-     * as an EncodingException for more specific error handling.
+     * through the $options parameter to convert the array to JSON format.
+     * The JSON_THROW_ON_ERROR flag ensures that any errors in encoding throw a
+     * JsonException, which is caught and rethrown as an EncodingException for more
+     * specific error handling.
      *
-     * @param  array<mixed> $array   The associative array to encode.
-     * @param  int   $options Additional JSON encode options (e.g., JSON_UNESCAPED_UNICODE),
-     *                        combined with JSON_THROW_ON_ERROR.
-     * @param  int   $depth   The maximum depth for JSON encoding. Defaults to 512.
+     * @param array<mixed> $array   The associative array to encode.
+     * @param int          $options Additional JSON encode options (e.g.,
+     *                              JSON_UNESCAPED_UNICODE), The maximum
+     *                              depth for JSON encoding. Defaults to
+     *                              512.
+     *
      * @return string The JSON-encoded string.
+     *
      * @throws EncodingException if the array cannot be encoded to JSON.
      */
     public static function encode(array $array, int $options = 0, int $depth = 512): string
