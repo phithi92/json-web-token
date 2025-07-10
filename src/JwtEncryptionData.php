@@ -33,11 +33,11 @@ final class JwtEncryptionData
     /**
      * Returns the Base64URL-encoded AAD (Additional Authenticated Data).
      *
-     * @return string
+     * @return string|null get aad, null when not exist
      */
-    public function getAad(): string
+    public function getAad(): ?string
     {
-        return $this->aad;
+        return $this->aad ?? null;
     }
 
     /**

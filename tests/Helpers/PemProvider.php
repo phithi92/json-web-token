@@ -4,7 +4,17 @@ namespace Tests\Helpers;
 
 final class PemProvider
 {
-    private const BASE_PATH = __DIR__ . '/../keys';
+    private static string $resolvedBasePath;
+    
+    private static function getBasePath(): string
+    {
+        if(isset(self::$resolvedBasePath)){
+            return self::$resolvedBasePath;
+        }
+        
+        return self::$resolvedBasePath = getenv('KEYS_PATH') ?: 
+                realpath(__DIR__ . '/../keys');
+    }
 
     public static function getPrivateKey(string $alg): string
     {
@@ -18,7 +28,7 @@ final class PemProvider
 
     public static function getPassphrase(string $alg): string
     {
-        $path = self::BASE_PATH . "/{$alg}/secret.key";
+        $path = self::getBasePath() . "/{$alg}/secret.key";
 
         if (!file_exists($path)) {
             throw new \RuntimeException("Passphrase file not found: $path");
@@ -31,7 +41,7 @@ final class PemProvider
     {
         $result = [];
 
-        foreach (glob(self::BASE_PATH . '/*', GLOB_ONLYDIR) as $algDir) {
+        foreach (glob(self::getBasePath() . '/*', GLOB_ONLYDIR) as $algDir) {
             $alg = basename($algDir);
 
             $result[$alg] = [
@@ -46,7 +56,7 @@ final class PemProvider
 
     private static function load(string $relativePath): string
     {
-        $path = self::BASE_PATH . '/' . $relativePath;
+        $path = self::getBasePath() . '/' . $relativePath;
 
         if (!file_exists($path)) {
             throw new \RuntimeException("PEM file not found: $path");

@@ -117,17 +117,22 @@ final class KeyStore implements KeyStoreInterface
             throw new RuntimeException('Could not determine key type.');
         }
 
-        $type = match ($details['type']) {
-            OPENSSL_KEYTYPE_RSA => 'rsa',
-            OPENSSL_KEYTYPE_EC => 'ec',
-            OPENSSL_KEYTYPE_DSA => 'dsa',
-            default => throw new RuntimeException('Unknown key type: ' . $details['type']),
-        };
+        $type = $this->getKeyType($details['type']);
 
         return [
             'type' => $type,
             'role' => $role,
             'key' => $key,
         ];
+    }
+
+    private function getKeyType(int $type): string
+    {
+        return match ($type) {
+            OPENSSL_KEYTYPE_RSA => 'rsa',
+            OPENSSL_KEYTYPE_EC => 'ec',
+            OPENSSL_KEYTYPE_DSA => 'dsa',
+            default => throw new RuntimeException('Unknown key type: ' . $type),
+        };
     }
 }

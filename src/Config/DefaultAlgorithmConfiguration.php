@@ -28,7 +28,7 @@ class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInterface
      */
     public function __construct(string $configFile = __DIR__ . '/algorithms.php')
     {
-        $this->config = require $configFile;
+        $this->config = include $configFile;
     }
 
     public function get(string $algorithm): array

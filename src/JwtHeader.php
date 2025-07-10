@@ -154,14 +154,15 @@ final class JwtHeader
      */
     public function toArray(): array
     {
-        $header = array_filter([
-            'alg' => $this->getAlgorithm(),
-            'typ' => $this->getType(),
-            'enc' => $this->getEnc(),
-            'kid' => $this->getKid(),
-        ], fn($value) => $value !== null && $value !== '');
-
-        return $header;
+        return array_filter(
+            [
+                'alg' => $this->getAlgorithm(),
+                'typ' => $this->getType(),
+                'enc' => $this->getEnc(),
+                'kid' => $this->getKid(),
+            ],
+            static fn ($value) => $value !== null && $value !== ''
+        );
     }
 
     /**
@@ -173,7 +174,7 @@ final class JwtHeader
      */
     public function toJson(): string
     {
-        return JsonEncoder::encode($this->toArray());
+        return JsonEncoder::encode($this->toArray(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
     /**

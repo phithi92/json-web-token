@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\JwtPayload;
-use Phithi92\JsonWebToken\JwtHeader;
-use Phithi92\JsonWebToken\JwtEncryptionData;
 use Phithi92\JsonWebToken\Interfaces\EncryptedJwtInterface;
 
 /**
@@ -32,14 +29,11 @@ final class EncryptedJwtBundle implements EncryptedJwtInterface
      * Initializes the JWT header with an optional JwtPayload instance.
      *
      * If a JwtPayload is provided, it sets this payload during instantiation.
-     *
-     * @param JwtHeader $header
-     * @param JwtPayload $payload
      */
-    public function __construct(JwtHeader $header, JwtPayload $payload)
+    public function __construct(JwtHeader $header, ?JwtPayload $payload = null)
     {
         $this->header = $header;
-        $this->payload = $payload;
+        $this->payload = $payload ?? new JwtPayload();
         $this->encryption = new JwtEncryptionData();
     }
 
