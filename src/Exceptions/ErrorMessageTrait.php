@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Phithi92\JsonWebToken\Exceptions;
 
 /**
@@ -19,8 +21,7 @@ trait ErrorMessageTrait
     {
         if (! empty($details)) {
             return sprintf($this->value, ...$details);
-        } else {
-            return $this->value;
         }
+        return $this->value;
     }
 }

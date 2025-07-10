@@ -1,9 +1,8 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exceptions\Payload;
+declare(strict_types=1);
 
-use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
-use Phithi92\JsonWebToken\Exceptions\Payload\ErrorMessagesEnum;
+namespace Phithi92\JsonWebToken\Exceptions\Payload;
 
 class InvalidAudienceException extends PayloadException
 {

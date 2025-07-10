@@ -1,9 +1,8 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exceptions\Token;
+declare(strict_types=1);
 
-use Phithi92\JsonWebToken\Exceptions\Token\ErrorMessagesEnum;
-use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
+namespace Phithi92\JsonWebToken\Exceptions\Token;
 
 class MissingPrivateClaimException extends TokenException
 {

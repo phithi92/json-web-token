@@ -1,14 +1,13 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exceptions\Crypto;
+declare(strict_types=1);
 
-use Phithi92\JsonWebToken\Exceptions\Crypto\ErrorMessagesEnum;
-use Phithi92\JsonWebToken\Exceptions\Crypto\CryptoException;
+namespace Phithi92\JsonWebToken\Exceptions\Crypto;
 
 class InvalidAsymmetricKeyException extends CryptoException
 {
-    public function __construct()
+    public function __construct(string $message)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_ASYMETRIC_KEY->getMessage(openssl_error_string()));
+        parent::__construct(ErrorMessagesEnum::INVALID_ASYMETRIC_KEY->getMessage($message));
     }
 }

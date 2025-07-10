@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Phithi92\JsonWebToken\Exceptions\Payload;
 
 use Phithi92\JsonWebToken\Exceptions\Exception;
-use Phithi92\JsonWebToken\Exceptions\Payload\ErrorMessagesEnum;
 
 class EmptyFieldException extends Exception
 {

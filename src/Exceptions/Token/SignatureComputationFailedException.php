@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Phithi92\JsonWebToken\Exceptions\Signing;
 
-use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\ErrorMessagesEnum;
+use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 
 class SignatureComputationFailedException extends TokenException
 {

@@ -1,9 +1,8 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exceptions\Token;
+declare(strict_types=1);
 
-use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
-use Phithi92\JsonWebToken\Exceptions\Token\ErrorMessagesEnum;
+namespace Phithi92\JsonWebToken\Exceptions\Token;
 
 class InvalidCekLength extends TokenException
 {

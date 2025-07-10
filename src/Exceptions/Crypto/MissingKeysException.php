@@ -1,9 +1,8 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exceptions\Crypto;
+declare(strict_types=1);
 
-use Phithi92\JsonWebToken\Exceptions\Crypto\ErrorMessagesEnum;
-use Phithi92\JsonWebToken\Exceptions\Crypto\CryptoException;
+namespace Phithi92\JsonWebToken\Exceptions\Crypto;
 
 class MissingKeysException extends CryptoException
 {

@@ -1,9 +1,8 @@
 <?php
 
-namespace Phithi92\JsonWebToken\Exceptions\Json;
+declare(strict_types=1);
 
-use Phithi92\JsonWebToken\Exceptions\Json\JsonException;
-use Phithi92\JsonWebToken\Exceptions\Json\ErrorMessagesEnum;
+namespace Phithi92\JsonWebToken\Exceptions\Json;
 
 class InvalidDepthException extends JsonException
 {
