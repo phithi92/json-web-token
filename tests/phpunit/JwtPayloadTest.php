@@ -103,10 +103,10 @@ class JwtPayloadTest extends TestCase
     {
         $payload = new JwtPayload();
         $payload->setIssuer('testIssuer')
-                ->setAudience(['aud1', 'aud2'])
-                ->setExpiration('+15 minutes')
-                ->setIssuedAt('now')
-                ->setNotBefore('now');
+            ->setAudience(['aud1', 'aud2'])
+            ->setExpiration('+15 minutes')
+            ->setIssuedAt('now')
+            ->setNotBefore('now');
 
         $array = $payload->toArray();
         $this->assertArrayHasKey('iss', $array);
@@ -120,10 +120,10 @@ class JwtPayloadTest extends TestCase
     {
         $payload = new JwtPayload();
         $payload->setIssuer('testIssuer')
-                ->setAudience(['aud1', 'aud2'])
-                ->setExpiration('+15 minutes')
-                ->setIssuedAt('now')
-                ->setNotBefore('now');
+            ->setAudience(['aud1', 'aud2'])
+            ->setExpiration('+15 minutes')
+            ->setIssuedAt('now')
+            ->setNotBefore('now');
 
         $json = $payload->toJson();
         $decoded = json_decode($json, true);
@@ -152,8 +152,8 @@ class JwtPayloadTest extends TestCase
         $this->expectNotToPerformAssertions();
 
         $payload = (new JwtPayload())
-                ->setIssuedAt('now')
-                ->setExpiration('+1 minutes');
+            ->setIssuedAt('now')
+            ->setExpiration('+1 minutes');
 
         // This should succeed because the `exp` is set in the future
         $validator = new JwtValidator();
@@ -163,8 +163,8 @@ class JwtPayloadTest extends TestCase
     public function testValidateTokenExpiredThrowsException()
     {
         $payload = (new JwtPayload())
-                ->setIssuedAt('-2 minutes')
-                ->setExpiration('-1 minutes');
+            ->setIssuedAt('-2 minutes')
+            ->setExpiration('-1 minutes');
 
         $this->expectException(Exceptions\Payload\ExpiredPayloadException::class);
 
@@ -178,9 +178,9 @@ class JwtPayloadTest extends TestCase
         $this->expectNotToPerformAssertions();
 
         $payload = (new JwtPayload())
-                ->setIssuedAt('-1 minutes')
-                ->setNotBefore('-1 minutes')
-                ->setExpiration('+1 minutes');
+            ->setIssuedAt('-1 minutes')
+            ->setNotBefore('-1 minutes')
+            ->setExpiration('+1 minutes');
 
         // This should succeed because all temporal claims are valid
         $validator = new JwtValidator();
@@ -190,9 +190,9 @@ class JwtPayloadTest extends TestCase
     public function testValidateTokenWithMixedInvalidTemporalClaims()
     {
         $payload = (new JwtPayload())
-                ->setIssuedAt('-2 minutes')
-                ->setNotBefore('-2 minutes')
-                ->setExpiration('-1 minutes');
+            ->setIssuedAt('-2 minutes')
+            ->setNotBefore('-2 minutes')
+            ->setExpiration('-1 minutes');
 
         $this->expectException(Exceptions\Payload\ExpiredPayloadException::class);
 
@@ -206,7 +206,7 @@ class JwtPayloadTest extends TestCase
         $dateTime = new DateTimeImmutable('@2147483647'); // Maximale 32-bit Zeit
 
         $payload = (new JwtPayload())
-                ->setExpiration($dateTime->format(DateTime::ATOM));
+            ->setExpiration($dateTime->format(DateTime::ATOM));
 
         $this->assertEquals($dateTime->getTimestamp(), $payload->getClaim('exp'));
     }

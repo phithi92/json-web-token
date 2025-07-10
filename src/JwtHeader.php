@@ -39,7 +39,8 @@ final class JwtHeader
      *
      * If the format or length of the Key ID is invalid, an exception is thrown.
      *
-     * @param  string $type            The Key ID to set.
+     * @param string $type The Key ID to set.
+     *
      * @return self                    Returns the instance for method chaining.
      *
      * @throws InvalidKidFormatException If the Key ID contains invalid characters.
@@ -52,7 +53,7 @@ final class JwtHeader
         $maxLength = 64;
 
         // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
-        if (!ctype_alnum(str_replace(['-', '_'], '', $type))) {
+        if (! ctype_alnum(str_replace(['-', '_'], '', $type))) {
             throw new InvalidKidFormatException();
         }
 
@@ -77,7 +78,8 @@ final class JwtHeader
     /**
      * Sets the token type in the header.
      *
-     * @param  string $type The type of the token, e.g., 'JWT' or 'JWS'.
+     * @param string $type The type of the token, e.g., 'JWT' or 'JWS'.
+     *
      * @return self   Returns the instance to allow method chaining.
      */
     public function setType(string $type): self
@@ -99,7 +101,8 @@ final class JwtHeader
     /**
      * Sets the algorithm used for signing or encoding the token.
      *
-     * @param  string $algorithm The algorithm identifier, e.g., 'HS256'.
+     * @param string $algorithm The algorithm identifier, e.g., 'HS256'.
+     *
      * @return self   Returns the instance to allow method chaining.
      */
     public function setAlgorithm(string $algorithm): self
@@ -121,7 +124,8 @@ final class JwtHeader
     /**
      * Sets the encryption method identifier in the header.
      *
-     * @param  string $enc The encryption method identifier.
+     * @param string $enc The encryption method identifier.
+     *
      * @return self   Returns the instance to allow method chaining.
      */
     public function setEnc(string $enc): self
@@ -129,7 +133,6 @@ final class JwtHeader
         $this->enc = $enc;
         return $this;
     }
-
 
     /**
      * Retrieves the encryption method identifier from the header.
@@ -178,7 +181,8 @@ final class JwtHeader
      *
      * Parses the JSON string, assigns values to the header properties, and returns a populated instance.
      *
-     * @param  string $json The JSON-encoded header string.
+     * @param string $json The JSON-encoded header string.
+     *
      * @return self   A new instance of JwtHeader with populated fields.
      */
     public static function fromJson(string $json): self

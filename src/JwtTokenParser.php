@@ -10,8 +10,10 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 class JwtTokenParser
 {
     /**
-     * @param string|array<string> $token
-     * @return EncryptedJwtBundle
+     * @param string|array<int,string> $token
+     *
+     * @return EncryptedJwtBundle configured bundle
+     *
      * @throws InvalidFormatException
      */
     public static function parse(string|array $token): EncryptedJwtBundle
@@ -29,8 +31,8 @@ class JwtTokenParser
     }
 
     /**
-     * @param EncryptedJwtBundle $jwtBundle
-     * @return string
+     * @return string Serialized token
+     *
      * @throws InvalidFormatException
      */
     public static function serialize(EncryptedJwtBundle $jwtBundle): string
@@ -44,7 +46,7 @@ class JwtTokenParser
 
     /**
      * @param array<string> $parts
-     * @return EncryptedJwtBundle
+     *
      * @throws InvalidFormatException
      */
     private static function parseEncodedToken(array $parts): EncryptedJwtBundle
@@ -85,7 +87,7 @@ class JwtTokenParser
 
     /**
      * @param array<string> $parts
-     * @return EncryptedJwtBundle
+     *
      * @throws InvalidFormatException
      */
     private static function parseSignatureToken(array $parts): EncryptedJwtBundle
@@ -107,8 +109,7 @@ class JwtTokenParser
     }
 
     /**
-     * @param EncryptedJwtBundle $jwtBundle
-     * @return string
+     * @return string serialized and encoded token
      */
     private static function serializeEncodedToken(EncryptedJwtBundle $jwtBundle): string
     {
@@ -128,15 +129,18 @@ class JwtTokenParser
      * @param EncryptedJwtBundle $jwtBundle
      * @return string
      */
-    private static function serializeSignatureToken(EncryptedJwtBundle $jwtBundle): string
+    private static function serializeSignatureToken(EncryptedJwtBundle $bundle): string
     {
-        /** @var string[] $tokenArray */
+        /**
+         * @param string<string> $tokenArray
+         */
         $tokenArray = [
-            $jwtBundle->getHeader()->toJson(),
-            $jwtBundle->getPayload()->toJson(),
-            $jwtBundle->getSignature() ?? ''
+            $bundle->getHeader()->toJson(),
+            $bundle->getPayload()->toJson(),
+            $bundle->getSignature(),
         ];
 
-        return implode('.', array_map([Base64UrlEncoder::class, 'encode'], $tokenArray));
+        return self::encodeAndSerialize($tokenArray);
+    }
     }
 }

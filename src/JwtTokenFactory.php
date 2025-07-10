@@ -21,11 +21,11 @@ final class JwtTokenFactory
     /**
      * Creates a signed and/or encrypted JWT using the provided payload and algorithm.
      *
-     * @param JwtAlgorithmManager $manager Algorithm manager instance.
-     * @param JwtPayload $payload Payload object containing JWT claims.
-     * @param string $algorithm Algorithm name (e.g., 'RS256').
-     * @param JwtValidator|null $validator Optional validator instance.
-     * @param string|null $kid Optional key ID.
+     * @param JwtAlgorithmManager $manager   Algorithm manager instance.
+     * @param JwtPayload          $payload   Payload object containing JWT claims.
+     * @param string              $algorithm Algorithm name (e.g., 'RS256').
+     * @param JwtValidator|null   $validator Optional validator instance.
+     * @param string|null         $kid       Optional key ID.
      *
      * @return EncryptedJwtBundle Resulting token bundle.
      */
@@ -43,11 +43,11 @@ final class JwtTokenFactory
     /**
      * Creates a JWT from an associative array of claims.
      *
-     * @param JwtAlgorithmManager $manager Algorithm manager instance.
-     * @param array $claims Associative array of JWT claims.
-     * @param string $algorithm Algorithm name.
-     * @param JwtValidator|null $validator Optional validator instance.
-     * @param string|null $kid Optional key ID.
+     * @param JwtAlgorithmManager  $manager   Algorithm manager instance.
+     * @param array<string,string> $claims    Associative array of JWT claims.
+     * @param string               $algorithm Algorithm name.
+     * @param JwtValidator|null    $validator Optional validator instance.
+     * @param string|null          $kid       Optional key ID.
      *
      * @return EncryptedJwtBundle Resulting token bundle.
      */
@@ -72,11 +72,11 @@ final class JwtTokenFactory
      * ❌ Do NOT use this method in production code.
      * ❌ It disables signature, claim, and context verification.
      *
-     * @param JwtAlgorithmManager $manager Algorithm manager instance.
-     * @param JwtPayload $payload JWT payload.
-     * @param string $algorithm Algorithm name.
-     * @param JwtValidator|null $validator Ignored in this method.
-     * @param string|null $kid Optional key ID.
+     * @param JwtAlgorithmManager $manager   Algorithm manager instance.
+     * @param JwtPayload          $payload   JWT payload.
+     * @param string              $algorithm Algorithm name.
+     * @param JwtValidator|null   $validator Ignored in this method.
+     * @param string|null         $kid       Optional key ID.
      *
      * @return EncryptedJwtBundle Resulting token bundle.
      *
@@ -96,11 +96,11 @@ final class JwtTokenFactory
     /**
      * Creates a JWT and returns it as a serialized string (JWT compact format).
      *
-     * @param JwtAlgorithmManager $manager Algorithm manager instance.
-     * @param JwtPayload $payload JWT payload.
-     * @param string $algorithm Algorithm name.
-     * @param JwtValidator|null $validator Optional validator.
-     * @param string|null $kid Optional key ID.
+     * @param JwtAlgorithmManager $manager   Algorithm manager instance.
+     * @param JwtPayload          $payload   JWT payload.
+     * @param string              $algorithm Algorithm name.
+     * @param JwtValidator|null   $validator Optional validator.
+     * @param string|null         $kid       Optional key ID.
      *
      * @return string JWT as a compact string.
      */
@@ -118,9 +118,9 @@ final class JwtTokenFactory
     /**
      * Decrypts and validates a JWT string using the provided manager and validator.
      *
-     * @param JwtAlgorithmManager $manager Algorithm manager.
-     * @param string $jwt Serialized JWT string.
-     * @param JwtValidator|null $validator Optional validator.
+     * @param JwtAlgorithmManager $manager   Algorithm manager.
+     * @param string              $jwt       Serialized JWT string.
+     * @param JwtValidator|null   $validator Optional validator.
      *
      * @return EncryptedJwtBundle Decrypted and parsed JWT bundle.
      */
@@ -136,9 +136,9 @@ final class JwtTokenFactory
     /**
      * Decrypts a JWT string without performing validation.
      *
-     * @param JwtAlgorithmManager $manager Algorithm manager.
-     * @param string $jwt Serialized JWT string.
-     * @param JwtValidator|null $validator Ignored in this method.
+     * @param JwtAlgorithmManager $manager   Algorithm manager.
+     * @param string              $jwt       Serialized JWT string.
+     * @param JwtValidator|null   $validator Ignored in this method.
      *
      * @return EncryptedJwtBundle Decrypted JWT bundle.
      */
@@ -154,9 +154,9 @@ final class JwtTokenFactory
     /**
      * Validates a JWT string by decrypting and passing it to a JwtValidator.
      *
-     * @param JwtAlgorithmManager $manager Algorithm manager instance.
-     * @param string $jwt Serialized JWT string.
-     * @param JwtValidator $validator Validator instance.
+     * @param JwtAlgorithmManager $manager   Algorithm manager instance.
+     * @param string              $jwt       Serialized JWT string.
+     * @param JwtValidator        $validator Validator instance.
      *
      * @return bool True if the token is valid, false otherwise.
      */
@@ -174,7 +174,7 @@ final class JwtTokenFactory
      * Refreshes a JWT by cloning its payload and updating the timestamps.
      *
      * @param EncryptedJwtBundle $jwtBundle Existing JWT bundle to refresh.
-     * @param string $interval Expiration interval (e.g., "+1 hour").
+     * @param string             $interval  Expiration interval (e.g., "+1 hour").
      *
      * @return EncryptedJwtBundle New JWT bundle with refreshed timestamps.
      */

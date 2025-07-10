@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken;
 
+use DateMalformedStringException;
+use DateTimeImmutable;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
-use DateTimeImmutable;
-use DateMalformedStringException;
 
 /**
  * JwtPayload represents the payload segment of a JSON Web Token (JWT).
@@ -25,9 +25,7 @@ class JwtPayload
     private string $encryptedPayload;
 
     /**
-     * store token data (JWT payload)
-     *
-     * @var array<string, mixed>
+     * @var array<string, int|string|array<string, int|string|array<string, int|string|null>|null>|null>
      */
     private array $payload;
 
@@ -47,15 +45,22 @@ class JwtPayload
      * Creates a new instance of JwtPayload from a JSON string.
      * This static method parses the JSON input and populates the payload fields accordingly.
      *
-     * @param  string $json A JSON-encoded string representing the JWT payload data.
-     * @uses   JsonEncoder Encodes the array representation of the object into JSON.
-     * @see    fromArray()
+     * @param string $json A JSON-encoded string representing the JWT payload data.
+     *
+     * @uses JsonEncoder Encodes the array representation of the object into JSON.
+     *
+     * @see fromArray()
+     *
      * @return self Returns an instance of JwtPayload with fields populated from the JSON data.
      */
     public static function fromJson(string $json): self
     {
         // Decode the JSON string into an associative array
-        $payload = JsonEncoder::decode($json);
+
+        /**
+         * @var array<string, string|int|float|bool|array<string, mixed>|null> $payload
+         */
+        $payload = JsonEncoder::decode($json, true);
 
         return self::fromArray($payload);
     }
@@ -92,10 +97,13 @@ class JwtPayload
      * Converts the token data (JWT payload) into an array.
      * Before returning the array, it validates the data.
      *
-     * @see    validate() Called to ensure the payload meets required criteria.
-     * @see    setField()
-     * @see    getField()
-     * @return array<string,string> The complete JWT payload as an associative array.
+     * @see validate() Called to ensure the payload meets required criteria.
+     * @see setField()
+     * @see getField()
+     *
+     * @return array<string, string|int|float|bool|array<string, mixed>|null>
+     *         The complete JWT payload as an associative array.
+     *
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
      */
@@ -114,8 +122,10 @@ class JwtPayload
      * Converts the payload properties to an array using `toArray`, then encodes them
      * as a JSON string suitable for inclusion in a JWT.
      *
-     * @uses   JsonEncoder Encodes the array representation of the object into JSON.
-     * @see    toArray()
+     * @uses JsonEncoder Encodes the array representation of the object into JSON.
+     *
+     * @see toArray()
+     *
      * @return string The JSON-encoded representation of the JWT payload.
      */
     public function toJson(): string
@@ -124,12 +134,16 @@ class JwtPayload
     }
 
     /**
+     * array<int|string,
+     * int|string|null>
      * Adds a field to the token data (JWT payload).
      * Ensures that the key is unique and the value is a valid type (scalar or array).
      *
-     * @param  string $key   The key of the field to add.
-     * @param  mixed  $value The value to associate with the key (must be scalar or array).
+     * @param string                               $key   The key of the field to add.
+     * @param string|int|array<string, mixed>|null $value
+     *
      * @return self Returns the instance to allow method chaining.
+     *
      * @throws InvalidValueTypeException if the value type is invalid.
      * @throws EmptyFieldException if the value is empty.
      */
@@ -141,8 +155,9 @@ class JwtPayload
     /**
      * Retrieves a specific field from the token data (JWT payload).
      *
-     * @param  string $field The field to retrieve.
-     * @return string|int|array<mixed>|null The value of the specified field, or null if it does not exist.
+     * @param string $claim The field to retrieve.
+     *
+     * @return string|int|array<string, mixed>|null
      */
     public function getField(string $field): string|int|array|null
     {
@@ -152,9 +167,12 @@ class JwtPayload
     /**
      * Sets the "iss" (issuer) claim in the JWT payload.
      *
-     * @param  string $issuer The issuer of the JWT.
-     * @see    addField()
+     * @param string $issuer The issuer of the JWT.
+     *
+     * @see addClaim()
+     *
      * @return self Returns the instance to allow method chaining.
+     *
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
      */
@@ -170,7 +188,8 @@ class JwtPayload
      * in the payload. The 'iss' field is expected to contain a string identifying
      * the issuer, or null if the field is not set.
      *
-     * @see    getField()
+     * @see getField()
+     *
      * @return string|null The issuer identifier as a string, or null if it is not present.
      */
     public function getIssuer(): ?string
@@ -182,9 +201,12 @@ class JwtPayload
     /**
      * Sets the "aud" (audience) claim in the JWT payload.
      *
-     * @param  string|array<string> $audience The intended audience of the JWT. Can be a string or an array of strings.
-     * @see    addField()
+     * @param string|array<string> $audience The intended audience of the JWT. Can be a string or an array of strings.
+     *
+     * @see addClaim()
+     *
      * @return self Returns the instance to allow method chaining.
+     *
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
      */
@@ -200,8 +222,9 @@ class JwtPayload
      * in the payload. The 'aud' field is expected to contain a string identifying
      * the intended audience, or null if the field is not set.
      *
-     * @see    getField()
-     * @return array<string>|string|null The audience identifier as a string, or null if it is not present.
+     * @see getField()
+     *
+     * @return array<string,string>|string|null The audience identifier as a string, or null if it is not present.
      */
     public function getAudience(): string|array|null
     {
@@ -212,9 +235,12 @@ class JwtPayload
     /**
      * Sets the "iat" (issued at) claim in the JWT payload.
      *
-     * @param  string $dateTime The issued at time, which will be parsed and stored as a Unix timestamp.
+     * @param string $dateTime The issued at time, which will be parsed and stored as a Unix timestamp.
+     *
      * @return self Returns the instance to allow method chaining.
-     * @see    setTimestamp()
+     *
+     * @see setTimestamp()
+     *
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
      */
@@ -230,7 +256,8 @@ class JwtPayload
      * in the payload. The 'iat' field is expected to contain a string representing
      * a timestamp, or null if the field is not set.
      *
-     * @see    getField()
+     * @see getField()
+     *
      * @return int|null The issued-at timestamp as a string, or null if it is not present.
      */
     public function getIssuedAt(): int|null
@@ -242,9 +269,12 @@ class JwtPayload
     /**
      * Sets the "exp" (expiration) claim in the JWT payload.
      *
-     * @param  string $dateTime The expiration time, which will be parsed and stored as a Unix timestamp.
-     * @see    setTimestamp()
+     * @param string $dateTime The expiration time, which will be parsed and stored as a Unix timestamp.
+     *
+     * @see setTimestamp()
+     *
      * @return self Returns the instance to allow method chaining.
+     *
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
      * @throws InvalidDateTimeException If the datetime string is in an invalid format.
@@ -261,7 +291,8 @@ class JwtPayload
      * in the payload. The 'exp' field is expected to contain a string representing
      * a timestamp, or null if the field is not set.
      *
-     * @see    getField()
+     * @see getField()
+     *
      * @return int|null The expiration timestamp as int, or null if it is not present.
      */
     public function getExpiration(): int|null
@@ -273,9 +304,12 @@ class JwtPayload
     /**
      * Sets the "nbf" (not before) claim in the JWT payload.
      *
-     * @param  string $dateTime The not before time, which will be parsed and stored as a Unix timestamp.
-     * @see    setTimestamp()
+     * @param string $dateTime The not before time, which will be parsed and stored as a Unix timestamp.
+     *
+     * @see setTimestamp()
+     *
      * @return self Returns the instance to allow method chaining.
+     *
      * @throws InvalidValueTypeException If the value type is invalid.
      * @throws EmptyFieldException If the value is empty.
      * @throws InvalidDateTimeException If the datetime string is in an invalid format.
@@ -303,7 +337,8 @@ class JwtPayload
     /**
      * Checks whether a specific field exists in the token data (JWT payload).
      *
-     * @param  string|int $field The field to check.
+     * @param string|int $field The field to check.
+     *
      * @return bool Returns true if the field exists, false otherwise.
      */
     public function hasField(string|int $field): bool
@@ -315,9 +350,9 @@ class JwtPayload
      * Parses and sets a timestamp field in the JWT payload.
      * Converts a datetime string into a Unix timestamp and stores it under the specified key.
      *
-     * @param  string $key      The key for the timestamp field (e.g., "iat", "nbf", "exp").
-     * @param  string $dateTime The datetime string to be converted into a timestamp.
-     * @see    setField()
+     * @param string $key      The key for the timestamp field (e.g., "iat", "nbf", "exp").
+     * @param string $dateTime The datetime string to be converted into a timestamp.
+     *
      * @return self Returns the instance to allow method chaining.
      * @throws InvalidDateTimeException If the datetime string is in an invalid format.
      * @throws InvalidValueTypeException If the value type is invalid.
@@ -344,13 +379,28 @@ class JwtPayload
     /**
      * Checks whether the value is invalid (null, empty string, or empty array).
      *
-     * @param  string $key   The key of the field.
-     * @param  mixed  $value The value being checked.
-     * @return self Returns the instance to allow method chaining.
+     * @param string                                               $key   The key of the field.
+     * @param array<string, array<string, string>|int|string|null> $value The value being checked.
+     *
+     * @return JwtPayload Returns the instance to allow method chaining.
+     *
      * @throws EmptyFieldException if the value is empty.
      * @throws InvalidValueTypeException if the value is neither scalar nor array.
      */
     private function setField(string $key, mixed $value, bool $overwrite = false): self
+    /**
+     * Validates that a given JWT claim value is not empty or of invalid type.
+     *
+     * Rejects null values, empty strings, and empty arrays, as these are considered
+     * semantically meaningless in the context of JWT claims. Also ensures that the
+     * value is either a scalar or an array.
+     *
+     * @param string $key   The claim key being validated (used for error context).
+     * @param mixed  $value The claim value to validate.
+     *
+     * @throws EmptyFieldException        If the value is null, empty string, or empty array.
+     * @throws InvalidValueTypeException If the value is neither scalar nor array.
+     */
     {
         // Check if the value is null
         $isNull = $value === null;

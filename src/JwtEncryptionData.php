@@ -22,8 +22,7 @@ final class JwtEncryptionData
      * Sets the Base64URL-encoded AAD (Additional Authenticated Data),
      * typically the protected header from the JWE compact serialization.
      *
-     * @param string $encodedHeader
-     * @return self
+     * @return self For method chaining
      */
     public function setAad(string $encodedHeader): self
     {
@@ -42,9 +41,9 @@ final class JwtEncryptionData
     }
 
     /**
+     * set initialization vector
      *
-     * @param string $iv
-     * @return self
+     * @return self For method chaining
      */
     public function setIv(string $iv): self
     {
@@ -55,8 +54,9 @@ final class JwtEncryptionData
     /**
      * Sets the encrypted Content Encryption Key (CEK).
      *
-     * @param  string $cek The content encryption key.
-     * @return self
+     * @param string $cek The content encryption key.
+     *
+     * @return self For method chaining
      */
     public function setCek(string $cek): self
     {
@@ -77,8 +77,9 @@ final class JwtEncryptionData
     /**
      * Sets the encrypted key for the token.
      *
-     * @param  string $encryptedKey The encrypted key.
-     * @return self
+     * @param string $encryptedKey The encrypted key.
+     *
+     * @return self For method chaining
      */
     public function setEncryptedKey(string $encryptedKey): self
     {
@@ -99,8 +100,9 @@ final class JwtEncryptionData
     /**
      * Sets the authentication tag for encryption.
      *
-     * @param  string $tag The authentication tag.
-     * @return self
+     * @param string $tag The authentication tag.
+     *
+     * @return self For method chaining
      */
     public function setAuthTag(string $tag): self
     {

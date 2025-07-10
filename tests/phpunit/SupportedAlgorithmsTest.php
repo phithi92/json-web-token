@@ -7,7 +7,6 @@ require_once __DIR__ . "/../Helpers/TokenStorage.php";
 require_once __DIR__ . "/../Helpers/KeyProvider.php";
 
 use Phithi92\JsonWebToken\JwtTokenFactory;
-use Phithi92\JsonWebToken\JwtTokenParser;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 
 use Tests\Helpers\TokenStorage;

@@ -36,8 +36,11 @@ final class JwtTokenBuilder
      *
      * @throws LogicException
      */
-    public function createWithoutValidation(JwtPayload $payload, string $algorithm, ?string $kid = null): EncryptedJwtBundle
-    {
+    public function createWithoutValidation(
+        JwtPayload $payload,
+        string $algorithm,
+        ?string $kid = null
+    ): EncryptedJwtBundle {
         $config = $this->manager->getConfiguration($algorithm);
 
         $tokenType = $config['token_type'] ?? null;
