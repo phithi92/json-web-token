@@ -149,7 +149,7 @@ class JwtTokenParser
     }
 
     /**
-     * @param EncryptedJwtBundle $jwtBundle
+     * @param EncryptedJwtBundle $bundle
      * @return string
      */
     private static function serializeSignatureToken(EncryptedJwtBundle $bundle): string
