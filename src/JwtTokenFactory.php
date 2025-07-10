@@ -167,7 +167,7 @@ final class JwtTokenFactory
     ): bool {
         $processor = new JwtTokenDecryptor($manager, $validator);
         $bundle = $processor->decrypt($jwt);
-        return $validator->isValid($bundle);
+        return $validator->isValid($bundle->getPayload());
     }
 
     /**
