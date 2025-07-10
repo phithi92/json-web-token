@@ -62,7 +62,7 @@ class TestCaseWithSecrets extends TestCase
 
     public function decryptToken(
         string $token,
-        JwtAlgorithmManager $manager = null
+        ?JwtAlgorithmManager $manager = null
     ) {
         $resolvedManager = $manager ?? $this->manager;
 
