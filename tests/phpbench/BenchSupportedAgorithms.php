@@ -15,7 +15,7 @@ class BenchSupportedAgorithms extends BenchmarkBase
 {
     public function setUp(): void
     {
-        parent::setUp(); // optional, falls du von anderer Base-Klasse erbst
+        parent::setUp();
     }
 
     public function bench_create(array $params): void
