@@ -122,6 +122,28 @@ foreach ($ecCurves as $curve => $hash) {
     echo "✅ EC-Schlüssel für {$curve} gespeichert unter {$keyPath}\n\n";
 }
 
+// === AES-GCM Key Generation ===
+$aesGcmConfigs = [
+    'a128gcm' => 16, // 128 Bit = 16 Byte
+    'a192gcm' => 24, // 192 Bit = 24 Byte
+    'a256gcm' => 32, // 256 Bit = 32 Byte
+];
+
+foreach ($aesGcmConfigs as $algo => $bytes) {
+    echo "🔐 Generiere AES-GCM-Schlüssel für {$algo} ({$bytes} Byte)...\n";
+
+    $keyPath = "{$basePath}/aes/{$algo}";
+    @mkdir($keyPath, 0777, true);
+
+    $keyFile = "{$keyPath}/secret.key";
+    $key = random_bytes($bytes);
+
+    file_put_contents($keyFile, $key);
+
+    echo "✅ AES-GCM-Schlüssel gespeichert unter {$keyFile}\n\n";
+}
+
+
 // === HMAC Key Generation ===
 $hmacConfigs = [
     'hs256' => 32, // 256 Bit
@@ -138,9 +160,9 @@ foreach ($hmacConfigs as $algo => $bytes) {
     $keyFile = "{$keyPath}/secret.key";
     $key = random_bytes($bytes);
 
-    file_put_contents($keyFile, bin2hex($key)); // HEX-Format
+    file_put_contents($keyFile, $key);
 
     echo "✅ HMAC-Schlüssel gespeichert unter {$keyFile}\n\n";
 }
 
-echo "🎉 Alle Schlüssel für RSA, EC und HMAC wurden erfolgreich generiert.\n";
+echo "🎉 Alle Schlüssel für RSA, EC, AES-GCM und HMAC wurden erfolgreich generiert.\n";

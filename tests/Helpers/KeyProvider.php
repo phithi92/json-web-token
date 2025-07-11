@@ -47,6 +47,10 @@ class KeyProvider
             self::createSymmetricKeyItem('HS256', 'hmac/hs256'),
             self::createSymmetricKeyItem('HS384', 'hmac/hs384'),
             self::createSymmetricKeyItem('HS512', 'hmac/hs512'),
+                
+            self::createSymmetricKeyItem('A128GCM', 'aes/a128gcm'),
+            self::createSymmetricKeyItem('A192GCM', 'aes/a192gcm'),
+            self::createSymmetricKeyItem('A256GCM', 'aes/a256gcm'),
         );
     }
 
