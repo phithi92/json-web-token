@@ -88,10 +88,10 @@ final class JwtTokenBuilder
     private function getHandlerMappings(): array
     {
         return [
-            'cek' => [ContentEncryptionKeyManagerInterface::class, 'prepareCek'],
+            'cek' => [ContentEncryptionKeyManagerInterface::class, 'initializeCek'],
             'key_management' => [KeyManagementManagerInterface::class, 'wrapKey'],
             'signing_algorithm' => [SignatureManagerInterface::class, 'computeSignature'],
-            'iv' => [InitializationVectorManagerInterface::class, 'prepareIv'],
+            'iv' => [InitializationVectorManagerInterface::class, 'initializeIv'],
             'content_encryption' => [ContentEncryptionManagerInterface::class, 'encryptPayload'],
         ];
     }

@@ -10,7 +10,7 @@ use Phithi92\JsonWebToken\Interfaces\ContentEncryptionKeyManagerInterface;
 
 class DefaultCekHandler implements ContentEncryptionKeyManagerInterface
 {
-    public function prepareCek(EncryptedJwtBundle $jwtToken, array $config): void
+    public function initializeCek(EncryptedJwtBundle $jwtToken, array $config): void
     {
         $bitLength = (int) $config['length'];
         if ($bitLength < 8) {

@@ -15,7 +15,7 @@ interface ContentEncryptionKeyManagerInterface
      * @param array<string, array<string, string|class-string<object>>|string> $config
      *          Configuration array (expects 'length' in bits).
      */
-    public function prepareCek(EncryptedJwtBundle $bundle, array $config): void;
+    public function initializeCek(EncryptedJwtBundle $bundle, array $config): void;
 
     /**
      * Validates the CEK against expected configuration (length, format, etc).

@@ -17,7 +17,7 @@ interface InitializationVectorManagerInterface
      * @param array<string, array<string, string>|string> $config
      *          Configuration array (expects 'length' in bits).
      */
-    public function prepareIv(EncryptedJwtBundle $bundle, array $config): void;
+    public function initializeIv(EncryptedJwtBundle $bundle, array $config): void;
 
     /**
      * Validates the IV stored in the JWT encryption bundle against the expected length.

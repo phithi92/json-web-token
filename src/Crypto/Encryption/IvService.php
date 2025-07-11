@@ -21,7 +21,7 @@ final class IvService implements InitializationVectorManagerInterface
      * @param EncryptedJwtBundle        $bundle The JWT encryption container
      * @param array<string, int|string> $config
      */
-    public function prepareIv(EncryptedJwtBundle $bundle, array $config): void
+    public function initializeIv(EncryptedJwtBundle $bundle, array $config): void
     {
         $length = (int) $config['length'];   // IV length in bits
         $expectedBytes = intdiv($length, 8);
