@@ -23,16 +23,16 @@ class RsaEncryptionService extends ContentCryptoService
             throw new InvalidSignatureException('No key ID (kid) provided for signature validation.');
         }
 
-        $encryptedKey = $bundle->getEncryption()->getEncryptedKey();
+        $encryptedData = $bundle->getPayload()->getEncryptedPayload();
         $padding = (int) $config['padding'];
         $privateKey = $this->manager->getPrivateKey($kid);
-        $cek = '';
 
-        if (! openssl_private_decrypt($encryptedKey, $cek, $privateKey, $padding)) {
+        $jsonData = '';
+        if (! openssl_private_decrypt($encryptedData, $jsonData, $privateKey, $padding)) {
             throw new DecryptionException($this->getOpenSslError('decryption'));
         }
-
-        $bundle->getEncryption()->setCek($cek);
+        
+        $bundle->getPayload()->fromJson($jsonData);
     }
 
     /**
@@ -47,7 +47,7 @@ class RsaEncryptionService extends ContentCryptoService
             throw new InvalidSignatureException('No key ID (kid) provided for signature validation.');
         }
 
-        $data = $bundle->getEncryption()->getCek();
+        $data = $bundle->getPayload()->toJson();
         $padding = (int) $config['padding'];
         $publicKey = $this->manager->getPublicKey($kid);
         $encrypted = '';
@@ -56,7 +56,7 @@ class RsaEncryptionService extends ContentCryptoService
             throw new EncryptionException($this->getOpenSslError('encryption'));
         }
 
-        $bundle->getEncryption()->setEncryptedKey($encrypted);
+        $bundle->getPayload()->setEncryptedPayload($encrypted);
     }
 
     private function getOpenSslError(string $context): string
