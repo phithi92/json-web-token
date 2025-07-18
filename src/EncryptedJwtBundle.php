@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Interfaces\EncryptedJwtInterface;
-
 /**
  * EncryptedJwtBundle
  *
@@ -18,7 +16,7 @@ use Phithi92\JsonWebToken\Interfaces\EncryptedJwtInterface;
  * - CEK: The content encryption key used in encryption for JWE tokens.
  * - IV: The initialization vector for encryption processes.
  */
-final class EncryptedJwtBundle implements EncryptedJwtInterface
+final class EncryptedJwtBundle
 {
     private JwtHeader $header;
     private JwtPayload $payload;

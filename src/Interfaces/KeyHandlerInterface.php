@@ -6,7 +6,7 @@ namespace Phithi92\JsonWebToken\Interfaces;
 
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 
-interface KeyManagementManagerInterface
+interface KeyHandlerInterface
 {
     /**
      * @param array<string, array<string, string|class-string<object>>|string> $config

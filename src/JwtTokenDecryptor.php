@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken;
 
 use Phithi92\JsonWebToken\Core\HandlerResolver;
-use Phithi92\JsonWebToken\Interfaces\ContentEncryptionKeyManagerInterface;
-use Phithi92\JsonWebToken\Interfaces\ContentEncryptionManagerInterface;
-use Phithi92\JsonWebToken\Interfaces\InitializationVectorManagerInterface;
-use Phithi92\JsonWebToken\Interfaces\KeyManagementManagerInterface;
-use Phithi92\JsonWebToken\Interfaces\SignatureManagerInterface;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\KeyHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\PayloadHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
 
 final class JwtTokenDecryptor
 {
@@ -63,11 +64,11 @@ final class JwtTokenDecryptor
     private function getHandlerMappings(): array
     {
         return [
-            'key_management' => [KeyManagementManagerInterface::class, 'unwrapKey'],
-            'cek' => [ContentEncryptionKeyManagerInterface::class, 'validateCek'],
-            'iv' => [InitializationVectorManagerInterface::class, 'validateIv'],
-            'signing_algorithm' => [SignatureManagerInterface::class, 'validateSignature'],
-            'content_encryption' => [ContentEncryptionManagerInterface::class, 'decryptPayload'],
+            'key_management' => [KeyHandlerInterface::class, 'unwrapKey'],
+            'cek' => [CekHandlerInterface::class, 'validateCek'],
+            'iv' => [IvHandlerInterface::class, 'validateIv'],
+            'signing_algorithm' => [SignatureHandlerInterface::class, 'validateSignature'],
+            'content_encryption' => [PayloadHandlerInterface::class, 'decryptPayload'],
         ];
     }
 

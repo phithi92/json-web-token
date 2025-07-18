@@ -6,7 +6,7 @@ namespace Phithi92\JsonWebToken\Interfaces;
 
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 
-interface ContentEncryptionKeyManagerInterface
+interface CekHandlerInterface
 {
     /**
      * Generates or loads the Content Encryption Key (CEK)

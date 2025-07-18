@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken;
 
 use LogicException;
-use Phithi92\JsonWebToken\Interfaces\ContentEncryptionKeyManagerInterface;
-use Phithi92\JsonWebToken\Interfaces\ContentEncryptionManagerInterface;
-use Phithi92\JsonWebToken\Interfaces\InitializationVectorManagerInterface;
-use Phithi92\JsonWebToken\Interfaces\KeyManagementManagerInterface;
-use Phithi92\JsonWebToken\Interfaces\SignatureManagerInterface;
+use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\KeyHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\PayloadHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
 
 final class JwtTokenBuilder
 {
@@ -88,21 +88,21 @@ final class JwtTokenBuilder
     private function getHandlerMappings(): array
     {
         return [
-            'cek' => [ContentEncryptionKeyManagerInterface::class, 'initializeCek'],
-            'key_management' => [KeyManagementManagerInterface::class, 'wrapKey'],
-            'signing_algorithm' => [SignatureManagerInterface::class, 'computeSignature'],
-            'iv' => [InitializationVectorManagerInterface::class, 'initializeIv'],
-            'content_encryption' => [ContentEncryptionManagerInterface::class, 'encryptPayload'],
+            'cek' => [CekHandlerInterface::class, 'initializeCek'],
+            'key_management' => [KeyHandlerInterface::class, 'wrapKey'],
+            'signing_algorithm' => [SignatureHandlerInterface::class, 'computeSignature'],
+            'iv' => [IvHandlerInterface::class, 'initializeIv'],
+            'content_encryption' => [PayloadHandlerInterface::class, 'encryptPayload'],
         ];
     }
 
     /**
-     * Ruft Handler auf, falls konfiguriert.
+     * Run handler when configured.
      *
      * @template T of object
      *
      * @param array<string, mixed> $config
-     * @param class-string<T> $interface
+     * @param class-string<T>      $interface
      */
     private function applyHandler(
         EncryptedJwtBundle $bundle,

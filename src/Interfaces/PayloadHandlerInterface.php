@@ -12,7 +12,7 @@ use Phithi92\JsonWebToken\EncryptedJwtBundle;
  * Defines content-level encryption and decryption for JWT payloads,
  * as specified by the "enc" parameter in JWE.
  */
-interface ContentEncryptionManagerInterface
+interface PayloadHandlerInterface
 {
     /**
      * Encrypts the JWT payload using the configured content encryption algorithm.

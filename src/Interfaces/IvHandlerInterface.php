@@ -7,7 +7,7 @@ namespace Phithi92\JsonWebToken\Interfaces;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializeVectorException;
 
-interface InitializationVectorManagerInterface
+interface IvHandlerInterface
 {
     /**
      * Prepares or generates the Initialization Vector (IV)
