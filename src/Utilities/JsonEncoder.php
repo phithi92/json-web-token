@@ -47,7 +47,13 @@ final class JsonEncoder
         }
 
         try {
-            return json_decode($json, $associative, $depth, JSON_THROW_ON_ERROR | $options);
+            $result = json_decode($json, $associative, $depth, JSON_THROW_ON_ERROR | $options);
+            
+            if (!is_array($result) && !is_object($result)) {
+                throw new DecodingException('Expected JSON to decode to array or object.');
+            }
+
+            return $result;
         } catch (JsonException $e) {
             throw new DecodingException($e->getMessage());
         }
