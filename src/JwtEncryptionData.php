@@ -12,17 +12,26 @@ namespace Phithi92\JsonWebToken;
  */
 final class JwtEncryptionData
 {
+    // Content Encryption Key (symmetric key used for data encryption)
     private string $cek;
+
+    // Initialization Vector for encryption (ensures randomness)
     private string $iv;
+
+    // Authentication tag used to verify data integrity and authenticity
     private string $authTag;
+
+    // Encrypted version of the CEK (e.g., encrypted with recipient's public key)
     private string $encryptedKey;
+
+    // Additional Authenticated Data (extra data authenticated but not encrypted)
     private string $aad;
 
     /**
      * Sets the Base64URL-encoded AAD (Additional Authenticated Data),
      * typically the protected header from the JWE compact serialization.
      *
-     * @return self For method chaining
+     * @return self For method chaining.
      */
     public function setAad(string $encodedHeader): self
     {
@@ -33,15 +42,19 @@ final class JwtEncryptionData
     /**
      * Returns the Base64URL-encoded AAD (Additional Authenticated Data).
      *
-     * @return string|null get aad, null when not exist
+     * @return string get aad
      */
-    public function getAad(): ?string
+    public function getAad(): string
     {
-        return $this->aad ?? null;
+        if (! isset($this->aad)) {
+            throw new \LogicException('AAD has not been set.');
+        }
+
+        return $this->aad;
     }
 
     /**
-     * set initialization vector
+     * Sets initialization vector.
      *
      * @return self For method chaining
      */
@@ -67,11 +80,15 @@ final class JwtEncryptionData
     /**
      * Retrieves the encrypted Content Encryption Key.
      *
-     * @return string|null The encryption key, or null if not set.
+     * @return string The encryption key.
      */
-    public function getCek(): ?string
+    public function getCek(): string
     {
-        return $this->cek ?? null;
+        if (! isset($this->cek)) {
+            throw new \LogicException('CEK has not been set.');
+        }
+
+        return $this->cek;
     }
 
     /**
@@ -90,11 +107,15 @@ final class JwtEncryptionData
     /**
      * Retrieves the encrypted key.
      *
-     * @return string|null The encrypted key, or null if not set.
+     * @return string The encrypted key.
      */
-    public function getEncryptedKey(): ?string
+    public function getEncryptedKey(): string
     {
-        return $this->encryptedKey ?? null;
+        if (! isset($this->encryptedKey)) {
+            throw new \LogicException('Encrypted Key has not been set.');
+        }
+
+        return $this->encryptedKey;
     }
 
     /**
@@ -113,20 +134,28 @@ final class JwtEncryptionData
     /**
      * Retrieves the authentication tag.
      *
-     * @return string|null The authentication tag, or null if not set.
+     * @return string The authentication tag.
      */
-    public function getAuthTag(): ?string
+    public function getAuthTag(): string
     {
-        return $this->authTag ?? null;
+        if (! isset($this->authTag)) {
+            throw new \LogicException('AuthTag has not been set.');
+        }
+
+        return $this->authTag;
     }
 
     /**
      * Retrieves the Initialization Vector (IV).
      *
-     * @return string|null The initialization vector, or null if not set.
+     * @return string The initialization vector.
      */
-    public function getIv(): ?string
+    public function getIv(): string
     {
-        return $this->iv ?? null;
+        if (! isset($this->iv)) {
+            throw new \LogicException('IV has not been set.');
+        }
+
+        return $this->iv;
     }
 }
