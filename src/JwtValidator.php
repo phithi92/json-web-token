@@ -285,13 +285,7 @@ class JwtValidator
      */
     private function assertNotExpired(JwtPayload $payload): void
     {
-        $exp = $payload->getExpiration();
-
-        if ($exp === null) {
-            return;
-        }
-
-        if ($exp + $this->clockSkew <= time()) {
+        if (!$this->isNotExpired($payload)) {
             throw new ExpiredPayloadException();
         }
     }
@@ -311,11 +305,11 @@ class JwtValidator
             return;
         }
 
-        if ($iat !== null && $nbf < $iat - $this->clockSkew) {
+        if ($iat !== null && $nbf < $iat) {
             throw new NotBeforeOlderThanIatException();
         }
 
-        if ($nbf > time() - $this->clockSkew) {
+        if ($nbf - $this->clockSkew > time()) {
             throw new NotYetValidException();
         }
     }
@@ -327,9 +321,7 @@ class JwtValidator
      */
     private function assertIssuedAtValid(JwtPayload $payload): void
     {
-        $iat = $payload->getIssuedAt();
-
-        if ($iat !== null && ($iat - $this->clockSkew) > time()) {
+        if (!$this->isIssuedAtValid($payload)) {
             throw new InvalidIssuedAtException();
         }
     }

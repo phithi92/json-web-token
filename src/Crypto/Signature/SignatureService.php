@@ -42,7 +42,7 @@ abstract class SignatureService implements SignatureHandlerInterface
     {
         if ($bundle->getHeader()->hasKid()) {
             $kid = $bundle->getHeader()->getKid();
-        } elseif (! empty($config['name'])) {
+        } elseif (isset($config['name'])) {
             $kid = $config['name'];
         } else {
             throw new InvalidFormatException('No "kid" found in bundle or configuration');

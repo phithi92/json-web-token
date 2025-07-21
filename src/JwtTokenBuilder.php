@@ -83,7 +83,7 @@ final class JwtTokenBuilder
             $parts[] = $alg;
         }
 
-        if (! empty($enc)) {
+        if ($enc !== null && $enc !== '') {
             $parts[] = $enc;
         }
 

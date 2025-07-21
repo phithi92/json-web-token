@@ -32,7 +32,7 @@ final class JwtTokenDecryptor
      */
     public function __construct(
         JwtAlgorithmManager $manager,
-        ?JwtValidator $validator
+        ?JwtValidator $validator = null
     ) {
         $this->manager = $manager;
         $this->validator = ($validator ?? new JwtValidator());

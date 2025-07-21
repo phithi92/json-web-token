@@ -10,7 +10,6 @@ use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
-use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 /**
@@ -104,9 +103,7 @@ class RsaKeyService extends KeyCryptoService
             throw new EncryptionException($message);
         }
 
-        /**
-         * @var string $wrappedKey
-         */
+        /** @var string $wrappedKey */
         if (strlen($wrappedKey) !== $this->getKeyByteLength($keyDetails['bits'])) {
             throw new InvalidTokenException('wrong size of encrypted cek');
         }
