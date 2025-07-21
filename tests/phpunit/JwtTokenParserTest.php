@@ -17,7 +17,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
     public function testParseValidJweToken(): void
     {
         // Simulierter gültiger JWE-Header
-        $header = ['alg' => 'dir', 'typ' => 'JWE', 'enc' => 'A256GCM'];
+        $header = ['alg' => 'dir', 'typ' => 'JWE', 'enc' => 'A256GCM','kid' => 'A256GCM'];
         $headerJson = json_encode($header, JSON_THROW_ON_ERROR);
 
         $parts = [
@@ -35,6 +35,28 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
         $this->assertInstanceOf(EncryptedJwtBundle::class, $bundle);
         $this->assertEquals('JWE', $bundle->getHeader()->getType());
     }
+
+    public function testParseValidJweTokenWithoutType(): void
+    {
+        // Simulierter gültiger JWE-Header
+        $header = ['alg' => 'dir', 'enc' => 'A256GCM'];
+        $headerJson = json_encode($header, JSON_THROW_ON_ERROR);
+
+        $parts = [
+            Base64UrlEncoder::encode($headerJson),           // Header
+            Base64UrlEncoder::encode('cek_or_encrypted_key'),// CEK oder Encrypted Key
+            Base64UrlEncoder::encode('iv123'),               // IV
+            Base64UrlEncoder::encode('ciphertext'),          // Ciphertext
+            Base64UrlEncoder::encode('authtag'),             // AuthTag
+        ];
+
+        $jwt = implode('.', $parts);
+
+        $bundle = JwtTokenParser::parse($jwt);
+
+        $this->assertInstanceOf(EncryptedJwtBundle::class, $bundle);
+    }
+
 
     public function testParseInvalidTokenThrowsException(): void
     {
@@ -57,5 +79,74 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
         $this->assertIsString($token);
         $this->assertCount(5, explode('.', $token));
+    }
+
+    public function testInvalidBase64InTokenPartThrowsException(): void
+    {
+        $this->expectException(InvalidFormatException::class);
+
+        $parts = [
+            '!!invalid_base64@@', // ungültig
+            Base64UrlEncoder::encode('key'),
+            Base64UrlEncoder::encode('iv'),
+            Base64UrlEncoder::encode('ciphertext'),
+            Base64UrlEncoder::encode('authtag'),
+        ];
+
+        JwtTokenParser::parse(implode('.', $parts));
+    }
+
+    public function testInvalidJsonInHeaderThrowsException(): void
+    {
+        $this->expectException(InvalidFormatException::class);
+
+        $invalidJson = '{"alg": "dir", "typ": "JWE",'; // fehlendes schließendes Objekt
+        $parts = [
+            Base64UrlEncoder::encode($invalidJson),
+            Base64UrlEncoder::encode('key'),
+            Base64UrlEncoder::encode('iv'),
+            Base64UrlEncoder::encode('ciphertext'),
+            Base64UrlEncoder::encode('authtag'),
+        ];
+
+        JwtTokenParser::parse(implode('.', $parts));
+    }
+
+    public function testParseDirectAlgSetsCek(): void
+    {
+        $cek = 'my_cek_secret';
+        $header = ['alg' => 'dir', 'typ' => 'JWE', 'enc' => 'A256GCM'];
+        $headerJson = json_encode($header, JSON_THROW_ON_ERROR);
+
+        $parts = [
+            Base64UrlEncoder::encode($headerJson),
+            Base64UrlEncoder::encode($cek),
+            Base64UrlEncoder::encode('iv123'),
+            Base64UrlEncoder::encode('ciphertext123'),
+            Base64UrlEncoder::encode('authtag123'),
+        ];
+
+        $bundle = JwtTokenParser::parse(implode('.', $parts));
+
+        $this->assertEquals($cek, $bundle->getEncryption()->getCek());
+    }
+
+    public function testJwsWithInvalidJsonPayloadThrowsException(): void
+    {
+        $this->expectException(InvalidFormatException::class);
+
+        $header = ['alg' => 'HS256', 'typ' => 'JWS'];
+        $headerJson = json_encode($header, JSON_THROW_ON_ERROR);
+
+        $invalidPayload = '{"sub": "user"'; // ungültiges JSON
+        $signature = 'dummy_signature';
+
+        $parts = [
+            Base64UrlEncoder::encode($headerJson),
+            Base64UrlEncoder::encode($invalidPayload),
+            Base64UrlEncoder::encode($signature),
+        ];
+
+        JwtTokenParser::parse(implode('.', $parts));
     }
 }
