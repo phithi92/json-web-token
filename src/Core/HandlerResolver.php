@@ -22,20 +22,45 @@ final class HandlerResolver
      */
     public static function resolve(array $config, string $key, string $interface, mixed ...$constructorArgs): mixed
     {
+        $handlerClass = self::resolveHandlerClass($config, $key);
+
+        /** @var T $handler */
+        $handler = new $handlerClass(...$constructorArgs);
+
+        self::assertImplementsInterface($handler, $interface, $key);
+
+        return $handler;
+    }
+
+    /**
+     *
+     * @param array<string,mixed> $config The algorithm config array.
+     * @param string $key
+     * @return string
+     * @throws LogicException
+     */
+    private static function resolveHandlerClass(array $config, string $key): string
+    {
         $entry = $config[$key] ?? null;
 
-        if (
-            ! is_array($entry)
-            || ! isset($entry['handler'])
-            || ! is_string($entry['handler'])
-            || ! class_exists($entry['handler'])
-        ) {
-            throw new LogicException(sprintf('Invalid or missing handler for "%s" (%s).', $key, $interface));
+        if (!is_array($entry)) {
+            throw new LogicException("Missing config entry for key '{$key}'.");
         }
 
-        $handlerClass = $entry['handler'];
-        $handler = new $handlerClass(...$constructorArgs);
-        if (! $handler instanceof $interface) {
+        if (!isset($entry['handler']) || !is_string($entry['handler'])) {
+            throw new LogicException("Invalid or missing 'handler' for key '{$key}'.");
+        }
+
+        if (!class_exists($entry['handler'])) {
+            throw new LogicException("Handler class '{$entry['handler']}' does not exist.");
+        }
+
+        return $entry['handler'];
+    }
+
+    private static function assertImplementsInterface(object $handler, string $interface, string $key): void
+    {
+        if (!$handler instanceof $interface) {
             throw new LogicException(
                 sprintf(
                     'Handler for "%s" must implement %s. Got %s.',
@@ -45,7 +70,5 @@ final class HandlerResolver
                 )
             );
         }
-
-        return $handler;
     }
 }
