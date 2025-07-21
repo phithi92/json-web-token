@@ -6,7 +6,7 @@ namespace Phithi92\JsonWebToken\Interfaces;
 
 interface PassphraseStoreInterface
 {
-    public function addPassphrase(string $passphrase, ?string $id): void;
+    public function addPassphrase(string $passphrase, ?string $id): string;
 
     public function getPassphrase(string $id): string;
 
