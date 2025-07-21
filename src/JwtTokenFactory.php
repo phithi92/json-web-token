@@ -81,7 +81,6 @@ final class JwtTokenFactory
      * @param JwtAlgorithmManager $manager   Algorithm manager instance.
      * @param JwtPayload          $payload   JWT payload.
      * @param string              $algorithm Algorithm name.
-     * @param JwtValidator|null   $validator Ignored in this method.
      * @param string|null         $kid       Optional key ID.
      *
      * @return EncryptedJwtBundle Resulting token bundle.
@@ -92,7 +91,6 @@ final class JwtTokenFactory
         JwtAlgorithmManager $manager,
         JwtPayload $payload,
         string $algorithm,
-        ?JwtValidator $validator = null,
         ?string $kid = null
     ): EncryptedJwtBundle {
         $builder = new JwtTokenBuilder($manager);
@@ -144,16 +142,14 @@ final class JwtTokenFactory
      *
      * @param JwtAlgorithmManager $manager   Algorithm manager.
      * @param string              $jwt       Serialized JWT string.
-     * @param JwtValidator|null   $validator Ignored in this method.
      *
      * @return EncryptedJwtBundle Decrypted JWT bundle.
      */
     public static function decryptTokenWithoutValidation(
         JwtAlgorithmManager $manager,
-        string $jwt,
-        ?JwtValidator $validator = null
+        string $jwt
     ): EncryptedJwtBundle {
-        $processor = new JwtTokenDecryptor($manager, $validator);
+        $processor = new JwtTokenDecryptor($manager);
         return $processor->decryptWithoutValidation($jwt);
     }
 
