@@ -31,8 +31,6 @@ final class OpenSslErrorHelper
     {
         $errors = self::collectErrors();
 
-        return empty($errors)
-            ? $prefix . ' <none>'
-            : $prefix . ' ' . implode(' | ', $errors);
+        return empty($errors) ? $prefix . ' <none>' : $prefix . ' ' . implode(' | ', $errors);
     }
 }

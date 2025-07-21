@@ -5,14 +5,14 @@ namespace Tests\Helpers;
 final class PemProvider
 {
     private static string $resolvedBasePath;
-    
+
     private static function getBasePath(): string
     {
-        if(isset(self::$resolvedBasePath)){
+        if (isset(self::$resolvedBasePath)) {
             return self::$resolvedBasePath;
         }
-        
-        return self::$resolvedBasePath = getenv('KEYS_PATH') ?: 
+
+        return self::$resolvedBasePath = getenv('KEYS_PATH') ?:
                 realpath(__DIR__ . '/../keys');
     }
 

@@ -23,7 +23,7 @@ class SupportedAlgorithmsTest extends TestCaseWithSecrets
             return self::$supportedAlgorithms;
         }
 
-        $algorithms = KeyProvider::getSupportedAlgorithms(); // z. B. ['HS256', 'RS256']
+        $algorithms = KeyProvider::getSupportedAlgorithms();
 
         // korrektes Format erzeugen:
         return self::$supportedAlgorithms = array_map(

@@ -46,6 +46,7 @@ final class Base64UrlEncoder
         if ($padding && $remainder > 0) {
             $string .= str_repeat('=', 4 - $remainder);
         }
+
         return base64_decode(strtr($string, '-_', '+/'));
     }
 }

@@ -42,6 +42,7 @@ class JsonEncoderTest extends TestCase
     public function testDecodeValidJsonToObject(): void
     {
         $json = '{"key":"value"}';
+
         $data = JsonEncoder::decode($json, false);
 
         $this->assertIsObject($data);
