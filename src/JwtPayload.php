@@ -446,16 +446,7 @@ class JwtPayload
      */
     private function ensureValidClaimValue(string $key, mixed $value): void
     {
-        // Check if the value is null
-        $isNull = $value === null;
-
-        // Check if the value is an empty string
-        $isEmptyString = is_string($value) && trim($value) === '';
-
-        // Check if the value is an empty array
-        $isEmptyArray = is_array($value) && empty($value);
-
-        if ($isNull || $isEmptyString || $isEmptyArray) {
+        if ($value === null || $value === '' || $value === []) {
             throw new EmptyFieldException($key);
         }
 
