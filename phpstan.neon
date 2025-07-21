@@ -1,23 +1,10 @@
 parameters:
-    level: 7
+    level: max
+
     paths:
         - src
+
+    bootstrapFiles:
+        - vendor/autoload.php
+
     reportUnmatchedIgnoredErrors: false
-    ignoreErrors:
-        # Ignore undefined method errors for HMAC\CryptographysProvider & OpenSSL\CryptographysProvider
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::verifyRsa\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::signRsa\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::randomBytes\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::rsaEncryptWithPublicKey\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::aesKeyWrapEncrypt\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::encryptWithECDH_ES_P521\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::ecdhEsKeyAgreement\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::pbes2EncryptKey\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::rsaDecryptWithPrivateKey\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::aesKeyWrapDecrypt\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::decryptWithECDH_ES_P521\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::pbes2DecryptKey\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::aesGcmEncrypt\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::aesGcmDecrypt\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::signWithAlgorithm\(\).#'
-        - '#Call to an undefined method Phithi92\\JsonWebToken\\Cryptographys\\Provider::verifyWithAlgorithm\(\).#'
