@@ -8,6 +8,16 @@ if (! $basePath || ! is_dir($basePath) && ! mkdir($basePath, 0777, true)) {
 }
 @mkdir($basePath, 0777, true);
 
+$distinguishedNames = [
+    'countryName' => 'DE',
+    'stateOrProvinceName' => 'NRW',
+    'localityName' => 'Köln',
+    'organizationName' => 'MyOrg',
+    'organizationalUnitName' => 'Dev',
+    'commonName' => 'localhost',
+    'emailAddress' => 'info@example.com',
+];
+
 // === RSA Key Generation ===
 $rsaKeyLengths = [2048, 3072, 4096];
 
@@ -32,17 +42,7 @@ foreach ($rsaKeyLengths as $bits) {
         continue;
     }
 
-    $dn = [
-        'countryName' => 'DE',
-        'stateOrProvinceName' => 'NRW',
-        'localityName' => 'Köln',
-        'organizationName' => 'MyOrg',
-        'organizationalUnitName' => 'Dev',
-        'commonName' => 'localhost',
-        'emailAddress' => 'info@example.com',
-    ];
-
-    $csr = openssl_csr_new($dn, $privateKey, $config);
+    $csr = openssl_csr_new($distinguishedNames, $privateKey, $config);
     if (! $csr) {
         echo '❌ Fehler bei openssl_csr_new(): ' . openssl_error_string() . "\n";
         continue;
@@ -91,17 +91,7 @@ foreach ($ecCurves as $curve => $hash) {
         continue;
     }
 
-    $dn = [
-        'countryName' => 'DE',
-        'stateOrProvinceName' => 'NRW',
-        'localityName' => 'Köln',
-        'organizationName' => 'MyOrg',
-        'organizationalUnitName' => 'Dev',
-        'commonName' => 'localhost',
-        'emailAddress' => 'info@example.com',
-    ];
-
-    $csr = openssl_csr_new($dn, $privateKey, $config);
+    $csr = openssl_csr_new($distinguishedNames, $privateKey, $config);
     if (! $csr) {
         echo "❌ Fehler bei openssl_csr_new() (EC {$curve}): " . openssl_error_string() . "\n";
         continue;
@@ -142,7 +132,6 @@ foreach ($aesGcmConfigs as $algo => $bytes) {
 
     echo "✅ AES-GCM-Schlüssel gespeichert unter {$keyFile}\n\n";
 }
-
 
 // === HMAC Key Generation ===
 $hmacConfigs = [
