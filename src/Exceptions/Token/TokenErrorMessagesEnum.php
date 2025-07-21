@@ -20,7 +20,8 @@ enum TokenErrorMessagesEnum: string
     case INVALID_FORMAT = 'Invalid JWT format: %s.';
     case INVALID_TOKEN = 'Invalid token: %s.';
     case INVALID_AUTH_TAG = 'Authentication tag mismatch: the ciphertext may have been altered or is corrupted.';
-    case INVALID_KID_FORMAT = 'Invalid "kid" format: only alphanumeric characters, hyphens ("-"), and underscores ' . '("_") are allowed.';
+    case INVALID_KID_FORMAT = 'Invalid "kid" format: only alphanumeric characters, hyphens ("-"), and underscores '
+    . '("_") are allowed.';
     case INVALID_KID_LENGTH = 'Invalid "kid" length: must be between %s and %s characters.';
     case INVALID_CEK_LENGTH = 'Invalid CEK length: expected %2$s bits, but got %1$s bits.';
     case INVALID_JTI = 'Invalid "jti" claim: the token identifier is not recognized or is explicitly rejected.';

@@ -24,8 +24,12 @@ final class KeyStore
     /**
      * @param string|array<int,string>|null $kid
      */
-    public function addKey(#[SensitiveParameter] string $pem, ?string $role = null, string|array|null $kid = null): string
-    {
+    public function addKey(
+        #[SensitiveParameter]
+        string $pem,
+        ?string $role = null,
+        string|array|null $kid = null
+    ): string {
         $parsed = $this->parsePemKey($pem, $role);
         $resolvedRole = ($role ?? $parsed['role']);
 

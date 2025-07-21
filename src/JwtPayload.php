@@ -210,7 +210,7 @@ class JwtPayload
      * Sets the "aud" (audience) claim in the JWT payload.
      *
      * @param array<string, array<string,string>|int|string|null>|string $audience The
-     *                                                                             intended audience of the JWT. Can be a string or an array of strings.
+     *        intended audience of the JWT. Can be a string or an array of strings.
      *
      * @see addClaim()
      *
