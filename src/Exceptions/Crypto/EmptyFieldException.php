@@ -8,6 +8,6 @@ class EmptyFieldException extends CryptoException
 {
     public function __construct(string $field)
     {
-        parent::__construct(ErrorMessagesEnum::EMPTY_FIELD->getMessage($field));
+        parent::__construct('EMPTY_FIELD', $field);
     }
 }

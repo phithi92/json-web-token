@@ -17,11 +17,12 @@ namespace Phithi92\JsonWebToken\Exceptions;
  */
 trait ErrorMessageTrait
 {
-    public function getMessage(mixed ...$details): string
+    public function getMessage(string|int|float|bool|null ...$details): string
     {
         if (! empty($details)) {
             return sprintf($this->value, ...$details);
         }
+
         return $this->value;
     }
 }

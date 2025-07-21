@@ -8,6 +8,6 @@ class InvalidInitializationVectorConfigException extends CryptoException
 {
     public function __construct(int $length, int $expect)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_CONFIG->getMessage($length, $expect));
+        parent::__construct('INVALID_CONFIG', $length, $expect);
     }
 }

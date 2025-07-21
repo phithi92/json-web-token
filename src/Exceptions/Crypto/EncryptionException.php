@@ -8,6 +8,6 @@ class EncryptionException extends CryptoException
 {
     public function __construct(string $errorMessage)
     {
-        parent::__construct(ErrorMessagesEnum::ENCRYPTION_FAILED->getMessage($errorMessage));
+        parent::__construct('ENCRYPTION_FAILED', $errorMessage);
     }
 }

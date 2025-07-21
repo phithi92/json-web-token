@@ -12,11 +12,11 @@ use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
  * Provides standardized messages for encoding and decoding errors, with
  * optional details for more context.
  */
-enum ErrorMessagesEnum: string
+enum JsonErrorMessagesEnum: string
 {
     use ErrorMessageTrait;
 
-    case DecodingFailed = 'JSON decoding failed: %s';
-    case EncodingFailed = 'JSON encoding failed: %s';
+    case DECODING_FAILED = 'JSON decoding failed: %s';
+    case ENCODING_FAILED = 'JSON encoding failed: %s';
     case INVALID_LENGTH = 'Invalid depth. %s';
 }

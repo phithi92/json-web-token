@@ -8,6 +8,6 @@ class InvalidAsymmetricKeyLength extends CryptoException
 {
     public function __construct(int $length, int $expect)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_ASYMETRIC_KEY_LENGTH->getMessage($length, $expect));
+        parent::__construct('INVALID_ASYMETRIC_KEY_LENGTH', $length, $expect);
     }
 }

@@ -8,6 +8,6 @@ class NotYetValidException extends PayloadException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::FUTURE_TOKEN->getMessage());
+        parent::__construct('FUTURE_TOKEN');
     }
 }

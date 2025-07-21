@@ -8,6 +8,6 @@ class EmptyInitializeVectorException extends CryptoException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::EMPTY_IV->getMessage());
+        parent::__construct('EMPTY_IV');
     }
 }

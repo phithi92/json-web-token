@@ -8,6 +8,6 @@ class InvalidAuthTagException extends TokenException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_AUTH_TAG->getMessage());
+        parent::__construct('INVALID_AUTH_TAG');
     }
 }

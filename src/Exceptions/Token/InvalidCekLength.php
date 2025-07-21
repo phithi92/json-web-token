@@ -8,6 +8,6 @@ class InvalidCekLength extends TokenException
 {
     public function __construct(int $length, int $expect)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_CEK_LENGTH->getMessage($length, $expect));
+        parent::__construct('INVALID_CEK_LENGTH', $length, $expect);
     }
 }

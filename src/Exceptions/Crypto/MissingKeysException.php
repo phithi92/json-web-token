@@ -8,6 +8,6 @@ class MissingKeysException extends CryptoException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::MISSING_KEYS->getMessage());
+        parent::__construct('MISSING_KEYS');
     }
 }

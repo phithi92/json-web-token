@@ -8,6 +8,6 @@ class IatEarlierThanExpException extends PayloadException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_IAT->getMessage());
+        parent::__construct('INVALID_IAT');
     }
 }

@@ -11,6 +11,6 @@ class InvalidDepthException extends JsonException
      */
     public function __construct(int $length)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_LENGTH->getMessage($length));
+        parent::__construct('INVALID_LENGTH', $length);
     }
 }

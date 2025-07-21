@@ -8,6 +8,6 @@ class InvalidKidFormatException extends TokenException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_KID_FORMAT->getMessage());
+        parent::__construct('INVALID_KID_FORMAT');
     }
 }

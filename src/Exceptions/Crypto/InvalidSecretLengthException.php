@@ -8,6 +8,6 @@ class InvalidSecretLengthException extends CryptoException
 {
     public function __construct(int $length, int $expect)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_SECRET_LENGTH->getMessage($length, $expect));
+        parent::__construct('INVALID_SECRET_LENGTH', $length, $expect);
     }
 }

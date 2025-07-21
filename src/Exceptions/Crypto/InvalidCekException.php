@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Exceptions\Crypto;
 
-class InvalidAsymmetricKeyException extends CryptoException
+class InvalidCekException extends CryptoException
 {
     public function __construct(string $message)
     {
-        parent::__construct('INVALID_ASYMETRIC_KEY', $message);
+        parent::__construct('INVALID_CEK', $message);
     }
 }

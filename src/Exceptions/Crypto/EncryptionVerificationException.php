@@ -6,8 +6,8 @@ namespace Phithi92\JsonWebToken\Exceptions\Crypto;
 
 class EncryptionVerificationException extends CryptoException
 {
-    public function __construct()
+    public function __construct(string $message)
     {
-        parent::__construct(ErrorMessagesEnum::VERIFICATION_FAILED->getMessage(openssl_error_string()));
+        parent::__construct('VERIFICATION_FAILED', $message);
     }
 }

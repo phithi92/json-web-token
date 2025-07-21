@@ -8,6 +8,6 @@ class UnsupportedAlgorithmException extends CryptoException
 {
     public function __construct(string $algorithm)
     {
-        parent::__construct(ErrorMessagesEnum::UNSUPPORTED->getMessage($algorithm));
+        parent::__construct('UNSUPPORTED', $algorithm);
     }
 }

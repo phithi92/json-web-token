@@ -12,7 +12,7 @@ use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
  * Provides standardized messages for encoding and decoding errors, with
  * optional details for more context.
  */
-enum ErrorMessagesEnum: string
+enum PayloadErrorMessagesEnum: string
 {
     use ErrorMessageTrait;
 

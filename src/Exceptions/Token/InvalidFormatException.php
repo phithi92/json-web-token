@@ -8,6 +8,6 @@ class InvalidFormatException extends TokenException
 {
     public function __construct(string $message)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_FORMAT->getMessage($message));
+        parent::__construct('INVALID_FORMAT', $message);
     }
 }

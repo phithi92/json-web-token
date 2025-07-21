@@ -8,6 +8,6 @@ class InvalidInitializeVectorException extends CryptoException
 {
     public function __construct(int $length, int $expect)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_IV->getMessage($length, $expect));
+        parent::__construct('INVALID_IV', $length, $expect);
     }
 }

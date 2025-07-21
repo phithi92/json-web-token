@@ -11,6 +11,6 @@ class DecodingException extends JsonException
      */
     public function __construct(string $message)
     {
-        parent::__construct(ErrorMessagesEnum::DecodingFailed->getMessage($message));
+        parent::__construct('DECODING_FAILED', $message);
     }
 }

@@ -8,6 +8,6 @@ class InvalidDateTimeException extends PayloadException
 {
     public function __construct(string $field)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_DATETIME->getMessage($field));
+        parent::__construct('INVALID_DATETIME', $field);
     }
 }

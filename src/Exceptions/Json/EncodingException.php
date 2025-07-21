@@ -8,6 +8,6 @@ class EncodingException extends JsonException
 {
     public function __construct(string $message)
     {
-        parent::__construct(ErrorMessagesEnum::DecodingFailed->getMessage($message));
+        parent::__construct('ENCODING_FAILED', $message);
     }
 }

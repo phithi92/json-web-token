@@ -12,7 +12,7 @@ use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
  * Provides standardized messages for encoding and decoding errors, with
  * optional details for more context.
  */
-enum ErrorMessagesEnum: string
+enum TokenErrorMessagesEnum: string
 {
     use ErrorMessageTrait;
 
@@ -20,8 +20,7 @@ enum ErrorMessagesEnum: string
     case INVALID_FORMAT = 'Invalid JWT format: %s.';
     case INVALID_TOKEN = 'Invalid token: %s.';
     case INVALID_AUTH_TAG = 'Authentication tag mismatch: the ciphertext may have been altered or is corrupted.';
-    case INVALID_KID_FORMAT = 'Invalid "kid" format: only alphanumeric characters, hyphens ("-"), and underscores '
-    . '("_") are allowed.';
+    case INVALID_KID_FORMAT = 'Invalid "kid" format: only alphanumeric characters, hyphens ("-"), and underscores ' . '("_") are allowed.';
     case INVALID_KID_LENGTH = 'Invalid "kid" length: must be between %s and %s characters.';
     case INVALID_CEK_LENGTH = 'Invalid CEK length: expected %2$s bits, but got %1$s bits.';
     case INVALID_JTI = 'Invalid "jti" claim: the token identifier is not recognized or is explicitly rejected.';
@@ -29,4 +28,5 @@ enum ErrorMessagesEnum: string
     case INVALID_CONFIG_TOKEN_TYPE = 'Invalid configuration: missing or invalid "token_type" value.';
     case INVALID_PRIVATE_CLAIM = 'Invalid value for private claim "%1$s". Expect "%2%s".';
     case MISSING_PRIVATE_CLAIM = 'Missing required private claim "%1$s".';
+    case UNRESOLVABLE_KEY = 'No key or passphrase found for requested secret. KID: "%1$s".';
 }

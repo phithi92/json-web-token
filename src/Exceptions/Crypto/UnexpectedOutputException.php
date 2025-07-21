@@ -8,6 +8,6 @@ class UnexpectedOutputException extends CryptoException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::UNEXPECTED_OUTPUT->getMessage());
+        parent::__construct('UNEXPECTED_OUTPUT');
     }
 }

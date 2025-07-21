@@ -8,6 +8,6 @@ class ExpiredPayloadException extends PayloadException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::PAYLOAD_EXPIRED->getMessage());
+        parent::__construct('PAYLOAD_EXPIRED');
     }
 }

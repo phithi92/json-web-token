@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Exceptions\Crypto;
 
 use Exception;
+use Phithi92\JsonWebToken\Support\EnumUtils;
 
 /**
  * Exception for errors related to algorithm handling.
@@ -13,4 +14,9 @@ use Exception;
  */
 abstract class CryptoException extends Exception
 {
+    public function __construct(string $type, mixed ...$details)
+    {
+        $case = EnumUtils::fromName(CryptoErrorMessagesEnum::class, $type);
+        parent::__construct($case->getMessage(...$details));
+    }
 }

@@ -8,6 +8,6 @@ class MissingPassphraseException extends CryptoException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::MISSING_PASSPHRASE->getMessage());
+        parent::__construct('MISSING_PASSPHRASE');
     }
 }

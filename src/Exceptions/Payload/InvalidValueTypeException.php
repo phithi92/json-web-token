@@ -8,6 +8,6 @@ class InvalidValueTypeException extends PayloadException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_VALUE_TYPE->getMessage());
+        parent::__construct('INVALID_VALUE_TYPE');
     }
 }

@@ -8,6 +8,6 @@ class InvalidTokenException extends TokenException
 {
     public function __construct(string $message)
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_TOKEN->getMessage($message));
+        parent::__construct('INVALID_TOKEN', $message);
     }
 }

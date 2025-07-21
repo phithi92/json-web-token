@@ -8,6 +8,6 @@ class MissingPrivateClaimException extends TokenException
 {
     public function __construct(string $claim)
     {
-        parent::__construct(ErrorMessagesEnum::MISSING_PRIVATE_CLAIM->getMessage($claim));
+        parent::__construct('MISSING_PRIVATE_CLAIM', $claim);
     }
 }

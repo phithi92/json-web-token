@@ -8,6 +8,6 @@ class InvalidIssuedAtException extends PayloadException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::EXPIRED_PAYLOAD->getMessage());
+        parent::__construct('EXPIRED_PAYLOAD');
     }
 }

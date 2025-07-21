@@ -8,6 +8,6 @@ class InvalidAudienceException extends PayloadException
 {
     public function __construct()
     {
-        parent::__construct(ErrorMessagesEnum::INVALID_AUDIENCE->getMessage());
+        parent::__construct('INVALID_AUDIENCE');
     }
 }
