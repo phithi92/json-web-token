@@ -13,11 +13,6 @@ use PhpBench\Attributes as Bench;
 #[Bench\ParamProviders('provideAlgs')]
 class BenchSupportedAgorithms extends BenchmarkBase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
-    }
-
     public function bench_create(array $params): void
     {
         $this->getValidToken($params['alg']);
