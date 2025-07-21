@@ -22,14 +22,19 @@ final class HandlerResolver
      */
     public static function resolve(array $config, string $key, string $interface, mixed ...$constructorArgs): mixed
     {
-        $handlerClass = $config[$key]['handler'] ?? null;
+        $entry = $config[$key] ?? null;
 
-        if (! is_string($handlerClass) || ! class_exists($handlerClass)) {
+        if (
+            ! is_array($entry)
+            || ! isset($entry['handler'])
+            || ! is_string($entry['handler'])
+            || ! class_exists($entry['handler'])
+        ) {
             throw new LogicException(sprintf('Invalid or missing handler for "%s" (%s).', $key, $interface));
         }
 
+        $handlerClass = $entry['handler'];
         $handler = new $handlerClass(...$constructorArgs);
-
         if (! $handler instanceof $interface) {
             throw new LogicException(
                 sprintf(
