@@ -8,6 +8,8 @@ use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 class RsaEncryptionService extends ContentCryptoService
 {
@@ -18,21 +20,9 @@ class RsaEncryptionService extends ContentCryptoService
      */
     public function decryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
-        $kid = $bundle->getHeader()->getKid() ?? $config['name'] ?? null;
-        if (! is_string($kid)) {
-            throw new InvalidSignatureException('No key ID (kid) provided for signature validation.');
-        }
+        $kid = $this->getKid($bundle);
 
-        $encryptedData = $bundle->getPayload()->getEncryptedPayload();
-        $padding = (int) $config['padding'];
-        $privateKey = $this->manager->getPrivateKey($kid);
-
-        $jsonData = '';
-        if (! openssl_private_decrypt($encryptedData, $jsonData, $privateKey, $padding)) {
-            throw new DecryptionException($this->getOpenSslError('decryption'));
-        }
-        
-        $bundle->getPayload()->fromJson($jsonData);
+        $this->decrypt($bundle, $kid, $config);
     }
 
     /**
@@ -42,25 +32,62 @@ class RsaEncryptionService extends ContentCryptoService
      */
     public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
-        $kid = $bundle->getHeader()->getKid() ?? $config['name'] ?? null;
-        if (! is_string($kid)) {
-            throw new InvalidSignatureException('No key ID (kid) provided for signature validation.');
+        $kid = $this->getKid($bundle);
+        $this->encrypt($bundle, $kid, $config);
+    }
+
+    /**
+     * @param array<string,int|string> $config
+     *
+     * @throws DecryptionException
+     */
+    public function decrypt(EncryptedJwtBundle $bundle, string $kid, array $config): void
+    {
+        $padding = (int) $config['padding'];
+        $privateKey = $this->manager->getPrivateKey($kid);
+        $encrypted = $bundle->getPayload()->getEncryptedPayload();
+
+        $decrypted = '';
+        if (! openssl_private_decrypt($encrypted, $decrypted, $privateKey, $padding)) {
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Decrypt Payload Failed: ');
+            throw new DecryptionException($message);
         }
 
-        $data = $bundle->getPayload()->toJson();
+        /**
+         * @var string $decrypted
+         */
+        $bundle->getPayload()->fromJson($decrypted);
+    }
+
+    /**
+     * @param array<string,int|string> $config
+     *
+     * @throws InvalidTokenException
+     */
+    public function encrypt(EncryptedJwtBundle $bundle, string $kid, array $config): void
+    {
         $padding = (int) $config['padding'];
         $publicKey = $this->manager->getPublicKey($kid);
-        $encrypted = '';
+        $plain = $bundle->getPayload()->toJson();
 
-        if (! openssl_public_encrypt($data, $encrypted, $publicKey, $padding) || empty($encrypted)) {
-            throw new EncryptionException($this->getOpenSslError('encryption'));
+        $encrypted = '';
+        if (! openssl_public_encrypt($plain, $encrypted, $publicKey, $padding)) {
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Encrypt Payload Failed: ');
+            throw new InvalidTokenException($message);
         }
 
+        /**
+         * @var string $encrypted
+         */
         $bundle->getPayload()->setEncryptedPayload($encrypted);
     }
 
-    private function getOpenSslError(string $context): string
+    private function getKid(EncryptedJwtBundle $bundle): string
     {
-        return openssl_error_string() ?: "Unknown OpenSSL {$context} error";
+        if (! $bundle->getHeader()->hasKid()) {
+            throw new InvalidSignatureException('No key ID (kid) provided for validation.');
+        }
+
+        return $bundle->getHeader()->getKid();
     }
 }

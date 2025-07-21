@@ -56,21 +56,28 @@ class RsaHelperService
             return $cached;
         }
 
-        if (! in_array($role, ['private','public'])) {
+        if (! in_array($role, ['private', 'public'])) {
             throw new Exception('Given role is invalid.');
         }
 
-        $key = $role === 'public' ?
-            $this->manager->getPublicKey($kid) :
-            $this->manager->getPrivateKey($kid);
+        $key = $role === 'public' ? $this->manager->getPublicKey($kid) : $this->manager->getPrivateKey($kid);
 
         $details = openssl_pkey_get_details($key);
-        if (! isset($details['rsa']['n'])) {
+
+        if (
+            ! is_array($details)
+            || ! isset($details['rsa'])
+            || ! is_array($details['rsa'])
+            || ! isset($details['rsa']['n'])
+            || ! is_string($details['rsa']['n'])
+        ) {
             throw new InvalidSignatureException("Key [{$kid}] is not a valid RSA key.");
         }
 
+        $modulusLength = strlen($details['rsa']['n']);
         $expectedKeySize = $this->getRequiredRsaKeySize($algorithm);
-        $actualKeySize = strlen($details['rsa']['n']) * 8; // Bytes to bits
+        $actualKeySize = $modulusLength * 8;
+        // Bytes to bits
         if ($actualKeySize < $expectedKeySize) {
             throw new InvalidSignatureException("RSA key must be at least {$expectedKeySize} bits long");
         }

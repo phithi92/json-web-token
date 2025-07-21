@@ -6,9 +6,10 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use Phithi92\JsonWebToken\Crypto\RsaHelperService;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
-use Phithi92\JsonWebToken\Exceptions\Signing\SignatureComputationFailedException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 class RsaSignatureService extends SignatureService
 {
@@ -32,8 +33,13 @@ class RsaSignatureService extends SignatureService
         $algorithmConst = $this->rsaHelper->mapHashToOpenSSLConstant($algorithm);
 
         if (! openssl_sign($signinInput, $signature, $privateKey, $algorithmConst)) {
-            throw new SignatureComputationFailedException(openssl_error_string() ?: 'Signature generation failed.');
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Compute Signature Failed: ');
+            throw new SignatureComputationFailedException($message);
         }
+
+        /**
+         * @var string $signature
+         */
         $bundle->setSignature($signature);
     }
 
@@ -51,7 +57,8 @@ class RsaSignatureService extends SignatureService
         // Verify the signature using the public key and algorithm
         $verified = openssl_verify($signinInput, $signature, $publicKey, $algorithmConst);
         if ($verified !== 1) {
-            throw new InvalidSignatureException(openssl_error_string() ?: 'unknown OpenSSL error');
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Validate Signature Failed: ');
+            throw new InvalidTokenException($message);
         }
     }
 }

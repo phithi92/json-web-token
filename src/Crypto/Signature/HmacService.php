@@ -31,15 +31,15 @@ class HmacService extends SignatureService
     public function validateSignature(EncryptedJwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
-        $algorithm = $config['hash_algorithm'];         // e.g., 'sha256'
-        $signature = $bundle->getSignature();           // Signature from JWT
-        $data = $bundle->getEncryption()->getAad();     // Base64Url-encoded header.payload
+        $algorithm = $config['hash_algorithm'];
+        $signature = $bundle->getSignature();
+        $aad = $bundle->getEncryption()->getAad();
+
         $passphrase = $this->manager->getPassphrase($kid);
 
         $this->assertHmacKeyIsValid($kid, $algorithm, $passphrase);
 
-        // Compute the HMAC for the input data using the configured algorithm
-        $expectedHash = hash_hmac($algorithm, $data, $passphrase, true);
+        $expectedHash = hash_hmac($algorithm, $aad, $passphrase, true);
 
         // Compare the expected HMAC with the provided signature using constant-time comparison
         if (! hash_equals($expectedHash, $signature)) {
@@ -51,7 +51,8 @@ class HmacService extends SignatureService
     {
         $cacheKey = $kid . ':' . strtolower($algorithm);
         if (isset($this->checkedHmacKeys[$cacheKey])) {
-            return; // Already checked
+            return;
+            // Already checked
         }
 
         if (empty($passphrase)) {

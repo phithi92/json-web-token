@@ -8,6 +8,7 @@ use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
+use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 /**
  * AES-GCM implementation for JWE content encryption (RFC 7516 §5.3).
@@ -21,7 +22,7 @@ class AesGcmService extends ContentCryptoService
     protected const OPENSSL_OPTIONS = OPENSSL_RAW_DATA;
 
     /**
-     * @param array<string,string|int> $config
+     * @param array<string,int|string> $config
      *
      * @throws InvalidTokenException
      */
@@ -47,22 +48,28 @@ class AesGcmService extends ContentCryptoService
         );
 
         if ($plaintext === false) {
-            throw new InvalidTokenException(openssl_error_string() ?: 'Unknow openssl decryption error');
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Decrypt Payload Failed: ');
+            throw new InvalidTokenException($message);
         }
 
         $bundle->getPayload()->fromJson($plaintext);
     }
 
+    /**
+     * @param array<string,int|string> $config
+     */
     public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
         $bits = (int) $config['length'];
+        $algorithm = sprintf('aes-%s-gcm', $bits);
+
         $cek = $bundle->getEncryption()->getCek();
         $iv = $bundle->getEncryption()->getIv();
         $plaintext = $bundle->getPayload()->toJson();
-        $aad = Base64UrlEncoder::encode($bundle->getHeader()->toJson());
-        $authTag = '';
-        $algorithm = sprintf('aes-%s-gcm', $bits);
+        $headerJson = $bundle->getHeader()->toJson();
+        $aad = Base64UrlEncoder::encode($headerJson);
 
+        $authTag = '';
         $encrypted = openssl_encrypt(
             $plaintext,
             $algorithm,
@@ -74,10 +81,14 @@ class AesGcmService extends ContentCryptoService
         );
 
         if (! $encrypted) {
-            throw new EncryptionException(openssl_error_string() ?: 'Unknow openssl encryption error');
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Encrypt Payload Failed: ');
+            throw new EncryptionException($message);
         }
 
         $bundle->getPayload()->setEncryptedPayload($encrypted);
+        /**
+         * @var string $authTag
+         */
         $bundle->getEncryption()->setAuthTag($authTag);
     }
 }

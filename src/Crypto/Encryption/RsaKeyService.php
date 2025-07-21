@@ -4,66 +4,138 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Encryption;
 
+use LogicException;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 /**
  * Handles RSA-specific key operations for encrypted JWTs.
  */
 class RsaKeyService extends KeyCryptoService
 {
-    public function unwrapKey(EncryptedJwtBundle $bundle, array $config): void
+    public function __construct(JwtAlgorithmManager $manager)
     {
-        $kid = $bundle->getHeader()->getKid() ?? $config['name'] ?? null;
-        if (! is_string($kid)) {
-            throw new InvalidSignatureException('No key ID (kid) provided for signature validation.');
-        }
-
-        $encryptedKey = $bundle->getEncryption()->getEncryptedKey();
-        $padding = (int) $config['padding'];
-        $data = '';
-
-        $privateKey = $this->manager->getPrivateKey($kid);
-
-        // Decrypt data with RSA private key
-        if (! openssl_private_decrypt($encryptedKey, $data, $privateKey, $padding)) {
-            throw new InvalidSignatureException('Token invalid. Key unwrap failed.');
-        }
-
-        // Result may be empty if decryption libary is configured incorrectly
-        // or if memory allocation fails
-        if (empty($data)) {
-            throw new DecryptionException(openssl_error_string() ?: 'Key unwrap failed.');
-        }
-
-        $bundle->getEncryption()->setCek($data);
+        parent::__construct($manager);
     }
 
+    /**
+     * @param array<string,string|int> $config
+     *
+     * @throws InvalidKidFormatException
+     */
+    public function unwrapKey(EncryptedJwtBundle $bundle, array $config): void
+    {
+        $kid = $bundle->getHeader()->getKid();
+
+        $wrappedKey = $bundle->getEncryption()->getEncryptedKey();
+
+        // Decrypt CEK with RSA private key
+        $cek = $this->unwrap($wrappedKey, $kid, $config);
+
+        $bundle->getEncryption()->setCek($cek);
+    }
+
+    /**
+     * @param array<string,string|int> $config
+     */
     public function wrapKey(EncryptedJwtBundle $bundle, array $config): void
     {
-        $kid = $bundle->getHeader()->getKid() ?? $config['name'] ?? null;
-        if (! is_string($kid)) {
-            throw new InvalidSignatureException('No key ID (kid) provided for signature validation.');
-        }
+        $kid = $bundle->getHeader()->getKid();
 
-        // Generate CEK (Content Encryption Key)
         $cek = $bundle->getEncryption()->getCek();
-        $padding = (int) $config['padding'];
-        $encrypted = '';
-
-        $publicKey = $this->manager->getPublicKey($kid);
 
         // Encrypt CEK with RSA public key
-        if (! openssl_public_encrypt($cek, $encrypted, $publicKey, $padding)) {
-            throw new EncryptionException(openssl_error_string() ?: 'Key unwrap failed.');
+        $wrappedKey = $this->wrap($cek, $kid, $config);
+
+        $bundle->getEncryption()->setEncryptedKey($wrappedKey);
+    }
+
+    /**
+     * @param array<string, int|string> $config
+     *
+     * @throws InvalidTokenException
+     * @throws LogicException
+     * @throws DecryptionException
+     */
+    protected function unwrap(string $wrappedKey, string $kid, array $config): string
+    {
+        $padding = (int) $config['padding'];
+
+        $keyDetails = $this->manager->getKeyMetadata($kid, 'private');
+
+        $this->assertValidPadding($padding);
+
+        if (strlen($wrappedKey) !== $this->getKeyByteLength($keyDetails['bits'])) {
+            throw new InvalidTokenException('wrong size of encrypted cek');
         }
 
-        if (empty($encrypted)) {
-            throw new EncryptionException(openssl_error_string() ?: 'Key unwrap failed.');
+        // Decrypt data with RSA private key
+        $cek = '';
+        if (! openssl_private_decrypt($wrappedKey, $cek, $keyDetails['key'], $padding)) {
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Unwrap CEK Failed: ');
+            throw new DecryptionException($message);
         }
 
-        $bundle->getEncryption()->setEncryptedKey($encrypted);
+        /**
+         * @var string $cek
+         */
+        return $cek;
+    }
+
+    /**
+     * @param array<string, int|string> $config
+     *
+     * @throws LogicException
+     * @throws EncryptionException
+     * @throws InvalidTokenException
+     */
+    protected function wrap(string $cek, string $kid, array $config): string
+    {
+        $padding = (int) $config['padding'];
+
+        $keyDetails = $this->manager->getKeyMetadata($kid, 'public');
+
+        $this->assertValidPadding($padding);
+
+        $wrappedKey = '';
+        // Decrypt data with RSA private key
+        if (! openssl_public_encrypt($cek, $wrappedKey, $keyDetails['key'], $padding)) {
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Wrap CEK Failed: ');
+            throw new EncryptionException($message);
+        }
+
+        /**
+         * @var string $wrappedKey
+         */
+        if (strlen($wrappedKey) !== $this->getKeyByteLength($keyDetails['bits'])) {
+            throw new InvalidTokenException('wrong size of encrypted cek');
+        }
+
+        return $wrappedKey;
+    }
+
+    /**
+     * @throws LogicException
+     */
+    protected function assertValidPadding(int $padding): void
+    {
+        $validPaddings = [
+            OPENSSL_PKCS1_PADDING,
+            OPENSSL_PKCS1_OAEP_PADDING,
+        ];
+
+        if (! in_array($padding, $validPaddings, true)) {
+            throw new LogicException('Invalid RSA padding specified.');
+        }
+    }
+
+    protected function getKeyByteLength(int $bits): int
+    {
+        return $bits >> 3;
     }
 }

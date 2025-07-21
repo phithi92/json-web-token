@@ -6,8 +6,9 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
-use Phithi92\JsonWebToken\Exceptions\Signing\SignatureComputationFailedException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
+use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
+use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 class EcdsaService extends SignatureService
 {
@@ -25,18 +26,19 @@ class EcdsaService extends SignatureService
     {
         $kid = $this->resolveKid($bundle, $config);
         $data = $this->getSigningInput($bundle);
-        $algorithm = strtolower($config['hash_algorithm'] ?? '');
+        $algorithm = strtolower(($config['hash_algorithm'] ?? ''));
 
         $privateKey = $this->assertEcdsaKeyIsValid($kid, $algorithm, 'private');
 
         $success = openssl_sign($data, $signature, $privateKey, $algorithm);
         if (! $success) {
-            throw new SignatureComputationFailedException(
-                openssl_error_string()
-                ?: 'Failed to compute ECDSA signature.'
-            );
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Compute Signature Failed: ');
+            throw new SignatureComputationFailedException($message);
         }
 
+        /**
+         * @var string $signature
+         */
         $bundle->setSignature($signature);
     }
 
@@ -61,7 +63,8 @@ class EcdsaService extends SignatureService
 
         $verified = openssl_verify($data, $signature, $publicKey, $algorithm);
         if ($verified !== 1) {
-            throw new InvalidSignatureException(openssl_error_string() ?: 'Signature verification failed.');
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Validate Signature Failed: ');
+            throw new InvalidSignatureException($message);
         }
     }
 
@@ -79,15 +82,17 @@ class EcdsaService extends SignatureService
 
         $expectedCurve = $this->resolveExpectedCurve($hashAlgorithm);
 
-        $key = $role === 'public' ?
-            $this->manager->getPublicKey($kid) :
-            $this->manager->getPrivateKey($kid);
+        $key = $role === 'public' ? $this->manager->getPublicKey($kid) : $this->manager->getPrivateKey($kid);
 
         $details = openssl_pkey_get_details($key);
-        $actualCurve = $details['ec']['curve_name'] ?? null;
 
-        if (! $actualCurve) {
+        if (! is_array($details) || ! isset($details['ec']) || ! is_array($details['ec'])) {
             throw new InvalidSignatureException("Key [{$kid}] is not a valid EC key.");
+        }
+
+        $actualCurve = $details['ec']['curve_name'] ?? null;
+        if (! is_string($actualCurve)) {
+            throw new InvalidSignatureException("Key [{$kid}] has no valid curve name.");
         }
 
         if ($actualCurve !== $expectedCurve) {
@@ -114,9 +119,12 @@ class EcdsaService extends SignatureService
     private function resolveExpectedCurve(string $hashAlgorithm): string
     {
         return match (strtolower($hashAlgorithm)) {
-            'sha256' => 'prime256v1',  // ES256
-            'sha384' => 'secp384r1',   // ES384
-            'sha512' => 'secp521r1',   // ES512
+            'sha256' => 'prime256v1',
+            // ES256
+            'sha384' => 'secp384r1',
+            // ES384
+            'sha512' => 'secp521r1',
+            // ES512
             default => throw new InvalidSignatureException("Unsupported hash algorithm for EC key: {$hashAlgorithm}."),
         };
     }

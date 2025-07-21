@@ -6,9 +6,9 @@ namespace Phithi92\JsonWebToken\Crypto\Cek;
 
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidCekLength;
-use Phithi92\JsonWebToken\Interfaces\ContentEncryptionKeyManagerInterface;
+use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
 
-class DefaultCekHandler implements ContentEncryptionKeyManagerInterface
+class DefaultCekHandler implements CekHandlerInterface
 {
     public function initializeCek(EncryptedJwtBundle $jwtToken, array $config): void
     {
@@ -29,9 +29,10 @@ class DefaultCekHandler implements ContentEncryptionKeyManagerInterface
     {
         $cek = $jwtToken->getEncryption()->getCek();
         $cekLength = strlen($cek);
-        $expectedLength = (int) $config['length']; // bits
-        $expectedBytes = intdiv($expectedLength, 8); // convert to bytes
-
+        $expectedLength = (int) $config['length'];
+        // bits
+        $expectedBytes = intdiv($expectedLength, 8);
+        // convert to bytes
         if ($cekLength < $expectedBytes) {
             throw new InvalidCekLength($cekLength, $expectedBytes);
         }

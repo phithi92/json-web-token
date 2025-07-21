@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
-use Phithi92\JsonWebToken\Interfaces\SignatureManagerInterface;
+use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
-abstract class SignatureService implements SignatureManagerInterface
+abstract class SignatureService implements SignatureHandlerInterface
 {
     protected JwtAlgorithmManager $manager;
 
@@ -39,10 +40,12 @@ abstract class SignatureService implements SignatureManagerInterface
      */
     protected function resolveKid(EncryptedJwtBundle $bundle, array $config): string
     {
-        $kid = $bundle->getHeader()->getKid() ?? $config['name'] ?? null;
-
-        if (! $kid) {
-            throw new InvalidSignatureException('No key ID (kid) provided for signature operation.');
+        if ($bundle->getHeader()->hasKid()) {
+            $kid = $bundle->getHeader()->getKid();
+        } elseif (! empty($config['name'])) {
+            $kid = $config['name'];
+        } else {
+            throw new InvalidFormatException('No "kid" found in bundle or configuration');
         }
 
         return $kid;
