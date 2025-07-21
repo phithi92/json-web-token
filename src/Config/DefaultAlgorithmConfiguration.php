@@ -15,7 +15,7 @@ use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
 class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInterface
 {
     /**
-     * @var array<string, array<string, mixed>> Configuration for algorithms.
+     * @var array<string, array<string, string>> Configuration for algorithms.
      */
     private readonly array $config;
 
@@ -28,9 +28,15 @@ class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInterface
      */
     public function __construct(string $configFile = __DIR__ . '/algorithms.php')
     {
-        $this->config = include $configFile;
+        /** @var array<string, array<string, string>> $config */
+        $config = include $configFile;
+
+        $this->config = $config;
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function get(string $algorithm): array
     {
         return $this->config[$algorithm] ?? [];
