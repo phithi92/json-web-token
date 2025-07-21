@@ -8,19 +8,19 @@ use Tests\Helpers\PemProvider;
 
 class KeyProvider
 {
-    private static function createAsymetricKeysItem($algorithm, $dir): array
+    private static function createAsymetricKeysItem(string $kid, string $path): array
     {
         return [
-            $algorithm => [
-                'private' => PemProvider::getPrivateKey($dir),
-                'public' => PemProvider::getPublicKey($dir)
+            $kid => [
+                'private' => PemProvider::getPrivateKey($path),
+                'public' => PemProvider::getPublicKey($path)
             ]
         ];
     }
 
-    private static function createSymmetricKeyItem(string $alg, string $path): array
+    private static function createSymmetricKeyItem(string $kid, string $path): array
     {
-        return [$alg => ['passphrase' => PemProvider::getPassphrase($path)]];
+        return [$kid => ['passphrase' => PemProvider::getPassphrase($path)]];
     }
 
     public static function getAll(): array
@@ -36,9 +36,9 @@ class KeyProvider
             self::createAsymetricKeysItem('PS384', 'rsa/3072'),
             self::createAsymetricKeysItem('PS512', 'rsa/4096'),
             //rsa
-            self::createAsymetricKeysItem('RSA1_5', 'rsa/2048'),
-            self::createAsymetricKeysItem('RSA-OAEP', 'rsa/3072'),
-            self::createAsymetricKeysItem('RSA-OAEP-256', 'rsa/4096'),
+            self::createAsymetricKeysItem('RSA1_5_A256GCM', 'rsa/2048'),
+            self::createAsymetricKeysItem('RSA-OAEP_A256GCM', 'rsa/3072'),
+            self::createAsymetricKeysItem('RSA-OAEP-256_A256GCM', 'rsa/4096'),
             //ec
             self::createAsymetricKeysItem('ES256', 'ec/prime256v1'),
             self::createAsymetricKeysItem('ES384', 'ec/secp384r1'),
