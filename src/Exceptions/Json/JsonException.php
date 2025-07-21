@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Exceptions\Json;
 
 use Exception;
-use Phithi92\JsonWebToken\Support\EnumUtils;
+use Phithi92\JsonWebToken\Utilities\EnumUtils;
 
 /**
  * Base exception class for JSON-related errors.

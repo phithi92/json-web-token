@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Crypto;
+namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use Exception;
 use InvalidArgumentException;

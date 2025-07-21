@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Support;
+namespace Phithi92\JsonWebToken\Utilities;
 
 use InvalidArgumentException;
 use UnitEnum;

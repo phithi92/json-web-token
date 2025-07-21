@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Exceptions\Token;
 
 use Phithi92\JsonWebToken\Exceptions\Exception;
-use Phithi92\JsonWebToken\Support\EnumUtils;
+use Phithi92\JsonWebToken\Utilities\EnumUtils;
 
 abstract class TokenException extends Exception
 {

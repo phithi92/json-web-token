@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Core;
+namespace Phithi92\JsonWebToken;
 
 use LogicException;
 
@@ -33,25 +33,23 @@ final class HandlerResolver
     }
 
     /**
-     *
      * @param array<string,mixed> $config The algorithm config array.
-     * @param string $key
-     * @return string
+     *
      * @throws LogicException
      */
     private static function resolveHandlerClass(array $config, string $key): string
     {
         $entry = $config[$key] ?? null;
 
-        if (!is_array($entry)) {
+        if (! is_array($entry)) {
             throw new LogicException("Missing config entry for key '{$key}'.");
         }
 
-        if (!isset($entry['handler']) || !is_string($entry['handler'])) {
+        if (! isset($entry['handler']) || ! is_string($entry['handler'])) {
             throw new LogicException("Invalid or missing 'handler' for key '{$key}'.");
         }
 
-        if (!class_exists($entry['handler'])) {
+        if (! class_exists($entry['handler'])) {
             throw new LogicException("Handler class '{$entry['handler']}' does not exist.");
         }
 
@@ -60,7 +58,7 @@ final class HandlerResolver
 
     private static function assertImplementsInterface(object $handler, string $interface, string $key): void
     {
-        if (!$handler instanceof $interface) {
+        if (! $handler instanceof $interface) {
             throw new LogicException(
                 sprintf(
                     'Handler for "%s" must implement %s. Got %s.',

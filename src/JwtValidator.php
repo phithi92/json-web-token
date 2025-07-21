@@ -285,7 +285,7 @@ class JwtValidator
      */
     private function assertNotExpired(JwtPayload $payload): void
     {
-        if (!$this->isNotExpired($payload)) {
+        if (! $this->isNotExpired($payload)) {
             throw new ExpiredPayloadException();
         }
     }
@@ -321,7 +321,7 @@ class JwtValidator
      */
     private function assertIssuedAtValid(JwtPayload $payload): void
     {
-        if (!$this->isIssuedAtValid($payload)) {
+        if (! $this->isIssuedAtValid($payload)) {
             throw new InvalidIssuedAtException();
         }
     }

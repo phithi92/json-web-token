@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken;
 
 use LogicException;
-use Phithi92\JsonWebToken\Core\HandlerResolver;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
 use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
