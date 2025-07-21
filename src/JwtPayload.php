@@ -6,9 +6,11 @@ namespace Phithi92\JsonWebToken;
 
 use DateMalformedStringException;
 use DateTimeImmutable;
+use Phithi92\JsonWebToken\Exceptions\Json\JsonException;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
 /**
@@ -38,7 +40,7 @@ class JwtPayload
      */
     public function __construct(?DateTimeImmutable $dateTime = null)
     {
-        $this->dateTimeImmutable = $dateTime ?? new DateTimeImmutable();
+        $this->dateTimeImmutable = ($dateTime ?? new DateTimeImmutable());
     }
 
     /**
@@ -56,11 +58,14 @@ class JwtPayload
     public static function fromJson(string $json): self
     {
         // Decode the JSON string into an associative array
-
-        /**
-         * @var array<string, string|int|float|bool|array<string, mixed>|null> $payload
-         */
-        $payload = JsonEncoder::decode($json, true);
+        try {
+            /**
+             * @var array<string, string|int|float|bool|array<string, mixed>|null> $payload
+             */
+            $payload = JsonEncoder::decode($json, true);
+        } catch (JsonException $e) {
+            throw new InvalidFormatException('Header decoding failed: ' . $e->getMessage());
+        }
 
         return self::fromArray($payload);
     }
@@ -88,7 +93,8 @@ class JwtPayload
                 continue;
             }
 
-            $instance->setClaim($key, $value, true);  // true allows overwriting fields
+            $instance->setClaim($key, $value, true);
+            // true allows overwriting fields
         }
 
         // Return the populated JwtPayload instance
@@ -132,7 +138,7 @@ class JwtPayload
      */
     public function toJson(): string
     {
-        return JsonEncoder::encode($this->toArray(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return JsonEncoder::encode($this->toArray(), (JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
 
     /**
@@ -141,8 +147,8 @@ class JwtPayload
      * Adds a field to the token data (JWT payload).
      * Ensures that the key is unique and the value is a valid type (scalar or array).
      *
-     * @param string                               $key   The key of the field to add.
-     * @param string|int|array<string, mixed>|null $value
+     * @param string                                                              $key   The key of the field to add.
+     * @param array<string, array<string,string>|int|string|null>|int|string|null $value
      *
      * @return self Returns the instance to allow method chaining.
      *
@@ -159,7 +165,7 @@ class JwtPayload
      *
      * @param string $claim The field to retrieve.
      *
-     * @return string|int|array<string, mixed>|null
+     * @return string|int|array<string, string|int|float|bool|array<string, string|int|float|bool|null>|null>|null
      */
     public function getClaim(string $claim): string|int|array|null
     {
@@ -203,7 +209,8 @@ class JwtPayload
     /**
      * Sets the "aud" (audience) claim in the JWT payload.
      *
-     * @param string|array<string> $audience The intended audience of the JWT. Can be a string or an array of strings.
+     * @param array<string, array<string,string>|int|string|null>|string $audience The
+     *                                                                             intended audience of the JWT. Can be a string or an array of strings.
      *
      * @see addClaim()
      *
@@ -226,7 +233,7 @@ class JwtPayload
      *
      * @see getField()
      *
-     * @return array<string,string>|string|null The audience identifier as a string, or null if it is not present.
+     * @return array<string,mixed>|string|null The audience identifier as a string, or null if it is not present.
      */
     public function getAudience(): string|array|null
     {
@@ -362,11 +369,11 @@ class JwtPayload
     /**
      * Retrieves the encrypted payload.
      *
-     * @return string|null The encrypted payload data, or null if not set.
+     * @return string The encrypted payload data, or null if not set.
      */
-    public function getEncryptedPayload(): ?string
+    public function getEncryptedPayload(): string
     {
-        return $this->encryptedPayload ?? null;
+        return $this->encryptedPayload;
     }
 
     /**

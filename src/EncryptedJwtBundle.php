@@ -7,21 +7,19 @@ namespace Phithi92\JsonWebToken;
 /**
  * EncryptedJwtBundle
  *
- * The class provides functionality to set and retrieve key components of a token,
- * such as the header, payload, signature, content encryption key (CEK), and initialization vector (IV).
- *
- * - Header: Contains metadata about the token such as the type (e.g., JWS, JWE).
- * - Payload: Contains the data to be signed or encrypted.
- * - Signature: Holds the digital signature for JWS tokens.
- * - CEK: The content encryption key used in encryption for JWE tokens.
- * - IV: The initialization vector for encryption processes.
+ * Internal representation of a JSON-based token during its lifecycle,
+ * supporting both JWS and JWE formats. Used for building, decoding,
+ * encrypting, decrypting, signing, and verifying tokens.
  */
 final class EncryptedJwtBundle
 {
     private JwtHeader $header;
+
     private JwtPayload $payload;
+
     private JwtEncryptionData $encryption;
-    private ?string $signature = null;
+
+    private string $signature;
 
     /**
      * Initializes the JWT header with an optional JwtPayload instance.
@@ -31,7 +29,7 @@ final class EncryptedJwtBundle
     public function __construct(JwtHeader $header, ?JwtPayload $payload = null)
     {
         $this->header = $header;
-        $this->payload = $payload ?? new JwtPayload();
+        $this->payload = ($payload ?? new JwtPayload());
         $this->encryption = new JwtEncryptionData();
     }
 
@@ -67,7 +65,7 @@ final class EncryptedJwtBundle
     /**
      * Retrieves the payload.
      *
-     * @return JwtPayload The JWT payload, or null if not set.
+     * @return JwtPayload The JWT payload.
      */
     public function getPayload(): JwtPayload
     {
@@ -77,10 +75,10 @@ final class EncryptedJwtBundle
     /**
      * Retrieves the JWT signature.
      *
-     * @return string|null The signature, or null if not set.
+     * @return string The signature.
      */
-    public function getSignature(): ?string
+    public function getSignature(): string
     {
-        return $this->signature ?? null;
+        return $this->signature;
     }
 }

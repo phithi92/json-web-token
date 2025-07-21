@@ -36,8 +36,14 @@ final class JwtTokenFactory
         ?JwtValidator $validator = null,
         ?string $kid = null
     ): EncryptedJwtBundle {
-        $builder = new JwtTokenBuilder($manager, $validator);
-        return $builder->create($payload, $algorithm, $kid);
+        $validator ??= new JwtValidator();
+
+        $builder = new JwtTokenBuilder($manager);
+        $bundle = $builder->create($payload, $algorithm, $kid);
+
+        $validator->assertValidBundle($bundle);
+
+        return $bundle;
     }
 
     /**
@@ -89,7 +95,7 @@ final class JwtTokenFactory
         ?JwtValidator $validator = null,
         ?string $kid = null
     ): EncryptedJwtBundle {
-        $builder = new JwtTokenBuilder($manager, $validator);
+        $builder = new JwtTokenBuilder($manager);
         return $builder->createWithoutValidation($payload, $algorithm, $kid);
     }
 
@@ -185,9 +191,7 @@ final class JwtTokenFactory
         $payload = clone $jwtBundle->getPayload();
 
         // Update issued-at to current time and expiration to the specified interval
-        $payload
-            ->setIssuedAt('now')
-            ->setExpiration($interval);
+        $payload->setIssuedAt('now')->setExpiration($interval);
 
         // Return a new token bundle with updated payload
         return new EncryptedJwtBundle($header, $payload);

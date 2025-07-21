@@ -15,7 +15,6 @@ use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
-use Phithi92\JsonWebToken\Interfaces\EncryptedJwtInterface;
 
 /**
  * JwtValidator provides validation logic for standard JWT claims.
@@ -27,11 +26,14 @@ use Phithi92\JsonWebToken\Interfaces\EncryptedJwtInterface;
  */
 class JwtValidator
 {
-    private ?string $expectedIssuer = null; // The expected issuer value (public claim iss).
+    private ?string $expectedIssuer = null;
 
-    private ?string $expectedAudience = null; // The expected audience value (public claim aud).
+    // The expected issuer value (public claim iss).
+    private ?string $expectedAudience = null;
 
-    private int $clockSkew = 0; // Allowed clock skew in seconds.
+    // The expected audience value (public claim aud).
+    private int $clockSkew = 0;
+    // Allowed clock skew in seconds.
 
     /**
      * @var array<string, scalar|null>
@@ -138,9 +140,7 @@ class JwtValidator
 
         $aud = $payload->getAudience();
 
-        return is_array($aud)
-            ? in_array($this->expectedAudience, $aud, true)
-            : $aud === $this->expectedAudience;
+        return is_array($aud) ? in_array($this->expectedAudience, $aud, true) : $aud === $this->expectedAudience;
     }
 
     /**
@@ -149,7 +149,7 @@ class JwtValidator
      * @throws PayloadException On any validation failure
      * @throws TokenException On any validation failure
      */
-    public function assertValidBundle(EncryptedJwtInterface $bundle): void
+    public function assertValidBundle(EncryptedJwtBundle $bundle): void
     {
         $this->assertValid($bundle->getPayload());
     }
@@ -259,6 +259,7 @@ class JwtValidator
             if (! is_string($expectedValue) && ! is_int($expectedValue) && ! is_null($expectedValue)) {
                 throw new \LogicException('missconfigured private claims. wrong value type');
             }
+
             $this->validateClaim($key, $payload, $expectedValue);
         }
     }
@@ -359,9 +360,7 @@ class JwtValidator
 
         $aud = $payload->getAudience();
 
-        $valid = is_array($aud)
-            ? in_array($this->expectedAudience, $aud, true)
-            : $aud === $this->expectedAudience;
+        $valid = is_array($aud) ? in_array($this->expectedAudience, $aud, true) : $aud === $this->expectedAudience;
 
         if (! $valid) {
             throw new InvalidAudienceException();

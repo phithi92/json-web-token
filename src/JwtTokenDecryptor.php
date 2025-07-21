@@ -14,17 +14,37 @@ use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
 
 final class JwtTokenDecryptor
 {
+    /**
+     * @var JwtAlgorithmManager Handles algorithm resolution and handler configuration.
+     */
     private readonly JwtAlgorithmManager $manager;
+
+    /**
+     * @var JwtValidator Validates the integrity and structure of the decrypted JWT bundle.
+     */
     private readonly JwtValidator $validator;
 
+    /**
+     * JwtTokenDecryptor constructor.
+     *
+     * @param JwtAlgorithmManager $manager   Provides cryptographic handler configurations.
+     * @param JwtValidator|null   $validator Optional validator; defaults to JwtValidator if not provided.
+     */
     public function __construct(
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator
     ) {
         $this->manager = $manager;
-        $this->validator = $validator ?? new JwtValidator();
+        $this->validator = ($validator ?? new JwtValidator());
     }
 
+    /**
+     * Fully decrypts and validates a JWT token.
+     *
+     * @param string $token The encrypted JWT string.
+     *
+     * @return EncryptedJwtBundle The fully decrypted and validated JWT payload bundle.
+     */
     public function decrypt(string $token): EncryptedJwtBundle
     {
         $bundle = $this->decryptWithoutValidation($token);
@@ -32,6 +52,15 @@ final class JwtTokenDecryptor
         return $bundle;
     }
 
+    /**
+     * Decrypts a JWT token without running any validation checks.
+     *
+     * Useful for debugging or low-trust environments where validation is handled elsewhere.
+     *
+     * @param string $token The encrypted JWT string.
+     *
+     * @return EncryptedJwtBundle The decrypted JWT payload bundle.
+     */
     public function decryptWithoutValidation(string $token): EncryptedJwtBundle
     {
         $bundle = JwtTokenParser::parse($token);
@@ -41,44 +70,75 @@ final class JwtTokenDecryptor
         $config = $this->manager->getConfiguration($algorithm);
 
         foreach ($this->getHandlerMappings() as $key => [$interface, $method]) {
-            /** @var class-string<object> $interface */
+            /*
+             * @var class-string<object> $interface
+             */
             $this->applyHandler($bundle, $config, $key, $interface, $method);
         }
 
         return $bundle;
     }
 
+    /**
+     * Resolves the algorithm used for key decryption or encryption based on JWT headers.
+     *
+     * If 'alg' is 'dir' (direct symmetric key), falls back to 'enc' for further processing.
+     *
+     * @return string The resolved algorithm identifier.
+     *
+     * @throws InvalidTokenException If no algorithm is specified in the JWT header.
+     */
     private function resolveAlgorithm(EncryptedJwtBundle $bundle): string
     {
         $header = $bundle->getHeader();
-        $alg = $header->getAlgorithm() ?? throw new \Exception('no algorithm');
+        $alg = $header->getAlgorithm() ?? throw new InvalidTokenException('no algorithm');
 
-        return $alg === 'dir' && $header->getEnc() !== null
-            ? $header->getEnc()
-            : $alg;
+        return $alg === 'dir' && $header->getEnc() !== null ? $header->getEnc() : $alg;
     }
 
     /**
-     * @return array<string, array<string>>
+     * Maps JWT cryptographic roles to their corresponding interface and handler method.
+     *
+     * @return array<string, array{0: class-string, 1: string}> Map of role key to [interface, method].
      */
     private function getHandlerMappings(): array
     {
         return [
-            'key_management' => [KeyHandlerInterface::class, 'unwrapKey'],
-            'cek' => [CekHandlerInterface::class, 'validateCek'],
-            'iv' => [IvHandlerInterface::class, 'validateIv'],
-            'signing_algorithm' => [SignatureHandlerInterface::class, 'validateSignature'],
-            'content_encryption' => [PayloadHandlerInterface::class, 'decryptPayload'],
+            'key_management' => [
+                KeyHandlerInterface::class,
+                'unwrapKey',
+            ],
+            'cek' => [
+                CekHandlerInterface::class,
+                'validateCek',
+            ],
+            'iv' => [
+                IvHandlerInterface::class,
+                'validateIv',
+            ],
+            'signing_algorithm' => [
+                SignatureHandlerInterface::class,
+                'validateSignature',
+            ],
+            'content_encryption' => [
+                PayloadHandlerInterface::class,
+                'decryptPayload',
+            ],
         ];
     }
 
     /**
-     * Applies a handler to the bundle if the config key is set.
+     * Applies a specific handler to the JWT bundle based on the configuration key.
+     *
+     * If the configuration entry is missing or invalid, the handler is skipped.
      *
      * @template T of object
      *
-     * @param array<string, mixed> $config
-     * @param class-string<T> $interface
+     * @param EncryptedJwtBundle   $bundle    The JWT bundle being processed.
+     * @param array<string, mixed> $config    Configuration map for the current algorithm.
+     * @param string               $key       Configuration key corresponding to the handler.
+     * @param class-string<T>      $interface Expected interface of the handler.
+     * @param string               $method    The handler method to invoke.
      */
     private function applyHandler(
         EncryptedJwtBundle $bundle,
@@ -96,12 +156,15 @@ final class JwtTokenDecryptor
     }
 
     /**
+     * Resolves a configured handler instance for a specific cryptographic role.
+     *
      * @template T of object
      *
-     * @param array<string, array<string, string>|string> $config
-     * @param class-string<T> $interface
+     * @param array<string, mixed> $config    Full configuration for the algorithm.
+     * @param string               $key       Configuration key under which the handler is defined.
+     * @param class-string<T>      $interface Required interface the handler must implement.
      *
-     * @return T
+     * @return T A resolved and validated handler instance.
      */
     private function resolveHandler(array $config, string $key, string $interface): object
     {

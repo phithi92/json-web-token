@@ -11,8 +11,10 @@ use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 class JwtTokenParser
 {
     private const JWS_PART_COUNT = 3;
+    private const JWS_TYPE = 'JWS';
 
     private const JWE_PART_COUNT = 5;
+    private const JWE_TYPE = 'JWE';
 
     /**
      * @param string|array<int,string> $token
@@ -23,42 +25,37 @@ class JwtTokenParser
      */
     public static function parse(string|array $token): EncryptedJwtBundle
     {
-        $parts = is_string($token) ? explode('.', $token) : $token;
-        $partsCount = count($parts);
+        $tokenArray = is_string($token) ? explode('.', $token) : $token;
+        if (! isset($tokenArray[0])) {
+            throw new InvalidFormatException('Token is malformed or incomplete');
+        }
 
-        $headerB64 = array_shift($parts);
+        $headerB64 = $tokenArray[0];
         $headerJson = Base64UrlEncoder::decode($headerB64, true);
 
         try {
             $header = JwtHeader::fromJson($headerJson);
         } catch (JsonException) {
-            throw new InvalidFormatException('Token header is no valid json format');
+            throw new InvalidFormatException('Token header is not valid JSON');
         }
 
         $bundle = new EncryptedJwtBundle($header);
 
-        $type = $header->getType();
-
-        if ($type === 'JWS') {
-            if ($partsCount !== self::JWS_PART_COUNT) {
-                throw new InvalidFormatException('Invalid jws token structure.');
-            }
-
-            $payloadB64 = $parts[0];
-            $bundle->getEncryption()->setAad(implode('.', [$headerB64,$payloadB64]));
-
-            return self::parseSignatureToken($parts, $bundle);
+        $typ = $header->getType();
+        if (! is_null($typ)) {
+            return match ($typ) {
+                self::JWS_TYPE => self::parseSignatureToken($bundle, $tokenArray),
+                self::JWE_TYPE => self::parseEncodedToken($bundle, $tokenArray),
+                default => throw new InvalidFormatException('Invalid or unsupported token type'),
+            };
         }
-        if ($type === 'JWE') {
-            if ($partsCount !== self::JWE_PART_COUNT) {
-                throw new InvalidFormatException('Invalid jwe token structure.');
-            }
 
-            $bundle->getEncryption()->setAad($headerB64);
-
-            return self::parseEncodedToken($parts, $bundle);
-        }
-        throw new InvalidFormatException('Unsupported token type');
+        $parts = count($tokenArray);
+        return match ($parts) {
+            self::JWS_PART_COUNT => self::parseSignatureToken($bundle, $tokenArray),
+            self::JWE_PART_COUNT => self::parseEncodedToken($bundle, $tokenArray),
+            default => throw new InvalidFormatException('Invalid or unsupported token type'),
+        };
     }
 
     /**
@@ -68,66 +65,80 @@ class JwtTokenParser
      */
     public static function serialize(EncryptedJwtBundle $bundle): string
     {
-        $type = $bundle->getHeader()->getType();
-
-        return match ($type) {
-            'JWE' => self::serializeEncodedToken($bundle),
-            'JWS' => self::serializeSignatureToken($bundle),
-            default => throw new InvalidFormatException("Unsupported token type: {$type}"),
+        return match ($bundle->getHeader()->getType()) {
+            self::JWE_TYPE => self::serializeEncodedToken($bundle),
+            self::JWS_TYPE => self::serializeSignatureToken($bundle),
+            default => throw new InvalidFormatException('Invalid or unsupported token type'),
         };
     }
 
     /**
-     * @param array<string> $parts
+     * @param array<int,string> $tokenArray
      *
      * @throws InvalidFormatException
      */
-    private static function parseEncodedToken(array $parts, EncryptedJwtBundle $bundle): EncryptedJwtBundle
+    private static function parseEncodedToken(EncryptedJwtBundle $bundle, array $tokenArray): EncryptedJwtBundle
     {
-        [$keyB64, $ivB64, $ciphertextB64, $authTagB64] = $parts;
+        if (count($tokenArray) !== self::JWE_PART_COUNT) {
+            throw new InvalidFormatException('Invalid JWE token structure.');
+        }
 
-        $key = Base64UrlEncoder::decode($keyB64, true);
-        $iv = Base64UrlEncoder::decode($ivB64, true);
-        $ciphertext = Base64UrlEncoder::decode($ciphertextB64, true);
-        $authTag = Base64UrlEncoder::decode($authTagB64, true);
+        [
+            $headerB64,
+            $keyB64,
+            $ivB64,
+            $ciphertextB64,
+            $authTagB64,
+        ] = $tokenArray;
 
         $encryption = $bundle->getEncryption();
         $header = $bundle->getHeader();
 
-        // Set CEK or Encrypted Key based on alg
-        $isDirectEncryption = $header->getAlgorithm() === 'dir';
-        if ($isDirectEncryption) {
-            $encryption->setCek($key); // key ist CEK
+        $decoded = [
+            'key' => Base64UrlEncoder::decode($keyB64, true),
+            'iv' => Base64UrlEncoder::decode($ivB64, true),
+            'ciphertext' => Base64UrlEncoder::decode($ciphertextB64, true),
+            'authTag' => Base64UrlEncoder::decode($authTagB64, true),
+        ];
+
+        // Set key or CEK depending on algorithm
+        if ($header->getAlgorithm() === 'dir') {
+            $encryption->setCek($decoded['key']);
         } else {
-            $encryption->setEncryptedKey($key); // key ist verschlüsselter CEK
+            $encryption->setEncryptedKey($decoded['key']);
         }
 
-        $bundle->getPayload()->setEncryptedPayload($ciphertext);
-
-        // Always treat ciphertext as encrypted
-
-        $encryption
-            ->setIv($iv)
-            ->setAuthTag($authTag);
-
+        // Assign remaining fields
+        $bundle->getPayload()->setEncryptedPayload($decoded['ciphertext']);
+        $encryption->setIv($decoded['iv'])->setAuthTag($decoded['authTag'])->setAad($headerB64);
+        // Preserve header for verification
         return $bundle;
     }
 
     /**
-     * @param array<string> $parts
+     * @param array<int,string> $tokenArray
      *
      * @throws InvalidFormatException
      */
-    private static function parseSignatureToken(array $parts, EncryptedJwtBundle $bundle): EncryptedJwtBundle
+    private static function parseSignatureToken(EncryptedJwtBundle $bundle, array $tokenArray): EncryptedJwtBundle
     {
-        [$payloadB64, $signatureB64] = $parts;
+        if (count($tokenArray) !== self::JWS_PART_COUNT) {
+            throw new InvalidFormatException('Invalid JWS token structure.');
+        }
 
+        [
+            $headerB64,
+            $payloadB64,
+            $signatureB64,
+        ] = $tokenArray;
+
+        $aad = "{$headerB64}.{$payloadB64}";
         $payloadJson = Base64UrlEncoder::decode($payloadB64, true);
         $signature = Base64UrlEncoder::decode($signatureB64, true);
 
-        $bundle
-            ->setSignature($signature)
-            ->getPayload()->fromJson($payloadJson);
+        $bundle->getEncryption()->setAad($aad);
+        $bundle->setSignature($signature);
+        $bundle->getPayload()->fromJson($payloadJson);
 
         return $bundle;
     }
@@ -137,24 +148,28 @@ class JwtTokenParser
      */
     private static function serializeEncodedToken(EncryptedJwtBundle $bundle): string
     {
+        $header = $bundle->getHeader();
+        $encryption = $bundle->getEncryption();
+
+        $encryptedKey = match ($header->getAlgorithm()) {
+            'dir' => $encryption->getCek(),
+            default => $encryption->getEncryptedKey()
+        };
+
         $tokenArray = [
             $bundle->getHeader()->toJson(),
-            $bundle->getEncryption()->getEncryptedKey() ?? $bundle->getEncryption()->getCek(),
-            $bundle->getEncryption()->getIv() ?? '',
-            $bundle->getPayload()->getEncryptedPayload() ?? $bundle->getPayload()->toJson(),
-            $bundle->getEncryption()->getAuthTag() ?? '',
+            $encryptedKey,
+            $bundle->getEncryption()->getIv(),
+            $bundle->getPayload()->getEncryptedPayload(),
+            $bundle->getEncryption()->getAuthTag(),
         ];
 
         return self::encodeAndSerialize($tokenArray);
     }
 
-    /**
-     * @param EncryptedJwtBundle $bundle
-     * @return string
-     */
     private static function serializeSignatureToken(EncryptedJwtBundle $bundle): string
     {
-        /**
+        /*
          * @param string<string> $tokenArray
          */
         $tokenArray = [
@@ -167,14 +182,14 @@ class JwtTokenParser
     }
 
     /**
-     * @param array<int,string> $array
+     * @param array<int,string|null> $array
      */
     private static function encodeAndSerialize(array $array): string
     {
         return implode(
             '.',
             array_map(
-                static fn (?string $v): string => Base64UrlEncoder::encode($v ?? ''),
+                static fn (?string $v): string => Base64UrlEncoder::encode(($v ?? '')),
                 $array
             )
         );

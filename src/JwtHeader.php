@@ -28,7 +28,7 @@ final class JwtHeader
     private string $enc;
 
     // The key identifier, used to indicate which key was used to sign or encrypt the token
-    private string $kid;
+    private ?string $kid = null;
 
     /**
      * Sets the Key ID ('kid') for the JWT header.
@@ -39,40 +39,47 @@ final class JwtHeader
      *
      * If the format or length of the Key ID is invalid, an exception is thrown.
      *
-     * @param string $type The Key ID to set.
+     * @param string $kid The Key ID to set.
      *
      * @return self                    Returns the instance for method chaining.
      *
      * @throws InvalidKidFormatException If the Key ID contains invalid characters.
      * @throws InvalidKidLengthException If the Key ID is shorter than 3 or longer than 64 characters.
      */
-    public function setKid(string $type): self
+    public function setKid(string $kid): self
     {
         // Define min and max length constraints for the 'kid'
         $minLength = 3;
         $maxLength = 64;
 
         // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
-        if (! ctype_alnum(str_replace(['-', '_'], '', $type))) {
+        if (! preg_match('/^[a-zA-Z0-9_-]+$/', $kid)) {
             throw new InvalidKidFormatException();
         }
 
-        if (strlen($type) < $minLength || strlen($type) > $maxLength) {
+        $kidLength = strlen($kid);
+
+        if ($kidLength < $minLength || $kidLength > $maxLength) {
             throw new InvalidKidLengthException($minLength, $maxLength);
         }
 
-        $this->kid = $type;
+        $this->kid = $kid;
         return $this;
     }
 
     /**
      * Retrieves the token type from the header.
      *
-     * @return string|null The token type if set, otherwise null.
+     * @return string The token type if set.
      */
-    public function getKid(): ?string
+    public function getKid(): string
     {
-        return $this->kid ?? null;
+        return $this->kid ?? '';
+    }
+
+    public function hasKid(): bool
+    {
+        return is_string($this->kid);
     }
 
     /**
@@ -156,10 +163,10 @@ final class JwtHeader
     {
         return array_filter(
             [
-                'alg' => $this->getAlgorithm(),
-                'typ' => $this->getType(),
-                'enc' => $this->getEnc(),
-                'kid' => $this->getKid(),
+                'alg' => $this->algorithm ?? null,
+                'typ' => $this->typ ?? null,
+                'enc' => $this->enc ?? null,
+                'kid' => $this->kid ?? null,
             ],
             static fn ($value) => $value !== null && $value !== ''
         );
@@ -174,7 +181,7 @@ final class JwtHeader
      */
     public function toJson(): string
     {
-        return JsonEncoder::encode($this->toArray(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return JsonEncoder::encode($this->toArray(), (JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
     }
 
     /**
@@ -188,9 +195,8 @@ final class JwtHeader
      */
     public static function fromJson(string $json): self
     {
-        /** @var \stdClass $data */
+        /** @var object{alg?: string, typ?: string, enc?: string, kid?: string} $data */
         $data = JsonEncoder::decode($json, false);
-        $instance = new self();
 
         $map = [
             'alg' => 'setAlgorithm',
@@ -198,6 +204,8 @@ final class JwtHeader
             'enc' => 'setEnc',
             'kid' => 'setKid',
         ];
+
+        $instance = new self();
 
         foreach ($map as $jsonKey => $setter) {
             if (isset($data->$jsonKey)) {

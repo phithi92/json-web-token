@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken;
 
 use LogicException;
+use Phithi92\JsonWebToken\Core\HandlerResolver;
+use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
 use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
 use Phithi92\JsonWebToken\Interfaces\KeyHandlerInterface;
@@ -14,19 +16,15 @@ use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
 final class JwtTokenBuilder
 {
     private readonly JwtAlgorithmManager $manager;
-    private readonly JwtValidator $validator;
 
     public function __construct(
-        JwtAlgorithmManager $manager,
-        ?JwtValidator $validator
+        JwtAlgorithmManager $manager
     ) {
         $this->manager = $manager;
-        $this->validator = $validator ?? new JwtValidator();
     }
 
     public function create(JwtPayload $payload, string $algorithm, ?string $kid = null): EncryptedJwtBundle
     {
-        $this->validator->assertValid($payload);
         return $this->createWithoutValidation($payload, $algorithm, $kid);
     }
 
@@ -43,41 +41,53 @@ final class JwtTokenBuilder
     ): EncryptedJwtBundle {
         $config = $this->manager->getConfiguration($algorithm);
 
-        $tokenType = $config['token_type'] ?? null;
-        $algorithmName = $config['alg'] ?? null;
+        $typ = $config['token_type'];
+        $alg = $config['alg'] ?? null;
+        /** @var string $enc */
+        $enc = $config['enc'] ?? null;
 
-        if (! is_string($tokenType) || ! is_string($algorithmName)) {
+        if (! is_string($typ) || ! is_string($alg)) {
             throw new LogicException('Invalid algorithm configuration');
         }
 
-        $resolvedKid = $kid ?? $algorithm;
-        $jwtHeader = $this->createHeader($tokenType, $algorithmName, $resolvedKid, $config);
-        $jwtBundle = new EncryptedJwtBundle($jwtHeader, $payload);
+        $header = $this->createHeader($typ, $alg, $kid, $enc);
+        $bundle = new EncryptedJwtBundle($header, $payload);
 
         foreach ($this->getHandlerMappings() as $key => [$interface, $method]) {
-            $this->applyHandler($jwtBundle, $config, $key, $interface, $method);
+            $this->applyHandler($bundle, $config, $key, $interface, $method);
         }
 
-        return $jwtBundle;
+        return $bundle;
     }
 
     /**
-     * Erstellt den Header basierend auf Config und Parametern.
-     *
-     * @param array<string, array<string,string>|string> $config
+     * Create header on config and params
      */
-    private function createHeader(string $type, string $alg, string $kid, array $config): JwtHeader
+    private function createHeader(string $typ, string $alg, ?string $kid, ?string $enc): JwtHeader
     {
-        $header = new JwtHeader();
-        $header->setType($type);
-        $header->setAlgorithm($alg);
-        $header->setKid($kid);
+        $header = (new JwtHeader())->setType($typ)->setAlgorithm($alg);
 
-        if (isset($config['enc']) && is_string($config['enc'])) {
-            $header->setEnc($config['enc']);
+        $kid ??= $this->buildDefaultKid($alg, $enc);
+        if (! $this->manager->hasKey($kid) && ! $this->manager->hasPassphrase($kid)) {
+            throw new UnresolvableKeyException($kid);
         }
 
-        return $header;
+        return $header->setKid($kid);
+    }
+
+    private function buildDefaultKid(string $alg, ?string $enc): string
+    {
+        $parts = [];
+
+        if (strtolower($alg) !== 'dir') {
+            $parts[] = $alg;
+        }
+
+        if (! empty($enc)) {
+            $parts[] = $enc;
+        }
+
+        return implode('_', $parts);
     }
 
     /**
@@ -88,11 +98,26 @@ final class JwtTokenBuilder
     private function getHandlerMappings(): array
     {
         return [
-            'cek' => [CekHandlerInterface::class, 'initializeCek'],
-            'key_management' => [KeyHandlerInterface::class, 'wrapKey'],
-            'signing_algorithm' => [SignatureHandlerInterface::class, 'computeSignature'],
-            'iv' => [IvHandlerInterface::class, 'initializeIv'],
-            'content_encryption' => [PayloadHandlerInterface::class, 'encryptPayload'],
+            'cek' => [
+                CekHandlerInterface::class,
+                'initializeCek',
+            ],
+            'key_management' => [
+                KeyHandlerInterface::class,
+                'wrapKey',
+            ],
+            'signing_algorithm' => [
+                SignatureHandlerInterface::class,
+                'computeSignature',
+            ],
+            'iv' => [
+                IvHandlerInterface::class,
+                'initializeIv',
+            ],
+            'content_encryption' => [
+                PayloadHandlerInterface::class,
+                'encryptPayload',
+            ],
         ];
     }
 
@@ -122,14 +147,14 @@ final class JwtTokenBuilder
     /**
      * @template T of object
      *
-     * @param array<string, array<string, string>|string> $config
-     * @param class-string<T> $interface
+     * @param array<string, mixed> $config
+     * @param class-string<T>      $interface
      *
      * @return T
      */
     private function resolveHandler(array $config, string $key, string $interface): object
     {
-        return \Phithi92\JsonWebToken\Core\HandlerResolver::resolve(
+        return HandlerResolver::resolve(
             $config,
             $key,
             $interface,
