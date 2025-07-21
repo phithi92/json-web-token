@@ -18,11 +18,6 @@ use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
  */
 class RsaKeyService extends KeyCryptoService
 {
-    public function __construct(JwtAlgorithmManager $manager)
-    {
-        parent::__construct($manager);
-    }
-
     /**
      * @param array<string,string|int> $config
      *
