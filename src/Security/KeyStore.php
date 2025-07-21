@@ -5,30 +5,56 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Security;
 
 use OpenSSLAsymmetricKey;
-use Phithi92\JsonWebToken\Interfaces\KeyStoreInterface;
 use RuntimeException;
+use SensitiveParameter;
 
-final class KeyStore implements KeyStoreInterface
+final class KeyStore
 {
     /**
-     * @var array<string, array<string, array{key: OpenSSLAsymmetricKey, type: string}>>
-     * Struktur: ['kid' => ['private' => ['key' => ..., 'type' => ...], 'public' => [...]]]
+     * @var array<string, array<string, array{
+     *     pem: string,
+     *     bits: int,
+     *     type: string,
+     *     role: string,
+     *     key: OpenSSLAsymmetricKey
+     * }>>
      */
     private array $keys = [];
 
-    public function addKey(#[\SensitiveParameter] string $pem, ?string $role = null, ?string $kid = null): string
+    /**
+     * @param string|array<int,string>|null $kid
+     */
+    public function addKey(#[SensitiveParameter] string $pem, ?string $role = null, string|array|null $kid = null): string
     {
         $parsed = $this->parsePemKey($pem, $role);
+        $resolvedRole = ($role ?? $parsed['role']);
 
-        $resolvedRole = $role ?? $parsed['role'];
-        $resolvedKid = $kid ?? KeyIdentifier::fromPem($pem);
+        $kids = match (true) {
+            is_string($kid) => [$kid],
+            is_array($kid) => $kid,
+            default => [KeyIdentifier::fromPem($pem)],
+        };
 
-        $this->keys[$resolvedKid][$resolvedRole] = [
-            'key' => $parsed['key'],
-            'type' => $parsed['type'],
-        ];
+        // insert all ids
+        foreach ($kids as $singleKid) {
+            $this->keys[$singleKid][$resolvedRole] = $parsed;
+        }
 
-        return $resolvedKid;
+        return $kids[0];
+    }
+
+    /**
+     * @return array<string, array<string, array{
+     *     pem: string,
+     *     bits: int,
+     *     type: string,
+     *     role: string,
+     *     key: OpenSSLAsymmetricKey
+     * }>>
+     */
+    public function getAll(): array
+    {
+        return $this->keys;
     }
 
     public function getKey(string $kid, string $role): OpenSSLAsymmetricKey
@@ -46,26 +72,22 @@ final class KeyStore implements KeyStoreInterface
     }
 
     /**
-     * Gibt Key-Metadaten wie Typ (RSA, EC) und Rolle (public/private) zurück.
-     *
-     * @return array<string,string>
+     * @return array{pem: string, bits: int, type: string, role: string, key: OpenSSLAsymmetricKey}
      *
      * @throws RuntimeException
      */
-    public function getMetadata(string $kid): array
+    public function getMetadata(string $kid, ?string $role): array
     {
         if (! isset($this->keys[$kid])) {
             throw new RuntimeException("Key with ID [{$kid}] not found.");
         }
 
-        foreach ($this->keys[$kid] as $role => $data) {
-            return [
-                'type' => $data['type'],
-                'role' => $role,
-            ];
+        $entries = $this->keys[$kid];
+        if (! isset($entries[$role])) {
+            throw new RuntimeException("Role [{$role}] not found for key ID [{$kid}].");
         }
 
-        throw new RuntimeException("No roles found for key ID [{$kid}].");
+        return $entries[$role];
     }
 
     public function hasKey(string $kid, ?string $role = null): bool
@@ -82,47 +104,79 @@ final class KeyStore implements KeyStoreInterface
      *
      * @param string $pem
      *
-     * @return array{type: string, role: string, key: OpenSSLAsymmetricKey}
+     * @return array{
+     *      type: string,
+     *      role: 'private'|'public',
+     *      key: OpenSSLAsymmetricKey,
+     *      pem: string,
+     *      bits: int
+     * }
      *
      * @throws RuntimeException
      */
-    private function parsePemKey(#[\SensitiveParameter] string|OpenSSLAsymmetricKey $pem, ?string $role = null): array
+    private function parsePemKey(#[SensitiveParameter] string|OpenSSLAsymmetricKey $pem, ?string $role = null): array
     {
         if ($role !== null && ! in_array($role, ['private', 'public'], true)) {
-            throw new RuntimeException('Invalid key role specified. Got "' . $role . '".');
+            throw new RuntimeException(sprintf('Invalid key role specified. Got "%s".', $role));
         }
 
-        if (is_resource($pem)) {
+        if ($pem instanceof OpenSSLAsymmetricKey) {
             $key = $pem;
-        } elseif ($role === 'private') {
-            $key = openssl_pkey_get_private($pem);
-        } elseif ($role === 'public') {
-            $key = openssl_pkey_get_public($pem);
+            if ($role === null) {
+                throw new RuntimeException('Role must be provided when using an OpenSSLAsymmetricKey instance.');
+            }
         } else {
-            $key = openssl_pkey_get_private($pem);
-            if ($key !== false) {
-                $role = 'private';
-            } else {
-                $key = openssl_pkey_get_public($pem);
-                $role = $key !== false ? 'public' : null;
+            $key = match ($role) {
+                'private' => openssl_pkey_get_private($pem),
+                'public' => openssl_pkey_get_public($pem),
+                default => openssl_pkey_get_private($pem) ?: openssl_pkey_get_public($pem)
+            };
+
+            if (! $key instanceof OpenSSLAsymmetricKey) {
+                throw new RuntimeException('Invalid PEM key – neither public nor private.');
+            }
+
+            if ($role === null) {
+                $role = openssl_pkey_get_private($pem) ? 'private' : 'public';
             }
         }
 
-        if (! $key instanceof OpenSSLAsymmetricKey || $role === null) {
-            throw new RuntimeException('Invalid PEM key – neither public nor private.');
-        }
-
         $details = openssl_pkey_get_details($key);
-        if (! $details || ! isset($details['type'])) {
-            throw new RuntimeException('Could not determine key type.');
+        if (! is_array($details) || ! isset($details['type'], $details['bits'], $details['key'])) {
+            throw new RuntimeException('Could not determine key details.');
         }
 
-        $type = $this->getKeyType($details['type']);
+        /**
+         * @var int $typeInt
+         */
+        $typeInt = $details['type'];
+
+        /**
+         * @var int $bits
+         */
+        $bits = $details['bits'];
+
+        /**
+         * @var string $exportedPem
+         */
+        $exportedPem = $details['key'];
+
+        $type = $this->getKeyType($typeInt);
+
+        if ($role === 'public') {
+            $pem = $exportedPem;
+        } else {
+            if (! openssl_pkey_export($key, $pem) || ! is_string($pem)) {
+                throw new RuntimeException('Unable to export private key.');
+            }
+        }
 
         return [
             'type' => $type,
             'role' => $role,
             'key' => $key,
+            'pem' => $pem,
+            'bits' => $bits,
         ];
     }
 

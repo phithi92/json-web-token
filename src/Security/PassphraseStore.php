@@ -14,10 +14,10 @@ final class PassphraseStore implements PassphraseStoreInterface
      */
     private array $phrases = [];
 
-    public function addPassphrase(#[\SensitiveParameter] string $passphrase, ?string $kid): void
+    public function addPassphrase(#[\SensitiveParameter] string $passphrase, ?string $kid): string
     {
-        $resolvedKid = $kid ?? KeyIdentifier::fromSecret($passphrase);
-        $this->phrases[$resolvedKid] = $passphrase;
+        $kid ??= KeyIdentifier::fromSecret($passphrase);
+        return $this->phrases[$kid] = $passphrase;
     }
 
     public function getPassphrase(string $kid): string
@@ -25,6 +25,7 @@ final class PassphraseStore implements PassphraseStoreInterface
         if (! isset($this->phrases[$kid])) {
             throw new RuntimeException("No passphrase found for ID: {$kid}");
         }
+
         return $this->phrases[$kid];
     }
 

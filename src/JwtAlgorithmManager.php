@@ -7,8 +7,6 @@ namespace Phithi92\JsonWebToken;
 use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Config\DefaultAlgorithmConfiguration;
 use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
-use Phithi92\JsonWebToken\Interfaces\KeyStoreInterface;
-use Phithi92\JsonWebToken\Interfaces\PassphraseStoreInterface;
 use Phithi92\JsonWebToken\Security\KeyStore;
 use Phithi92\JsonWebToken\Security\PassphraseStore;
 
@@ -26,21 +24,21 @@ use Phithi92\JsonWebToken\Security\PassphraseStore;
  */
 final class JwtAlgorithmManager
 {
+    private readonly KeyStore $keyStore;
+
+    private readonly PassphraseStore $passphraseStore;
+
     // The configurations of supported algorithms
     private readonly AlgorithmConfigurationInterface $algorithmRegistry;
 
-    private readonly KeyStoreInterface $keyStore;
-
-    private readonly PassphraseStoreInterface $passphraseStore;
-
     public function __construct(
         ?AlgorithmConfigurationInterface $algConfig = null,
-        ?KeyStoreInterface $keyStore = null,
-        ?PassphraseStoreInterface $passphraseStore = null
+        ?KeyStore $keyStore = null,
+        ?PassphraseStore $passphraseStore = null
     ) {
-        $this->algorithmRegistry = $algConfig ?? new DefaultAlgorithmConfiguration();
-        $this->keyStore = $keyStore ?? new KeyStore();
-        $this->passphraseStore = $passphraseStore ?? new PassphraseStore();
+        $this->algorithmRegistry = ($algConfig ?? new DefaultAlgorithmConfiguration());
+        $this->keyStore = ($keyStore ?? new KeyStore());
+        $this->passphraseStore = ($passphraseStore ?? new PassphraseStore());
     }
 
     /**
@@ -49,6 +47,11 @@ final class JwtAlgorithmManager
     public function getConfiguration(string $algorithm): array
     {
         return $this->algorithmRegistry->get($algorithm);
+    }
+
+    public function hasPrivateKey(string $kid): bool
+    {
+        return $this->keyStore->hasKey($kid, 'private');
     }
 
     public function addPrivateKey(string $pemContent, ?string $kid): void
@@ -61,6 +64,16 @@ final class JwtAlgorithmManager
         $this->keyStore->addKey($pemContent, 'public', $kid);
     }
 
+    public function hasPublicKey(string $kid): bool
+    {
+        return $this->keyStore->hasKey($kid, 'public');
+    }
+
+    public function hasKey(string $kid): bool
+    {
+        return $this->keyStore->hasKey($kid);
+    }
+
     public function getPrivateKey(string $kid): OpenSSLAsymmetricKey
     {
         return $this->keyStore->getKey($kid, 'private');
@@ -69,6 +82,25 @@ final class JwtAlgorithmManager
     public function getPublicKey(string $kid): OpenSSLAsymmetricKey
     {
         return $this->keyStore->getKey($kid, 'public');
+    }
+
+    /**
+     * @return array{
+     *     pem: string,
+     *     bits: int,
+     *     type: string,
+     *     role: string,
+     *     key: OpenSSLAsymmetricKey
+     * }
+     */
+    public function getKeyMetadata(string $kid, ?string $role = null): array
+    {
+        return $this->keyStore->getMetadata($kid, $role);
+    }
+
+    public function hasPassphrase(string $kid): bool
+    {
+        return $this->passphraseStore->hasPassphrase($kid);
     }
 
     public function addPassphrase(string $passphrase, ?string $kid): void
