@@ -20,11 +20,13 @@
         "phpbench/phpbench": "^1.0",
         "nikic/php-parser": "^5.3",
         "phpstan/phpstan": "2.0.x-dev",
-        "nunomaduro/phpinsights": "dev-master"
+        "nunomaduro/phpinsights": "dev-master",
+        "shipmonk/dead-code-detector": "^0.9.2"
     },
     "autoload": {
         "psr-4": {
-            "Phithi92\\JsonWebToken\\": "src/"
+            "Phithi92\\JsonWebToken\\": "src/",
+            "Tests\\": "tests/"
          }
     },
     "scripts": {
