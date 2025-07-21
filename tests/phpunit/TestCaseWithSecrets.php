@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests;
-
-require_once __DIR__ . '/../Helpers/KeyProvider.php';
+namespace Tests\phpunit;
 
 use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\JwtTokenFactory;
@@ -12,8 +10,6 @@ use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtTokenParser;
-use Phithi92\JsonWebToken\Security\PassphraseStore;
-use Phithi92\JsonWebToken\Security\KeyStore;
 use Tests\Helpers\KeyProvider;
 
 class TestCaseWithSecrets extends TestCase

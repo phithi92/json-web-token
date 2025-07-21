@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Utilities;
+namespace Tests\phpunit\Utilities;
 
 use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;

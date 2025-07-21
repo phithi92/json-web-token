@@ -1,17 +1,12 @@
 <?php
 
-namespace Tests;
-
-require_once "TestCaseWithSecrets.php";
-require_once __DIR__ . "/../Helpers/TokenStorage.php";
-require_once __DIR__ . "/../Helpers/KeyProvider.php";
+namespace Tests\phpunit;
 
 use Phithi92\JsonWebToken\JwtTokenFactory;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
-
 use Tests\Helpers\TokenStorage;
 use Tests\Helpers\KeyProvider;
-use Tests\TestCaseWithSecrets;
+use Tests\phpunit\TestCaseWithSecrets;
 
 class SupportedAlgorithmsTest extends TestCaseWithSecrets
 {

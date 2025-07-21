@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests;
+namespace Tests\phpunit;
 
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\Exceptions;

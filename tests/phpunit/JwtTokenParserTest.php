@@ -2,17 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Tests;
+namespace Tests\phpunit;
 
-require_once "TestCaseWithSecrets.php";
-
-use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\JwtTokenParser;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtTokenFactory;
+use Tests\phpunit\TestCaseWithSecrets;
 
 final class JwtTokenParserTest extends TestCaseWithSecrets
 {
