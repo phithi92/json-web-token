@@ -14,9 +14,10 @@ use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 class RsaEncryptionService extends ContentCryptoService
 {
     /**
+     * 
+     * @param EncryptedJwtBundle $bundle
      * @param array<string,int|string> $config
-     *
-     * @throws DecryptionException
+     * @return void
      */
     public function decryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
@@ -26,9 +27,10 @@ class RsaEncryptionService extends ContentCryptoService
     }
 
     /**
+     * 
+     * @param EncryptedJwtBundle $bundle
      * @param array<string,int|string> $config
-     *
-     * @throws EncryptionException
+     * @return void
      */
     public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
@@ -37,8 +39,11 @@ class RsaEncryptionService extends ContentCryptoService
     }
 
     /**
+     * 
+     * @param EncryptedJwtBundle $bundle
+     * @param string $kid
      * @param array<string,int|string> $config
-     *
+     * @return void
      * @throws DecryptionException
      */
     public function decrypt(EncryptedJwtBundle $bundle, string $kid, array $config): void
@@ -53,15 +58,16 @@ class RsaEncryptionService extends ContentCryptoService
             throw new DecryptionException($message);
         }
 
-        /**
-         * @var string $decrypted
-         */
+        /** @var string $decrypted */
         $bundle->getPayload()->fromJson($decrypted);
     }
 
     /**
+     * 
+     * @param EncryptedJwtBundle $bundle
+     * @param string $kid
      * @param array<string,int|string> $config
-     *
+     * @return void
      * @throws InvalidTokenException
      */
     public function encrypt(EncryptedJwtBundle $bundle, string $kid, array $config): void
@@ -76,12 +82,16 @@ class RsaEncryptionService extends ContentCryptoService
             throw new InvalidTokenException($message);
         }
 
-        /**
-         * @var string $encrypted
-         */
+        /** @var string $encrypted */
         $bundle->getPayload()->setEncryptedPayload($encrypted);
     }
 
+    /**
+     * 
+     * @param EncryptedJwtBundle $bundle
+     * @return string
+     * @throws InvalidSignatureException
+     */
     private function getKid(EncryptedJwtBundle $bundle): string
     {
         if (! $bundle->getHeader()->hasKid()) {

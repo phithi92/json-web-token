@@ -75,9 +75,7 @@ class RsaKeyService extends KeyCryptoService
             throw new DecryptionException($message);
         }
 
-        /**
-         * @var string $cek
-         */
+        /** @var string $cek */
         return $cek;
     }
 

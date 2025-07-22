@@ -18,9 +18,11 @@ class EcdsaService extends SignatureService
     private array $checkedKeys = [];
 
     /**
+     * 
+     * @param EncryptedJwtBundle $bundle
      * @param array<string, string> $config
-     *
-     * @throws SignatureComputationFailedException|InvalidSignatureException
+     * @return void
+     * @throws SignatureComputationFailedException
      */
     public function computeSignature(EncryptedJwtBundle $bundle, array $config): void
     {
@@ -43,8 +45,10 @@ class EcdsaService extends SignatureService
     }
 
     /**
+     * 
+     * @param EncryptedJwtBundle $bundle
      * @param array<string, string> $config
-     *
+     * @return void
      * @throws InvalidSignatureException
      */
     public function validateSignature(EncryptedJwtBundle $bundle, array $config): void
@@ -69,8 +73,11 @@ class EcdsaService extends SignatureService
     }
 
     /**
-     * Validates the EC key curve against the algorithm and caches the result.
-     *
+     * 
+     * @param string $kid
+     * @param string $hashAlgorithm
+     * @param string $role
+     * @return OpenSSLAsymmetricKey
      * @throws InvalidSignatureException
      */
     private function assertEcdsaKeyIsValid(string $kid, string $hashAlgorithm, string $role): OpenSSLAsymmetricKey
@@ -106,16 +113,32 @@ class EcdsaService extends SignatureService
         return $key;
     }
 
+    /**
+     * 
+     * @param string $kid
+     * @return OpenSSLAsymmetricKey|null
+     */
     private function getCachedEcdsaKey(string $kid): ?OpenSSLAsymmetricKey
     {
         return $this->checkedKeys[$kid] ?? null;
     }
 
+    /**
+     * 
+     * @param string $kid
+     * @param OpenSSLAsymmetricKey $key
+     * @return void
+     */
     private function cacheEcdsaKeyValidation(string $kid, OpenSSLAsymmetricKey $key): void
     {
         $this->checkedKeys[$kid] = $key;
     }
 
+    /**
+     * 
+     * @param string $hashAlgorithm
+     * @return string
+     */
     private function resolveExpectedCurve(string $hashAlgorithm): string
     {
         return match (strtolower($hashAlgorithm)) {
