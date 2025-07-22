@@ -20,7 +20,7 @@ final class PassphraseStore implements PassphraseStoreInterface
         return $this->phrases[$kid] = $passphrase;
     }
 
-    public function getPassphrase(string $kid): string
+    public function getPassphrase(#[\SensitiveParameter] string $kid): string
     {
         if (! isset($this->phrases[$kid])) {
             throw new RuntimeException("No passphrase found for ID: {$kid}");
@@ -29,7 +29,7 @@ final class PassphraseStore implements PassphraseStoreInterface
         return $this->phrases[$kid];
     }
 
-    public function hasPassphrase(string $kid): bool
+    public function hasPassphrase(#[\SensitiveParameter] string $kid): bool
     {
         return isset($this->phrases[$kid]);
     }
