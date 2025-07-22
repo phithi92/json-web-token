@@ -14,6 +14,28 @@ use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
 
 final class JwtTokenBuilder
 {
+    private const HANDLER_MAPPINGS = [
+        'cek' => [
+            CekHandlerInterface::class,
+            'initializeCek',
+        ],
+        'key_management' => [
+            KeyHandlerInterface::class,
+            'wrapKey',
+        ],
+        'signing_algorithm' => [
+            SignatureHandlerInterface::class,
+            'computeSignature',
+        ],
+        'iv' => [
+            IvHandlerInterface::class,
+            'initializeIv',
+        ],
+        'content_encryption' => [
+            PayloadHandlerInterface::class,
+            'encryptPayload',
+        ],
+    ];
     private readonly JwtAlgorithmManager $manager;
 
     public function __construct(
@@ -52,7 +74,7 @@ final class JwtTokenBuilder
         $header = $this->createHeader($typ, $alg, $kid, $enc);
         $bundle = new EncryptedJwtBundle($header, $payload);
 
-        foreach ($this->getHandlerMappings() as $key => [$interface, $method]) {
+        foreach (self::HANDLER_MAPPINGS as $key => [$interface, $method]) {
             $this->applyHandler($bundle, $config, $key, $interface, $method);
         }
 
@@ -87,37 +109,6 @@ final class JwtTokenBuilder
         }
 
         return implode('_', $parts);
-    }
-
-    /**
-     * Handler-Mapping-Konfiguration: [config-key => [Interface, Methode]]
-     *
-     * @return array<string, array{class-string, string}>
-     */
-    private function getHandlerMappings(): array
-    {
-        return [
-            'cek' => [
-                CekHandlerInterface::class,
-                'initializeCek',
-            ],
-            'key_management' => [
-                KeyHandlerInterface::class,
-                'wrapKey',
-            ],
-            'signing_algorithm' => [
-                SignatureHandlerInterface::class,
-                'computeSignature',
-            ],
-            'iv' => [
-                IvHandlerInterface::class,
-                'initializeIv',
-            ],
-            'content_encryption' => [
-                PayloadHandlerInterface::class,
-                'encryptPayload',
-            ],
-        ];
     }
 
     /**

@@ -14,6 +14,31 @@ use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
 final class JwtTokenDecryptor
 {
     /**
+     * Handler-Mapping-Konfiguration: [config-key => [Interface, Methode]]
+     */
+    private const HANDLER_MAPPINGS = [
+        'key_management' => [
+            KeyHandlerInterface::class,
+            'unwrapKey',
+        ],
+        'cek' => [
+            CekHandlerInterface::class,
+            'validateCek',
+        ],
+        'iv' => [
+            IvHandlerInterface::class,
+            'validateIv',
+        ],
+        'signing_algorithm' => [
+            SignatureHandlerInterface::class,
+            'validateSignature',
+        ],
+        'content_encryption' => [
+            PayloadHandlerInterface::class,
+            'decryptPayload',
+        ],
+    ];
+    /**
      * @var JwtAlgorithmManager Handles algorithm resolution and handler configuration.
      */
     private readonly JwtAlgorithmManager $manager;
@@ -68,7 +93,7 @@ final class JwtTokenDecryptor
 
         $config = $this->manager->getConfiguration($algorithm);
 
-        foreach ($this->getHandlerMappings() as $key => [$interface, $method]) {
+        foreach (self::HANDLER_MAPPINGS as $key => [$interface, $method]) {
             /*
              * @var class-string<object> $interface
              */
@@ -93,37 +118,6 @@ final class JwtTokenDecryptor
         $alg = $header->getAlgorithm() ?? throw new InvalidTokenException('no algorithm');
 
         return $alg === 'dir' && $header->getEnc() !== null ? $header->getEnc() : $alg;
-    }
-
-    /**
-     * Maps JWT cryptographic roles to their corresponding interface and handler method.
-     *
-     * @return array<string, array{0: class-string, 1: string}> Map of role key to [interface, method].
-     */
-    private function getHandlerMappings(): array
-    {
-        return [
-            'key_management' => [
-                KeyHandlerInterface::class,
-                'unwrapKey',
-            ],
-            'cek' => [
-                CekHandlerInterface::class,
-                'validateCek',
-            ],
-            'iv' => [
-                IvHandlerInterface::class,
-                'validateIv',
-            ],
-            'signing_algorithm' => [
-                SignatureHandlerInterface::class,
-                'validateSignature',
-            ],
-            'content_encryption' => [
-                PayloadHandlerInterface::class,
-                'decryptPayload',
-            ],
-        ];
     }
 
     /**
