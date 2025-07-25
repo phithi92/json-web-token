@@ -62,14 +62,7 @@ final class JwtTokenBuilder
     ): EncryptedJwtBundle {
         $config = $this->manager->getConfiguration($algorithm);
 
-        $typ = $config['token_type'];
-        $alg = $config['alg'] ?? null;
-        /** @var string $enc */
-        $enc = $config['enc'] ?? null;
-
-        if (! is_string($typ) || ! is_string($alg)) {
-            throw new LogicException('Invalid algorithm configuration');
-        }
+        [$typ,$alg,$enc] = $this->extractHeaderParams($config);
 
         $header = $this->createHeader($typ, $alg, $kid, $enc);
         $bundle = new EncryptedJwtBundle($header, $payload);
@@ -79,6 +72,25 @@ final class JwtTokenBuilder
         }
 
         return $bundle;
+    }
+    
+    /**
+     * 
+     * @param array $config
+     * @return array{string,string|null,string|null}
+     * @throws LogicException
+     */
+    private function extractHeaderParams(array $config):array
+    {
+        if (!isset($config['token_type'], $config['alg'])) {
+            throw new LogicException('Incomplete algorithm configuration');
+        }
+        
+        return [
+            $config['token_type'],
+            $config['alg'] ?? null,
+            $config['enc'] ?? null
+        ];
     }
 
     /**
