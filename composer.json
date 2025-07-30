@@ -32,7 +32,7 @@
     "scripts": {
         "test": "phpunit --configuration phpunit.xml",
 
-        "analyze": "@php vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=1G",
+        "analyse": "@php vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=1G",
         "style": "phpcs --standard=PSR12 src/",
 
         "benchmark": "@php vendor/bin/phpbench run tests/phpbench/* --report=benchmark",
