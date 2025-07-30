@@ -145,7 +145,8 @@ return [
 
         'key_management' => [
             'hash' => 'sha1',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\RsaOaepKeyService::class,
+            'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
+            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService::class,
         ],
 
         'iv' => [
@@ -155,6 +156,7 @@ return [
 
         'cek' => [
             'length' => 256, // bits
+            'strict_length' => false,
             'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
         ],
 
@@ -173,7 +175,8 @@ return [
 
         'key_management' => [
             'hash' => 'sha256',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\RsaOaepKeyService::class,
+            'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
+            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService::class,
         ],
 
         'iv' => [
@@ -183,6 +186,7 @@ return [
 
         'cek' => [
             'length' => 256, // bits
+            'strict_length' => false,
             'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
         ],
 
@@ -200,8 +204,8 @@ return [
         'enc' => 'A256GCM',
 
         'key_management' => [
-            'padding' => OPENSSL_PKCS1_PADDING,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\RsaKeyService::class,
+            'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_PKCS1,
+            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService::class,
         ],
 
         'iv' => [
@@ -211,8 +215,8 @@ return [
         ],
 
         'cek' => [
-            'length' => 256,
-        // bits
+            'length' => 256, // bits
+            'strict_length' => false,
             'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
         ],
 
@@ -243,6 +247,7 @@ return [
 
         'cek' => [
             'length' => 128,// bits
+            'strict_length' => false,
             'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
         ],
     ],
@@ -256,19 +261,17 @@ return [
 
         'content_encryption' => [
             'length' => 192,
-    // bits
             'mac_bit_length' => null,
             'handler' => \Phithi92\JsonWebToken\Crypto\Content\AesGcmService::class,
         ],
         'iv' => [
-            'length' => 96,
-        // bits
+            'length' => 96, // bits
             'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class,
         ],
 
         'cek' => [
             'length' => 192,
-        // bits
+            'strict_length' => false,
             'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
         ],
     ],
@@ -287,14 +290,13 @@ return [
         ],
 
         'iv' => [
-            'length' => 96,
-        // bits
+            'length' => 96, // bits
             'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class,
         ],
 
         'cek' => [
             'length' => 256,
-        // bits
+            'strict_length' => false,
             'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
         ],
     ],
