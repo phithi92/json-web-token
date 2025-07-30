@@ -147,7 +147,7 @@ class JwtPayload
      * Adds a field to the token data (JWT payload).
      * Ensures that the key is unique and the value is a valid type (scalar or array).
      *
-     * @param string                                                              $key   The key of the field to add.
+     * @param string $key The key of the field to add.
      * @param array<string, array<string,string>|int|string|null>|int|string|null $value
      *
      * @return self Returns the instance to allow method chaining.
@@ -446,12 +446,22 @@ class JwtPayload
      */
     private function ensureValidClaimValue(string $key, mixed $value): void
     {
-        if ($value === null || $value === '' || $value === []) {
+        if ($this->isEmpty($value)) {
             throw new EmptyFieldException($key);
         }
 
-        if (is_scalar($value) === false && is_array($value) === false) {
+        if (! $this->isAcceptableType($value)) {
             throw new InvalidValueTypeException();
         }
+    }
+
+    private function isEmpty(mixed $value): bool
+    {
+        return $value === null || $value === '' || $value === [];
+    }
+
+    private function isAcceptableType(mixed $value): bool
+    {
+        return is_scalar($value) || is_array($value);
     }
 }
