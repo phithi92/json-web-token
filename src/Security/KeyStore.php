@@ -142,8 +142,11 @@ final class KeyStore
     /**
      * @throws RuntimeException
      */
-    private function extractKey(#[SensitiveParameter] string|OpenSSLAsymmetricKey $pem, ?string $role = null): OpenSSLAsymmetricKey
-    {
+    private function extractKey(
+        #[SensitiveParameter]
+        string|OpenSSLAsymmetricKey $pem,
+        ?string $role = null
+    ): OpenSSLAsymmetricKey {
         if ($pem instanceof OpenSSLAsymmetricKey) {
             if ($role === null) {
                 throw new RuntimeException('Role must be provided when using an OpenSSLAsymmetricKey instance.');
@@ -161,8 +164,11 @@ final class KeyStore
     /**
      * @throws RuntimeException
      */
-    private function parseAsymmetricKey(#[SensitiveParameter] string|OpenSSLAsymmetricKey $pem, ?string $role = null): OpenSSLAsymmetricKey
-    {
+    private function parseAsymmetricKey(
+        #[SensitiveParameter]
+        string|OpenSSLAsymmetricKey $pem,
+        ?string $role = null
+    ): OpenSSLAsymmetricKey {
         $key = match ($role) {
             'private' => openssl_pkey_get_private($pem),
             'public' => openssl_pkey_get_public($pem),

@@ -38,6 +38,7 @@ final class JwtTokenDecryptor
             'decryptPayload',
         ],
     ];
+
     /**
      * @var JwtAlgorithmManager Handles algorithm resolution and handler configuration.
      */
