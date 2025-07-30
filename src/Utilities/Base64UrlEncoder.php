@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Utilities;
 
+use Phithi92\JsonWebToken\Exceptions\Base64\InvalidBase64UrlFormatException;
+
 /**
  * Class Base64UrlEncoder
  *
@@ -42,11 +44,25 @@ final class Base64UrlEncoder
      */
     public static function decode(string $string, bool $padding = false): string
     {
+        // add optional padding
         $remainder = strlen($string) % 4;
         if ($padding && $remainder > 0) {
             $string .= str_repeat('=', 4 - $remainder);
         }
 
-        return base64_decode(strtr($string, '-_', '+/'));
+        // Base64URL to Base64
+        $base64 = strtr($string, '-_', '+/');
+
+        // decode
+        $decoded = base64_decode($base64, true);
+
+        if ($decoded === false) {
+            $snippet = substr($string, 0, 30) . (strlen($string) > 30 ? '...' : '');
+            throw new InvalidBase64UrlFormatException(
+                sprintf('Invalid Base64Url input: "%s"', $snippet)
+            );
+        }
+
+        return $decoded;
     }
 }
