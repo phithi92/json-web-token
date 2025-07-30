@@ -7,7 +7,7 @@ namespace Phithi92\JsonWebToken\Crypto\Encryption;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EmptyInitializeVectorException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorConfigException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializeVectorException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorException;
 use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
 
 /**

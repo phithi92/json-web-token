@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Interfaces;
 
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
-use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializeVectorException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorException;
 
 interface IvHandlerInterface
 {
@@ -26,7 +26,7 @@ interface IvHandlerInterface
      * @param array<string, string> $config
      *          Configuration array (expects 'length' in bits).
      *
-     * @throws InvalidInitializeVectorException If the IV is missing or has incorrect length.
+     * @throws InvalidInitializationVectorException If the IV is missing or has incorrect length.
      */
     public function validateIv(EncryptedJwtBundle $bundle, array $config): void;
 }
