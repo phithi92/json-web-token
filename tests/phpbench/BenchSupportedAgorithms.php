@@ -3,6 +3,7 @@
 require_once __DIR__ . '/BenchmarkBase.php';
 
 use Phithi92\JsonWebToken\JwtTokenFactory;
+use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use PhpBench\Attributes as Bench;
@@ -31,7 +32,8 @@ class BenchSupportedAgorithms extends BenchmarkBase
 
         try {
             JwtTokenFactory::decryptToken($this->getManager(), $token);
-        } catch (ExpiredPayloadException) {
+        } catch (PayloadException $e) {
+            assert($e instanceof ExpiredPayloadException);
         }
     }
 
@@ -41,7 +43,8 @@ class BenchSupportedAgorithms extends BenchmarkBase
 
         try {
             JwtTokenFactory::decryptToken($this->getManager(), $token);
-        } catch (TokenException) {
+        } catch (TokenException $e) {
+            assert($e instanceof TokenException);
         }
     }
 }

@@ -12,23 +12,12 @@ class SupportedAlgorithmsTest extends TestCaseWithSecrets
 {
     protected static array $supportedAlgorithms;
 
-    public function setUp(): void
-    {
-        parent::setUp();
-    }
-
     public static function algorithmProvider(): array
     {
-        if (isset(self::$supportedAlgorithms)) {
-            return self::$supportedAlgorithms;
-        }
-
-        $algorithms = KeyProvider::getSupportedAlgorithms();
-
         // korrektes Format erzeugen:
         return self::$supportedAlgorithms = array_map(
             fn(string $alg): array => [$alg],
-            $algorithms
+            KeyProvider::getSupportedAlgorithms()
         );
     }
 

@@ -23,9 +23,13 @@ class KeyProvider
         return [$kid => ['passphrase' => PemProvider::getPassphrase($path)]];
     }
 
+    public static function getKey(string $key): array
+    {
+        return self::getAll()[$key] ?? [];
+    }
+
     public static function getAll(): array
     {
-
         return array_merge(
             //rs
             self::createAsymetricKeysItem('RS256', 'rsa/2048'),

@@ -88,7 +88,7 @@ abstract class BenchmarkBase
                 $parts[2] = 'invalidsig';
             } elseif (count($parts) === 5) {
                 $parts[1] = 'invalidiv';
-                $parts[4] = 'sinvalidsig';
+                $parts[4] = 'invalidauthtag';
             }
 
             $token = implode('.', $parts);

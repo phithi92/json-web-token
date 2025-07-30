@@ -19,37 +19,37 @@ use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 final class JwtValidatorTest extends TestCase
 {
     private function createPayload(array $data): JwtPayload
-    {        
+    {
         $payload = new JwtPayload();
-        
-        if(isset($data['exp'])) {
+
+        if (isset($data['exp'])) {
             $payload->setExpiration($data['exp']);
         }
-        
-        if(isset($data['nbf'])) {
+
+        if (isset($data['nbf'])) {
             $payload->setNotBefore($data['nbf']);
         }
-        
-        if(isset($data['iat'])) {
+
+        if (isset($data['iat'])) {
             $payload->setIssuedAt($data['iat']);
         }
-        
-        if(isset($data['iss'])) {
+
+        if (isset($data['iss'])) {
             $payload->setIssuer($data['iss']);
         }
-        
-        if(isset($data['aud'])) {
+
+        if (isset($data['aud'])) {
             $payload->setAudience($data['aud']);
         }
-        
-        if(isset($data['customClaim'])){
+
+        if (isset($data['customClaim'])) {
             $payload->addClaim('customClaim', $data['customClaim']);
         }
-        
-        if(isset($data['role'])){
+
+        if (isset($data['role'])) {
             $payload->addClaim('role', $data['role']);
         }
-        
+
         return $payload;
     }
 
@@ -65,11 +65,11 @@ final class JwtValidatorTest extends TestCase
             'customClaim' => 'abc'
             ]
         );
-        
+
         $validator = new JwtValidator('trusted-issuer', 'my-app', 2, ['customClaim' => 'abc']);
-        
+
         $validator->assertValid($payload);
-        
+
         $this->assertTrue($validator->isValid($payload));
     }
 
