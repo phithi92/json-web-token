@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken;
 
 use LogicException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
 use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
@@ -14,6 +15,8 @@ use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
 
 final class JwtTokenBuilder
 {
+    private const KID_PART_SEPARATOR = '_';
+
     private const HANDLER_MAPPINGS = [
         'cek' => [
             CekHandlerInterface::class,
@@ -50,8 +53,9 @@ final class JwtTokenBuilder
     }
 
     /**
-     * ❌ Do NOT use this method in production code.
-     * ❌ It disables claim and context verification.
+     * DO NOT USE in production: skips all validation logic.
+     *
+     * This method bypasses claim/context validation and should only be used for testing.
      *
      * @throws LogicException
      */
@@ -62,7 +66,7 @@ final class JwtTokenBuilder
     ): EncryptedJwtBundle {
         $config = $this->manager->getConfiguration($algorithm);
 
-        [$typ,$alg,$enc] = $this->extractHeaderParams($config);
+        [$typ, $alg, $enc] = $this->extractHeaderParams($config);
 
         $header = $this->createHeader($typ, $alg, $kid, $enc);
         $bundle = new EncryptedJwtBundle($header, $payload);
@@ -73,36 +77,72 @@ final class JwtTokenBuilder
 
         return $bundle;
     }
-    
+
     /**
-     * 
-     * @param array $config
-     * @return array{string,string|null,string|null}
-     * @throws LogicException
+     * Extracts core header parameters from algorithm configuration.
+     *
+     * @param array<string, mixed> $config
+     *
+     * @return array{string,string|null,string|null} [$typ, $alg, $enc]
+     *
+     * @throws LogicException If required keys are missing
      */
-    private function extractHeaderParams(array $config):array
+    private function extractHeaderParams(array $config): array
     {
-        if (!isset($config['token_type'], $config['alg'])) {
-            throw new LogicException('Incomplete algorithm configuration');
+        $tokenType = $config['token_type'] ?? null;
+        $alg = $config['alg'] ?? null;
+        $enc = $config['enc'] ?? null;
+
+        $this->assertResolvableHeaderConfig($tokenType, $alg, $enc);
+
+        /** @var string $tokenType */
+        /** @var string|null $alg */
+        /** @var string|null $enc */
+
+        return [$tokenType, $alg, $enc];
+    }
+
+    private function assertResolvableHeaderConfig(mixed $tokenType, mixed $alg, mixed $enc): void
+    {
+        if (! is_string($tokenType) || (! is_string($alg) && $alg !== null) || (! is_string($enc) && $enc !== null)) {
+            throw new LogicException('Invalid header configuration');
         }
-        
-        return [
-            $config['token_type'],
-            $config['alg'] ?? null,
-            $config['enc'] ?? null
-        ];
     }
 
     /**
      * Create header on config and params
      */
-    private function createHeader(string $typ, string $alg, ?string $kid, ?string $enc): JwtHeader
+    private function createHeader(string $typ, ?string $alg, ?string $kid, ?string $enc): JwtHeader
+    {
+        if ($alg === null) {
+            throw new InvalidFormatException('Incomplete token header configuration');
+        }
+
+        $kid ??= $this->buildDefaultKid($alg, $enc);
+
+        $this->assertResolvableKid($kid);
+
+        return $this->buildHeader($typ, $alg, $enc, $kid);
+    }
+
+    private function assertResolvableKid(string $kid): void
+    {
+        if (! $this->isResolvableKid($kid)) {
+            throw new UnresolvableKeyException($kid);
+        }
+    }
+
+    private function isResolvableKid(string $kid): bool
+    {
+        return $this->manager->hasKey($kid) || $this->manager->hasPassphrase($kid);
+    }
+
+    private function buildHeader(string $typ, string $alg, ?string $enc, string $kid): JwtHeader
     {
         $header = (new JwtHeader())->setType($typ)->setAlgorithm($alg);
 
-        $kid ??= $this->buildDefaultKid($alg, $enc);
-        if (! $this->manager->hasKey($kid) && ! $this->manager->hasPassphrase($kid)) {
-            throw new UnresolvableKeyException($kid);
+        if ($enc !== null) {
+            $header->setEnc($enc);
         }
 
         return $header->setKid($kid);
@@ -120,7 +160,7 @@ final class JwtTokenBuilder
             $parts[] = $enc;
         }
 
-        return implode('_', $parts);
+        return implode(self::KID_PART_SEPARATOR, $parts);
     }
 
     /**
