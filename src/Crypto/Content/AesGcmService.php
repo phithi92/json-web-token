@@ -17,7 +17,7 @@ use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
  * of JWT payloads using AES in Galois/Counter Mode (GCM), as specified
  * in the JSON Web Encryption (JWE) standard.
  */
-class AesGcmService extends ContentCryptoService
+final class AesGcmService extends ContentCryptoService
 {
     protected const OPENSSL_OPTIONS = OPENSSL_RAW_DATA;
 
@@ -28,20 +28,99 @@ class AesGcmService extends ContentCryptoService
      */
     public function decryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
-        $bits = (int) $config['length'];
-        $algorithm = sprintf('aes-%s-gcm', $bits);
+        $algorithm = $this->buildAlgorithmNameFromKeyLength($config);
 
-        $cek = $bundle->getEncryption()->getCek();
-        $iv = $bundle->getEncryption()->getIv();
-        $authTag = $bundle->getEncryption()->getAuthTag();
-        $aad = $bundle->getEncryption()->getAad();
-        $ciphertext = $bundle->getPayload()->getEncryptedPayload();
+        [$cek,$iv,$ciphertext,$authTag,$aad] = $this->extractTokenDecryptionComponents($bundle);
 
+        $plaintext = $this->decrypt(
+            $algorithm,
+            self::OPENSSL_OPTIONS,
+            $ciphertext,
+            $cek,
+            $iv,
+            $authTag,
+            $aad
+        );
+
+        $bundle->getPayload()->fromJson($plaintext);
+    }
+
+    /**
+     * @param array<string,int|string> $config
+     */
+    public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
+    {
+        $algorithm = $this->buildAlgorithmNameFromKeyLength($config);
+
+        [$cek,$iv,$plaintext,$aad] = $this->extractTokenEncryptionComponents($bundle);
+
+        [$encrypted, $authTag] = $this->encrypt(
+            $algorithm,
+            self::OPENSSL_OPTIONS,
+            $plaintext,
+            $cek,
+            $iv,
+            $aad
+        );
+
+        $bundle->getPayload()->setEncryptedPayload($encrypted);
+        $bundle->getEncryption()->setAuthTag($authTag);
+    }
+
+    /**
+     * @param array<string,int|string> $config
+     */
+    private function buildAlgorithmNameFromKeyLength(array $config): string
+    {
+        /** @var int $bits */
+        $bits = $config['length'];
+        return sprintf('aes-%s-gcm', $bits);
+    }
+
+    /**
+     * @return array{string,string,string,string,string}
+     */
+    private function extractTokenDecryptionComponents(EncryptedJwtBundle $bundle): array
+    {
+        return [
+            $bundle->getEncryption()->getCek(),
+            $bundle->getEncryption()->getIv(),
+            $bundle->getPayload()->getEncryptedPayload(),
+            $bundle->getEncryption()->getAuthTag(),
+            $bundle->getEncryption()->getAad(),
+        ];
+    }
+
+    /**
+     * @return array{string,string,string,string}
+     */
+    private function extractTokenEncryptionComponents(EncryptedJwtBundle $bundle): array
+    {
+        return [
+            $bundle->getEncryption()->getCek(),
+            $bundle->getEncryption()->getIv(),
+            $bundle->getPayload()->toJson(),
+            Base64UrlEncoder::encode($bundle->getHeader()->toJson()),
+        ];
+    }
+
+    /**
+     * @throws InvalidTokenException
+     */
+    private function decrypt(
+        string $algorithm,
+        int $options,
+        string $ciphertext,
+        string $cek,
+        string $iv,
+        string $authTag,
+        string $aad
+    ): string {
         $plaintext = openssl_decrypt(
             $ciphertext,
             $algorithm,
             $cek,
-            self::OPENSSL_OPTIONS,
+            $options,
             $iv,
             $authTag,
             $aad
@@ -52,43 +131,39 @@ class AesGcmService extends ContentCryptoService
             throw new InvalidTokenException($message);
         }
 
-        $bundle->getPayload()->fromJson($plaintext);
+        return $plaintext;
     }
 
     /**
-     * @param array<string,int|string> $config
+     * @return array{string,string}
+     *
+     * @throws EncryptionException
      */
-    public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
-    {
-        $bits = (int) $config['length'];
-        $algorithm = sprintf('aes-%s-gcm', $bits);
-
-        $cek = $bundle->getEncryption()->getCek();
-        $iv = $bundle->getEncryption()->getIv();
-        $plaintext = $bundle->getPayload()->toJson();
-        $headerJson = $bundle->getHeader()->toJson();
-        $aad = Base64UrlEncoder::encode($headerJson);
-
+    private function encrypt(
+        string $algorithm,
+        int $options,
+        string $plaintext,
+        string $cek,
+        string $iv,
+        string $aad
+    ): array {
         $authTag = '';
         $encrypted = openssl_encrypt(
             $plaintext,
             $algorithm,
             $cek,
-            self::OPENSSL_OPTIONS,
+            $options,
             $iv,
             $authTag,
             $aad
         );
 
-        if (! $encrypted) {
+        if ($encrypted === false) {
             $message = OpenSslErrorHelper::getFormattedErrorMessage('Encrypt Payload Failed: ');
             throw new EncryptionException($message);
         }
 
-        $bundle->getPayload()->setEncryptedPayload($encrypted);
-        /**
-         * @var string $authTag
-         */
-        $bundle->getEncryption()->setAuthTag($authTag);
+        /** @var string $authTag */
+        return [$encrypted,$authTag];
     }
 }

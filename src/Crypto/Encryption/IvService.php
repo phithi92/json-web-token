@@ -24,17 +24,14 @@ final class IvService implements IvHandlerInterface
      */
     public function initializeIv(EncryptedJwtBundle $bundle, array $config): void
     {
-        $bits = (int) $config['length'];
+        $bits = $this->getBitLengthFromConfig($config);
         $bytesLength = $this->normalizeAndValidateBitLength($bits);
 
-        $iv = random_bytes($bytesLength);
         // Secure random IV
-        if (strlen($iv) !== $bytesLength) {
-            throw new InvalidInitializeVectorException(strlen($iv), $bytesLength);
-        }
+        $iv = $this->generateRandomIv($bytesLength);
 
-        $bundle->getEncryption()->setIv($iv);
         // Store IV in the bundle
+        $bundle->getEncryption()->setIv($iv);
     }
 
     /**
@@ -43,27 +40,48 @@ final class IvService implements IvHandlerInterface
      * @param EncryptedJwtBundle        $bundle The JWT encryption container
      * @param array<string, int|string> $config
      *
-     * @throws InvalidInitializeVectorException If the IV is missing or has an unexpected length
+     * @throws InvalidInitializationVectorException If the IV is missing or has an unexpected length
      */
     public function validateIv(EncryptedJwtBundle $bundle, array $config): void
     {
-        $bits = (int) $config['length'];
+        $bits = $this->getBitLengthFromConfig($config);
         $bytesLength = $this->normalizeAndValidateBitLength($bits);
 
         $iv = $bundle->getEncryption()->getIv();
-        $ivLength = strlen($iv);
 
-        $this->assertValidIvLength($ivLength, $bytesLength);
+        // validate iv
+        $this->assertValidIvLength($iv, $bytesLength);
     }
 
-    private function assertValidIvLength(int $ivBytes, int $expectedBytes): void
+    /**
+     * @param array<string, int|string> $config
+     *
+     * @throws InvalidInitializationVectorConfigException
+     */
+    private function getBitLengthFromConfig(array $config): int
     {
+        if (! isset($config['length'])) {
+            throw new InvalidInitializationVectorConfigException(0, 0);
+        }
+
+        $length = $config['length'];
+
+        if (! is_int($length)) {
+            throw new InvalidInitializationVectorConfigException(0, 0);
+        }
+
+        return $length;
+    }
+
+    private function assertValidIvLength(string $iv, int $expectedBytes): void
+    {
+        $ivBytes = strlen($iv);
         if ($ivBytes === 0) {
             throw new EmptyInitializeVectorException();
         }
 
         if ($ivBytes !== $expectedBytes) {
-            throw new InvalidInitializeVectorException($ivBytes, $expectedBytes);
+            throw new InvalidInitializationVectorException($ivBytes, $expectedBytes);
         }
     }
 
@@ -80,5 +98,18 @@ final class IvService implements IvHandlerInterface
         }
 
         return $expectedBytes;
+    }
+
+    /**
+     * @param int<1, max> $byteLength
+     */
+    private function generateRandomIv(int $byteLength): string
+    {
+        $iv = random_bytes($byteLength);
+        if (strlen($iv) !== $byteLength) {
+            throw new InvalidInitializationVectorException(strlen($iv), $byteLength);
+        }
+
+        return $iv;
     }
 }

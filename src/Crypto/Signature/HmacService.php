@@ -15,10 +15,7 @@ class HmacService extends SignatureService
     private array $checkedHmacKeys;
 
     /**
-     * 
-     * @param EncryptedJwtBundle $bundle
      * @param array<string, string> $config
-     * @return void
      */
     public function computeSignature(EncryptedJwtBundle $bundle, array $config): void
     {
@@ -35,10 +32,8 @@ class HmacService extends SignatureService
     }
 
     /**
-     * 
-     * @param EncryptedJwtBundle $bundle
      * @param array<string, string> $config
-     * @return void
+     *
      * @throws InvalidSignatureException
      */
     public function validateSignature(EncryptedJwtBundle $bundle, array $config): void
@@ -61,11 +56,6 @@ class HmacService extends SignatureService
     }
 
     /**
-     * 
-     * @param string $kid
-     * @param string $algorithm
-     * @param string $passphrase
-     * @return void
      * @throws InvalidSignatureException
      */
     private function assertHmacKeyIsValid(string $kid, string $algorithm, string $passphrase): void

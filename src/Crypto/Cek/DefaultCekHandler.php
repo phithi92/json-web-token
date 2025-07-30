@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Cek;
 
-use InvalidArgumentException;
+use Exception;
+use LogicException;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidCekLength;
 use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
@@ -13,40 +14,77 @@ final class DefaultCekHandler implements CekHandlerInterface
 {
     public function initializeCek(EncryptedJwtBundle $bundle, array $config): void
     {
-        $bitLength = $this->getBitLength($config);
+        $byteLength = $this->getByteLength($config);
 
-        // Ensure at least 1 byte; random_bytes(0) throws and a 0-byte CEK is invalid.
-        $byteLength = max(1, intdiv($bitLength, 8));
-
-        $cek = random_bytes($byteLength);
+        $cek = $this->generateRandomCek($byteLength);
 
         $bundle->getEncryption()->setCek($cek);
     }
 
     public function validateCek(EncryptedJwtBundle $bundle, array $config): void
     {
-        $bitLength = $this->getBitLength($config);
-        $expectedBytes = intdiv($bitLength, 8);
-
         $cek = $bundle->getEncryption()->getCek();
+        $expectedBytes = $this->getByteLength($config);
+        $strict = ! empty($config['strict_length']);
+
+        $this->validateCekLength($cek, $expectedBytes, $strict);
+    }
+
+    private function validateCekLength(string $cek, int $expectedBytes, bool $strict): void
+    {
         $cekLength = strlen($cek);
 
-        if ($cekLength < $expectedBytes) {
-            throw new InvalidCekLength($cekLength, $expectedBytes);
+        if ($strict) {
+            if ($cekLength !== $expectedBytes) {
+                throw new InvalidCekLength($cekLength, $expectedBytes);
+            }
+        } else {
+            if ($cekLength < $expectedBytes) {
+                throw new InvalidCekLength($cekLength, $expectedBytes);
+            }
         }
     }
 
     /**
-     * @param array<string,int|string> $config
+     * Returns the CEK bytes length from configuration after validation.
      *
-     * @throws \InvalidArgumentException
+     * Ensures that the value is a positive integer and divisible by 8 (i.e., convertible to bytes).
+     *
+     * Assumes that the configured bit length is always at least 16 bits,
+     * so the resulting byte length is guaranteed to be ≥ 2.
+     *
+     * @param array<string, int|string> $config Configuration array with 'length' key in bits
+     *
+     * @return int The CEK bytes length
+     *
+     * @phpstan-return int<2, max>
+     *
+     * @throws LogicException If the bit length is missing, non-positive, or not divisible by 8
      */
-    private function getBitLength(array $config): int
+    private function getByteLength(array $config): int
     {
         $bitLength = (int) $config['length'];
-        if ($bitLength < 8) {
-            throw new InvalidArgumentException('CEK length must be >= 8 bits.');
+        if ($bitLength < 16 || $bitLength % 8 !== 0) {
+            throw new LogicException('Invalid CEK bit length: must be >= 16 and divisible by 8');
         }
-        return $bitLength;
+        return $bitLength >> 3;
+    }
+
+    /**
+     * Generates a cryptographically secure random CEK (Content Encryption Key).
+     *
+     * Uses PHP's random_bytes() to generate a binary string of the given byte length.
+     *
+     * @param int $byteLength The length of the CEK in bytes (must be ≥ 1)
+     *
+     * @phpstan-param int<1, max> $byteLength
+     *
+     * @return string Binary-encoded CEK
+     *
+     * @throws Exception If random_bytes() fails (e.g. due to system entropy issues)
+     */
+    private function generateRandomCek(int $byteLength): string
+    {
+        return random_bytes($byteLength);
     }
 }
