@@ -89,16 +89,21 @@ class JwtPayload
 
         // Iterate over the decoded data and set each key-value pair in the payload
         foreach ($payload as $key => $value) {
-            if (! is_string($value) && ! is_int($value)) {
+            if (! self::isValidClaimValue($value)) {
                 continue;
             }
-
+            
+            /** @var array<string, array<string, string>|int|string|null>|int|string|null $value */
             $instance->setClaim($key, $value, true);
-            // true allows overwriting fields
         }
 
         // Return the populated JwtPayload instance
         return $instance;
+    }
+    
+    private static function isValidClaimValue(mixed $value): bool
+    {
+        return is_string($value) || is_int($value) || is_array($value);
     }
 
     /**

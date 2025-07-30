@@ -116,13 +116,15 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
     private function buildPrivateKey(string $pem, int $padding, ?string $hash): RsaPrivateKey
     {
         /** @var RSAPrivateKey $key */
-        return $this->buildKey('private', $pem, $padding, $hash);
+        $key =  $this->buildKey('private', $pem, $padding, $hash);
+        return $key;
     }
 
     private function buildPublicKey(string $pem, int $padding, ?string $hash): RsaPublicKey
     {
         /** @var RSAPublicKey $key */
-        return $this->buildKey('public', $pem, $padding, $hash);
+        $key = $this->buildKey('public', $pem, $padding, $hash);
+        return $key;
     }
 
     private function buildKey(string $role, string $pem, int $padding, ?string $hash): RSAPrivateKey|RSAPublicKey
