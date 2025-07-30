@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken;
 
+use Phithi92\JsonWebToken\Exceptions\Json\JsonException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
@@ -18,6 +20,9 @@ use Phithi92\JsonWebToken\Utilities\JsonEncoder;
  */
 final class JwtHeader
 {
+    // Min/Max length for KID validation
+    private const MIN_KID_LENGTH = 3;
+    private const MAX_KID_LENGTH = 64;
     // The type of token, typically 'JWT' or 'JWS'
     private string $typ;
 
@@ -48,20 +53,8 @@ final class JwtHeader
      */
     public function setKid(string $kid): self
     {
-        // Define min and max length constraints for the 'kid'
-        $minLength = 3;
-        $maxLength = 64;
-
         // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
-        if (! preg_match('/^[a-zA-Z0-9_-]+$/', $kid)) {
-            throw new InvalidKidFormatException();
-        }
-
-        $kidLength = strlen($kid);
-
-        if ($kidLength < $minLength || $kidLength > $maxLength) {
-            throw new InvalidKidLengthException($minLength, $maxLength);
-        }
+        $this->assertValidKid($kid);
 
         $this->kid = $kid;
         return $this;
@@ -195,8 +188,7 @@ final class JwtHeader
      */
     public static function fromJson(string $json): self
     {
-        /** @var object{alg?: string, typ?: string, enc?: string, kid?: string} $data */
-        $data = JsonEncoder::decode($json, false);
+        $data = self::decodeHeaderJson($json);
 
         $map = [
             'alg' => 'setAlgorithm',
@@ -214,5 +206,69 @@ final class JwtHeader
         }
 
         return $instance;
+    }
+
+    /**
+     * @throws InvalidKidFormatException
+     * @throws InvalidKidLengthException
+     */
+    private function assertValidKid(string $kid): void
+    {
+        $kidLength = strlen($kid);
+
+        // validate `kid` length
+        if ($kidLength < self::MIN_KID_LENGTH || $kidLength > self::MAX_KID_LENGTH) {
+            throw new InvalidKidLengthException(self::MIN_KID_LENGTH, self::MAX_KID_LENGTH);
+        }
+
+        // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
+        if (! preg_match('/^[a-zA-Z0-9_-]+$/', $kid)) {
+            throw new InvalidKidFormatException();
+        }
+    }
+
+    /**
+     * @return object{
+     *     alg?: string,
+     *     typ?: string,
+     *     enc?: string,
+     *     kid?: string
+     * }
+     */
+    private static function decodeHeaderJson(string $json): object
+    {
+        $data = self::jsonDecode($json);
+
+        // Define allowed optional string keys
+        $allowedKeys = ['alg', 'typ', 'enc', 'kid'];
+
+        foreach (get_object_vars($data) as $key => $value) {
+            if (! in_array($key, $allowedKeys, true)) {
+                throw new InvalidFormatException("Unexpected header field: {$key}");
+            }
+
+            if (! is_string($value)) {
+                throw new InvalidFormatException("Header field '{$key}' must be a string.");
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Decode a JSON string into an associative array representing JWT headers.
+     *
+     * @throws InvalidFormatException
+     */
+    private static function jsonDecode(string $json): object
+    {
+        try {
+            /** @var object $data */
+            $data = JsonEncoder::decode($json, false);
+        } catch (JsonException) {
+            throw new InvalidFormatException('Token header is not valid JSON');
+        }
+
+        return $data;
     }
 }
