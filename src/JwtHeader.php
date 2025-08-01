@@ -189,7 +189,16 @@ final class JwtHeader
     public static function fromJson(string $json): self
     {
         $data = self::decodeHeaderJson($json);
-
+        return self::fromArray($data);
+    }
+    
+    /**
+     * 
+     * @param array<string,string> $data
+     * @return self
+     */
+    public static function fromArray(array $data): self
+    {
         $map = [
             'alg' => 'setAlgorithm',
             'typ' => 'setType',
