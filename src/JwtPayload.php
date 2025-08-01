@@ -89,21 +89,13 @@ class JwtPayload
 
         // Iterate over the decoded data and set each key-value pair in the payload
         foreach ($payload as $key => $value) {
-            if (! self::isValidClaimValue($value)) {
-                continue;
-            }
-            
+
             /** @var array<string, array<string, string>|int|string|null>|int|string|null $value */
             $instance->setClaim($key, $value, true);
         }
 
         // Return the populated JwtPayload instance
         return $instance;
-    }
-    
-    private static function isValidClaimValue(mixed $value): bool
-    {
-        return is_string($value) || is_int($value) || is_array($value);
     }
 
     /**
@@ -379,6 +371,11 @@ class JwtPayload
     public function getEncryptedPayload(): string
     {
         return $this->encryptedPayload;
+    }
+
+    private static function isValidClaimValue(mixed $value): bool
+    {
+        return is_string($value) || is_int($value) || is_array($value);
     }
 
     /**
