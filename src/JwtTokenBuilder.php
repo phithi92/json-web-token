@@ -45,7 +45,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
         $header = $this->createHeader($typ, $alg, $kid, $enc);
         $bundle = new EncryptedJwtBundle($header, $payload);
 
-        $this->dispatchHandlers($bundle, $algorithm, self::OPERATION);
+        $this->dispatchHandlers($bundle, $algorithm);
 
         return $bundle;
     }
