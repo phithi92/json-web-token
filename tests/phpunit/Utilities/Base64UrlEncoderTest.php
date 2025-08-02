@@ -23,7 +23,11 @@ class Base64UrlEncoderTest extends TestCase
         $expected = 'SGVsbG8sIFdvcmxkIQ';
 
         $actual = Base64UrlEncoder::encode($input);
-        $this->assertEquals($expected, $actual, 'The encoded string does not match the expected Base64 URL-safe string.');
+        $this->assertEquals(
+            $expected,
+            $actual,
+            'The encoded string does not match the expected Base64 URL-safe string.'
+        );
     }
 
     /**
@@ -35,7 +39,11 @@ class Base64UrlEncoderTest extends TestCase
         $expected = 'Hello, World!';
 
         $actual = Base64UrlEncoder::decode($input);
-        $this->assertEquals($expected, $actual, 'The decoded string does not match the expected original string.');
+        $this->assertEquals(
+            $expected,
+            $actual,
+            'The decoded string does not match the expected original string.'
+        );
     }
 
     public function testDecodeWithPadding()
@@ -44,19 +52,31 @@ class Base64UrlEncoderTest extends TestCase
         $inputWithPadding = 'U29tZSBkYXRhCg=='; // "Some data\n" in Base64 mit Padding
         $expected = "Some data\n";
         $actual = Base64UrlEncoder::decode($inputWithPadding, true);
-        $this->assertEquals($expected, $actual, 'The decoded string with explicit padding does not match the expected original string.');
+        $this->assertEquals(
+            $expected,
+            $actual,
+            'The decoded string with explicit padding does not match the expected original string.'
+        );
 
         // String, bei dem Padding benötigt wird (kein explizites '=' vorhanden)
         $inputMissingPadding = 'U29tZSBkYXRhCg'; // "Some data\n" in Base64 ohne Padding
         $expected = "Some data\n";
         $actual = Base64UrlEncoder::decode($inputMissingPadding, true);
-        $this->assertEquals($expected, $actual, 'The decoded string with added padding does not match the expected original string.');
+        $this->assertEquals(
+            $expected,
+            $actual,
+            'The decoded string with added padding does not match the expected original string.'
+        );
 
         // String, der durch Base64-Kodierung explizites Padding erzeugt
         $originalInput = "Pad this";
         $encodedWithPadding = Base64UrlEncoder::encode($originalInput); // Sollte auf URL-konformes Base64 konvertieren
         $expectedDecoded = Base64UrlEncoder::decode($encodedWithPadding, true);
-        $this->assertEquals($originalInput, $expectedDecoded, 'Reversible encoding and decoding with padding mismatch.');
+        $this->assertEquals(
+            $originalInput,
+            $expectedDecoded,
+            'Reversible encoding and decoding with padding mismatch.'
+        );
     }
 
     /**
@@ -69,7 +89,11 @@ class Base64UrlEncoderTest extends TestCase
         $encoded = Base64UrlEncoder::encode($input);
         $decoded = Base64UrlEncoder::decode($encoded);
 
-        $this->assertEquals($input, $decoded, 'The decoded string does not match the original input string.');
+        $this->assertEquals(
+            $input,
+            $decoded,
+            'The decoded string does not match the original input string.'
+        );
     }
 
     /**
@@ -82,7 +106,11 @@ class Base64UrlEncoderTest extends TestCase
         $encoded = Base64UrlEncoder::encode($input);
         $decoded = Base64UrlEncoder::decode($encoded);
 
-        $this->assertEquals($input, $decoded, 'The decoded string with special characters does not match the original input string.');
+        $this->assertEquals(
+            $input,
+            $decoded,
+            'The decoded string with special characters does not match the original input string.'
+        );
     }
 
     /**
@@ -95,6 +123,10 @@ class Base64UrlEncoderTest extends TestCase
         $encoded = Base64UrlEncoder::encode($input);
         $decoded = Base64UrlEncoder::decode($encoded);
 
-        $this->assertEquals($input, $decoded, 'The decoded string for an empty input does not match the original input string.');
+        $this->assertEquals(
+            $input,
+            $decoded,
+            'The decoded string for an empty input does not match the original input string.'
+        );
     }
 }

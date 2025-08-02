@@ -7,6 +7,7 @@ namespace Tests\phpunit;
 use Phithi92\JsonWebToken\JwtTokenParser;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
+use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use Phithi92\JsonWebToken\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\JwtTokenFactory;
@@ -18,7 +19,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
     {
         // Simulierter gültiger JWE-Header
         $header = ['alg' => 'dir', 'typ' => 'JWE', 'enc' => 'A256GCM','kid' => 'A256GCM'];
-        $headerJson = json_encode($header, JSON_THROW_ON_ERROR);
+        $headerJson = JsonEncoder::encode($header);
 
         $parts = [
             Base64UrlEncoder::encode($headerJson),           // Header
@@ -40,7 +41,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
     {
         // Simulierter gültiger JWE-Header
         $header = ['alg' => 'dir', 'enc' => 'A256GCM'];
-        $headerJson = json_encode($header, JSON_THROW_ON_ERROR);
+        $headerJson = JsonEncoder::encode($header);
 
         $parts = [
             Base64UrlEncoder::encode($headerJson),           // Header
@@ -116,7 +117,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
     {
         $cek = 'my_cek_secret';
         $header = ['alg' => 'dir', 'typ' => 'JWE', 'enc' => 'A256GCM'];
-        $headerJson = json_encode($header, JSON_THROW_ON_ERROR);
+        $headerJson = JsonEncoder::encode($header);
 
         $parts = [
             Base64UrlEncoder::encode($headerJson),
@@ -136,7 +137,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
         $this->expectException(InvalidFormatException::class);
 
         $header = ['alg' => 'HS256', 'typ' => 'JWS'];
-        $headerJson = json_encode($header, JSON_THROW_ON_ERROR);
+        $headerJson = JsonEncoder::encode($header);
 
         $invalidPayload = '{"sub": "user"'; // ungültiges JSON
         $signature = 'dummy_signature';
@@ -148,5 +149,34 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
         ];
 
         JwtTokenParser::parse(implode('.', $parts));
+    }
+
+    public function testInvalidTypInHeaderThrowsException(): void
+    {
+        $this->expectException(InvalidFormatException::class);
+
+        $header = ['alg' => 'none', 'typ' => 'XYZ'];
+        $payload = ['data' => 'value'];
+        $signature = 'sig';
+
+        $parts = [
+            Base64UrlEncoder::encode(json_encode($header, JSON_THROW_ON_ERROR)),
+            Base64UrlEncoder::encode(json_encode($payload, JSON_THROW_ON_ERROR)),
+            Base64UrlEncoder::encode($signature),
+        ];
+
+        JwtTokenParser::parse(implode('.', $parts));
+    }
+
+    public function testParseEmptyTokenThrowsException(): void
+    {
+        $this->expectException(InvalidFormatException::class);
+        JwtTokenParser::parse('');
+    }
+
+    public function testParseEmptyArrayThrowsException(): void
+    {
+        $this->expectException(InvalidFormatException::class);
+        JwtTokenParser::parse([]);
     }
 }

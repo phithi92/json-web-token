@@ -218,4 +218,88 @@ class JwtPayloadTest extends TestCase
         (new JwtPayload())
                 ->setNotBefore('invalid-date-format');
     }
+
+    public function testFromJsonCreatesValidPayload()
+    {
+        $json = json_encode([
+            'iss' => 'issuerTest',
+            'aud' => ['aud1', 'aud2'],
+            'custom' => 'customValue',
+        ]);
+
+        $payload = JwtPayload::fromJson($json);
+
+        $this->assertEquals('issuerTest', $payload->getClaim('iss'));
+        $this->assertEquals(['aud1', 'aud2'], $payload->getClaim('aud'));
+        $this->assertEquals('customValue', $payload->getClaim('custom'));
+    }
+
+    public function testFromArrayCreatesValidPayload()
+    {
+        $array = [
+            'iss' => 'arrayIssuer',
+            'aud' => 'arrayAudience',
+            'foo' => 'bar',
+        ];
+
+        $payload = JwtPayload::fromArray($array);
+
+        $this->assertEquals('arrayIssuer', $payload->getIssuer());
+        $this->assertEquals('arrayAudience', $payload->getAudience());
+        $this->assertEquals('bar', $payload->getClaim('foo'));
+    }
+
+    public function testAddEmptyClaimThrowsException()
+    {
+        $this->expectException(Exceptions\Payload\EmptyFieldException::class);
+        (new JwtPayload())->addClaim('empty', '');
+    }
+
+    public function testAddInvalidClaimTypeThrowsException()
+    {
+        $this->expectException(\TypeError::class);
+
+        (new JwtPayload())->addClaim('invalid', new \stdClass());
+    }
+
+    public function testFromJsonInvalidJsonThrowsException()
+    {
+        $this->expectException(Exceptions\Token\InvalidFormatException::class);
+        JwtPayload::fromJson('{"iss": invalid json}');
+    }
+
+    public function testEncryptedPayloadSetAndGet()
+    {
+        $payload = (new JwtPayload())->setEncryptedPayload('ENCRYPTED123');
+        $this->assertEquals('ENCRYPTED123', $payload->getEncryptedPayload());
+    }
+
+    public function testClaimOverwriteFalseDoesNotReplaceExisting()
+    {
+        $payload = new JwtPayload();
+        $payload->addClaim('claim1', 'original');
+        $payload->addClaim('claim1', 'new'); // overwrite = false
+
+        $this->assertEquals('original', $payload->getClaim('claim1'));
+    }
+
+    public function testHasClaimReturnsCorrectResult()
+    {
+        $payload = new JwtPayload();
+        $this->assertFalse($payload->hasClaim('missing'));
+
+        $payload->addClaim('exists', 'value');
+        $this->assertTrue($payload->hasClaim('exists'));
+    }
+
+    public function testIssuedAtAutoSetIfMissingInToArray()
+    {
+        $payload = new JwtPayload();
+        $payload->setIssuer('issuer');
+
+        $array = $payload->toArray();
+
+        $this->assertArrayHasKey('iat', $array);
+        $this->assertGreaterThan(0, $array['iat']);
+    }
 }
