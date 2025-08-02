@@ -66,8 +66,8 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         EncryptedJwtBundle $bundle,
         string $algorithm
     ): void {
-        $config = $this->manager->getConfiguration($algorithm);
-        $descriptors = $this->resolveApplicableHandlers($config);
+
+        [$config, $descriptors] = $this->resolveConfigAndHandlers($algorithm);
 
         foreach ($descriptors as $descriptor) {
             $this->dispatcher->dispatch(
@@ -84,11 +84,27 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     }
 
     /**
+     *
+     * @param string $algorithm
+     * @return array{
+     *     0: array<string, mixed>,
+     *     1: array<int, HandlerDescriptor>
+     * }
+     */
+    private function resolveConfigAndHandlers(string $algorithm): array
+    {
+        $config = $this->manager->getConfiguration($algorithm);
+        $descriptors = $this->resolveApplicableHandlers($config);
+
+        return [$config, $descriptors];
+    }
+
+    /**
      * Builds a list of handler descriptors based on available config keys.
      *
      * @param array<string, mixed> $config
      *
-     * @return array<HandlerDescriptor>
+     * @return array<int,HandlerDescriptor>
      */
     private function resolveApplicableHandlers(array $config): array
     {
@@ -100,6 +116,16 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
             }
         }
 
+        return $this->orderByPriority($descriptors);
+    }
+
+    /**
+     * @param array<int,HandlerDescriptor> $descriptors
+     *
+     * @return array<int,HandlerDescriptor>
+     */
+    private function orderByPriority(array $descriptors): array
+    {
         usort($descriptors, static fn ($a, $b) => $a->priority <=> $b->priority);
 
         return $descriptors;
