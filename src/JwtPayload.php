@@ -43,6 +43,11 @@ class JwtPayload
         $this->dateTimeImmutable = ($dateTime ?? new DateTimeImmutable());
     }
 
+    public function getReferenceTime(): DateTimeImmutable
+    {
+        return $this->dateTimeImmutable;
+    }
+
     /**
      * Creates a new instance of JwtPayload from a JSON string.
      * This static method parses the JSON input and populates the payload fields accordingly.
@@ -390,7 +395,7 @@ class JwtPayload
     {
         try {
             // Suppress warnings temporarily and handle them manually.
-            $adjustedDateTime = @$this->dateTimeImmutable->modify($dateTime);
+            $adjustedDateTime = @$this->getReferenceTime()->modify($dateTime);
         } catch (DateMalformedStringException) {
             throw new InvalidDateTimeException($dateTime);
         }

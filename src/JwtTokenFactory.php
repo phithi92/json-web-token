@@ -18,6 +18,12 @@ namespace Phithi92\JsonWebToken;
  */
 final class JwtTokenFactory
 {
+    private const RETAINED_CLAIMS = ['sub', 'aud', 'iss', 'role', 'permissions'];
+
+    private static ?JwtTokenBuilder $builderCache = null;
+
+    private static ?JwtTokenDecryptor $decryptorCache = null;
+
     /**
      * Creates a signed and/or encrypted JWT using the provided payload and algorithm.
      *
@@ -36,10 +42,8 @@ final class JwtTokenFactory
         ?JwtValidator $validator = null,
         ?string $kid = null
     ): EncryptedJwtBundle {
-        $validator ??= new JwtValidator();
-
-        $builder = new JwtTokenBuilder($manager);
-        return $builder->create($algorithm, $payload, $kid);
+        $builder = self::getBuilder($manager);
+        return $builder->create($algorithm, $payload, $validator, $kid);
     }
 
     /**
@@ -86,7 +90,7 @@ final class JwtTokenFactory
         ?JwtPayload $payload = null,
         ?string $kid = null
     ): EncryptedJwtBundle {
-        $builder = new JwtTokenBuilder($manager);
+        $builder = self::getBuilder($manager);
         return $builder->createWithoutValidation($algorithm, $payload, $kid);
     }
 
@@ -126,8 +130,8 @@ final class JwtTokenFactory
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator = null
     ): EncryptedJwtBundle {
-        $processor = new JwtTokenDecryptor($manager, $validator);
-        return $processor->decrypt($token);
+        $processor = self::getDecryptor($manager);
+        return $processor->decrypt($token, $validator);
     }
 
     /**
@@ -138,12 +142,12 @@ final class JwtTokenFactory
      *
      * @return EncryptedJwtBundle Decrypted JWT bundle.
      */
-    public static function decryptTokenWithoutValidation(
+    public static function decryptTokenWithoutClaimValidation(
         string $token,
         JwtAlgorithmManager $manager
     ): EncryptedJwtBundle {
-        $processor = new JwtTokenDecryptor($manager);
-        return $processor->decryptWithoutValidation($token);
+        $processor = self::getDecryptor($manager);
+        return $processor->decryptWithoutClaimValidation($token);
     }
 
     /**
@@ -155,26 +159,26 @@ final class JwtTokenFactory
      *
      * @return bool True if the token is valid, false otherwise.
      */
-    public static function validateToken(
+    public static function validateTokenClaim(
         string $token,
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator = null
     ): bool {
+        $processor = self::getDecryptor($manager);
+        $bundle = $processor->decrypt($token, $validator);
+
         $validator ??= new JwtValidator();
-        $processor = new JwtTokenDecryptor($manager, $validator);
-        $bundle = $processor->decrypt($token);
         return $validator->isValid($bundle->getPayload());
     }
 
-    public static function refreshTokenFromString(
+    public static function reissueBundleFromToken(
         string $token,
         string $interval,
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator = null
     ): EncryptedJwtBundle {
         $bundle = JwtTokenParser::parse($token);
-
-        return self::refreshTokenFromBundle($interval, $bundle, $manager, $validator);
+        return self::reissueBundle($interval, $bundle, $manager, $validator);
     }
 
     /**
@@ -187,22 +191,47 @@ final class JwtTokenFactory
      *
      * @return EncryptedJwtBundle New JWT bundle with refreshed timestamps.
      */
-    public static function refreshTokenFromBundle(
+    public static function reissueBundle(
         string $interval,
         EncryptedJwtBundle $bundle,
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator = null
     ): EncryptedJwtBundle {
+        $payload = self::buildFilteredPayload($bundle);
+
+        $newBundle = new EncryptedJwtBundle($bundle->getHeader(), $payload);
+
         $validator ??= new JwtValidator();
+        $validator->assertValidBundle($newBundle);
 
-        // Update issued-at to current time and expiration to the specified interval
-        $bundle->getPayload()
-            ->setIssuedAt('now')
-            ->setExpiration($interval);
+        $builder = self::getBuilder($manager);
+        return $builder->createFromBundle($newBundle);
+    }
 
-        $validator->assertValidBundle($bundle);
+    private static function buildFilteredPayload(EncryptedJwtBundle $bundle): JwtPayload
+    {
+        $payloadArray = $bundle->getPayload()->toArray();
 
-        $builder = new JwtTokenBuilder($manager);
-        return $builder->createFromBundle($bundle);
+        $oldPayload = $bundle->getPayload();
+        $newPayload = new JwtPayload($oldPayload->getReferenceTime());
+
+        foreach (self::RETAINED_CLAIMS as $claim) {
+            if ($oldPayload->hasClaim($claim)) {
+                // @phpstan-ignore-next-line
+                $newPayload->addClaim($claim, $oldPayload->getClaim($claim));
+            }
+        }
+
+        return $newPayload;
+    }
+
+    private static function getBuilder(JwtAlgorithmManager $manager): JwtTokenBuilder
+    {
+        return self::$builderCache ??= new JwtTokenBuilder($manager);
+    }
+
+    private static function getDecryptor(JwtAlgorithmManager $manager): JwtTokenDecryptor
+    {
+        return self::$decryptorCache ??= new JwtTokenDecryptor($manager);
     }
 }

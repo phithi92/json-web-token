@@ -13,14 +13,12 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      * JwtTokenDecryptor constructor.
      *
      * @param JwtAlgorithmManager $manager   Provides cryptographic handler configurations.
-     * @param JwtValidator|null   $validator Optional validator; defaults to JwtValidator if not provided.
      */
     public function __construct(
         JwtAlgorithmManager $manager,
-        ?JwtValidator $validator = null
     ) {
         $operation = HandlerOperation::Reverse;
-        parent::__construct($operation, $manager, $validator);
+        parent::__construct($operation, $manager);
     }
 
     /**
@@ -30,10 +28,12 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      *
      * @return EncryptedJwtBundle The fully decrypted and validated JWT payload bundle.
      */
-    public function decrypt(string $token): EncryptedJwtBundle
+    public function decrypt(string $token, ?JwtValidator $validator = null): EncryptedJwtBundle
     {
-        $bundle = $this->decryptWithoutValidation($token);
-        $this->validator->assertValidBundle($bundle);
+        $bundle = $this->decryptWithoutClaimValidation($token);
+
+        $this->assertValidBundle($bundle, $validator);
+
         return $bundle;
     }
 
@@ -46,7 +46,7 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      *
      * @return EncryptedJwtBundle The decrypted JWT payload bundle.
      */
-    public function decryptWithoutValidation(string $token): EncryptedJwtBundle
+    public function decryptWithoutClaimValidation(string $token): EncryptedJwtBundle
     {
         $bundle = JwtTokenParser::parse($token);
 
@@ -55,5 +55,11 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
         $this->dispatchHandlers($bundle, $algorithm);
 
         return $bundle;
+    }
+
+    private function assertValidBundle(EncryptedJwtBundle $bundle, ?JwtValidator $validator = null): void
+    {
+        $validator ??= new JwtValidator();
+        $validator->assertValidBundle($bundle);
     }
 }

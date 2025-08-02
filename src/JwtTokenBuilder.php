@@ -15,31 +15,37 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     private const KID_PART_SEPARATOR = '_';
 
     public function __construct(
-        JwtAlgorithmManager $manager,
-        ?JwtValidator $validator = null
+        JwtAlgorithmManager $manager
     ) {
         $operation = HandlerOperation::Perform;
-        parent::__construct($operation, $manager, $validator);
+        parent::__construct($operation, $manager);
     }
 
     public function create(
         string $algorithm,
         ?JwtPayload $payload = null,
+        ?JwtValidator $validator = null,
         ?string $kid = null
     ): EncryptedJwtBundle {
-        $payload ??= new JwtPayload();
+        $validator ??= new JwtValidator();
         $bundle = $this->createWithoutValidation($algorithm, $payload, $kid);
 
-        $this->validator->assertValidBundle($bundle);
+        $validator->assertValidBundle($bundle);
 
         return $bundle;
     }
 
-    public function createFromBundle(EncryptedJwtBundle $bundle, ?string $algorithm = null): EncryptedJwtBundle
-    {
+    public function createFromBundle(
+        EncryptedJwtBundle $bundle,
+        ?string $algorithm = null,
+        ?JwtValidator $validator = null
+    ): EncryptedJwtBundle {
         $algorithm ??= $bundle->getHeader()->getAlgorithm() ?? '';
 
         $this->dispatchHandlers($bundle, $algorithm);
+
+        $validator ??= new JwtValidator();
+        $validator->assertValidBundle($bundle);
 
         return $bundle;
     }
@@ -57,7 +63,6 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
         ?string $kid = null
     ): EncryptedJwtBundle {
         $config = $this->manager->getConfiguration($algorithm);
-        $payload ??= new JwtPayload();
 
         [$typ, $alg, $enc] = $this->extractHeaderParams($config);
 
