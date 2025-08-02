@@ -117,13 +117,14 @@ class JwtHeaderTest extends TestCase
         $this->expectException(InvalidFormatException::class);
         JwtHeader::fromJson('{"alg":"HS256","typ":"JWT","enc":123}');
     }
-    
-    public function testFromJsonFailsOnEmptyString() {
+
+    public function testFromJsonFailsOnEmptyString()
+    {
         $this->expectException(InvalidFormatException::class);
 
         JwtHeader::fromJson('');
     }
-    
+
     public function testFromJsonFailsOnMalformedUtf8()
     {
         // Enthält absichtlich ungültige UTF-8-Bytefolge
@@ -133,7 +134,7 @@ class JwtHeaderTest extends TestCase
 
         JwtHeader::fromJson($malformedJson);
     }
-    
+
     public function testFromJsonWithInvalidJson()
     {
         $this->expectException(InvalidFormatException::class);

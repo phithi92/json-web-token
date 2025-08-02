@@ -235,13 +235,14 @@ class JwtPayloadTest extends TestCase
         $this->assertEquals(['aud1', 'aud2'], $payload->getClaim('aud'));
         $this->assertEquals('customValue', $payload->getClaim('custom'));
     }
-        
-    public function testFromJsonFailsOnEmptyString() {
+
+    public function testFromJsonFailsOnEmptyString()
+    {
         $this->expectException(InvalidFormatException::class);
 
         JwtPayload::fromJson('');
     }
-    
+
     public function testFromJsonFailsOnMalformedUtf8()
     {
         // Enthält absichtlich ungültige UTF-8-Bytefolge
@@ -251,7 +252,7 @@ class JwtPayloadTest extends TestCase
 
         JwtPayload::fromJson($malformedJson);
     }
-    
+
     public function testFromJsonInvalidJsonThrowsException()
     {
         $this->expectException(InvalidFormatException::class);
