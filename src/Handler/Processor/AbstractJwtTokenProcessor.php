@@ -40,7 +40,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 
     public function getOperation(): HandlerOperation
     {
-        return self::OPERATION;
+        return static::OPERATION;
     }
 
     /**
