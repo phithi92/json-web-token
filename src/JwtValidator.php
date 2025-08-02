@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken;
 
+use LogicException;
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuedAtException;
@@ -257,7 +258,7 @@ class JwtValidator
     {
         foreach ($this->expectedPrivateClaims as $key => $expectedValue) {
             if (! is_string($expectedValue) && ! is_int($expectedValue) && ! is_null($expectedValue)) {
-                throw new \LogicException('missconfigured private claims. wrong value type');
+                throw new LogicException('Misconfigured private claim value type');
             }
 
             $this->validateClaim($key, $payload, $expectedValue);

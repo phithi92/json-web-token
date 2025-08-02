@@ -99,7 +99,6 @@ class JwtPayload
 
     /**
      * Converts the token data (JWT payload) into an array.
-     * Before returning the array, it validates the data.
      *
      * @see validate() Called to ensure the payload meets required criteria.
      * @see setField()
