@@ -69,7 +69,7 @@ final class JwtHeader
     }
 
     /**
-     * Retrieves the token type from the header.
+     * Retrieves the kid (key id) from the header.
      *
      * @return string The token type if set.
      */

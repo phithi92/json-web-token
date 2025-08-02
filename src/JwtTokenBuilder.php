@@ -12,7 +12,7 @@ use Phithi92\JsonWebToken\Handler\Processor\AbstractJwtTokenProcessor;
 
 final class JwtTokenBuilder extends AbstractJwtTokenProcessor
 {
-    private const string KID_PART_SEPARATOR = '_';
+    private const KID_PART_SEPARATOR = '_';
 
     public function __construct(
         JwtAlgorithmManager $manager,

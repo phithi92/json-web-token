@@ -64,7 +64,7 @@ class JwtPayload
              */
             $payload = JsonEncoder::decode($json, true);
         } catch (JsonException $e) {
-            throw new InvalidFormatException('Header decoding failed: ' . $e->getMessage());
+            throw new InvalidFormatException('Payload decoding failed: ' . $e->getMessage());
         }
 
         return self::fromArray($payload);
@@ -144,7 +144,7 @@ class JwtPayload
      * Ensures that the key is unique and the value is a valid type (scalar or array).
      *
      * @param string $key The key of the field to add.
-     * @param array<string, array<string,string>|int|string|null>|int|string|null $value
+     * @param array<string, array<string,string>|int|string|null> $value
      *
      * @return self Returns the instance to allow method chaining.
      *

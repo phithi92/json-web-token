@@ -217,7 +217,7 @@ class JwtTokenParser
     private static function serializeSignatureToken(EncryptedJwtBundle $bundle): string
     {
         /*
-         * @param string<string> $tokenArray
+         * @param array<string> $tokenArray
          */
         $tokenArray = [
             $bundle->getHeader()->toJson(),
