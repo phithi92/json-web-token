@@ -17,8 +17,6 @@ use Phithi92\JsonWebToken\JwtValidator;
 
 abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 {
-    protected readonly HandlerOperation $operation;
-
     private const array HANDLER_CONFIG_MAP = [
         'cek' => [HandlerType::Cek, 10],
         'key' => [HandlerType::Key, 20],
@@ -26,6 +24,8 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         'payload' => [HandlerType::Payload, 40],
         'signature' => [HandlerType::Signature, 50],
     ];
+
+    protected readonly HandlerOperation $operation;
 
     /**
      * @var JwtAlgorithmManager Handles algorithm resolution and handler configuration.
@@ -76,7 +76,6 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         EncryptedJwtBundle $bundle,
         string $algorithm
     ): void {
-
         [$config, $descriptors] = $this->resolveConfigAndHandlers($algorithm);
 
         foreach ($descriptors as $descriptor) {
@@ -94,8 +93,6 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     }
 
     /**
-     *
-     * @param string $algorithm
      * @return array{
      *     0: array<string, mixed>,
      *     1: array<int, HandlerDescriptor>

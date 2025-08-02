@@ -41,7 +41,6 @@ class JwtTokenParser
     /**
      * @throws InvalidFormatException
      *
-     * @param EncryptedJwtBundle $bundle
      * @return string Serialized token
      */
     public static function serialize(EncryptedJwtBundle $bundle): string

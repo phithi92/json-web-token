@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler;
 use Phithi92\JsonWebToken\Crypto\Content\AesGcmService;
 use Phithi92\JsonWebToken\Crypto\Encryption\IvService;
+use Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService;
+use Phithi92\JsonWebToken\Crypto\Signature\EcdsaService;
 use Phithi92\JsonWebToken\Crypto\Signature\HmacService;
 use Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService;
 use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
@@ -89,7 +91,7 @@ return [
         'alg' => 'ES256',
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha256',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
+            'handler' => EcdsaService::class,
         ],
     ],
     'ES384' => [
@@ -98,7 +100,7 @@ return [
         'alg' => 'ES384',
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha384',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
+            'handler' => EcdsaService::class,
         ],
     ],
     'ES512' => [
@@ -107,7 +109,7 @@ return [
         'alg' => 'ES512',
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha512',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
+            'handler' => EcdsaService::class,
         ],
     ],
 
@@ -157,7 +159,7 @@ return [
         KeyHandlerInterface::class => [
             'hash' => 'sha1',
             'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService::class,
+            'handler' => PhpseclibRsaEncryptionService::class,
         ],
 
         IvHandlerInterface::class => [
@@ -187,7 +189,7 @@ return [
         KeyHandlerInterface::class => [
             'hash' => 'sha256',
             'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService::class,
+            'handler' => PhpseclibRsaEncryptionService::class,
         ],
 
         IvHandlerInterface::class => [
@@ -216,7 +218,7 @@ return [
 
         KeyHandlerInterface::class => [
             'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_PKCS1,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService::class,
+            'handler' => PhpseclibRsaEncryptionService::class,
         ],
 
         IvHandlerInterface::class => [

@@ -63,7 +63,7 @@ final class JwtTokenFactory
         $payload = JwtPayload::fromArray($claims);
         return self::createToken($algorithm, $manager, $payload, $validator, $kid);
     }
-    
+
     /**
      * ⚠️ SECURITY WARNING:
      * Creates a JWT without performing any claim validation.
@@ -165,16 +165,16 @@ final class JwtTokenFactory
         $bundle = $processor->decrypt($token);
         return $validator->isValid($bundle->getPayload());
     }
-    
+
     public static function refreshTokenFromString(
         string $token,
         string $interval,
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator = null
-    ){
+    ): EncryptedJwtBundle {
         $bundle = JwtTokenParser::parse($token);
-        
-        self::refreshTokenFromBundle($interval, $bundle, $manager, $validator);
+
+        return self::refreshTokenFromBundle($interval, $bundle, $manager, $validator);
     }
 
     /**
@@ -192,15 +192,16 @@ final class JwtTokenFactory
         EncryptedJwtBundle $bundle,
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator = null
-    ): EncryptedJwtBundle
-    {
+    ): EncryptedJwtBundle {
+        $validator ??= new JwtValidator();
+
         // Update issued-at to current time and expiration to the specified interval
         $bundle->getPayload()
-                ->setIssuedAt('now')
-                ->setExpiration($interval);
-        
+            ->setIssuedAt('now')
+            ->setExpiration($interval);
+
         $validator->assertValidBundle($bundle);
-        
+
         $builder = new JwtTokenBuilder($manager);
         return $builder->createFromBundle($bundle);
     }

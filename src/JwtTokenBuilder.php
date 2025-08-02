@@ -34,12 +34,14 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
 
         return $bundle;
     }
-    
+
     public function createFromBundle(EncryptedJwtBundle $bundle, ?string $algorithm = null): EncryptedJwtBundle
     {
-        $algorithm ??= $bundle->getHeader()->getAlgorithm();
+        $algorithm ??= $bundle->getHeader()->getAlgorithm() ?? '';
 
-        return $this->dispatchHandlers($bundle, $algorithm);
+        $this->dispatchHandlers($bundle, $algorithm);
+
+        return $bundle;
     }
 
     /**
