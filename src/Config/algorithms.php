@@ -2,6 +2,17 @@
 
 declare(strict_types=1);
 
+use Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler;
+use Phithi92\JsonWebToken\Crypto\Content\AesGcmService;
+use Phithi92\JsonWebToken\Crypto\Encryption\IvService;
+use Phithi92\JsonWebToken\Crypto\Signature\HmacService;
+use Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService;
+use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\KeyHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\PayloadHandlerInterface;
+use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
+
 return [
 
     // HMAC Signatures
@@ -9,9 +20,9 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'HMAC',
         'alg' => 'HS256',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha256',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
+            'handler' => HmacService::class,
         ],
     ],
 
@@ -19,9 +30,9 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'HMAC',
         'alg' => 'HS384',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha384',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
+            'handler' => HmacService::class,
         ],
     ],
 
@@ -29,9 +40,9 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'HMAC',
         'alg' => 'HS512',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha512',
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\HmacService::class,
+            'handler' => HmacService::class,
         ],
     ],
 
@@ -40,11 +51,11 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'RSA',
         'alg' => 'RS256',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'name' => 'RS256',
             'hash_algorithm' => 'sha256',
             'padding' => OPENSSL_PKCS1_PADDING,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService::class,
+            'handler' => RsaSignatureService::class,
         ],
     ],
 
@@ -52,11 +63,11 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'RSA',
         'alg' => 'RS384',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'name' => 'RS384',
             'hash_algorithm' => 'sha384',
             'padding' => OPENSSL_PKCS1_PADDING,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService::class,
+            'handler' => RsaSignatureService::class,
         ],
     ],
 
@@ -64,10 +75,10 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'RSA',
         'alg' => 'RS512',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha512',
             'padding' => OPENSSL_PKCS1_PADDING,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService::class,
+            'handler' => RsaSignatureService::class,
         ],
     ],
 
@@ -76,7 +87,7 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'ECDSA',
         'alg' => 'ES256',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha256',
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
         ],
@@ -85,7 +96,7 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'ECDSA',
         'alg' => 'ES384',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha384',
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
         ],
@@ -94,7 +105,7 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'ECDSA',
         'alg' => 'ES512',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha512',
             'handler' => \Phithi92\JsonWebToken\Crypto\Signature\EcdsaService::class,
         ],
@@ -105,10 +116,10 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'RSA',
         'alg' => 'PS256',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha256',
             'padding' => defined('OPENSSL_PKCS1_PSS_PADDING') ? OPENSSL_PKCS1_PSS_PADDING : 6,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService::class,
+            'handler' => RsaSignatureService::class,
         ],
     ],
 
@@ -116,10 +127,10 @@ return [
         'token_type' => 'JWS',
         'algorithm_type' => 'RSA',
         'alg' => 'PS384',
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha384',
             'padding' => defined('OPENSSL_PKCS1_PSS_PADDING') ? OPENSSL_PKCS1_PSS_PADDING : 6,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService::class,
+            'handler' => RsaSignatureService::class,
         ],
     ],
 
@@ -128,10 +139,10 @@ return [
         'algorithm_type' => 'RSA',
         'alg' => 'PS512',
 
-        'signing_algorithm' => [
+        SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha512',
             'padding' => defined('OPENSSL_PKCS1_PSS_PADDING') ? OPENSSL_PKCS1_PSS_PADDING : 6,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService::class,
+            'handler' => RsaSignatureService::class,
         ],
     ],
 
@@ -143,26 +154,26 @@ return [
         'alg' => 'RSA-OAEP',
         'enc' => 'A256GCM',
 
-        'key_management' => [
+        KeyHandlerInterface::class => [
             'hash' => 'sha1',
             'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
             'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService::class,
         ],
 
-        'iv' => [
+        IvHandlerInterface::class => [
             'length' => 128, // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class,
+            'handler' => IvService::class,
         ],
 
-        'cek' => [
+        CekHandlerInterface::class => [
             'length' => 256, // bits
             'strict_length' => false,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
+            'handler' => DefaultCekHandler::class,
         ],
 
-        'content_encryption' => [
+        PayloadHandlerInterface::class => [
             'length' => 256, // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Content\AesGcmService::class,
+            'handler' => AesGcmService::class,
         ],
     ],
 
@@ -173,26 +184,26 @@ return [
         'alg' => 'RSA-OAEP-256',
         'enc' => 'A256GCM',
 
-        'key_management' => [
+        KeyHandlerInterface::class => [
             'hash' => 'sha256',
             'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
             'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService::class,
         ],
 
-        'iv' => [
+        IvHandlerInterface::class => [
             'length' => 128, // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class,
+            'handler' => IvService::class,
         ],
 
-        'cek' => [
+        CekHandlerInterface::class => [
             'length' => 256, // bits
             'strict_length' => false,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
+            'handler' => DefaultCekHandler::class,
         ],
 
-        'content_encryption' => [
+        PayloadHandlerInterface::class => [
             'length' => 256, // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Content\AesGcmService::class,
+            'handler' => AesGcmService::class,
         ],
     ],
 
@@ -203,27 +214,25 @@ return [
         'alg' => 'RSA1_5',
         'enc' => 'A256GCM',
 
-        'key_management' => [
+        KeyHandlerInterface::class => [
             'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_PKCS1,
             'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService::class,
         ],
 
-        'iv' => [
-            'length' => 128,
-        // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class,
+        IvHandlerInterface::class => [
+            'length' => 128, // bits
+            'handler' => IvService::class,
         ],
 
-        'cek' => [
+        CekHandlerInterface::class => [
             'length' => 256, // bits
             'strict_length' => false,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
+            'handler' => DefaultCekHandler::class,
         ],
 
-        'content_encryption' => [
-            'length' => 256,
-        // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Content\AesGcmService::class,
+        PayloadHandlerInterface::class => [
+            'length' => 256, // bits
+            'handler' => AesGcmService::class,
         ],
     ],
 
@@ -235,20 +244,20 @@ return [
         'alg' => 'dir',
         'enc' => 'A128GCM',
 
-        'content_encryption' => [
+        PayloadHandlerInterface::class => [
             'length' => 128,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Content\AesGcmService::class,
+            'handler' => AesGcmService::class,
         ],
 
-        'iv' => [
+        IvHandlerInterface::class => [
             'length' => 96,// bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class,
+            'handler' => IvService::class,
         ],
 
-        'cek' => [
+        CekHandlerInterface::class => [
             'length' => 128,// bits
             'strict_length' => false,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
+            'handler' => DefaultCekHandler::class,
         ],
     ],
 
@@ -259,20 +268,20 @@ return [
         'alg' => 'dir',
         'enc' => 'A192GCM',
 
-        'content_encryption' => [
+        PayloadHandlerInterface::class => [
             'length' => 192,
             'mac_bit_length' => null,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Content\AesGcmService::class,
+            'handler' => AesGcmService::class,
         ],
-        'iv' => [
+        IvHandlerInterface::class => [
             'length' => 96, // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class,
+            'handler' => IvService::class,
         ],
 
-        'cek' => [
+        CekHandlerInterface::class => [
             'length' => 192,
             'strict_length' => false,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
+            'handler' => DefaultCekHandler::class,
         ],
     ],
 
@@ -283,21 +292,21 @@ return [
         'alg' => 'dir',
         'enc' => 'A256GCM',
 
-        'content_encryption' => [
+        PayloadHandlerInterface::class => [
             'length' => 256,
             'mac_bit_length' => null,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Content\AesGcmService::class,
+            'handler' => AesGcmService::class,
         ],
 
-        'iv' => [
+        IvHandlerInterface::class => [
             'length' => 96, // bits
-            'handler' => \Phithi92\JsonWebToken\Crypto\Encryption\IvService::class,
+            'handler' => IvService::class,
         ],
 
-        'cek' => [
+        CekHandlerInterface::class => [
             'length' => 256,
             'strict_length' => false,
-            'handler' => \Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler::class,
+            'handler' => DefaultCekHandler::class,
         ],
     ],
 ];

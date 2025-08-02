@@ -23,6 +23,14 @@ final class JwtHeader
     // Min/Max length for KID validation
     private const MIN_KID_LENGTH = 3;
     private const MAX_KID_LENGTH = 64;
+
+    private const HEADER_MAP = [
+        'alg' => 'setAlgorithm',
+        'typ' => 'setType',
+        'enc' => 'setEnc',
+        'kid' => 'setKid',
+    ];
+
     // The type of token, typically 'JWT' or 'JWS'
     private string $typ;
 
@@ -191,26 +199,17 @@ final class JwtHeader
         $data = self::decodeHeaderJson($json);
         return self::fromArray($data);
     }
-    
+
     /**
-     * 
      * @param array<string,string> $data
-     * @return self
      */
     public static function fromArray(array $data): self
     {
-        $map = [
-            'alg' => 'setAlgorithm',
-            'typ' => 'setType',
-            'enc' => 'setEnc',
-            'kid' => 'setKid',
-        ];
-
         $instance = new self();
 
-        foreach ($map as $jsonKey => $setter) {
-            if (isset($data->$jsonKey)) {
-                $instance->$setter($data->$jsonKey);
+        foreach (self::HEADER_MAP as $jsonKey => $setter) {
+            if (isset($data[$jsonKey])) {
+                $instance->$setter($data[$jsonKey]);
             }
         }
 
@@ -237,43 +236,62 @@ final class JwtHeader
     }
 
     /**
-     * @return object{
+     * @return array{
      *     alg?: string,
      *     typ?: string,
      *     enc?: string,
      *     kid?: string
      * }
      */
-    private static function decodeHeaderJson(string $json): object
+    private static function decodeHeaderJson(string $json): array
     {
-        $data = self::jsonDecode($json);
+        $rawData = self::jsonDecode($json);
 
-        // Define allowed optional string keys
-        $allowedKeys = ['alg', 'typ', 'enc', 'kid'];
+        return self::extractValidHeaderFields($rawData);
+    }
 
-        foreach (get_object_vars($data) as $key => $value) {
-            if (! in_array($key, $allowedKeys, true)) {
-                throw new InvalidFormatException("Unexpected header field: {$key}");
+    /**
+     * @param array<mixed> $data
+     *
+     * @return array<string,string>
+     *
+     * @throws InvalidFormatException
+     */
+    private static function extractValidHeaderFields(array $data): array
+    {
+        $allowedKeys = array_keys(self::HEADER_MAP);
+
+        $filtered = [];
+
+        foreach ($allowedKeys as $key) {
+            if (! isset($data[$key])) {
+                continue;
             }
+
+            $value = $data[$key];
 
             if (! is_string($value)) {
                 throw new InvalidFormatException("Header field '{$key}' must be a string.");
             }
+
+            $filtered[$key] = $value;
         }
 
-        return $data;
+        return $filtered;
     }
 
     /**
      * Decode a JSON string into an associative array representing JWT headers.
      *
+     * @return array<mixed>
+     *
      * @throws InvalidFormatException
      */
-    private static function jsonDecode(string $json): object
+    private static function jsonDecode(string $json): array
     {
         try {
-            /** @var object $data */
-            $data = JsonEncoder::decode($json, false);
+            /** @var array<mixed> $data */
+            $data = JsonEncoder::decode($json, true);
         } catch (JsonException) {
             throw new InvalidFormatException('Token header is not valid JSON');
         }
