@@ -12,13 +12,12 @@ use Phithi92\JsonWebToken\Handler\Processor\AbstractJwtTokenProcessor;
 
 final class JwtTokenBuilder extends AbstractJwtTokenProcessor
 {
-    public const OPERATION = HandlerOperation::Perform;
     private const string KID_PART_SEPARATOR = '_';
 
     public function __construct(
         JwtAlgorithmManager $manager
     ) {
-        parent::__construct($manager);
+        parent::__construct($manager, HandlerOperation::Perform);
     }
 
     public function create(JwtPayload $payload, string $algorithm, ?string $kid = null): EncryptedJwtBundle

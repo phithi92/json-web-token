@@ -9,8 +9,6 @@ use Phithi92\JsonWebToken\Handler\Processor\AbstractJwtTokenProcessor;
 
 final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
 {
-    public const OPERATION = HandlerOperation::Reverse;
-
     /**
      * @var JwtValidator Validates the integrity and structure of the decrypted JWT bundle.
      */
@@ -26,7 +24,7 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator = null
     ) {
-        parent::__construct($manager);
+        parent::__construct($manager, HandlerOperation::Reverse);
         $this->validator = ($validator ?? new JwtValidator());
     }
 

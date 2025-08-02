@@ -16,7 +16,7 @@ use Phithi92\JsonWebToken\JwtAlgorithmManager;
 
 abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 {
-    public const OPERATION = null;
+    protected readonly HandlerOperation $operation;
 
     private const array HANDLER_CONFIG_MAP = [
         'cek' => [HandlerType::Cek, 10],
@@ -30,17 +30,19 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      * @var JwtAlgorithmManager Handles algorithm resolution and handler configuration.
      */
     protected readonly JwtAlgorithmManager $manager;
+
     protected readonly HandlerDispatcher $dispatcher;
 
-    public function __construct(JwtAlgorithmManager $manager)
+    public function __construct(JwtAlgorithmManager $manager, HandlerOperation $operation)
     {
         $this->manager = $manager;
         $this->dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
+        $this->operation = $operation;
     }
 
     public function getOperation(): HandlerOperation
     {
-        return static::OPERATION;
+        return $this->operation;
     }
 
     /**
