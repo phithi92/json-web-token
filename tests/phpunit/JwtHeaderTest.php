@@ -112,16 +112,32 @@ class JwtHeaderTest extends TestCase
         $this->assertEquals('my_kid-123', $jwtHeader->getKid());
     }
 
-    public function testFromJsonWithInvalidJson()
-    {
-        $this->expectException(InvalidFormatException::class);
-        JwtHeader::fromJson('{"alg":123}');
-    }
-
     public function testFromJsonWithNonStringValue()
     {
         $this->expectException(InvalidFormatException::class);
         JwtHeader::fromJson('{"alg":"HS256","typ":"JWT","enc":123}');
+    }
+    
+    public function testFromJsonFailsOnEmptyString() {
+        $this->expectException(InvalidFormatException::class);
+
+        JwtHeader::fromJson('');
+    }
+    
+    public function testFromJsonFailsOnMalformedUtf8()
+    {
+        // Enthält absichtlich ungültige UTF-8-Bytefolge
+        $malformedJson = "\xB1\x31\x31"; // ungültig, zerschneidet ein Multibyte-Zeichen
+
+        $this->expectException(InvalidFormatException::class);
+
+        JwtHeader::fromJson($malformedJson);
+    }
+    
+    public function testFromJsonWithInvalidJson()
+    {
+        $this->expectException(InvalidFormatException::class);
+        JwtHeader::fromJson('{"iss": invalid json}');
     }
 
     public function testFromArray()

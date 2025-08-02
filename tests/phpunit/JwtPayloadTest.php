@@ -7,6 +7,8 @@ namespace Tests\phpunit;
 use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\Exceptions;
 use Phithi92\JsonWebToken\JwtValidator;
+use Phithi92\JsonWebToken\Utilities\JsonEncoder;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use PHPUnit\Framework\TestCase;
 use DateTimeImmutable;
 use DateTime;
@@ -233,6 +235,28 @@ class JwtPayloadTest extends TestCase
         $this->assertEquals(['aud1', 'aud2'], $payload->getClaim('aud'));
         $this->assertEquals('customValue', $payload->getClaim('custom'));
     }
+        
+    public function testFromJsonFailsOnEmptyString() {
+        $this->expectException(InvalidFormatException::class);
+
+        JwtPayload::fromJson('');
+    }
+    
+    public function testFromJsonFailsOnMalformedUtf8()
+    {
+        // Enthält absichtlich ungültige UTF-8-Bytefolge
+        $malformedJson = "\xB1\x31\x31"; // ungültig, zerschneidet ein Multibyte-Zeichen
+
+        $this->expectException(InvalidFormatException::class);
+
+        JwtPayload::fromJson($malformedJson);
+    }
+    
+    public function testFromJsonInvalidJsonThrowsException()
+    {
+        $this->expectException(InvalidFormatException::class);
+        JwtPayload::fromJson('{"iss": invalid json}');
+    }
 
     public function testFromArrayCreatesValidPayload()
     {
@@ -260,12 +284,6 @@ class JwtPayloadTest extends TestCase
         $this->expectException(\TypeError::class);
 
         (new JwtPayload())->addClaim('invalid', new \stdClass());
-    }
-
-    public function testFromJsonInvalidJsonThrowsException()
-    {
-        $this->expectException(Exceptions\Token\InvalidFormatException::class);
-        JwtPayload::fromJson('{"iss": invalid json}');
     }
 
     public function testEncryptedPayloadSetAndGet()
