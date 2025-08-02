@@ -13,6 +13,7 @@ use Phithi92\JsonWebToken\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Handler\HandlerType;
 use Phithi92\JsonWebToken\Interfaces\JwtTokenOperation;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\JwtValidator;
 
 abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 {
@@ -32,12 +33,18 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     protected readonly JwtAlgorithmManager $manager;
 
     protected readonly HandlerDispatcher $dispatcher;
+    
+    /**
+     * @var JwtValidator Validates the integrity and structure of the decrypted JWT bundle.
+     */
+    protected readonly JwtValidator $validator;
 
-    public function __construct(JwtAlgorithmManager $manager, HandlerOperation $operation)
+    public function __construct(HandlerOperation $operation, JwtAlgorithmManager $manager, ?JwtValidator $validator = null)
     {
         $this->manager = $manager;
         $this->dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
         $this->operation = $operation;
+        $this->validator = $validator ?? new JwtValidator();
     }
 
     public function getOperation(): HandlerOperation

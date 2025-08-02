@@ -15,14 +15,23 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     private const string KID_PART_SEPARATOR = '_';
 
     public function __construct(
-        JwtAlgorithmManager $manager
+        JwtAlgorithmManager $manager,
+        ?JwtValidator $validator = null
     ) {
-        parent::__construct($manager, HandlerOperation::Perform);
+        $operation = HandlerOperation::Perform;
+        parent::__construct($operation, $manager, $validator);
     }
 
-    public function create(JwtPayload $payload, string $algorithm, ?string $kid = null): EncryptedJwtBundle
-    {
-        return $this->createWithoutValidation($payload, $algorithm, $kid);
+    public function create(
+        JwtPayload $payload,
+        string $algorithm,
+        ?string $kid = null
+    ): EncryptedJwtBundle {
+        $bundle =  $this->createWithoutValidation($payload, $algorithm, $kid);
+
+        $this->validator->assertValidBundle($bundle);
+
+        return $bundle;
     }
 
     /**
