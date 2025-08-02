@@ -23,7 +23,7 @@ class BenchSupportedAgorithms extends BenchmarkBase
     {
         $token = $this->getValidToken($params['alg']);
 
-        JwtTokenFactory::decryptToken($this->getManager(), $token);
+        JwtTokenFactory::decryptToken($token, $this->getManager());
     }
 
     public function bench_expired(array $params): void
@@ -31,7 +31,7 @@ class BenchSupportedAgorithms extends BenchmarkBase
         $token = $this->getExpiredToken($params['alg']);
 
         try {
-            JwtTokenFactory::decryptToken($this->getManager(), $token);
+            JwtTokenFactory::decryptToken($token, $this->getManager());
         } catch (PayloadException $e) {
             assert($e instanceof ExpiredPayloadException);
         }
@@ -42,7 +42,7 @@ class BenchSupportedAgorithms extends BenchmarkBase
         $token = $this->getInvalidToken($params['alg']);
 
         try {
-            JwtTokenFactory::decryptToken($this->getManager(), $token);
+            JwtTokenFactory::decryptToken($token, $this->getManager());
         } catch (TokenException $e) {
             assert($e instanceof TokenException);
         }

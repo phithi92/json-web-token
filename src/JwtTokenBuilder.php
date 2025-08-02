@@ -23,11 +23,12 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     }
 
     public function create(
-        JwtPayload $payload,
         string $algorithm,
+        ?JwtPayload $payload = null,
         ?string $kid = null
     ): EncryptedJwtBundle {
-        $bundle =  $this->createWithoutValidation($payload, $algorithm, $kid);
+        $payload ??= new JwtPayload();
+        $bundle = $this->createWithoutValidation($algorithm, $payload, $kid);
 
         $this->validator->assertValidBundle($bundle);
 
@@ -42,11 +43,12 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      * @throws LogicException
      */
     public function createWithoutValidation(
-        JwtPayload $payload,
         string $algorithm,
+        ?JwtPayload $payload = null,
         ?string $kid = null
     ): EncryptedJwtBundle {
         $config = $this->manager->getConfiguration($algorithm);
+        $payload ??= new JwtPayload();
 
         [$typ, $alg, $enc] = $this->extractHeaderParams($config);
 

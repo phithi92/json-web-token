@@ -28,7 +28,7 @@ class SupportedAlgorithmsTest extends TestCaseWithSecrets
     {
         $payload = self::getPayload();
 
-        $token = JwtTokenFactory::createTokenString($this->manager, $algorithm, $payload);
+        $token = JwtTokenFactory::createTokenString($algorithm, $this->manager, $payload);
 
         TokenStorage::write($algorithm, $token);
 
@@ -42,7 +42,7 @@ class SupportedAlgorithmsTest extends TestCaseWithSecrets
     {
         $token = TokenStorage::read($algorithm);
 
-        $bundle = JwtTokenFactory::decryptToken($this->manager, $token);
+        $bundle = JwtTokenFactory::decryptToken($token, $this->manager);
 
         $this->assertInstanceOf(EncryptedJwtBundle::class, $bundle);
     }

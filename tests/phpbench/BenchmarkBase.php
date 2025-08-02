@@ -46,7 +46,7 @@ abstract class BenchmarkBase
                 ]
             );
 
-            $bundle = JwtTokenFactory::createTokenWithoutValidation($manager, $alg, $payload);
+            $bundle = JwtTokenFactory::createTokenWithoutClaimValidation($alg, $manager, $payload);
             $token = JwtTokenParser::serialize($bundle);
             $this->cache['expired'][$alg] = $token;
         }
@@ -68,7 +68,7 @@ abstract class BenchmarkBase
                 $payload->addClaim($key, $value);
             }
 
-            $bundle = JwtTokenFactory::createToken($manager, $alg, $payload);
+            $bundle = JwtTokenFactory::createToken($alg, $manager, $payload);
 
             $token = JwtTokenParser::serialize($bundle);
 
