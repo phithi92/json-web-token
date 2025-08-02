@@ -13,7 +13,6 @@ use Phithi92\JsonWebToken\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Handler\HandlerType;
 use Phithi92\JsonWebToken\Interfaces\JwtTokenOperation;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\JwtValidator;
 
 abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 {

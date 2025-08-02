@@ -44,13 +44,13 @@ class JwtValidator
     /**
      * JwtValidator constructor.
      *
-     * @param string|null                $expectedIssuer        Optional expected "iss" (issuer) claim value.
-     *                                                          If set, tokens must match this exact issuer.
-     * @param string|null                $expectedAudience      Optional expected "aud" (audience) claim value.
-     *                                                          Supports string or array in token payload.
-     * @param int                        $clockSkew             Allowed clock skew (in seconds) when validating
-     *                                                          time-based claims like "exp", "nbf", and "iat".
-     *                                                          Helps tolerate minor time drift.
+     * @param string|null $expectedIssuer   Optional expected "iss" (issuer) claim value.
+     *                                      If set, tokens must match this exact issuer.
+     * @param string|null $expectedAudience Optional expected "aud" (audience) claim value.
+     *                                      Supports string or array in token payload.
+     * @param int         $clockSkew        Allowed clock skew (in seconds) when validating
+     *                                      time-based claims like "exp", "nbf", and "iat".
+     *                                      Helps tolerate minor time drift.
      * @param array<string, scalar|null> $expectedPrivateClaims Optional associative array of expected private claims.
      *                                                          - If value is null, only claim existence is required.
      *                                                          - If value is set, exact match is required.
