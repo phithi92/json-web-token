@@ -33,14 +33,17 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     protected readonly JwtAlgorithmManager $manager;
 
     protected readonly HandlerDispatcher $dispatcher;
-    
+
     /**
      * @var JwtValidator Validates the integrity and structure of the decrypted JWT bundle.
      */
     protected readonly JwtValidator $validator;
 
-    public function __construct(HandlerOperation $operation, JwtAlgorithmManager $manager, ?JwtValidator $validator = null)
-    {
+    public function __construct(
+        HandlerOperation $operation,
+        JwtAlgorithmManager $manager,
+        ?JwtValidator $validator = null
+    ) {
         $this->manager = $manager;
         $this->dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
         $this->operation = $operation;
