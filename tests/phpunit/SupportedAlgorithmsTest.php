@@ -28,7 +28,7 @@ class SupportedAlgorithmsTest extends TestCaseWithSecrets
     {
         $payload = self::getPayload();
 
-        $token = JwtTokenFactory::createTokenString($this->manager, $payload, $algorithm);
+        $token = JwtTokenFactory::createTokenString($this->manager, $algorithm, $payload);
 
         TokenStorage::write($algorithm, $token);
 

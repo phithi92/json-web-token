@@ -74,7 +74,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
         // Setup Header + Payload
         $payload = new JwtPayload();
 
-        $bundle = JwtTokenFactory::createToken($this->manager, $payload, 'A256GCM');
+        $bundle = JwtTokenFactory::createToken($this->manager, 'A256GCM', $payload);
 
         $token = JwtTokenParser::serialize($bundle);
 
