@@ -49,8 +49,8 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         JwtAlgorithmManager $manager
     ) {
         $this->manager = $manager;
-        $this->dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
         $this->operation = $operation;
+        $this->dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
     }
 
     /**
@@ -86,13 +86,15 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      * Resolves configuration and handlers based on the provided algorithm, and
      * executes them in order of their defined priority.
      *
-     * @param EncryptedJwtBundle $bundle The encrypted JWT to process.
      * @param string $algorithm The resolved algorithm identifier.
+     * @param EncryptedJwtBundle $bundle The encrypted JWT to process.
      */
     protected function dispatchHandlers(
-        EncryptedJwtBundle $bundle,
-        string $algorithm
+        string $algorithm,
+        EncryptedJwtBundle $bundle
     ): void {
+        /** @var array<string,mixed> $config */
+        /** @var array<int, HandlerDescriptor> $descriptors */
         [$config, $descriptors] = $this->resolveConfigAndHandlers($algorithm);
 
         foreach ($descriptors as $descriptor) {
@@ -115,8 +117,8 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      * @param string $algorithm The algorithm to use for configuration resolution.
      *
      * @return array{
-     *     0: array<string, mixed>,          // Configuration for the algorithm.
-     *     1: array<int, HandlerDescriptor>  // Sorted handler descriptors.
+     *     0: array<string, mixed>,
+     *     1: array<int, HandlerDescriptor>
      * }
      */
     private function resolveConfigAndHandlers(string $algorithm): array
@@ -156,6 +158,8 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      */
     private function orderByPriority(array $descriptors): array
     {
-        return usort($descriptors, static fn ($a, $b) => $a->priority <=> $b->priority);
+        usort($descriptors, static fn ($a, $b) => $a->priority <=> $b->priority);
+
+        return $descriptors;
     }
 }
