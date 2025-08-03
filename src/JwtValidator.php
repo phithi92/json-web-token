@@ -39,7 +39,7 @@ class JwtValidator
     /**
      * @var array<string, scalar|null>
      */
-    private array $expectedPrivateClaims;
+    private array $expectedClaims;
 
     /**
      * JwtValidator constructor.
@@ -51,20 +51,20 @@ class JwtValidator
      * @param int         $clockSkew        Allowed clock skew (in seconds) when validating
      *                                      time-based claims like "exp", "nbf", and "iat".
      *                                      Helps tolerate minor time drift.
-     * @param array<string, scalar|null> $expectedPrivateClaims Optional associative array of expected private claims.
-     *                                                          - If value is null, only claim existence is required.
-     *                                                          - If value is set, exact match is required.
+     * @param array<string, scalar|null> $expectedClaims Optional associative array of expected private claims.
+     *                                                   - If value is null, only claim existence is required.
+     *                                                   - If value is set, exact match is required.
      */
     public function __construct(
         ?string $expectedIssuer = null,
         ?string $expectedAudience = null,
         int $clockSkew = 0,
-        array $expectedPrivateClaims = []
+        array $expectedClaims = []
     ) {
         $this->expectedIssuer = $expectedIssuer;
         $this->expectedAudience = $expectedAudience;
         $this->clockSkew = $clockSkew;
-        $this->expectedPrivateClaims = $expectedPrivateClaims;
+        $this->expectedClaims = $expectedClaims;
     }
 
     /**
@@ -221,7 +221,7 @@ class JwtValidator
      */
     private function isValidPrivateClaims(JwtPayload $payload): bool
     {
-        foreach ($this->expectedPrivateClaims as $key => $expectedValue) {
+        foreach ($this->expectedClaims as $key => $expectedValue) {
             // Retrieve the actual claim value from the payload
             $actualValue = $payload->getClaim($key);
 
@@ -256,7 +256,7 @@ class JwtValidator
      */
     private function assertValidPrivateClaims(JwtPayload $payload): void
     {
-        foreach ($this->expectedPrivateClaims as $key => $expectedValue) {
+        foreach ($this->expectedClaims as $key => $expectedValue) {
             if (! is_string($expectedValue) && ! is_int($expectedValue) && ! is_null($expectedValue)) {
                 throw new LogicException('Misconfigured private claim value type');
             }

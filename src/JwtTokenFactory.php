@@ -18,7 +18,7 @@ namespace Phithi92\JsonWebToken;
  */
 final class JwtTokenFactory
 {
-    private const RETAINED_CLAIMS = ['sub', 'aud', 'iss', 'role', 'permissions'];
+    private const RETAINED_CLAIMS = ['sub', 'aud', 'iss'];
 
     private static ?JwtTokenBuilder $builderCache = null;
 
@@ -195,9 +195,10 @@ final class JwtTokenFactory
         string $interval,
         EncryptedJwtBundle $bundle,
         JwtAlgorithmManager $manager,
-        ?JwtValidator $validator = null
+        ?JwtValidator $validator = null,
+        array $retainedClaims = []
     ): EncryptedJwtBundle {
-        $payload = self::buildFilteredPayload($bundle);
+        $payload = self::buildFilteredPayload($bundle, $retainedClaims);
 
         $newBundle = new EncryptedJwtBundle($bundle->getHeader(), $payload);
 
@@ -208,14 +209,16 @@ final class JwtTokenFactory
         return $builder->createFromBundle($newBundle);
     }
 
-    private static function buildFilteredPayload(EncryptedJwtBundle $bundle): JwtPayload
+    private static function buildFilteredPayload(EncryptedJwtBundle $bundle, array $retained): JwtPayload
     {
         $payloadArray = $bundle->getPayload()->toArray();
 
         $oldPayload = $bundle->getPayload();
         $newPayload = new JwtPayload($oldPayload->getReferenceTime());
+        
+        $retainedClaims = array_merge(self::RETAINED_CLAIMS,$retained);
 
-        foreach (self::RETAINED_CLAIMS as $claim) {
+        foreach ($retained as $claim) {
             if ($oldPayload->hasClaim($claim)) {
                 // @phpstan-ignore-next-line
                 $newPayload->addClaim($claim, $oldPayload->getClaim($claim));
