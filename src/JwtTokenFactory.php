@@ -215,8 +215,8 @@ final class JwtTokenFactory
 
         $oldPayload = $bundle->getPayload();
         $newPayload = new JwtPayload($oldPayload->getReferenceTime());
-        
-        $retainedClaims = array_merge(self::RETAINED_CLAIMS,$retained);
+
+        $retainedClaims = array_merge(self::RETAINED_CLAIMS, $retained);
 
         foreach ($retained as $claim) {
             if ($oldPayload->hasClaim($claim)) {
