@@ -184,10 +184,11 @@ final class JwtTokenFactory
     /**
      * Refreshes a JWT by cloning its payload and updating the timestamps.
      *
-     * @param string              $interval  Expiration interval (e.g., "+1 hour").
-     * @param EncryptedJwtBundle  $bundle    Existing JWT bundle to refresh.
-     * @param JwtAlgorithmManager $manager   Algorithm manager instance.
-     * @param JwtValidator|null   $validator Optional validator to check the bundle before refreshing.
+     * @param string              $interval        Expiration interval (e.g., "+1 hour").
+     * @param EncryptedJwtBundle  $bundle          Existing JWT bundle to refresh.
+     * @param JwtAlgorithmManager $manager         Algorithm manager instance.
+     * @param JwtValidator|null   $validator       Optional validator to check the bundle before refreshing.
+     * @param array<int, string>  $retainedClaims  Expiration interval (e.g., "+1 hour").
      *
      * @return EncryptedJwtBundle New JWT bundle with refreshed timestamps.
      */
@@ -209,6 +210,12 @@ final class JwtTokenFactory
         return $builder->createFromBundle($newBundle);
     }
 
+    /**
+     * 
+     * @param EncryptedJwtBundle $bundle
+     * @param array<int, string> $retained
+     * @return JwtPayload
+     */
     private static function buildFilteredPayload(EncryptedJwtBundle $bundle, array $retained): JwtPayload
     {
         $payloadArray = $bundle->getPayload()->toArray();
