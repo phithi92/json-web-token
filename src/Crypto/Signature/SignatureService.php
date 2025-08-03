@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
 abstract class SignatureService implements SignatureHandlerInterface

@@ -7,8 +7,8 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 use Exception;
 use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 
 class RsaHelperService
 {

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Factory;
 
-use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
-use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 /**
  * Factory class for creating, encrypting, decrypting, and validating JWTs.

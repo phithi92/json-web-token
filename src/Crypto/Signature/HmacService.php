@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 
 class HmacService extends SignatureService
 {

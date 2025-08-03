@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use OpenSSLAsymmetricKey;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 class EcdsaService extends SignatureService

@@ -6,9 +6,9 @@ namespace Phithi92\JsonWebToken\Crypto\Cek;
 
 use Exception;
 use LogicException;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidCekLength;
 use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 
 final class DefaultCekHandler implements CekHandlerInterface
 {

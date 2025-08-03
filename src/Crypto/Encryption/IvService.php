@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Encryption;
 
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EmptyInitializeVectorException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorConfigException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorException;
 use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 
 /**
  * Responsible for generating and validating the Initialization Vector (IV)
