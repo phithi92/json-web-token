@@ -32,10 +32,10 @@ jobs:
         run: composer install
         
       - name: Generate Keys & Passwords
-        run: php scripts/generate-keys.php
+        run: php bin/generate-keys.php
 
       - name: Run PHPBench
-        run: vendor/bin/phpbench run --report=aggregate
+        run: php vendor/bin/phpbench --config config/phpbench.json run tests/phpbench/* --report=aggregate
 
       - name: Upload Benchmark Results
         uses: actions/upload-artifact@v3

@@ -39,7 +39,7 @@ jobs:
       run: composer install --no-progress --prefer-dist
       
     - name: Generate Keys & Passwords
-      run: php scripts/generate-keys.php
+      run: php bin/generate-keys.php
 
     - name: Run PHPUnit tests
-      run: vendor/bin/phpunit --configuration phpunit.xml
+      run: composer test

@@ -30,14 +30,14 @@
          }
     },
     "scripts": {
-        "test": "phpunit --configuration phpunit.xml",
+        "test": "phpunit --configuration config/phpunit.xml",
 
-        "analyse": "@php vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=1G",
-        "style": "phpcs --standard=PSR12 src/",
+        "analyse": "@php vendor/bin/phpstan analyse --configuration=config/phpstan.neon --memory-limit=1G",
+        "style": "phpcs --standard=PSR12 src tests",
 
-        "benchmark": "@php vendor/bin/phpbench run tests/phpbench/* --report=benchmark",
+        "benchmark": "@php vendor/bin/phpbench --config config/phpbench.json run tests/phpbench/* --report=benchmark",
 
-        "generate-keys": "@php scripts/generate-keys.php"
+        "generate-keys": "@php bin/generate-keys.php"
     },
     "config": {
         "allow-plugins": {
