@@ -14,9 +14,20 @@ use Phithi92\JsonWebToken\Handler\HandlerType;
 use Phithi92\JsonWebToken\Interfaces\JwtTokenOperation;
 use Phithi92\JsonWebToken\JwtAlgorithmManager;
 
+/**
+ * Abstract base class for processing JWT tokens using a defined set of handlers and operations.
+ *
+ * Implements the JwtTokenOperation interface and provides common functionality for resolving
+ * algorithms and dispatching handlers.
+ */
 abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 {
-    private const array HANDLER_CONFIG_MAP = [
+    /**
+     * Maps JWT component keys to handler types and priorities.
+     *
+     * The integer values define execution order (lower = earlier).
+     */
+    private const HANDLER_CONFIG_MAP = [
         'cek' => [HandlerType::Cek, 10],
         'key' => [HandlerType::Key, 20],
         'iv' => [HandlerType::Iv, 30],
@@ -24,13 +35,13 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         'signature' => [HandlerType::Signature, 50],
     ];
 
+    /** @var HandlerOperation Encapsulates the operation mode (e.g., encrypt or decrypt). */
     protected readonly HandlerOperation $operation;
 
-    /**
-     * @var JwtAlgorithmManager Handles algorithm resolution and handler configuration.
-     */
+    /** @var JwtAlgorithmManager Manages algorithm-specific configurations. */
     protected readonly JwtAlgorithmManager $manager;
 
+    /** @var HandlerDispatcher Responsible for invoking the correct handler methods. */
     protected readonly HandlerDispatcher $dispatcher;
 
     public function __construct(
@@ -42,6 +53,11 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         $this->operation = $operation;
     }
 
+    /**
+     * Returns the operation associated with the processor.
+     *
+     * @return HandlerOperation
+     */
     public function getOperation(): HandlerOperation
     {
         return $this->operation;
@@ -64,6 +80,15 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         return $alg === 'dir' && $header->getEnc() !== null ? $header->getEnc() : $alg;
     }
 
+    /**
+     * Dispatches all applicable handlers for the given JWT bundle and algorithm.
+     *
+     * Resolves configuration and handlers based on the provided algorithm, and
+     * executes them in order of their defined priority.
+     *
+     * @param EncryptedJwtBundle $bundle The encrypted JWT to process.
+     * @param string $algorithm The resolved algorithm identifier.
+     */
     protected function dispatchHandlers(
         EncryptedJwtBundle $bundle,
         string $algorithm
@@ -85,9 +110,13 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     }
 
     /**
+     * Resolves both the handler configuration and corresponding handler descriptors.
+     *
+     * @param string $algorithm The algorithm to use for configuration resolution.
+     *
      * @return array{
-     *     0: array<string, mixed>,
-     *     1: array<int, HandlerDescriptor>
+     *     0: array<string, mixed>,          // Configuration for the algorithm.
+     *     1: array<int, HandlerDescriptor>  // Sorted handler descriptors.
      * }
      */
     private function resolveConfigAndHandlers(string $algorithm): array
@@ -119,14 +148,14 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     }
 
     /**
+     * Orders handler descriptors by ascending priority.
+     *
      * @param array<int,HandlerDescriptor> $descriptors
      *
-     * @return array<int,HandlerDescriptor>
+     * @return array<int,HandlerDescriptor> Sorted descriptor list.
      */
     private function orderByPriority(array $descriptors): array
     {
-        usort($descriptors, static fn ($a, $b) => $a->priority <=> $b->priority);
-
-        return $descriptors;
+        return usort($descriptors, static fn ($a, $b) => $a->priority <=> $b->priority);
     }
 }
