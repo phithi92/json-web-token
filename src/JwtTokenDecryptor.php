@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken;
 
-use Phithi92\JsonWebToken\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Handler\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
+use Phithi92\JsonWebToken\Handler\HandlerOperation;
+use Phithi92\JsonWebToken\Handler\Processor\AbstractJwtTokenProcessor;
 
 /**
  * Component class for decrypting and validating encrypted JWTs.

@@ -44,8 +44,6 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      * @param JwtPayload|null $payload  Optional payload
      * @param JwtValidator|null $validator  Optional custom validator
      * @param string|null $kid  Optional key ID
-     *
-     * @return EncryptedJwtBundle
      */
     public function create(
         string $algorithm,
@@ -67,8 +65,6 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      * @param EncryptedJwtBundle $bundle  Pre-built bundle
      * @param string|null $algorithm  Algorithm override (optional)
      * @param JwtValidator|null $validator  Optional validator
-     *
-     * @return EncryptedJwtBundle
      */
     public function createFromBundle(
         EncryptedJwtBundle $bundle,
@@ -113,6 +109,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      * Extracts core header parameters from algorithm configuration.
      *
      * @param array<string, mixed> $config
+     *
      * @return array{string,string|null,string|null} Token type, algorithm, encryption method
      *
      * @throws LogicException If required keys are missing

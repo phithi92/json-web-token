@@ -211,10 +211,7 @@ final class JwtTokenFactory
     }
 
     /**
-     *
-     * @param EncryptedJwtBundle $bundle
      * @param array<int, string> $retained
-     * @return JwtPayload
      */
     private static function buildFilteredPayload(EncryptedJwtBundle $bundle, array $retained): JwtPayload
     {

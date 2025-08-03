@@ -55,8 +55,6 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 
     /**
      * Returns the operation associated with the processor.
-     *
-     * @return HandlerOperation
      */
     public function getOperation(): HandlerOperation
     {
