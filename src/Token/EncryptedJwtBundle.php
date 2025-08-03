@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken;
+namespace Phithi92\JsonWebToken\Token;
 
 /**
  * EncryptedJwtBundle

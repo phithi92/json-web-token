@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\phpunit;
 
 use PHPUnit\Framework\TestCase;
-use Phithi92\JsonWebToken\JwtValidator;
-use Phithi92\JsonWebToken\JwtPayload;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
+use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuerException;

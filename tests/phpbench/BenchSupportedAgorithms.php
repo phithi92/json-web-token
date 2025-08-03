@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/BenchmarkBase.php';
 
-use Phithi92\JsonWebToken\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;

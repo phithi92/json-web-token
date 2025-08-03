@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Handler\Processor;
 
-use Phithi92\JsonWebToken\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Handler\HandlerDescriptor;
 use Phithi92\JsonWebToken\Handler\HandlerDispatcher;
@@ -12,7 +13,6 @@ use Phithi92\JsonWebToken\Handler\HandlerMethodResolver;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Handler\HandlerType;
 use Phithi92\JsonWebToken\Interfaces\JwtTokenOperation;
-use Phithi92\JsonWebToken\JwtAlgorithmManager;
 
 /**
  * Abstract base class for processing JWT tokens using a defined set of handlers and operations.

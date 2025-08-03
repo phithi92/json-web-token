@@ -2,8 +2,8 @@
 
 namespace Tests\phpunit;
 
-use Phithi92\JsonWebToken\JwtTokenFactory;
-use Phithi92\JsonWebToken\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Tests\Helpers\TokenStorage;
 use Tests\Helpers\KeyProvider;
 use Tests\phpunit\TestCaseWithSecrets;

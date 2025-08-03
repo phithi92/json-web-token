@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\phpunit;
 
-use Phithi92\JsonWebToken\JwtPayload;
 use Phithi92\JsonWebToken\Exceptions;
-use Phithi92\JsonWebToken\JwtValidator;
-use Phithi92\JsonWebToken\Utilities\JsonEncoder;
+use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use PHPUnit\Framework\TestCase;
 use DateTimeImmutable;

@@ -2,9 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken;
+namespace Phithi92\JsonWebToken\Token\Builder;
 
 use LogicException;
+use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
+use Phithi92\JsonWebToken\Token\JwtHeader;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;

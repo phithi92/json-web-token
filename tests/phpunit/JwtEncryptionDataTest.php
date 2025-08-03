@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\phpunit;
 
 use PHPUnit\Framework\TestCase;
-use Phithi92\JsonWebToken\JwtEncryptionData;
+use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 
 final class JwtEncryptionDataTest extends TestCase
 {

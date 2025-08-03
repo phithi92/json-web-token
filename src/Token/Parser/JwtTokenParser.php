@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken;
+namespace Phithi92\JsonWebToken\Token\Parser;
 
+use Phithi92\JsonWebToken\Token\JwtHeader;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Base64\InvalidBase64UrlFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;

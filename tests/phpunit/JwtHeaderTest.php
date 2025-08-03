@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\phpunit;
 
 use PHPUnit\Framework\TestCase;
-use Phithi92\JsonWebToken\JwtHeader;
+use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;

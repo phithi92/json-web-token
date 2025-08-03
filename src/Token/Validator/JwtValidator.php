@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken;
+namespace Phithi92\JsonWebToken\Token\Validator;
 
 use LogicException;
+use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuedAtException;

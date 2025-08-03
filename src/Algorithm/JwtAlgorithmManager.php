@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken;
+namespace Phithi92\JsonWebToken\Algorithm;
 
 use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Config\DefaultAlgorithmConfiguration;

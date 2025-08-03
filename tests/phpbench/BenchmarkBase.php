@@ -1,10 +1,10 @@
 <?php
 
-use Phithi92\JsonWebToken\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\JwtPayload;
-use Phithi92\JsonWebToken\JwtTokenFactory;
-use Phithi92\JsonWebToken\JwtTokenParser;
-use Phithi92\JsonWebToken\JwtValidator;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
+use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
+use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 
 require_once __DIR__ . '/../Helpers/KeyProvider.php';
 

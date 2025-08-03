@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\phpunit;
 
-use Phithi92\JsonWebToken\JwtTokenParser;
+use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
+use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
-use Phithi92\JsonWebToken\EncryptedJwtBundle;
-use Phithi92\JsonWebToken\JwtPayload;
-use Phithi92\JsonWebToken\JwtTokenFactory;
 use Tests\phpunit\TestCaseWithSecrets;
 
 final class JwtTokenParserTest extends TestCaseWithSecrets
