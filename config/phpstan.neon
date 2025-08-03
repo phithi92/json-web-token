@@ -2,9 +2,9 @@ parameters:
     level: max
 
     paths:
-        - src
+        - ../src
 
     bootstrapFiles:
-        - vendor/autoload.php
+        - ../vendor/autoload.php
 
     reportUnmatchedIgnoredErrors: false
