@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token;
 
-use DateMalformedStringException;
 use DateTimeImmutable;
-use Exception;
 use Phithi92\JsonWebToken\Exceptions\Json\JsonException;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
-use Phithi92\JsonWebToken\Exceptions\Payload\InvalidKeyTypeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
+use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
+use Phithi92\JsonWebToken\Token\Validator\ClaimValidator;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
 /**
@@ -26,14 +25,14 @@ use Phithi92\JsonWebToken\Utilities\JsonEncoder;
  */
 class JwtPayload
 {
-    private const DECODE_JSON_DEPTH = 4;
     private string $encryptedPayload;
 
     /** @var array<string, mixed> */
     private array $payload;
 
-    // DateTimeImmutable object to handle date-related operations
-    private readonly DateTimeImmutable $dateTimeImmutable;
+    private readonly ClaimValidator $claimValidator;
+
+    public readonly DateClaimHelper $claimHelper;
 
     /**
      * Constructor initializes the DateTimeImmutable object.
@@ -41,12 +40,8 @@ class JwtPayload
      */
     public function __construct(?DateTimeImmutable $dateTime = null)
     {
-        $this->dateTimeImmutable = ($dateTime ?? new DateTimeImmutable());
-    }
-
-    public function getReferenceTime(): DateTimeImmutable
-    {
-        return $this->dateTimeImmutable;
+        $this->claimValidator = new ClaimValidator();
+        $this->claimHelper = new DateClaimHelper($dateTime);
     }
 
     /**
@@ -63,12 +58,11 @@ class JwtPayload
      */
     public function fromJson(string $json): self
     {
-        // Decode the JSON string into an associative array
+        $depthLimit = $this->claimValidator->getJsonDepthLimit();
+
         try {
-            /**
-             * @var array<string, string|int|float|bool|array<string, mixed>|null> $payload
-             */
-            $payload = JsonEncoder::decode($json, true, 0, self::DECODE_JSON_DEPTH);
+            /** @var array<mixed> $payload */
+            $payload = JsonEncoder::decode($json, true, 0, $depthLimit);
         } catch (JsonException $e) {
             throw new InvalidFormatException('Payload decoding failed: ' . $e->getMessage());
         }
@@ -92,7 +86,7 @@ class JwtPayload
     {
         // Iterate over the decoded data and set each key-value pair in the payload
         foreach ($data as $key => $value) {
-            $this->ensureValidClaim($key, $value);
+            $this->claimValidator->ensureValidClaim($key, $value);
 
             if (in_array($key, ['exp', 'nbf', 'iat'], true)) {
                 if (is_string($value)) {
@@ -132,6 +126,12 @@ class JwtPayload
         return $this->payload;
     }
 
+    public function setClaimTimestamp(string $key, string|int $value): self
+    {
+        $this->claimHelper->setClaimTimestamp($this, $key, $value);
+        return $this;
+    }
+
     /**
      * Serializes the JWT payload data to a JSON-encoded string.
      *
@@ -148,15 +148,12 @@ class JwtPayload
     {
         $array = $this->toArray();
 
-        if ($this->getArrayDepth($array) > self::DECODE_JSON_DEPTH) {
-            throw new InvalidFormatException(
-                sprintf('Payload exceeds maximum allowed depth of %d', self::DECODE_JSON_DEPTH)
-            );
-        }
+        $this->claimValidator->assertValidPayloadDepth($array);
 
         $options = (JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $depthLimit = $this->claimValidator->getJsonDepthLimit();
 
-        return JsonEncoder::encode($this->toArray(), $options, self::DECODE_JSON_DEPTH);
+        return JsonEncoder::encode($this->toArray(), $options, $depthLimit);
     }
 
     /**
@@ -396,64 +393,6 @@ class JwtPayload
     }
 
     /**
-     * Parses and sets a timestamp field in the JWT payload.
-     * Converts a datetime string into a Unix timestamp and stores it under the specified key.
-     *
-     * @param string $key      The key for the timestamp field (e.g., "iat", "nbf", "exp").
-     * @param string $dateTime The datetime string to be converted into a timestamp.
-     *
-     * @see setClaim()
-     *
-     * @return self Returns the instance to allow method chaining.
-     *
-     * @throws InvalidDateTimeException If the datetime string is in an invalid format.
-     * @throws InvalidValueTypeException If the value type is invalid.
-     * @throws EmptyFieldException If the value is empty.
-     */
-    private function setClaimTimestamp(string $key, string|int $dateTime): self
-    {
-        $adjustedDateTime = $this->buildValidDateTime($dateTime);
-
-        return $this->setClaim($key, $adjustedDateTime->getTimestamp(), true);
-    }
-
-    /**
-     * Converts a datetime expression or timestamp into a DateTimeImmutable object.
-     *
-     * @param string|int $dateTime Relative string (e.g. "+5 minutes") or timestamp (string or int)
-     *
-     * @throws InvalidDateTimeException
-     */
-    private function buildValidDateTime(string|int $dateTime): DateTimeImmutable
-    {
-        // Falls Timestamp als int oder int-String
-        if (is_int($dateTime) || (ctype_digit($dateTime))) {
-            $timestamp = (int) $dateTime;
-
-            try {
-                return (new DateTimeImmutable())->setTimestamp($timestamp);
-            } catch (Exception $e) {
-                throw new InvalidDateTimeException((string) $dateTime);
-            }
-        }
-
-        // Ansonsten: relative Angabe oder absolute Datumsangabe
-        try {
-            $adjustedDateTime = @$this->getReferenceTime()->modify($dateTime);
-        } catch (DateMalformedStringException) {
-            throw new InvalidDateTimeException($dateTime);
-        }
-
-        // PHP < 8.3 Fallback-Schutz
-        // @phpstan-ignore-next-line
-        if (! $adjustedDateTime instanceof DateTimeImmutable) {
-            throw new InvalidDateTimeException($dateTime);
-        }
-
-        return $adjustedDateTime;
-    }
-
-    /**
      * Checks whether the value is invalid (null, empty string, or empty array).
      *
      * @param string $key The key of the field.
@@ -466,83 +405,12 @@ class JwtPayload
      */
     private function setClaim(string $key, mixed $value, bool $overwrite = false): self
     {
-        $this->ensureValidClaim($key, $value);
+        $this->claimValidator->ensureValidClaim($key, $value);
 
         if ($this->hasClaim($key) === false || $overwrite) {
             $this->payload[$key] = $value;
         }
 
         return $this;
-    }
-
-    /**
-     * Validates that a given JWT claim value is not empty or of invalid type.
-     *
-     * Rejects null values, empty strings, and empty arrays, as these are considered
-     * semantically meaningless in the context of JWT claims. Also ensures that the
-     * value is either a scalar or an array.
-     *
-     * @param mixed $key   The claim key being validated (used for error context).
-     * @param mixed $value The claim value to validate.
-     *
-     * @throws EmptyFieldException       If the value is null, empty string, or empty array.
-     * @throws InvalidValueTypeException If the value is neither scalar nor array.
-     */
-    private function ensureValidClaim(mixed $key, mixed $value): void
-    {
-        $key = $this->assertJsonKey($key);
-
-        if ($this->isEmpty($value)) {
-            throw new EmptyFieldException((string) $key);
-        }
-
-        if (! $this->isJsonValue($value)) {
-            throw new InvalidValueTypeException((string) $key, gettype($value));
-        }
-    }
-
-    private function isJsonValue(mixed $data): bool
-    {
-        return is_bool($data)
-            || is_float($data)
-            || is_int($data)
-            || is_string($data)
-            || is_null($data)
-            || (is_array($data)
-                && array_reduce($data, fn ($carry, $v) => $carry && $this->isJsonValue($v), true));
-    }
-
-    private function assertJsonKey(mixed $key): string|int
-    {
-        if (! is_string($key) && ! is_int($key)) {
-            throw new InvalidKeyTypeException(gettype($key));
-        }
-
-        return $key;
-    }
-
-    private function isEmpty(mixed $value): bool
-    {
-        return $value === null || $value === '' || $value === [];
-    }
-
-    /**
-     * Recursively calculates the maximum depth of a nested array.
-     */
-    private function getArrayDepth(mixed $data): int
-    {
-        if (! is_array($data)) {
-            return 0;
-        }
-
-        $maxDepth = 1;
-        foreach ($data as $value) {
-            $depth = $this->getArrayDepth($value) + 1;
-            if ($depth > $maxDepth) {
-                $maxDepth = $depth;
-            }
-        }
-
-        return $maxDepth + 1;
     }
 }
