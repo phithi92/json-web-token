@@ -50,7 +50,8 @@ final class TokenStorage
     {
         $safeAlg = preg_replace('/[^a-zA-Z0-9_]/', '_', $algorithm);
         $safeKey = $key !== '' ? '_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $key) : '';
-        return self::BASE_DIR . "/token_{$safeAlg}{$safeKey}.jwt";
+        $pid = getmypid(); // process id
+        return self::BASE_DIR . "/token_{$safeAlg}{$safeKey}_{$pid}.jwt";
     }
 
     private static function ensureDirectoryExists(): void
