@@ -21,7 +21,8 @@
         "nikic/php-parser": "^5.3",
         "phpstan/phpstan": "2.0.x-dev",
         "nunomaduro/phpinsights": "dev-master",
-        "shipmonk/dead-code-detector": "^0.9.2"
+        "shipmonk/dead-code-detector": "^0.9.2",
+        "phpstan/phpstan-strict-rules": "2.0.x-dev"
     },
     "autoload": {
         "psr-4": {
