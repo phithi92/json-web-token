@@ -39,10 +39,8 @@ final class HandlerDispatcher
 
         $args = $this->resolveArguments($type, $context, $config);
 
-        /** @var callable $callable */
-        $callable = [$handler, $method];
-
-        return call_user_func_array($callable, $args);
+        $invoker = new HandlerInvoker();
+        return $invoker->invoke($handler, $method, $args);
     }
 
     private function resolveMethod(

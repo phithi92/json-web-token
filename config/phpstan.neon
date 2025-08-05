@@ -10,7 +10,3 @@ parameters:
         - ../vendor/autoload.php
 
     reportUnmatchedIgnoredErrors: true
-
-    ignoreErrors:
-        - '#Method Phithi92\\JsonWebToken\\Token\\Validator\\JwtValidator::is.* is unused#'
-        - '#Method Phithi92\\JsonWebToken\\Token\\Validator\\JwtValidator::assert.* is unused#'

@@ -8,6 +8,7 @@ use Phithi92\JsonWebToken\Exceptions\Json\JsonException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
+use Phithi92\JsonWebToken\Handler\HandlerInvoker;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
 /**
@@ -211,9 +212,11 @@ final class JwtHeader
     {
         $instance = new self();
 
+        $invoker = new HandlerInvoker();
+
         foreach (self::HEADER_MAP as $jsonKey => $setter) {
             if (isset($data[$jsonKey])) {
-                call_user_func([$instance, $setter], $data[$jsonKey]);
+                $invoker->invoke($instance, $setter, [$data[$jsonKey]]);
             }
         }
 

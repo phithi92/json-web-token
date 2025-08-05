@@ -26,7 +26,7 @@ use Phithi92\JsonWebToken\Utilities\JsonEncoder;
  */
 class JwtPayload
 {
-    private const DECODE_JSON_DEPTH = 5;
+    private const DECODE_JSON_DEPTH = 4;
     private string $encryptedPayload;
 
     /** @var array<string, mixed> */
@@ -146,7 +146,16 @@ class JwtPayload
      */
     public function toJson(): string
     {
+        $array = $this->toArray();
+
+        if ($this->getArrayDepth($array) > self::DECODE_JSON_DEPTH) {
+            throw new InvalidFormatException(
+                sprintf('Payload exceeds maximum allowed depth of %d', self::DECODE_JSON_DEPTH)
+            );
+        }
+
         $options = (JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
         return JsonEncoder::encode($this->toArray(), $options, self::DECODE_JSON_DEPTH);
     }
 
@@ -515,5 +524,25 @@ class JwtPayload
     private function isEmpty(mixed $value): bool
     {
         return $value === null || $value === '' || $value === [];
+    }
+
+    /**
+     * Recursively calculates the maximum depth of a nested array.
+     */
+    private function getArrayDepth(mixed $data): int
+    {
+        if (! is_array($data)) {
+            return 0;
+        }
+
+        $maxDepth = 1;
+        foreach ($data as $value) {
+            $depth = $this->getArrayDepth($value) + 1;
+            if ($depth > $maxDepth) {
+                $maxDepth = $depth;
+            }
+        }
+
+        return $maxDepth + 1;
     }
 }

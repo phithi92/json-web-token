@@ -16,6 +16,7 @@ use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
+use Phithi92\JsonWebToken\Handler\HandlerInvoker;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 
@@ -51,6 +52,8 @@ class JwtValidator
      */
     private array $expectedClaims;
 
+    private HandlerInvoker $invoker;
+
     /**
      * JwtValidator constructor.
      *
@@ -75,6 +78,7 @@ class JwtValidator
         $this->expectedAudience = $expectedAudience;
         $this->clockSkew = $clockSkew;
         $this->expectedClaims = $expectedClaims;
+        $this->invoker = new HandlerInvoker();
     }
 
     /**
@@ -87,12 +91,7 @@ class JwtValidator
         $methods = $this->getValidationMethods();
 
         foreach ($methods as $method) {
-            /** @var callable $callback */
-            $callback = [self::class, $method];
-
-            if (call_user_func($callback, $payload) === false) {
-                return false;
-            }
+            $this->invoker->invoke($this, $method, [$payload]);
         }
 
         return true;
@@ -179,37 +178,8 @@ class JwtValidator
         $methods = $this->getAssertValidationMethods();
 
         foreach ($methods as $method) {
-            /** @var callable $callback */
-            $callback = [self::class, $method];
-            call_user_func($callback, $payload);
+            $this->invoker->invoke($this, $method, [$payload]);
         }
-    }
-
-    /**
-     * @return array<string>
-     */
-    private function getValidationMethods(): array
-    {
-        return $this->mapMethodNames('is');
-    }
-
-    /**
-     * @return array<string>
-     */
-    private function getAssertValidationMethods(): array
-    {
-        return $this->mapMethodNames('assert');
-    }
-
-    /**
-     * @return array<string>
-     */
-    private function mapMethodNames(string $prefix): array
-    {
-        return array_map(
-            static fn (string $suffix): string => $prefix . $suffix,
-            self::VALIDATE_METHODS
-        );
     }
 
     /**
@@ -220,7 +190,7 @@ class JwtValidator
      *
      * @return bool True if all expected private claims are valid.
      */
-    private function isValidPrivateClaims(JwtPayload $payload): bool
+    public function isValidPrivateClaims(JwtPayload $payload): bool
     {
         foreach ($this->expectedClaims as $key => $expectedValue) {
             // Retrieve the actual claim value from the payload
@@ -255,7 +225,7 @@ class JwtValidator
      * @throws InvalidPrivateClaimException
      * @throws MissingPrivateClaimException
      */
-    private function assertValidPrivateClaims(JwtPayload $payload): void
+    public function assertValidPrivateClaims(JwtPayload $payload): void
     {
         foreach ($this->expectedClaims as $key => $expectedValue) {
             if (! is_string($expectedValue) && ! is_int($expectedValue) && ! is_null($expectedValue)) {
@@ -266,26 +236,13 @@ class JwtValidator
         }
     }
 
-    private function validateClaim(string $key, JwtPayload $payload, string|int|null $expectedValue): void
-    {
-        if (! $payload->hasClaim($key)) {
-            throw new MissingPrivateClaimException($key);
-        }
-
-        $actualValue = $payload->getClaim($key);
-
-        if ($expectedValue !== null && $actualValue !== $expectedValue) {
-            throw new InvalidPrivateClaimException($key, is_string($expectedValue) ? $expectedValue : '');
-        }
-    }
-
     /**
      * Validates the 'exp' (expiration) claim.
      *
      * @throws ExpiredPayloadException If the token has expired
      * @throws ValueNotFoundException If the 'exp' claim is missing
      */
-    private function assertNotExpired(JwtPayload $payload): void
+    public function assertNotExpired(JwtPayload $payload): void
     {
         if (! $this->isNotExpired($payload)) {
             throw new ExpiredPayloadException();
@@ -298,7 +255,7 @@ class JwtValidator
      * @throws NotBeforeOlderThanIatException If 'nbf' is before 'iat' minus clock skew
      * @throws NotYetValidException If the token is not yet valid
      */
-    private function assertNotBeforeValid(JwtPayload $payload): void
+    public function assertNotBeforeValid(JwtPayload $payload): void
     {
         $nbf = $payload->getNotBefore();
         $iat = $payload->getIssuedAt();
@@ -321,7 +278,7 @@ class JwtValidator
      *
      * @throws InvalidIssuedAtException If 'iat' is in the future (with clock skew)
      */
-    private function assertIssuedAtValid(JwtPayload $payload): void
+    public function assertIssuedAtValid(JwtPayload $payload): void
     {
         if (! $this->isIssuedAtValid($payload)) {
             throw new InvalidIssuedAtException();
@@ -333,7 +290,7 @@ class JwtValidator
      *
      * @throws InvalidIssuerException If issuer doesn't match expected
      */
-    private function assertValidIssuer(JwtPayload $payload): void
+    public function assertValidIssuer(JwtPayload $payload): void
     {
         if ($this->expectedIssuer !== null && $payload->getIssuer() !== $this->expectedIssuer) {
             $resolvedIssuer = $payload->getIssuer() ?? 'Not set in Payload';
@@ -346,7 +303,7 @@ class JwtValidator
      *
      * @throws InvalidAudienceException If the audience doesn't match expected
      */
-    private function assertValidAudience(JwtPayload $payload): void
+    public function assertValidAudience(JwtPayload $payload): void
     {
         if ($this->expectedAudience === null) {
             return;
@@ -358,6 +315,46 @@ class JwtValidator
 
         if (! $valid) {
             throw new InvalidAudienceException();
+        }
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function getValidationMethods(): array
+    {
+        return $this->mapMethodNames('is');
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function getAssertValidationMethods(): array
+    {
+        return $this->mapMethodNames('assert');
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function mapMethodNames(string $prefix): array
+    {
+        return array_map(
+            static fn (string $suffix): string => $prefix . $suffix,
+            self::VALIDATE_METHODS
+        );
+    }
+
+    private function validateClaim(string $key, JwtPayload $payload, string|int|null $expectedValue): void
+    {
+        if (! $payload->hasClaim($key)) {
+            throw new MissingPrivateClaimException($key);
+        }
+
+        $actualValue = $payload->getClaim($key);
+
+        if ($expectedValue !== null && $actualValue !== $expectedValue) {
+            throw new InvalidPrivateClaimException($key, is_string($expectedValue) ? $expectedValue : '');
         }
     }
 }
