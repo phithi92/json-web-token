@@ -18,9 +18,6 @@ final class IvService implements IvHandlerInterface
 {
     /**
      * Generate a cryptographically secure IV and store it in the bundle.
-     *
-     * @param EncryptedJwtBundle        $bundle The JWT encryption container
-     * @param array<string, int|string> $config
      */
     public function initializeIv(EncryptedJwtBundle $bundle, array $config): void
     {
@@ -36,9 +33,6 @@ final class IvService implements IvHandlerInterface
 
     /**
      * Validates the Initialization Vector (IV) in the bundle.
-     *
-     * @param EncryptedJwtBundle        $bundle The JWT encryption container
-     * @param array<string, int|string> $config
      *
      * @throws InvalidInitializationVectorException If the IV is missing or has an unexpected length
      */

@@ -18,15 +18,13 @@ class EcdsaService extends SignatureService
     private array $checkedKeys = [];
 
     /**
-     * @param array<string, string> $config
-     *
      * @throws SignatureComputationFailedException
      */
     public function computeSignature(EncryptedJwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
         $data = $this->getSigningInput($bundle);
-        $algorithm = strtolower(($config['hash_algorithm'] ?? ''));
+        $algorithm = $this->getConfiguredHashAlgorithm($config);
 
         $privateKey = $this->assertEcdsaKeyIsValid($kid, $algorithm, 'private');
 
@@ -43,8 +41,6 @@ class EcdsaService extends SignatureService
     }
 
     /**
-     * @param array<string, string> $config
-     *
      * @throws InvalidSignatureException
      */
     public function validateSignature(EncryptedJwtBundle $bundle, array $config): void
@@ -52,12 +48,9 @@ class EcdsaService extends SignatureService
         $kid = $this->resolveKid($bundle, $config);
 
         $signature = $bundle->getSignature();
-        if (! $signature) {
-            throw new InvalidSignatureException('Missing signature for validation.');
-        }
 
         $data = $bundle->getEncryption()->getAad();
-        $algorithm = $config['hash_algorithm'];
+        $algorithm = $this->getConfiguredHashAlgorithm($config);
 
         $publicKey = $this->assertEcdsaKeyIsValid($kid, $algorithm, 'public');
 

@@ -29,6 +29,14 @@ use Phithi92\JsonWebToken\Token\JwtPayload;
  */
 class JwtValidator
 {
+    private const VALIDATE_METHODS = [
+        'ValidPrivateClaims',
+        'NotExpired',
+        'NotBeforeValid',
+        'IssuedAtValid',
+        'ValidIssuer',
+        'ValidAudience',
+    ];
     private ?string $expectedIssuer = null;
 
     // The expected issuer value (public claim iss).
@@ -79,7 +87,10 @@ class JwtValidator
         $methods = $this->getValidationMethods();
 
         foreach ($methods as $method) {
-            if (! $this->{$method}($payload)) {
+            /** @var callable $callback */
+            $callback = [self::class, $method];
+
+            if (call_user_func($callback, $payload) === false) {
                 return false;
             }
         }
@@ -162,20 +173,15 @@ class JwtValidator
      *
      * @throws PayloadException On any validation failure
      * @throws TokenException On any validation failure
-     *
-     * @used-by assertValidPrivateClaims
-     * @used-by assertNotExpired
-     * @used-by assertNotBeforeValid
-     * @used-by assertIssuedAtValid
-     * @used-by assertValidIssuer
-     * @used-by assertValidAudience
      */
     public function assertValid(JwtPayload $payload): void
     {
         $methods = $this->getAssertValidationMethods();
 
         foreach ($methods as $method) {
-            $this->{$method}($payload);
+            /** @var callable $callback */
+            $callback = [self::class, $method];
+            call_user_func($callback, $payload);
         }
     }
 
@@ -202,14 +208,7 @@ class JwtValidator
     {
         return array_map(
             static fn (string $suffix): string => $prefix . $suffix,
-            [
-                'ValidPrivateClaims',
-                'NotExpired',
-                'NotBeforeValid',
-                'IssuedAtValid',
-                'ValidIssuer',
-                'ValidAudience',
-            ]
+            self::VALIDATE_METHODS
         );
     }
 
@@ -337,7 +336,7 @@ class JwtValidator
     private function assertValidIssuer(JwtPayload $payload): void
     {
         if ($this->expectedIssuer !== null && $payload->getIssuer() !== $this->expectedIssuer) {
-            $resolvedIssuer = $payload->getIssuer() ?: 'Not set in Payload';
+            $resolvedIssuer = $payload->getIssuer() ?? 'Not set in Payload';
             throw new InvalidIssuerException($this->expectedIssuer, $resolvedIssuer);
         }
     }

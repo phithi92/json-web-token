@@ -12,7 +12,7 @@ interface CekHandlerInterface
      * Generates or loads the Content Encryption Key (CEK)
      * and attaches it to the bundle.
      *
-     * @param array<string, int|string> $config
+     * @param array<string,string|int|class-string<object>> $config
      *          Configuration array (expects 'length' in bits).
      */
     public function initializeCek(EncryptedJwtBundle $bundle, array $config): void;
@@ -20,7 +20,7 @@ interface CekHandlerInterface
     /**
      * Validates the CEK against expected configuration (length, format, etc).
      *
-     * @param array<string, int|string> $config
+     * @param array<string,string|int|class-string<object>> $config
      *          Configuration array (expects 'length' in bits).
      */
     public function validateCek(EncryptedJwtBundle $bundle, array $config): void;

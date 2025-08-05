@@ -13,8 +13,8 @@ interface IvHandlerInterface
      * Prepares or generates the Initialization Vector (IV)
      * and attaches it to the given JWT encryption bundle.
      *
-     * @param EncryptedJwtBundle                          $bundle The bundle to update with a generated IV.
-     * @param array<string, array<string, string>|string> $config
+     * @param EncryptedJwtBundle $bundle The bundle to update with a generated IV.
+     * @param array<string,string|int|class-string<object>> $config
      *          Configuration array (expects 'length' in bits).
      */
     public function initializeIv(EncryptedJwtBundle $bundle, array $config): void;
@@ -22,8 +22,8 @@ interface IvHandlerInterface
     /**
      * Validates the IV stored in the JWT encryption bundle against the expected length.
      *
-     * @param EncryptedJwtBundle    $bundle The bundle containing the IV to validate.
-     * @param array<string, string> $config
+     * @param EncryptedJwtBundle $bundle The bundle containing the IV to validate.
+     * @param array<string,string|int|class-string<object>> $config
      *          Configuration array (expects 'length' in bits).
      *
      * @throws InvalidInitializationVectorException If the IV is missing or has incorrect length.

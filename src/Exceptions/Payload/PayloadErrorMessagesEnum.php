@@ -26,7 +26,8 @@ enum PayloadErrorMessagesEnum: string
     case INVALID_ISSUED_AT = 'Invalid issued at';
     case INVALID_AUDIENCE = 'Audience is not valid: %s';
     case PAYLOAD_EXPIRED = 'Payload is expired';
-    case INVALID_IAT = 'invalid iat. Iat is earlier than exp';
-    case INVALID_VALUE_TYPE = 'Invalid value type.';
-    case EMPTY_VALUE = 'invalid value. empty value for %s';
+    case INVALID_IAT = 'Invalid iat. Iat is earlier than exp';
+    case INVALID_VALUE_TYPE = 'Invalid value type for key "%1$s". Given: %2$s.';
+    case INVALID_KEY_TYPE = 'Invalid key type. Key: "%1$s", Type: %2$s.';
+    case EMPTY_VALUE = 'Invalid value. empty value for %s';
 }

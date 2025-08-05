@@ -14,13 +14,10 @@ class HmacService extends SignatureService
      */
     private array $checkedHmacKeys;
 
-    /**
-     * @param array<string, string> $config
-     */
     public function computeSignature(EncryptedJwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
-        $algorithm = $config['hash_algorithm'];
+        $algorithm = $this->getConfiguredHashAlgorithm($config);
         $passphrase = $this->manager->getPassphrase($kid);
         $signingInput = $this->getSigningInput($bundle);
 
@@ -32,14 +29,12 @@ class HmacService extends SignatureService
     }
 
     /**
-     * @param array<string, string> $config
-     *
      * @throws InvalidSignatureException
      */
     public function validateSignature(EncryptedJwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
-        $algorithm = $config['hash_algorithm'];
+        $algorithm = $this->getConfiguredHashAlgorithm($config);
         $signature = $bundle->getSignature();
         $aad = $bundle->getEncryption()->getAad();
 
@@ -66,7 +61,7 @@ class HmacService extends SignatureService
             // Already checked
         }
 
-        if (empty($passphrase)) {
+        if ($passphrase === '') {
             throw new InvalidSignatureException("HMAC key for [{$kid}] is empty.");
         }
 

@@ -24,14 +24,27 @@ final class DefaultCekHandler implements CekHandlerInterface
     public function validateCek(EncryptedJwtBundle $bundle, array $config): void
     {
         $cek = $bundle->getEncryption()->getCek();
-        $expectedBytes = $this->getByteLength($config);
-        $strict = ! empty($config['strict_length']);
 
-        $this->validateCekLength($cek, $expectedBytes, $strict);
+        $this->validateCekLength($cek, $config);
     }
 
-    private function validateCekLength(string $cek, int $expectedBytes, bool $strict): void
+    /**
+     * @param array<string, int|string|bool> $config Configuration array with 'length' key in bits
+     */
+    private function isStrictLengthEnabled(array $config): bool
     {
+        return isset($config['strict_length']) && (bool) $config['strict_length'] === true;
+    }
+
+    /**
+     * @param array<string, int|string> $config
+     *
+     * @throws InvalidCekLength
+     */
+    private function validateCekLength(string $cek, array $config): void
+    {
+        $expectedBytes = $this->getByteLength($config);
+        $strict = $this->isStrictLengthEnabled($config);
         $cekLength = strlen($cek);
 
         if ($strict) {

@@ -22,8 +22,6 @@ final class AesGcmService extends ContentCryptoService
     protected const OPENSSL_OPTIONS = OPENSSL_RAW_DATA;
 
     /**
-     * @param array<string,int|string> $config
-     *
      * @throws InvalidTokenException
      */
     public function decryptPayload(EncryptedJwtBundle $bundle, array $config): void
@@ -45,9 +43,6 @@ final class AesGcmService extends ContentCryptoService
         $bundle->getPayload()->fromJson($plaintext);
     }
 
-    /**
-     * @param array<string,int|string> $config
-     */
     public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
         $algorithm = $this->buildAlgorithmNameFromKeyLength($config);

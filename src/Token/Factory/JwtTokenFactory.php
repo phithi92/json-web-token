@@ -72,7 +72,9 @@ final class JwtTokenFactory
         ?JwtValidator $validator = null,
         ?string $kid = null
     ): EncryptedJwtBundle {
-        $payload = JwtPayload::fromArray($claims);
+        $payload = new JwtPayload();
+        $payload->fromArray($claims);
+
         return self::createToken($algorithm, $manager, $payload, $validator, $kid);
     }
 
@@ -232,7 +234,6 @@ final class JwtTokenFactory
 
         foreach ($retained as $claim) {
             if ($oldPayload->hasClaim($claim)) {
-                // @phpstan-ignore-next-line
                 $newPayload->addClaim($claim, $oldPayload->getClaim($claim));
             }
         }

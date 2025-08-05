@@ -24,6 +24,8 @@ final class JwtHeader
     private const MIN_KID_LENGTH = 3;
     private const MAX_KID_LENGTH = 64;
 
+    private const ENCODE_JSON_DEPTH = 3;
+
     private const HEADER_MAP = [
         'alg' => 'setAlgorithm',
         'typ' => 'setType',
@@ -182,7 +184,9 @@ final class JwtHeader
      */
     public function toJson(): string
     {
-        return JsonEncoder::encode($this->toArray(), (JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $options = (JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        return JsonEncoder::encode($this->toArray(), $options, self::ENCODE_JSON_DEPTH);
     }
 
     /**
@@ -209,7 +213,7 @@ final class JwtHeader
 
         foreach (self::HEADER_MAP as $jsonKey => $setter) {
             if (isset($data[$jsonKey])) {
-                $instance->$setter($data[$jsonKey]);
+                call_user_func([$instance, $setter], $data[$jsonKey]);
             }
         }
 
@@ -222,17 +226,27 @@ final class JwtHeader
      */
     private function assertValidKid(string $kid): void
     {
-        $kidLength = strlen($kid);
-
         // validate `kid` length
-        if ($kidLength < self::MIN_KID_LENGTH || $kidLength > self::MAX_KID_LENGTH) {
+        if (! $this->isValidKidLength($kid)) {
             throw new InvalidKidLengthException(self::MIN_KID_LENGTH, self::MAX_KID_LENGTH);
         }
 
         // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
-        if (! preg_match('/^[a-zA-Z0-9_-]+$/', $kid)) {
+        if (! $this->isKidFormatValid($kid)) {
             throw new InvalidKidFormatException();
         }
+    }
+
+    private function isValidKidLength(string $kid): bool
+    {
+        $kidLength = strlen($kid);
+
+        return $kidLength >= self::MIN_KID_LENGTH && $kidLength <= self::MAX_KID_LENGTH;
+    }
+
+    private function isKidFormatValid(string $kid): bool
+    {
+        return preg_match('/^[a-zA-Z0-9_-]+$/', $kid) === 1;
     }
 
     /**
@@ -291,7 +305,7 @@ final class JwtHeader
     {
         try {
             /** @var array<mixed> $data */
-            $data = JsonEncoder::decode($json, true);
+            $data = JsonEncoder::decode($json, true, 0, self::ENCODE_JSON_DEPTH);
         } catch (JsonException) {
             throw new InvalidFormatException('Token header is not valid JSON');
         }

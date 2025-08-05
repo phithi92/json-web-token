@@ -34,7 +34,7 @@ abstract class SignatureService implements SignatureHandlerInterface
     /**
      * Resolves the key ID (kid) from header or config.
      *
-     * @param array<string, string> $config
+     * @param array<string, int|class-string<object>> $config
      *
      * @throws InvalidSignatureException
      */
@@ -42,12 +42,20 @@ abstract class SignatureService implements SignatureHandlerInterface
     {
         if ($bundle->getHeader()->hasKid()) {
             $kid = $bundle->getHeader()->getKid();
-        } elseif (isset($config['name'])) {
+        } elseif (isset($config['name']) && is_string($config['name'])) {
             $kid = $config['name'];
         } else {
             throw new InvalidFormatException('No "kid" found in bundle or configuration');
         }
 
         return $kid;
+    }
+
+    /**
+     * @param array<string,string|int|class-string<object>> $config
+     */
+    protected function getConfiguredHashAlgorithm(array $config): string
+    {
+        return is_string($config['hash_algorithm']) ? $config['hash_algorithm'] : '';
     }
 }

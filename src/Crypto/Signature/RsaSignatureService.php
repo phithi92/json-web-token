@@ -23,14 +23,14 @@ class RsaSignatureService extends SignatureService
     public function computeSignature(EncryptedJwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
-        $signature = '';
-        $algorithm = (string) $config['hash_algorithm'];
+        $algorithm = $this->getConfiguredHashAlgorithm($config);
 
         $privateKey = $this->rsaHelper->assertRsaKeyIsValid($kid, $algorithm, 'private');
 
         $signinInput = $this->getSigningInput($bundle);
         $algorithmConst = $this->rsaHelper->mapHashToOpenSSLConstant($algorithm);
 
+        $signature = '';
         if (! openssl_sign($signinInput, $signature, $privateKey, $algorithmConst)) {
             $message = OpenSslErrorHelper::getFormattedErrorMessage('Compute Signature Failed: ');
             throw new SignatureComputationFailedException($message);
@@ -45,7 +45,7 @@ class RsaSignatureService extends SignatureService
     public function validateSignature(EncryptedJwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
-        $algorithm = (string) $config['hash_algorithm'];
+        $algorithm = $this->getConfiguredHashAlgorithm($config);
         $signature = $bundle->getSignature();
 
         $publicKey = $this->rsaHelper->assertRsaKeyIsValid($kid, $algorithm, 'public');

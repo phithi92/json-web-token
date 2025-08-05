@@ -172,7 +172,9 @@ final class KeyStore
         $key = match ($role) {
             'private' => openssl_pkey_get_private($pem),
             'public' => openssl_pkey_get_public($pem),
-            default => openssl_pkey_get_private($pem) ?: openssl_pkey_get_public($pem)
+            default => ($private = openssl_pkey_get_private($pem)) !== false
+                ? $private
+                : openssl_pkey_get_public($pem),
         };
 
         if (! $key instanceof OpenSSLAsymmetricKey) {
@@ -206,7 +208,7 @@ final class KeyStore
 
     private function extractRole(OpenSSLAsymmetricKey $key): string
     {
-        return openssl_pkey_get_private($key) ? 'private' : 'public';
+        return openssl_pkey_get_public($key) === false ? 'private' : 'public';
     }
 
     private function assertValidRole(?string $role): void

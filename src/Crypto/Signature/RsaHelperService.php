@@ -56,7 +56,7 @@ class RsaHelperService
             return $cached;
         }
 
-        if (! in_array($role, ['private', 'public'])) {
+        if (! in_array($role, ['private', 'public'], true)) {
             throw new Exception('Given role is invalid.');
         }
 

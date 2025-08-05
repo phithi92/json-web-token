@@ -9,12 +9,12 @@ use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 interface SignatureHandlerInterface
 {
     /**
-     * @param array<string, string> $config
+     * @param array<string, int|class-string<object>> $config
      */
     public function validateSignature(EncryptedJwtBundle $bundle, array $config): void;
 
     /**
-     * @param array<string, string> $config
+     * @param array<string, int|class-string<object>> $config
      */
     public function computeSignature(EncryptedJwtBundle $bundle, array $config): void;
 }

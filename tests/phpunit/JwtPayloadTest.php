@@ -228,7 +228,8 @@ class JwtPayloadTest extends TestCase
             'custom' => 'customValue',
         ]);
 
-        $payload = JwtPayload::fromJson($json);
+        $payload = new JwtPayload();
+        $payload->fromJson($json);
 
         $this->assertEquals('issuerTest', $payload->getClaim('iss'));
         $this->assertEquals(['aud1', 'aud2'], $payload->getClaim('aud'));
@@ -239,7 +240,8 @@ class JwtPayloadTest extends TestCase
     {
         $this->expectException(InvalidFormatException::class);
 
-        JwtPayload::fromJson('');
+        $payload = new JwtPayload();
+        $payload->fromJson('');
     }
 
     public function testFromJsonFailsOnMalformedUtf8()
@@ -249,13 +251,16 @@ class JwtPayloadTest extends TestCase
 
         $this->expectException(InvalidFormatException::class);
 
-        JwtPayload::fromJson($malformedJson);
+        $payload = new JwtPayload();
+        $payload->fromJson($malformedJson);
     }
 
     public function testFromJsonInvalidJsonThrowsException()
     {
         $this->expectException(InvalidFormatException::class);
-        JwtPayload::fromJson('{"iss": invalid json}');
+
+        $payload = new JwtPayload();
+        $payload->fromJson('{"iss": invalid json}');
     }
 
     public function testFromArrayCreatesValidPayload()
@@ -266,7 +271,8 @@ class JwtPayloadTest extends TestCase
             'foo' => 'bar',
         ];
 
-        $payload = JwtPayload::fromArray($array);
+        $payload = new JwtPayload();
+        $payload->fromArray($array);
 
         $this->assertEquals('arrayIssuer', $payload->getIssuer());
         $this->assertEquals('arrayAudience', $payload->getAudience());
@@ -281,7 +287,7 @@ class JwtPayloadTest extends TestCase
 
     public function testAddInvalidClaimTypeThrowsException()
     {
-        $this->expectException(\TypeError::class);
+        $this->expectException(Exceptions\Payload\InvalidValueTypeException::class);
 
         (new JwtPayload())->addClaim('invalid', new \stdClass());
     }

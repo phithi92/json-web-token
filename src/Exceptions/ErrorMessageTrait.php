@@ -19,7 +19,7 @@ trait ErrorMessageTrait
 {
     public function getMessage(string|int|float|bool|null ...$details): string
     {
-        if (! empty($details)) {
+        if (count($details) > 0) {
             return sprintf($this->value, ...$details);
         }
 
