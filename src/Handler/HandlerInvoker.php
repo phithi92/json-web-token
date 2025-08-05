@@ -9,14 +9,12 @@ final class HandlerInvoker
     /**
      * Führt eine Methode performant auf einem Handler aus.
      *
-     * @template THandler of object
-     *
-     * @param THandler $handler
+     * @param object $handler
      * @param list<mixed> $args
      */
     public function invoke(object $handler, string $method, mixed $args): mixed
     {
         // @phpstan-ignore-next-line
-        return $handler->$method(...$args);
+        return $handler->{$method}(...$args);
     }
 }
