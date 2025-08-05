@@ -10,9 +10,12 @@ use RuntimeException;
 
 final class HandlerDispatcher
 {
+    private HandlerInvoker $invoker;
+
     public function __construct(
         private readonly HandlerMethodResolver $methodResolver,
     ) {
+        $this->invoker = new HandlerInvoker();
     }
 
     /**
@@ -39,8 +42,7 @@ final class HandlerDispatcher
 
         $args = $this->resolveArguments($type, $context, $config);
 
-        $invoker = new HandlerInvoker();
-        return $invoker->invoke($handler, $method, $args);
+        return $this->invoker->invoke($handler, $method, $args);
     }
 
     private function resolveMethod(
