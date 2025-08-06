@@ -8,6 +8,7 @@ use Phithi92\JsonWebToken\Exceptions\Json\JsonException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingKidException;
 use Phithi92\JsonWebToken\Handler\HandlerInvoker;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
@@ -35,13 +36,13 @@ final class JwtHeader
     ];
 
     // The type of token, typically 'JWT' or 'JWS'
-    private string $typ;
+    private ?string $typ = null;
 
     // The algorithm used for encoding or signing the token
-    private string $algorithm;
+    private ?string $algorithm = null;
 
     // The encryption method used, if applicable
-    private string $enc;
+    private ?string $enc = null;
 
     // The key identifier, used to indicate which key was used to sign or encrypt the token
     private ?string $kid = null;
@@ -75,10 +76,12 @@ final class JwtHeader
      * Retrieves the kid (key id) from the header.
      *
      * @return string The token type if set.
+     *
+     * @throw KidNotSetException when kid is not set
      */
     public function getKid(): string
     {
-        return $this->kid ?? '';
+        return $this->kid ?? throw new MissingKidException();
     }
 
     public function hasKid(): bool
@@ -106,7 +109,7 @@ final class JwtHeader
      */
     public function getType(): ?string
     {
-        return $this->typ ?? null;
+        return $this->typ;
     }
 
     /**
@@ -129,7 +132,7 @@ final class JwtHeader
      */
     public function getAlgorithm(): ?string
     {
-        return $this->algorithm ?? null;
+        return $this->algorithm;
     }
 
     /**
@@ -152,7 +155,7 @@ final class JwtHeader
      */
     public function getEnc(): ?string
     {
-        return $this->enc ?? null;
+        return $this->enc;
     }
 
     /**
@@ -167,10 +170,10 @@ final class JwtHeader
     {
         return array_filter(
             [
-                'alg' => $this->algorithm ?? null,
-                'typ' => $this->typ ?? null,
-                'enc' => $this->enc ?? null,
-                'kid' => $this->kid ?? null,
+                'alg' => $this->algorithm,
+                'typ' => $this->typ,
+                'enc' => $this->enc,
+                'kid' => $this->kid,
             ],
             static fn ($value) => $value !== null && $value !== ''
         );
@@ -206,14 +209,13 @@ final class JwtHeader
     }
 
     /**
-     * @param array<string,string> $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
-        $instance = new self();
-
         $invoker = new HandlerInvoker();
 
+        $instance = new self();
         foreach (self::HEADER_MAP as $jsonKey => $setter) {
             if (isset($data[$jsonKey])) {
                 $invoker->invoke($instance, $setter, [$data[$jsonKey]]);
@@ -249,7 +251,7 @@ final class JwtHeader
 
     private function isKidFormatValid(string $kid): bool
     {
-        return preg_match('/^[a-zA-Z0-9_-]+$/', $kid) === 1;
+        return preg_match('/^[a-zA-Z0-9._-]+$/', $kid) === 1;
     }
 
     /**

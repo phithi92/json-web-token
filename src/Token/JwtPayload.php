@@ -9,6 +9,7 @@ use Phithi92\JsonWebToken\Exceptions\Json\JsonException;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
+use Phithi92\JsonWebToken\Exceptions\Token\EncryptedPayloadNotSetException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
 use Phithi92\JsonWebToken\Token\Validator\ClaimValidator;
@@ -25,14 +26,13 @@ use Phithi92\JsonWebToken\Utilities\JsonEncoder;
  */
 class JwtPayload
 {
-    private string $encryptedPayload;
+    public readonly DateClaimHelper $claimHelper;
+    private ?string $encryptedPayload = null;
 
     /** @var array<string, mixed> */
-    private array $payload;
+    private array $payload = [];
 
     private readonly ClaimValidator $claimValidator;
-
-    public readonly DateClaimHelper $claimHelper;
 
     /**
      * Constructor initializes the DateTimeImmutable object.
@@ -45,16 +45,19 @@ class JwtPayload
     }
 
     /**
-     * Creates a new instance of JwtPayload from a JSON string.
-     * This static method parses the JSON input and populates the payload fields accordingly.
+     * Parses a JSON-encoded string and populates the payload with the decoded claims.
      *
-     * @param string $json A JSON-encoded string representing the JWT payload data.
+     * This method decodes the given JSON string into an associative array, applies validation,
+     * and sets the payload fields accordingly. It supports standard and custom JWT claims.
      *
-     * @uses JsonEncoder Encodes the array representation of the object into JSON.
+     * If the input JSON is malformed or violates structural constraints (e.g., depth limit),
+     * a domain-specific {@see InvalidFormatException} is thrown.
      *
-     * @see fromArray()
+     * @param string $json A JSON string representing the JWT payload.
      *
-     * @return self Returns an instance of JwtPayload with fields populated from the JSON data.
+     * @return self Returns the current JwtPayload instance populated with decoded claims.
+     *
+     * @throws InvalidFormatException If the JSON is invalid or cannot be parsed into a payload.
      */
     public function fromJson(string $json): self
     {
@@ -67,7 +70,7 @@ class JwtPayload
             throw new InvalidFormatException('Payload decoding failed: ' . $e->getMessage());
         }
 
-        return self::fromArray($payload);
+        return $this->fromArray($payload);
     }
 
     /**
@@ -146,14 +149,14 @@ class JwtPayload
      */
     public function toJson(): string
     {
-        $array = $this->toArray();
+        $payload = $this->toArray();
 
-        $this->claimValidator->assertValidPayloadDepth($array);
+        $this->claimValidator->assertValidPayloadDepth($payload);
 
         $options = (JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $depthLimit = $this->claimValidator->getJsonDepthLimit();
 
-        return JsonEncoder::encode($this->toArray(), $options, $depthLimit);
+        return JsonEncoder::encode($payload, $options, $depthLimit);
     }
 
     /**
@@ -389,7 +392,7 @@ class JwtPayload
      */
     public function getEncryptedPayload(): string
     {
-        return $this->encryptedPayload;
+        return $this->encryptedPayload ?? throw new EncryptedPayloadNotSetException();
     }
 
     /**

@@ -6,9 +6,9 @@ namespace Phithi92\JsonWebToken\Token\Helper;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
-use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Throwable;
 

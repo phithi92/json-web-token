@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Crypto\Content;
 
 use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
@@ -17,7 +16,7 @@ final class RsaEncryptionService extends ContentCryptoService
      */
     public function decryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
-        $kid = $this->getKid($bundle);
+        $kid = $bundle->getHeader()->getKid();
 
         $this->decrypt($bundle, $kid, $config);
     }
@@ -27,7 +26,8 @@ final class RsaEncryptionService extends ContentCryptoService
      */
     public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
-        $kid = $this->getKid($bundle);
+        $kid = $bundle->getHeader()->getKid();
+
         $this->encrypt($bundle, $kid, $config);
     }
 
@@ -71,17 +71,5 @@ final class RsaEncryptionService extends ContentCryptoService
 
         /** @var string $encrypted */
         $bundle->getPayload()->setEncryptedPayload($encrypted);
-    }
-
-    /**
-     * @throws InvalidSignatureException
-     */
-    private function getKid(EncryptedJwtBundle $bundle): string
-    {
-        if (! $bundle->getHeader()->hasKid()) {
-            throw new InvalidSignatureException('No key ID (kid) provided for validation.');
-        }
-
-        return $bundle->getHeader()->getKid();
     }
 }

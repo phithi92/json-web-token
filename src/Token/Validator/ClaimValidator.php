@@ -70,9 +70,8 @@ class ClaimValidator
     }
 
     /**
-     *
      * @param array<mixed> $array
-     * @return void
+     *
      * @throws InvalidFormatException
      */
     public function assertValidPayloadDepth(array $array): void

@@ -98,7 +98,7 @@ class JwtHeaderTest extends TestCase
         $this->assertEquals('HS256', $jwtHeader->getAlgorithm());
         $this->assertEquals('JWS', $jwtHeader->getType());
         $this->assertEmpty($jwtHeader->getEnc());
-        $this->assertEmpty($jwtHeader->getKid());
+        $this->assertFalse($jwtHeader->hasKid());
     }
 
     public function testFromJsonWithEncAndKid()

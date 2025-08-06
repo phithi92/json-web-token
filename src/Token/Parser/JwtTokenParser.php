@@ -85,7 +85,7 @@ class JwtTokenParser
     private static function decodeBase64Url(string $base64): string
     {
         try {
-            return Base64UrlEncoder::decode($base64, true);
+            return Base64UrlEncoder::decode($base64);
         } catch (InvalidBase64UrlFormatException) {
             throw new InvalidFormatException('Cannot decode: invalid Base64Url content.');
         }

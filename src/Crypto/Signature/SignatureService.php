@@ -40,12 +40,14 @@ abstract class SignatureService implements SignatureHandlerInterface
      */
     protected function resolveKid(EncryptedJwtBundle $bundle, array $config): string
     {
-        if ($bundle->getHeader()->hasKid()) {
-            $kid = $bundle->getHeader()->getKid();
-        } elseif (isset($config['name']) && is_string($config['name'])) {
-            $kid = $config['name'];
-        } else {
-            throw new InvalidFormatException('No "kid" found in bundle or configuration');
+        $kid = $bundle->getHeader()->getKid();
+
+        if (! $bundle->getHeader()->hasKid()) {
+            if ($this->existConfigKidFallback($config)) {
+                $kid = (string) $config['name'];
+            } else {
+                throw new InvalidFormatException('No "kid" found in bundle or configuration');
+            }
         }
 
         return $kid;
@@ -57,5 +59,13 @@ abstract class SignatureService implements SignatureHandlerInterface
     protected function getConfiguredHashAlgorithm(array $config): string
     {
         return is_string($config['hash_algorithm']) ? $config['hash_algorithm'] : '';
+    }
+
+    /**
+     * @param array<string, int|class-string<object>> $config
+     */
+    private function existConfigKidFallback(array $config): bool
+    {
+        return isset($config['name']) && is_string($config['name']);
     }
 }
