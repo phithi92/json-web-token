@@ -30,4 +30,6 @@ enum TokenErrorMessagesEnum: string
     case INVALID_PRIVATE_CLAIM = 'Invalid value for private claim "%1$s". Expect "%2%s".';
     case MISSING_PRIVATE_CLAIM = 'Missing required private claim "%1$s".';
     case UNRESOLVABLE_KEY = 'No key or passphrase found for requested secret. KID: "%1$s".';
+    case ENCRYPTED_PAYLOAD_NOT_SET = 'Encrypted payload has not been set.';
+    case KID_NOT_SET = 'No kid in header configured ';
 }

@@ -4,31 +4,49 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Security;
 
-use Phithi92\JsonWebToken\Interfaces\PassphraseStoreInterface;
-use RuntimeException;
+use Phithi92\JsonWebToken\Exception\Security\PassphraseNotFoundException;
 
-final class PassphraseStore implements PassphraseStoreInterface
+final class PassphraseStore
 {
     /**
-     * @var array<string,string> $phrases
+     * @var array<string, string> $phrases Map of key ID to passphrase
      */
     private array $phrases = [];
 
-    public function addPassphrase(#[\SensitiveParameter] string $passphrase, ?string $kid): string
+    /**
+     * Adds a passphrase and returns the resolved key ID.
+     *
+     * @param string $passphrase The secret passphrase
+     * @param string|null $kid Optional key ID. If null, it will be derived from the passphrase
+     *
+     * @return string The resolved key ID
+     */
+    public function addPassphrase(#[\SensitiveParameter] string $passphrase, ?string $kid = null): string
     {
-        $kid ??= KeyIdentifier::fromSecret($passphrase);
-        return $this->phrases[$kid] = $passphrase;
+        $resolvedKid = $kid ?? KeyIdentifier::fromSecret($passphrase);
+        $this->phrases[$resolvedKid] = $passphrase;
+
+        return $resolvedKid;
     }
 
+    /**
+     * Retrieves a passphrase by key ID.
+     *
+     * @param string $kid The key ID
+     *
+     * @throws PassphraseNotFoundException If no passphrase is found for the given key ID
+     */
     public function getPassphrase(#[\SensitiveParameter] string $kid): string
     {
-        if (! isset($this->phrases[$kid])) {
-            throw new RuntimeException("No passphrase found for ID: {$kid}");
-        }
-
-        return $this->phrases[$kid];
+        return $this->phrases[$kid]
+            ?? throw new PassphraseNotFoundException($kid);
     }
 
+    /**
+     * Checks whether a passphrase exists for the given key ID.
+     *
+     * @param string $kid The key ID
+     */
     public function hasPassphrase(#[\SensitiveParameter] string $kid): bool
     {
         return isset($this->phrases[$kid]);
