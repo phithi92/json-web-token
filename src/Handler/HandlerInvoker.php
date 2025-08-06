@@ -9,7 +9,6 @@ final class HandlerInvoker
     /**
      * Führt eine Methode performant auf einem Handler aus.
      *
-     * @param object $handler
      * @param list<mixed> $args
      */
     public function invoke(object $handler, string $method, mixed $args): mixed

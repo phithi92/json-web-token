@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Handler;
 
-use RuntimeException;
+use Phithi92\JsonWebToken\Exceptions\Handler\UnsupportedHandlerMethodException;
 
 final class HandlerMethodResolver
 {
@@ -30,9 +30,7 @@ final class HandlerMethodResolver
             $type === HandlerType::Payload && $operation === HandlerOperation::Perform => 'encryptPayload',
             $type === HandlerType::Payload && $operation === HandlerOperation::Reverse => 'decryptPayload',
 
-            default => throw new RuntimeException(
-                "No method defined for {$type->name} with {$operation->name} operation"
-            ),
+            default => throw new UnsupportedHandlerMethodException(),
         };
     }
 }

@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Handler;
 
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerClassDefinitionException;
+use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerImplementationException;
+use Phithi92\JsonWebToken\Exceptions\Handler\MissingHandlerConfigurationException;
+use Phithi92\JsonWebToken\Exceptions\Handler\UndefinedHandlerMethodException;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use RuntimeException;
 
@@ -55,7 +59,7 @@ final class HandlerDispatcher
     private function assertValidHandlerMethod(object $handler, string $method): void
     {
         if (! method_exists($handler, $method)) {
-            throw new RuntimeException('Handler ' . $handler::class . " has no method {$method}()");
+            throw new UndefinedHandlerMethodException($handler::class, $method);
         }
     }
 
@@ -72,24 +76,19 @@ final class HandlerDispatcher
         $interface = $type->interface();
 
         if (! isset($config[$interface]) || ! is_array($config[$interface])) {
-            throw new RuntimeException('Missing handler configuration');
+            throw new MissingHandlerConfigurationException();
         }
 
         $class = $config[$interface]['handler'];
         if (! is_string($class)) {
-            throw new RuntimeException('Handler class is no valid class string');
+            throw new InvalidHandlerClassDefinitionException(gettype($class));
         }
 
         if (! is_subclass_of($class, $interface)) {
-            throw new RuntimeException("Handler {$class} must implement {$interface}");
+            throw new InvalidHandlerImplementationException($class, $interface);
         }
 
-        $handler = new $class($manager);
-        if (! ($handler instanceof $interface)) {
-            throw new RuntimeException("Handler {$class} must implement {$interface}");
-        }
-
-        return $handler;
+        return new $class($manager);
     }
 
     /**
