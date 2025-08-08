@@ -70,9 +70,9 @@ final class JsonEncoder
      *
      * @param array<mixed> $array   The associative array to encode.
      * @param int          $options Additional JSON encode options (e.g.,
-     *                              JSON_UNESCAPED_UNICODE),
-     * @param int          $depth   The maximum depth for JSON
-     *                              encoding. Defaults to 512.
+     *                              JSON_UNESCAPED_UNICODE), The maximum
+     *                              depth for JSON encoding. Defaults to
+     *                              512.
      *
      * @return string The JSON-encoded string.
      *
