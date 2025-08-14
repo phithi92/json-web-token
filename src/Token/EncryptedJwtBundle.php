@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token;
 
+use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
+
 /**
  * EncryptedJwtBundle
  *
@@ -19,7 +21,7 @@ final class EncryptedJwtBundle
 
     private JwtEncryptionData $encryption;
 
-    private string $signature;
+    private ?string $signature = null;
 
     /**
      * Initializes the JWT header with an optional JwtPayload instance.
@@ -29,7 +31,7 @@ final class EncryptedJwtBundle
     public function __construct(JwtHeader $header, ?JwtPayload $payload = null)
     {
         $this->header = $header;
-        $this->payload = ($payload ?? new JwtPayload());
+        $this->payload = $payload ?? new JwtPayload();
         $this->encryption = new JwtEncryptionData();
     }
 
@@ -79,6 +81,6 @@ final class EncryptedJwtBundle
      */
     public function getSignature(): string
     {
-        return $this->signature;
+        return $this->signature ?? throw new MissingTokenPart('Signature');
     }
 }

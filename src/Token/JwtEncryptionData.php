@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token;
 
+use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
+
 /**
  * Holds cryptographic data used in JSON Web Encryption (JWE),
  * including the CEK, IV, AAD, auth tag, and encrypted key if applicable.
@@ -13,19 +15,19 @@ namespace Phithi92\JsonWebToken\Token;
 final class JwtEncryptionData
 {
     // Content Encryption Key (symmetric key used for data encryption)
-    private string $cek;
+    private ?string $cek = null;
 
     // Initialization Vector for encryption (ensures randomness)
-    private string $iv;
+    private ?string $iv = null;
 
     // Authentication tag used to verify data integrity and authenticity
-    private string $authTag;
+    private ?string $authTag = null;
 
     // Encrypted version of the CEK (e.g., encrypted with recipient's public key)
-    private string $encryptedKey;
+    private ?string $encryptedKey = null;
 
     // Additional Authenticated Data (extra data authenticated but not encrypted)
-    private string $aad;
+    private ?string $aad = null;
 
     /**
      * Sets the Base64URL-encoded AAD (Additional Authenticated Data),
@@ -46,11 +48,7 @@ final class JwtEncryptionData
      */
     public function getAad(): string
     {
-        if (! isset($this->aad)) {
-            throw new \LogicException('AAD has not been set.');
-        }
-
-        return $this->aad;
+        return $this->aad ?? throw new MissingTokenPart('AAD');
     }
 
     /**
@@ -84,11 +82,7 @@ final class JwtEncryptionData
      */
     public function getCek(): string
     {
-        if (! isset($this->cek)) {
-            throw new \LogicException('CEK has not been set.');
-        }
-
-        return $this->cek;
+        return $this->cek ?? throw new MissingTokenPart('CEK');
     }
 
     /**
@@ -111,11 +105,7 @@ final class JwtEncryptionData
      */
     public function getEncryptedKey(): string
     {
-        if (! isset($this->encryptedKey)) {
-            throw new \LogicException('Encrypted Key has not been set.');
-        }
-
-        return $this->encryptedKey;
+        return $this->encryptedKey ?? throw new MissingTokenPart('EncryptedKey');
     }
 
     /**
@@ -138,11 +128,7 @@ final class JwtEncryptionData
      */
     public function getAuthTag(): string
     {
-        if (! isset($this->authTag)) {
-            throw new \LogicException('AuthTag has not been set.');
-        }
-
-        return $this->authTag;
+        return $this->authTag ?? throw new MissingTokenPart('AuthTag');
     }
 
     /**
@@ -152,10 +138,6 @@ final class JwtEncryptionData
      */
     public function getIv(): string
     {
-        if (! isset($this->iv)) {
-            throw new \LogicException('IV has not been set.');
-        }
-
-        return $this->iv;
+        return $this->iv ?? throw new MissingTokenPart('IV');
     }
 }

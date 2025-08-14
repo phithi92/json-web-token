@@ -6,6 +6,7 @@ namespace Tests\phpunit;
 
 use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Token\JwtEncryptionData;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 
 final class JwtEncryptionDataTest extends TestCase
 {
@@ -20,8 +21,8 @@ final class JwtEncryptionDataTest extends TestCase
 
     public function testGetAadWithoutSetThrowsException(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('AAD has not been set.');
+        $this->expectException(MissingTokenPart::class);
+        $this->expectExceptionMessage('No AAD configured.');
 
         (new JwtEncryptionData())->getAad();
     }
@@ -37,8 +38,8 @@ final class JwtEncryptionDataTest extends TestCase
 
     public function testGetIvWithoutSetThrowsException(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('IV has not been set.');
+        $this->expectException(MissingTokenPart::class);
+        $this->expectExceptionMessage('No IV configured.');
 
         (new JwtEncryptionData())->getIv();
     }
@@ -54,8 +55,8 @@ final class JwtEncryptionDataTest extends TestCase
 
     public function testGetCekWithoutSetThrowsException(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('CEK has not been set.');
+        $this->expectException(MissingTokenPart::class);
+        $this->expectExceptionMessage('No CEK configured.');
 
         (new JwtEncryptionData())->getCek();
     }
@@ -71,8 +72,8 @@ final class JwtEncryptionDataTest extends TestCase
 
     public function testGetEncryptedKeyWithoutSetThrowsException(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Encrypted Key has not been set.');
+        $this->expectException(MissingTokenPart::class);
+        $this->expectExceptionMessage('No EncryptedKey configured.');
 
         (new JwtEncryptionData())->getEncryptedKey();
     }
@@ -88,8 +89,8 @@ final class JwtEncryptionDataTest extends TestCase
 
     public function testGetAuthTagWithoutSetThrowsException(): void
     {
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('AuthTag has not been set.');
+        $this->expectException(MissingTokenPart::class);
+        $this->expectExceptionMessage('No AuthTag configured.');
 
         (new JwtEncryptionData())->getAuthTag();
     }

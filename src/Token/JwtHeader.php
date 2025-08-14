@@ -8,7 +8,7 @@ use Phithi92\JsonWebToken\Exceptions\Json\JsonException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
-use Phithi92\JsonWebToken\Exceptions\Token\MissingKidException;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 use Phithi92\JsonWebToken\Handler\HandlerInvoker;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
@@ -81,7 +81,7 @@ final class JwtHeader
      */
     public function getKid(): string
     {
-        return $this->kid ?? throw new MissingKidException();
+        return $this->kid ?? throw new MissingTokenPart('Kid');
     }
 
     public function hasKid(): bool
