@@ -17,10 +17,13 @@ final class HandlerDispatcher
 {
     private HandlerInvoker $invoker;
 
+    private ClassFactory $classFactory;
+
     public function __construct(
         private readonly HandlerMethodResolver $methodResolver,
     ) {
         $this->invoker = new HandlerInvoker();
+        $this->classFactory = new ClassFactory();
     }
 
     /**
@@ -89,8 +92,7 @@ final class HandlerDispatcher
             throw new InvalidHandlerImplementationException($classString, $interface);
         }
 
-        $factory = new ClassFactory();
-        return $factory->create($classString, [$manager]);
+        return $this->classFactory->create($classString, [$manager]);
     }
 
     /**
