@@ -28,7 +28,7 @@ class JwtPayloadJsonCodecTest extends TestCase
         $codec = new JwtPayloadJsonCodec();
 
         $payload = $codec->decode($json);
-        
+
         $this->assertInstanceOf(JwtPayload::class, $payload);
         $this->assertSame('abc', $payload->getClaim('sub'));
     }

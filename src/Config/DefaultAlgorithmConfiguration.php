@@ -33,20 +33,6 @@ class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInterface
 
         $this->config = $config;
     }
-    
-    private function loadedAndValidatedConfiguration(string $configFile): array
-    {
-        if (!is_file($configFile)) {
-            throw new \RuntimeException("Algorithm config file not found: {$configFile}");
-        }
-
-        $config = include $configFile;
-        if (!is_array($config)) {
-            throw new \RuntimeException("Algorithm config file must return an array.");
-        }
-        
-        return $config;
-    }
 
     /**
      * @return array<string, string>
@@ -59,5 +45,19 @@ class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInterface
     public function isSupported(string $algorithm): bool
     {
         return isset($this->config[$algorithm]);
+    }
+
+    private function loadedAndValidatedConfiguration(string $configFile): array
+    {
+        if (! is_file($configFile)) {
+            throw new \RuntimeException("Algorithm config file not found: {$configFile}");
+        }
+
+        $config = include $configFile;
+        if (! is_array($config)) {
+            throw new \RuntimeException('Algorithm config file must return an array.');
+        }
+
+        return $config;
     }
 }
