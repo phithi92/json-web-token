@@ -5,38 +5,37 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token;
 
 use DateTimeImmutable;
-use Phithi92\JsonWebToken\Exceptions\Json\JsonException;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
+use Phithi92\JsonWebToken\Exceptions\Token\EncryptedPayloadAlreadySetException;
 use Phithi92\JsonWebToken\Exceptions\Token\EncryptedPayloadNotSetException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
 use Phithi92\JsonWebToken\Token\Validator\ClaimValidator;
-use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
 /**
- * JwtPayload represents the payload segment of a JSON Web Token (JWT).
+ * JwtPayload represents the payload part of a JSON Web Token.
  *
- * This class manages the creation, validation, and manipulation of JWT payload data.
- * It supports setting standard JWT claims (e.g., "iss", "aud", "iat", "exp", "nbf")
- * and allows custom claims to be added as well. Temporal claims, such as "iat", "nbf",
- * and "exp," are managed with DateTimeImmutable to ensure consistency in date-related
- * operations.
+ * This class manages creation, validation and updates to claims data.
+ * It supports standard claims such as iss, aud, iat, exp and nbf,
+ * and allows custom claims to be added. Time based claims are
+ * handled using DateTimeImmutable for consistency.
  */
 class JwtPayload
 {
+    private const TIME_CLAIMS = ['exp', 'nbf', 'iat'];
     public readonly DateClaimHelper $claimHelper;
     private ?string $encryptedPayload = null;
 
-    /** @var array<string, mixed> */
-    private array $payload = [];
+    /** @var array<string, mixed> Claims data */
+    private array $claims = [];
 
     private readonly ClaimValidator $claimValidator;
 
     /**
-     * Constructor initializes the DateTimeImmutable object.
-     * The DateTimeImmutable instance will be used for managing date-related claims (e.g., "iat", "nbf", "exp").
+     * Constructor.
+     *
+     * @param DateTimeImmutable|null $dateTime Optional date to use for time based claims
      */
     public function __construct(?DateTimeImmutable $dateTime = null)
     {
@@ -45,80 +44,46 @@ class JwtPayload
     }
 
     /**
-     * Parses a JSON-encoded string and populates the payload with the decoded claims.
+     * Populate this payload from an associative array.
      *
-     * This method decodes the given JSON string into an associative array, applies validation,
-     * and sets the payload fields accordingly. It supports standard and custom JWT claims.
+     * Time based claims (exp, nbf, iat) are validated and stored
+     * as timestamps or strings. Other claims are set directly.
      *
-     * If the input JSON is malformed or violates structural constraints (e.g., depth limit),
-     * a domain-specific {@see InvalidFormatException} is thrown.
+     * @param array<mixed> $data Claims input
      *
-     * @param string $json A JSON string representing the JWT payload.
-     *
-     * @return self Returns the current JwtPayload instance populated with decoded claims.
-     *
-     * @throws InvalidFormatException If the JSON is invalid or cannot be parsed into a payload.
-     */
-    public function fromJson(string $json): self
-    {
-        $depthLimit = $this->claimValidator->getJsonDepthLimit();
-
-        try {
-            /** @var array<mixed> $payload */
-            $payload = JsonEncoder::decode($json, true, 0, $depthLimit);
-        } catch (JsonException $e) {
-            throw new InvalidFormatException('Payload decoding failed: ' . $e->getMessage());
-        }
-
-        return $this->fromArray($payload);
-    }
-
-    /**
-     * Populates the current JwtPayload instance from an associative array.
-     *
-     * This method updates the current instance with key-value pairs from the provided
-     * array. Special handling is applied to standard JWT claims (`exp`, `nbf`, `iat`):
-     *
-     * @param array<mixed> $data The value being checked.
-     *
-     * @return self The current JwtPayload instance with updated payload data.
-     *
-     * @throws InvalidValueTypeException If `exp`, `nbf`, or `iat` has an unsupported value type.
+     * @throws InvalidValueTypeException If a time claim has an unsupported type
      */
     public function fromArray(array $data): self
     {
-        // Iterate over the decoded data and set each key-value pair in the payload
         foreach ($data as $key => $value) {
+            // throws if claim or type is invalid
             $this->claimValidator->ensureValidClaim($key, $value);
 
-            if (in_array($key, ['exp', 'nbf', 'iat'], true)) {
-                if (is_string($value)) {
-                    $this->setClaim($key, $value, true);
-                } elseif (is_int($value)) {
-                    $this->setClaimTimestamp($key, $value);
-                } else {
-                    throw new InvalidValueTypeException($key, gettype($value));
-                }
-            } else {
+            if (! in_array($key, self::TIME_CLAIMS, true)) {
                 $this->setClaim($key, $value);
+                continue; // process remaining claims
             }
+
+            if (! is_int($value) && ! is_string($value)) {
+                throw new InvalidDateTimeException($key);
+            }
+
+            // normalize time-based claims via helper (accepts string|int)
+            $this->setClaimTimestamp($key, $value);
         }
 
         return $this;
     }
 
     /**
-     * Converts the token data (JWT payload) into an array.
+     * Return all claims as an associative array.
      *
-     * @see validate() Called to ensure the payload meets required criteria.
-     * @see setField()
-     * @see getField()
+     * Ensures iat is set by default if missing.
      *
      * @return array<string,mixed>
-     *         The complete JWT payload as an associative array.
      *
-     * @throws InvalidValueTypeException If the value type is invalid.
-     * @throws EmptyFieldException If the value is empty.
+     * @throws InvalidValueTypeException
+     * @throws EmptyFieldException
      */
     public function toArray(): array
     {
@@ -126,9 +91,15 @@ class JwtPayload
             $this->setClaimTimestamp('iat', 'now');
         }
 
-        return $this->payload;
+        return $this->claims;
     }
 
+    /**
+     * Set a time based claim value as a timestamp.
+     *
+     * @param string $key Claim name
+     * @param string|int $value Date string or timestamp
+     */
     public function setClaimTimestamp(string $key, string|int $value): self
     {
         $this->claimHelper->setClaimTimestamp($this, $key, $value);
@@ -136,40 +107,13 @@ class JwtPayload
     }
 
     /**
-     * Serializes the JWT payload data to a JSON-encoded string.
+     * Add a claim to the payload.
      *
-     * Converts the payload properties to an array using `toArray`, then encodes them
-     * as a JSON string suitable for inclusion in a JWT.
+     * @param string $key Claim name
+     * @param mixed $value Claim value
      *
-     * @uses JsonEncoder Encodes the array representation of the object into JSON.
-     *
-     * @see toArray()
-     *
-     * @return string The JSON-encoded representation of the JWT payload.
-     */
-    public function toJson(): string
-    {
-        $payload = $this->toArray();
-
-        $this->claimValidator->assertValidPayloadDepth($payload);
-
-        $options = (JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        $depthLimit = $this->claimValidator->getJsonDepthLimit();
-
-        return JsonEncoder::encode($payload, $options, $depthLimit);
-    }
-
-    /**
-     * Adds a field to the token data (JWT payload).
-     * Ensures that the key is unique and the value is a valid type (scalar or array).
-     *
-     * @param string $key The key of the field to add.
-     * @param mixed $value A JSON-serializable value
-     *
-     * @return self Returns the instance to allow method chaining.
-     *
-     * @throws InvalidValueTypeException if the value type is invalid.
-     * @throws EmptyFieldException if the value is empty.
+     * @throws InvalidValueTypeException
+     * @throws EmptyFieldException
      */
     public function addClaim(string $key, mixed $value): self
     {
@@ -177,26 +121,22 @@ class JwtPayload
     }
 
     /**
-     * Retrieves a specific field from the token data (JWT payload).
+     * Get a claim value by name.
      *
-     * @param string $claim The field to retrieve.
+     * @param string $claim Claim name
      */
     public function getClaim(string $claim): mixed
     {
-        return $this->payload[$claim] ?? null;
+        return $this->claims[$claim] ?? null;
     }
 
     /**
-     * Sets the "iss" (issuer) claim in the JWT payload.
+     * Set the issuer claim.
      *
-     * @param string $issuer The issuer of the JWT.
+     * @param string $issuer Issuer value
      *
-     * @see addClaim()
-     *
-     * @return self Returns the instance to allow method chaining.
-     *
-     * @throws InvalidValueTypeException If the value type is invalid.
-     * @throws EmptyFieldException If the value is empty.
+     * @throws InvalidValueTypeException
+     * @throws EmptyFieldException
      */
     public function setIssuer(string $issuer): self
     {
@@ -204,15 +144,7 @@ class JwtPayload
     }
 
     /**
-     * Retrieves the issuer identifier from the payload.
-     *
-     * This method fetches the value associated with the 'iss' (issuer) field
-     * in the payload. The 'iss' field is expected to contain a string identifying
-     * the issuer, or null if the field is not set.
-     *
-     * @see getField()
-     *
-     * @return string|null The issuer identifier as a string, or null if it is not present.
+     * Get the issuer claim.
      */
     public function getIssuer(): ?string
     {
@@ -221,17 +153,12 @@ class JwtPayload
     }
 
     /**
-     * Sets the "aud" (audience) claim in the JWT payload.
+     * Set the audience claim.
      *
-     * @param array<string, array<string,string>|int|string|null>|string $audience The
-     *        intended audience of the JWT. Can be a string or an array of strings.
+     * @param string|array<string> $audience Audience value
      *
-     * @see addClaim()
-     *
-     * @return self Returns the instance to allow method chaining.
-     *
-     * @throws InvalidValueTypeException If the value type is invalid.
-     * @throws EmptyFieldException If the value is empty.
+     * @throws InvalidValueTypeException
+     * @throws EmptyFieldException
      */
     public function setAudience(string|array $audience): self
     {
@@ -239,15 +166,9 @@ class JwtPayload
     }
 
     /**
-     * Retrieves the audience information from the payload.
+     * Get the audience claim.
      *
-     * This method fetches the value associated with the 'aud' (audience) field
-     * in the payload. The 'aud' field is expected to contain a string identifying
-     * the intended audience, or null if the field is not set.
-     *
-     * @see getField()
-     *
-     * @return array<mixed>|string|null The audience identifier as a string, or null if it is not present.
+     * @return string|array<mixed>|null
      */
     public function getAudience(): string|array|null
     {
@@ -256,16 +177,9 @@ class JwtPayload
     }
 
     /**
-     * Sets the "iat" (issued at) claim in the JWT payload.
+     * Set the issued at claim.
      *
-     * @param string $dateTime The issued at time, which will be parsed and stored as a Unix timestamp.
-     *
-     * @return self Returns the instance to allow method chaining.
-     *
-     * @see setTimestamp()
-     *
-     * @throws InvalidValueTypeException If the value type is invalid.
-     * @throws EmptyFieldException If the value is empty.
+     * @param string $dateTime Date value
      */
     public function setIssuedAt(string $dateTime): self
     {
@@ -273,15 +187,7 @@ class JwtPayload
     }
 
     /**
-     * Retrieves the issued-at timestamp from the payload.
-     *
-     * This method fetches the value associated with the 'iat' (issued-at) field
-     * in the payload. The 'iat' field is expected to contain a string representing
-     * a timestamp, or null if the field is not set.
-     *
-     * @see getField()
-     *
-     * @return int|null The issued-at timestamp as a string, or null if it is not present.
+     * Get the issued at claim.
      */
     public function getIssuedAt(): int|null
     {
@@ -291,17 +197,11 @@ class JwtPayload
     }
 
     /**
-     * Sets the "exp" (expiration) claim in the JWT payload.
+     * Set the expiration claim.
      *
-     * @param string $dateTime The expiration time, which will be parsed and stored as a Unix timestamp.
+     * @param string $dateTime Date value
      *
-     * @see setTimestamp()
-     *
-     * @return self Returns the instance to allow method chaining.
-     *
-     * @throws InvalidValueTypeException If the value type is invalid.
-     * @throws EmptyFieldException If the value is empty.
-     * @throws InvalidDateTimeException If the datetime string is in an invalid format.
+     * @throws InvalidDateTimeException
      */
     public function setExpiration(string $dateTime): self
     {
@@ -309,36 +209,21 @@ class JwtPayload
     }
 
     /**
-     * Retrieves the expiration timestamp from the payload.
-     *
-     * This method fetches the value associated with the 'exp' (expiration) field
-     * in the payload. The 'exp' field is expected to contain a string representing
-     * a timestamp, or null if the field is not set.
-     *
-     * @see getField()
-     *
-     * @return int|null The expiration timestamp as int, or null if it is not present.
+     * Get the expiration claim.
      */
     public function getExpiration(): int|null
     {
         $expires = $this->getClaim('exp');
         $resolvedExpires = is_int($expires) ? $expires : 0;
-
         return $resolvedExpires > 0 ? $resolvedExpires : null;
     }
 
     /**
-     * Sets the "nbf" (not before) claim in the JWT payload.
+     * Set the not before claim.
      *
-     * @param string $dateTime The not before time, which will be parsed and stored as a Unix timestamp.
+     * @param string $dateTime Date value
      *
-     * @see setTimestamp()
-     *
-     * @return self Returns the instance to allow method chaining.
-     *
-     * @throws InvalidValueTypeException If the value type is invalid.
-     * @throws EmptyFieldException If the value is empty.
-     * @throws InvalidDateTimeException If the datetime string is in an invalid format.
+     * @throws InvalidDateTimeException
      */
     public function setNotBefore(string $dateTime): self
     {
@@ -346,49 +231,53 @@ class JwtPayload
     }
 
     /**
-     * Retrieves the not-before timestamp from the payload.
-     *
-     * This method fetches the value associated with the 'nbf' (not-before) field
-     * in the payload. The 'nbf' field is expected to contain a string representing
-     * a timestamp or null if the field is not set.
-     *
-     * @return int|null The not-before timestamp as int, or null if it is not present.
+     * Get the not before claim.
      */
     public function getNotBefore(): int|null
     {
         $nbf = $this->getClaim('nbf');
         $resolvedNbf = is_int($nbf) ? $nbf : 0;
-
         return $resolvedNbf > 0 ? $resolvedNbf : null;
     }
 
     /**
-     * Checks whether a specific field exists in the token data (JWT payload).
+     * Check if a claim exists.
      *
-     * @param string|int $field The field to check.
-     *
-     * @return bool Returns true if the field exists, false otherwise.
+     * @param string|int $field Claim name
      */
     public function hasClaim(string|int $field): bool
     {
-        return isset($this->payload[$field]);
+        return isset($this->claims[$field]);
     }
 
     /**
-     * Sets the encrypted payload.
+     * Set the encrypted payload string.
      *
-     * @param string $encryptedPayload The encrypted payload data.
+     * @param string $sealedPayload Encrypted payload value
+     * @param bool $overwrite Whether to overwrite existing value
+     *
+     * @throws EncryptedPayloadAlreadySetException
      */
-    public function setEncryptedPayload(string $encryptedPayload): self
+    public function setEncryptedPayload(string $sealedPayload, bool $overwrite = false): self
     {
-        $this->encryptedPayload = $encryptedPayload;
+        if ($this->encryptedPayload !== null) {
+            if ($this->encryptedPayload === $sealedPayload) {
+                return $this;
+            }
+
+            if (! $overwrite) {
+                throw new EncryptedPayloadAlreadySetException();
+            }
+        }
+
+        $this->encryptedPayload = $sealedPayload;
         return $this;
     }
 
     /**
-     * Retrieves the encrypted payload.
+     * Get the encrypted payload string.
      *
-     * @return string The encrypted payload data, or null if not set.
+     * @throws EncryptedPayloadNotSetException
      */
     public function getEncryptedPayload(): string
     {
@@ -396,22 +285,21 @@ class JwtPayload
     }
 
     /**
-     * Checks whether the value is invalid (null, empty string, or empty array).
+     * Set a claim value.
      *
-     * @param string $key The key of the field.
-     * @param mixed $value The value being checked.
+     * @param string $key Claim name
+     * @param mixed $value Claim value
+     * @param bool $overwrite Whether to overwrite existing value
      *
-     * @return JwtPayload Returns the instance to allow method chaining.
-     *
-     * @throws EmptyFieldException if the value is empty.
-     * @throws InvalidValueTypeException if the value is neither scalar nor array.
+     * @throws EmptyFieldException
+     * @throws InvalidValueTypeException
      */
     private function setClaim(string $key, mixed $value, bool $overwrite = false): self
     {
         $this->claimValidator->ensureValidClaim($key, $value);
 
         if ($this->hasClaim($key) === false || $overwrite) {
-            $this->payload[$key] = $value;
+            $this->claims[$key] = $value;
         }
 
         return $this;

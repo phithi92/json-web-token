@@ -8,6 +8,8 @@ use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
+use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
@@ -25,8 +27,8 @@ abstract class SignatureService implements SignatureHandlerInterface
         return implode(
             '.',
             [
-                Base64UrlEncoder::encode($bundle->getHeader()->toJson()),
-                Base64UrlEncoder::encode($bundle->getPayload()->toJson()),
+                Base64UrlEncoder::encode(JwtHeaderJsonCodec::encodeStatic($bundle->getHeader())),
+                Base64UrlEncoder::encode(JwtPayloadJsonCodec::encodeStatic($bundle->getPayload())),
             ]
         );
     }

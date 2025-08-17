@@ -19,4 +19,7 @@ enum JsonErrorMessagesEnum: string
     case DECODING_FAILED = 'JSON decoding failed: %s';
     case ENCODING_FAILED = 'JSON encoding failed: %s';
     case INVALID_LENGTH = 'Invalid depth. %s';
+    case UTF8_DECODING = 'JSON got non utf8 data.';
+    case MALFORMED = 'Malformed json data.';
+    case MALFORMED_UTF8 = 'Invalid UTF-8 sequence in token payload';
 }

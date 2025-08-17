@@ -6,6 +6,7 @@ namespace Phithi92\JsonWebToken\Crypto\Content;
 
 use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
@@ -40,16 +41,16 @@ final class RsaEncryptionService extends ContentCryptoService
     {
         $padding = (int) $config['padding'];
         $privateKey = $this->manager->getPrivateKey($kid);
-        $encrypted = $bundle->getPayload()->getEncryptedPayload();
+        $sealedPayload = $bundle->getPayload()->getEncryptedPayload();
 
-        $decrypted = '';
-        if (! openssl_private_decrypt($encrypted, $decrypted, $privateKey, $padding)) {
+        $unsealedPayload = '';
+        if (! openssl_private_decrypt($sealedPayload, $unsealedPayload, $privateKey, $padding)) {
             $message = OpenSslErrorHelper::getFormattedErrorMessage('Decrypt Payload Failed: ');
             throw new DecryptionException($message);
         }
 
-        /** @var string $decrypted */
-        $bundle->getPayload()->fromJson($decrypted);
+        /** @var string $unsealedPayload */
+        JwtPayloadJsonCodec::decodeStaticInto($unsealedPayload, $bundle->getPayload());
     }
 
     /**
@@ -61,15 +62,15 @@ final class RsaEncryptionService extends ContentCryptoService
     {
         $padding = (int) $config['padding'];
         $publicKey = $this->manager->getPublicKey($kid);
-        $plain = $bundle->getPayload()->toJson();
+        $payloadJson = JwtPayloadJsonCodec::encodeStatic($bundle->getPayload());
 
-        $encrypted = '';
-        if (! openssl_public_encrypt($plain, $encrypted, $publicKey, $padding)) {
+        $sealedPayload = '';
+        if (! openssl_public_encrypt($payloadJson, $sealedPayload, $publicKey, $padding)) {
             $message = OpenSslErrorHelper::getFormattedErrorMessage('Encrypt Payload Failed: ');
             throw new InvalidTokenException($message);
         }
 
-        /** @var string $encrypted */
-        $bundle->getPayload()->setEncryptedPayload($encrypted);
+        /** @var string $sealedPayload */
+        $bundle->getPayload()->setEncryptedPayload($sealedPayload);
     }
 }

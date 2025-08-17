@@ -8,106 +8,111 @@ use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 
-final class JwtEncryptionDataTest extends TestCase
+class JwtEncryptionDataTest extends TestCase
 {
     public function testSetAndGetAad(): void
     {
-        $jwtData = new JwtEncryptionData();
-        $encodedHeader = 'eyJhbGciOiAiUlMyNTYifQ';
+        $data = new JwtEncryptionData();
+        $aad = 'base64url-aad';
+        $data->setAad($aad);
 
-        $this->assertSame($jwtData, $jwtData->setAad($encodedHeader));
-        $this->assertSame($encodedHeader, $jwtData->getAad());
-    }
-
-    public function testGetAadWithoutSetThrowsException(): void
-    {
-        $this->expectException(MissingTokenPart::class);
-        $this->expectExceptionMessage('No AAD configured.');
-
-        (new JwtEncryptionData())->getAad();
+        $this->assertSame($aad, $data->getAad());
     }
 
     public function testSetAndGetIv(): void
     {
-        $jwtData = new JwtEncryptionData();
-        $iv = 'initialization_vector';
+        $data = new JwtEncryptionData();
+        $iv = 'initialization-vector';
+        $data->setIv($iv);
 
-        $this->assertSame($jwtData, $jwtData->setIv($iv));
-        $this->assertSame($iv, $jwtData->getIv());
-    }
-
-    public function testGetIvWithoutSetThrowsException(): void
-    {
-        $this->expectException(MissingTokenPart::class);
-        $this->expectExceptionMessage('No IV configured.');
-
-        (new JwtEncryptionData())->getIv();
+        $this->assertSame($iv, $data->getIv());
     }
 
     public function testSetAndGetCek(): void
     {
-        $jwtData = new JwtEncryptionData();
-        $cek = 'secret_encryption_key';
+        $data = new JwtEncryptionData();
+        $cek = 'content-encryption-key';
+        $data->setCek($cek);
 
-        $this->assertSame($jwtData, $jwtData->setCek($cek));
-        $this->assertSame($cek, $jwtData->getCek());
-    }
-
-    public function testGetCekWithoutSetThrowsException(): void
-    {
-        $this->expectException(MissingTokenPart::class);
-        $this->expectExceptionMessage('No CEK configured.');
-
-        (new JwtEncryptionData())->getCek();
+        $this->assertSame($cek, $data->getCek());
     }
 
     public function testSetAndGetEncryptedKey(): void
     {
-        $jwtData = new JwtEncryptionData();
-        $encryptedKey = 'encrypted_cek_value';
+        $data = new JwtEncryptionData();
+        $encryptedKey = 'encrypted-cek';
+        $data->setEncryptedKey($encryptedKey);
 
-        $this->assertSame($jwtData, $jwtData->setEncryptedKey($encryptedKey));
-        $this->assertSame($encryptedKey, $jwtData->getEncryptedKey());
-    }
-
-    public function testGetEncryptedKeyWithoutSetThrowsException(): void
-    {
-        $this->expectException(MissingTokenPart::class);
-        $this->expectExceptionMessage('No EncryptedKey configured.');
-
-        (new JwtEncryptionData())->getEncryptedKey();
+        $this->assertSame($encryptedKey, $data->getEncryptedKey());
     }
 
     public function testSetAndGetAuthTag(): void
     {
-        $jwtData = new JwtEncryptionData();
-        $authTag = 'auth_tag_value';
+        $data = new JwtEncryptionData();
+        $authTag = 'authentication-tag';
+        $data->setAuthTag($authTag);
 
-        $this->assertSame($jwtData, $jwtData->setAuthTag($authTag));
-        $this->assertSame($authTag, $jwtData->getAuthTag());
+        $this->assertSame($authTag, $data->getAuthTag());
     }
 
-    public function testGetAuthTagWithoutSetThrowsException(): void
+    public function testGetAadThrowsExceptionIfNotSet(): void
     {
         $this->expectException(MissingTokenPart::class);
-        $this->expectExceptionMessage('No AuthTag configured.');
+        $this->expectExceptionMessage('AAD');
 
-        (new JwtEncryptionData())->getAuthTag();
+        $data = new JwtEncryptionData();
+        $data->getAad();
+    }
+
+    public function testGetIvThrowsExceptionIfNotSet(): void
+    {
+        $this->expectException(MissingTokenPart::class);
+        $this->expectExceptionMessage('IV');
+
+        $data = new JwtEncryptionData();
+        $data->getIv();
+    }
+
+    public function testGetCekThrowsExceptionIfNotSet(): void
+    {
+        $this->expectException(MissingTokenPart::class);
+        $this->expectExceptionMessage('CEK');
+
+        $data = new JwtEncryptionData();
+        $data->getCek();
+    }
+
+    public function testGetEncryptedKeyThrowsExceptionIfNotSet(): void
+    {
+        $this->expectException(MissingTokenPart::class);
+        $this->expectExceptionMessage('EncryptedKey');
+
+        $data = new JwtEncryptionData();
+        $data->getEncryptedKey();
+    }
+
+    public function testGetAuthTagThrowsExceptionIfNotSet(): void
+    {
+        $this->expectException(MissingTokenPart::class);
+        $this->expectExceptionMessage('AuthTag');
+
+        $data = new JwtEncryptionData();
+        $data->getAuthTag();
     }
 
     public function testMethodChaining(): void
     {
-        $jwtData = (new JwtEncryptionData())
-            ->setCek('cek')
-            ->setIv('iv')
+        $data = (new JwtEncryptionData())
             ->setAad('aad')
+            ->setIv('iv')
+            ->setCek('cek')
             ->setEncryptedKey('encrypted')
             ->setAuthTag('tag');
 
-        $this->assertSame('cek', $jwtData->getCek());
-        $this->assertSame('iv', $jwtData->getIv());
-        $this->assertSame('aad', $jwtData->getAad());
-        $this->assertSame('encrypted', $jwtData->getEncryptedKey());
-        $this->assertSame('tag', $jwtData->getAuthTag());
+        $this->assertSame('aad', $data->getAad());
+        $this->assertSame('iv', $data->getIv());
+        $this->assertSame('cek', $data->getCek());
+        $this->assertSame('encrypted', $data->getEncryptedKey());
+        $this->assertSame('tag', $data->getAuthTag());
     }
 }

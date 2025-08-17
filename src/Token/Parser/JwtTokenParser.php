@@ -6,6 +6,8 @@ namespace Phithi92\JsonWebToken\Token\Parser;
 
 use Phithi92\JsonWebToken\Exceptions\Base64\InvalidBase64UrlFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
+use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
@@ -79,7 +81,7 @@ class JwtTokenParser
 
         $headerJson = self::decodeBase64Url($headerB64);
 
-        return JwtHeader::fromJson($headerJson);
+        return JwtHeaderJsonCodec::decodeStatic($headerJson);
     }
 
     private static function decodeBase64Url(string $base64): string
@@ -187,7 +189,8 @@ class JwtTokenParser
 
         $bundle->getEncryption()->setAad($aad);
         $bundle->setSignature($signature);
-        $bundle->getPayload()->fromJson($payloadJson);
+
+        JwtPayloadJsonCodec::decodeStaticInto($payloadJson, $bundle->getPayload());
 
         return $bundle;
     }
@@ -206,7 +209,7 @@ class JwtTokenParser
         };
 
         $tokenArray = [
-            $bundle->getHeader()->toJson(),
+            JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
             $encryptedKey,
             $bundle->getEncryption()->getIv(),
             $bundle->getPayload()->getEncryptedPayload(),
@@ -222,8 +225,8 @@ class JwtTokenParser
          * @param array<string> $tokenArray
          */
         $tokenArray = [
-            $bundle->getHeader()->toJson(),
-            $bundle->getPayload()->toJson(),
+            JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
+            JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
             $bundle->getSignature(),
         ];
 

@@ -6,6 +6,8 @@ namespace Phithi92\JsonWebToken\Crypto\Content;
 
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
@@ -28,37 +30,37 @@ final class AesGcmService extends ContentCryptoService
     {
         $algorithm = $this->buildAlgorithmNameFromKeyLength($config);
 
-        [$cek,$iv,$ciphertext,$authTag,$aad] = $this->extractTokenDecryptionComponents($bundle);
+        [$cek, $iv, $sealedPayload, $authTag, $aad] = $this->extractTokenDecryptionComponents($bundle);
 
-        $plaintext = $this->decrypt(
+        $unsealedPayload = $this->decrypt(
             $algorithm,
             self::OPENSSL_OPTIONS,
-            $ciphertext,
+            $sealedPayload,
             $cek,
             $iv,
             $authTag,
             $aad
         );
 
-        $bundle->getPayload()->fromJson($plaintext);
+        JwtPayloadJsonCodec::decodeStaticInto($unsealedPayload, $bundle->getPayload());
     }
 
     public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
     {
         $algorithm = $this->buildAlgorithmNameFromKeyLength($config);
 
-        [$cek,$iv,$plaintext,$aad] = $this->extractTokenEncryptionComponents($bundle);
+        [$cek, $iv, $jsonPayload, $aad] = $this->extractTokenEncryptionComponents($bundle);
 
-        [$encrypted, $authTag] = $this->encrypt(
+        [$sealedPayload, $authTag] = $this->encrypt(
             $algorithm,
             self::OPENSSL_OPTIONS,
-            $plaintext,
+            $jsonPayload,
             $cek,
             $iv,
             $aad
         );
 
-        $bundle->getPayload()->setEncryptedPayload($encrypted);
+        $bundle->getPayload()->setEncryptedPayload($sealedPayload);
         $bundle->getEncryption()->setAuthTag($authTag);
     }
 
@@ -94,8 +96,8 @@ final class AesGcmService extends ContentCryptoService
         return [
             $bundle->getEncryption()->getCek(),
             $bundle->getEncryption()->getIv(),
-            $bundle->getPayload()->toJson(),
-            Base64UrlEncoder::encode($bundle->getHeader()->toJson()),
+            JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
+            Base64UrlEncoder::encode(JwtHeaderJsonCodec::encodeStatic($bundle->getHeader())),
         ];
     }
 
@@ -105,14 +107,14 @@ final class AesGcmService extends ContentCryptoService
     private function decrypt(
         string $algorithm,
         int $options,
-        string $ciphertext,
+        string $sealedPayload,
         string $cek,
         string $iv,
         string $authTag,
         string $aad
     ): string {
-        $plaintext = openssl_decrypt(
-            $ciphertext,
+        $unsealedPayload = openssl_decrypt(
+            $sealedPayload,
             $algorithm,
             $cek,
             $options,
@@ -121,12 +123,12 @@ final class AesGcmService extends ContentCryptoService
             $aad
         );
 
-        if ($plaintext === false) {
+        if ($unsealedPayload === false) {
             $message = OpenSslErrorHelper::getFormattedErrorMessage('Decrypt Payload Failed: ');
             throw new InvalidTokenException($message);
         }
 
-        return $plaintext;
+        return $unsealedPayload;
     }
 
     /**
@@ -137,14 +139,14 @@ final class AesGcmService extends ContentCryptoService
     private function encrypt(
         string $algorithm,
         int $options,
-        string $plaintext,
+        string $jsonPayload,
         string $cek,
         string $iv,
         string $aad
     ): array {
         $authTag = '';
-        $encrypted = openssl_encrypt(
-            $plaintext,
+        $sealedPayload = openssl_encrypt(
+            $jsonPayload,
             $algorithm,
             $cek,
             $options,
@@ -153,12 +155,12 @@ final class AesGcmService extends ContentCryptoService
             $aad
         );
 
-        if ($encrypted === false) {
+        if ($sealedPayload === false) {
             $message = OpenSslErrorHelper::getFormattedErrorMessage('Encrypt Payload Failed: ');
             throw new EncryptionException($message);
         }
 
         /** @var string $authTag */
-        return [$encrypted,$authTag];
+        return [$sealedPayload, $authTag];
     }
 }

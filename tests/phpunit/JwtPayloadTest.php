@@ -7,7 +7,6 @@ namespace Tests\phpunit;
 use Phithi92\JsonWebToken\Exceptions;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use PHPUnit\Framework\TestCase;
 use DateTimeImmutable;
 use DateTime;
@@ -86,19 +85,6 @@ class JwtPayloadTest extends TestCase
         $this->assertEquals('testAudience', $array['aud']);
     }
 
-    public function testToJson()
-    {
-        $payload = new JwtPayload();
-        $payload->setIssuer('testIssuer')->setAudience('testAudience');
-        $payload->setExpiration('+15 minutes');
-
-        $json = $payload->toJson();
-        $decoded = json_decode($json, true);
-
-        $this->assertArrayHasKey('iss', $decoded);
-        $this->assertEquals('testIssuer', $decoded['iss']);
-        $this->assertEquals('testAudience', $decoded['aud']);
-    }
 
     public function testToArrayIncludesAllFields()
     {
@@ -115,25 +101,6 @@ class JwtPayloadTest extends TestCase
         $this->assertArrayHasKey('exp', $array);
         $this->assertArrayHasKey('iat', $array);
         $this->assertArrayHasKey('nbf', $array);
-    }
-
-    public function testToJsonIncludesAllFields()
-    {
-        $payload = new JwtPayload();
-        $payload->setIssuer('testIssuer')
-            ->setAudience(['aud1', 'aud2'])
-            ->setExpiration('+15 minutes')
-            ->setIssuedAt('now')
-            ->setNotBefore('now');
-
-        $json = $payload->toJson();
-        $decoded = json_decode($json, true);
-
-        $this->assertArrayHasKey('iss', $decoded);
-        $this->assertArrayHasKey('aud', $decoded);
-        $this->assertArrayHasKey('exp', $decoded);
-        $this->assertArrayHasKey('iat', $decoded);
-        $this->assertArrayHasKey('nbf', $decoded);
     }
 
     public function testAudienceArrayWithSingleExpectedMatch()
@@ -218,49 +185,6 @@ class JwtPayloadTest extends TestCase
 
         (new JwtPayload())
                 ->setNotBefore('invalid-date-format');
-    }
-
-    public function testFromJsonCreatesValidPayload()
-    {
-        $json = json_encode([
-            'iss' => 'issuerTest',
-            'aud' => ['aud1', 'aud2'],
-            'custom' => 'customValue',
-        ]);
-
-        $payload = new JwtPayload();
-        $payload->fromJson($json);
-
-        $this->assertEquals('issuerTest', $payload->getClaim('iss'));
-        $this->assertEquals(['aud1', 'aud2'], $payload->getClaim('aud'));
-        $this->assertEquals('customValue', $payload->getClaim('custom'));
-    }
-
-    public function testFromJsonFailsOnEmptyString()
-    {
-        $this->expectException(InvalidFormatException::class);
-
-        $payload = new JwtPayload();
-        $payload->fromJson('');
-    }
-
-    public function testFromJsonFailsOnMalformedUtf8()
-    {
-        // Enthält absichtlich ungültige UTF-8-Bytefolge
-        $malformedJson = "\xB1\x31\x31"; // ungültig, zerschneidet ein Multibyte-Zeichen
-
-        $this->expectException(InvalidFormatException::class);
-
-        $payload = new JwtPayload();
-        $payload->fromJson($malformedJson);
-    }
-
-    public function testFromJsonInvalidJsonThrowsException()
-    {
-        $this->expectException(InvalidFormatException::class);
-
-        $payload = new JwtPayload();
-        $payload->fromJson('{"iss": invalid json}');
     }
 
     public function testFromArrayCreatesValidPayload()

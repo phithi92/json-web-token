@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\phpunit;
+namespace Tests\phpunit\Validator;
 
 use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;

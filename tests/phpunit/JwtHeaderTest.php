@@ -8,7 +8,6 @@ use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 
 class JwtHeaderTest extends TestCase
 {
@@ -78,69 +77,6 @@ class JwtHeaderTest extends TestCase
         ], $array);
     }
 
-    public function testToJson()
-    {
-        $jwtHeader = new JwtHeader();
-        $jwtHeader->setAlgorithm('HS256')->setType('JWS');
-
-        $json = $jwtHeader->toJson();
-
-        $this->assertJson($json);
-        $this->assertStringContainsString('"alg":"HS256"', $json);
-        $this->assertStringContainsString('"typ":"JWS"', $json);
-    }
-
-    public function testFromJsonMinimal()
-    {
-        $json = '{"alg":"HS256","typ":"JWS"}';
-        $jwtHeader = JwtHeader::fromJson($json);
-
-        $this->assertEquals('HS256', $jwtHeader->getAlgorithm());
-        $this->assertEquals('JWS', $jwtHeader->getType());
-        $this->assertEmpty($jwtHeader->getEnc());
-        $this->assertFalse($jwtHeader->hasKid());
-    }
-
-    public function testFromJsonWithEncAndKid()
-    {
-        $json = '{"alg":"HS512","typ":"JWT","enc":"A256CBC","kid":"my_kid-123"}';
-        $jwtHeader = JwtHeader::fromJson($json);
-
-        $this->assertEquals('HS512', $jwtHeader->getAlgorithm());
-        $this->assertEquals('JWT', $jwtHeader->getType());
-        $this->assertEquals('A256CBC', $jwtHeader->getEnc());
-        $this->assertEquals('my_kid-123', $jwtHeader->getKid());
-    }
-
-    public function testFromJsonWithNonStringValue()
-    {
-        $this->expectException(InvalidFormatException::class);
-        JwtHeader::fromJson('{"alg":"HS256","typ":"JWT","enc":123}');
-    }
-
-    public function testFromJsonFailsOnEmptyString()
-    {
-        $this->expectException(InvalidFormatException::class);
-
-        JwtHeader::fromJson('');
-    }
-
-    public function testFromJsonFailsOnMalformedUtf8()
-    {
-        // Enthält absichtlich ungültige UTF-8-Bytefolge
-        $malformedJson = "\xB1\x31\x31"; // ungültig, zerschneidet ein Multibyte-Zeichen
-
-        $this->expectException(InvalidFormatException::class);
-
-        JwtHeader::fromJson($malformedJson);
-    }
-
-    public function testFromJsonWithInvalidJson()
-    {
-        $this->expectException(InvalidFormatException::class);
-        JwtHeader::fromJson('{"iss": invalid json}');
-    }
-
     public function testFromArray()
     {
         $data = [
@@ -169,17 +105,6 @@ class JwtHeaderTest extends TestCase
         $this->assertArrayNotHasKey('typ', $array);
         $this->assertArrayNotHasKey('enc', $array);
         $this->assertArrayNotHasKey('kid', $array);
-    }
-
-    public function testJsonRoundTrip()
-    {
-        $original = new JwtHeader();
-        $original->setAlgorithm('RS512')->setType('JWT')->setEnc('A192CBC')->setKid('abc123');
-
-        $json = $original->toJson();
-        $parsed = JwtHeader::fromJson($json);
-
-        $this->assertEquals($original->toArray(), $parsed->toArray());
     }
 
     public function testHasKid()

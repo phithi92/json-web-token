@@ -12,74 +12,103 @@ use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Throwable;
 
+/**
+ * Helper to convert date expressions into Unix timestamps for JWT claims.
+ * All calculations are based on a UTC reference time.
+ */
 class DateClaimHelper
 {
-    // DateTimeImmutable object to handle date-related operations
+    /** Reference time used for relative calculations (UTC). */
     private readonly DateTimeImmutable $dateTimeImmutable;
 
+    /**
+     * @param DateTimeImmutable|null $dateTime Optional reference time; defaults to now (UTC).
+     */
     public function __construct(?DateTimeImmutable $dateTime = null)
     {
-        $this->dateTimeImmutable = $dateTime ?? new DateTimeImmutable('now', new DateTimeZone('UTC'));
+        $this->dateTimeImmutable = $dateTime ?? $this->createReferenceTime();
     }
 
     /**
-     * Parses and sets a timestamp field in the JWT payload.
-     * Converts a datetime string into a Unix timestamp and stores it under the specified key.
+     * Set a timestamp claim (iat/nbf/exp) from a date expression or timestamp.
      *
-     * @param string     $key      The key for the timestamp field (e.g., "iat", "nbf", "exp").
-     * @param string|int $dateTime The datetime string to be converted into a timestamp.
+     * @param string      $key       Claim name (e.g., "iat", "nbf", "exp").
+     * @param string|int  $dateTime  Relative/absolute datetime (e.g., "+5 minutes", "2025-08-16 12:00") or Unix timestamp.
      *
-     * @see addClaim()
+     * @throws InvalidDateTimeException
+     * @throws InvalidValueTypeException
+     * @throws EmptyFieldException
      *
-     * @throws InvalidDateTimeException If the datetime string is in an invalid format.
-     * @throws InvalidValueTypeException If the value type is invalid.
-     * @throws EmptyFieldException If the value is empty.
+     * @see JwtPayload::addClaim()
      */
     public function setClaimTimestamp(JwtPayload $payload, string $key, string|int $dateTime): void
     {
-        $adjustedDateTime = $this->buildValidDateTime($dateTime);
-
-        $payload->addClaim($key, $adjustedDateTime->getTimestamp());
+        $payload->addClaim($key, $this->toTimestamp($dateTime));
     }
 
+    /** Returns the reference time used for calculations. */
     public function getReferenceTime(): DateTimeImmutable
     {
         return $this->dateTimeImmutable;
     }
 
+    public function toTimestamp(string|int $input): int
+    {
+        return $this->buildValidDateTime($input)->getTimestamp();
+    }
+
     /**
-     * Converts a datetime expression or timestamp into a DateTimeImmutable object.
-     *
-     * @param string|int $dateTime Relative string (e.g. "+5 minutes") or timestamp (string or int)
+     * Normalize a date expression or timestamp to a DateTimeImmutable anchored to the reference time.
      *
      * @throws InvalidDateTimeException
      */
     private function buildValidDateTime(string|int $dateTime): DateTimeImmutable
     {
-        // Falls Timestamp als int oder int-String
-        if (is_int($dateTime) || (ctype_digit($dateTime))) {
+        $ref = $this->getReferenceTime();
+
+        // Numeric input: treat as Unix timestamp.
+        if (is_int($dateTime) || preg_match('/^-?\d+$/', $dateTime) === 1) {
             $timestamp = (int) $dateTime;
 
             try {
-                return $this->getReferenceTime()->setTimestamp($timestamp);
-            } catch (Throwable $e) {
+                return $ref->setTimestamp($timestamp);
+            } catch (Throwable) {
                 throw new InvalidDateTimeException((string) $dateTime);
             }
         }
 
-        // Ansonsten: relative Angabe oder absolute Datumsangabe
+        // Relative or absolute string: derive from the reference time.
         try {
-            $adjustedDateTime = @$this->getReferenceTime()->modify($dateTime);
-        } catch (Throwable $e) {
+            $adjustedDateTime = @$ref->modify($dateTime);
+        } catch (Throwable) {
             throw new InvalidDateTimeException($dateTime);
         }
 
-        // PHP < 8.3 Fallback-Schutz
-        // @phpstan-ignore-next-line
-        if (! $adjustedDateTime instanceof DateTimeImmutable) {
-            throw new InvalidDateTimeException($dateTime);
-        }
+        self::assertDateTimeImmutable($adjustedDateTime, $dateTime);
 
         return $adjustedDateTime;
+    }
+
+    /**
+     * Ensures the value is a DateTimeImmutable; otherwise throws.
+     *
+     * @param DateTimeImmutable|false|null $value Result of DateTimeImmutable::modify() on older PHP versions.
+     * @param string|int                   $input Original input for error context.
+     *
+     * @throws InvalidDateTimeException
+     */
+    private static function assertDateTimeImmutable(DateTimeImmutable|false|null $value, string|int $input): DateTimeImmutable
+    {
+        if (! $value instanceof DateTimeImmutable) {
+            throw new InvalidDateTimeException((string) $input);
+        }
+
+        return $value;
+    }
+
+    /** Create the default UTC reference time. */
+    private function createReferenceTime(): DateTimeImmutable
+    {
+        return new DateTimeImmutable('now', new DateTimeZone('UTC'));
     }
 }

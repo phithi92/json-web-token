@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token;
 
-use Phithi92\JsonWebToken\Exceptions\Json\JsonException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 use Phithi92\JsonWebToken\Handler\HandlerInvoker;
-use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
 /**
  * Represents the header of a JWT (JSON Web Token).
@@ -25,8 +23,6 @@ final class JwtHeader
     // Min/Max length for KID validation
     private const MIN_KID_LENGTH = 3;
     private const MAX_KID_LENGTH = 64;
-
-    private const ENCODE_JSON_DEPTH = 3;
 
     private const HEADER_MAP = [
         'alg' => 'setAlgorithm',
@@ -180,45 +176,18 @@ final class JwtHeader
     }
 
     /**
-     * Converts the JWT header to a JSON-encoded string.
-     *
-     * Uses JsonEncoder to transform the header array into JSON format.
-     *
-     * @return string The JSON-encoded representation of the header.
-     */
-    public function toJson(): string
-    {
-        $options = (JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-        return JsonEncoder::encode($this->toArray(), $options, self::ENCODE_JSON_DEPTH);
-    }
-
-    /**
-     * Creates a JwtHeader instance from a JSON-encoded string.
-     *
-     * Parses the JSON string, assigns values to the header properties, and returns a populated instance.
-     *
-     * @param string $json The JSON-encoded header string.
-     *
-     * @return self   A new instance of JwtHeader with populated fields.
-     */
-    public static function fromJson(string $json): self
-    {
-        $data = self::decodeHeaderJson($json);
-        return self::fromArray($data);
-    }
-
-    /**
-     * @param array<string, mixed> $data
+     * @param array<mixed> $data
      */
     public static function fromArray(array $data): self
     {
         $invoker = new HandlerInvoker();
-
         $instance = new self();
+
+        $headerFields = self::extractValidHeaderFields($data);
+
         foreach (self::HEADER_MAP as $jsonKey => $setter) {
-            if (isset($data[$jsonKey])) {
-                $invoker->invoke($instance, $setter, [$data[$jsonKey]]);
+            if (isset($headerFields[$jsonKey])) {
+                $invoker->invoke($instance, $setter, [$headerFields[$jsonKey]]);
             }
         }
 
@@ -255,21 +224,6 @@ final class JwtHeader
     }
 
     /**
-     * @return array{
-     *     alg?: string,
-     *     typ?: string,
-     *     enc?: string,
-     *     kid?: string
-     * }
-     */
-    private static function decodeHeaderJson(string $json): array
-    {
-        $rawData = self::jsonDecode($json);
-
-        return self::extractValidHeaderFields($rawData);
-    }
-
-    /**
      * @param array<mixed> $data
      *
      * @return array<string,string>
@@ -297,24 +251,5 @@ final class JwtHeader
         }
 
         return $filtered;
-    }
-
-    /**
-     * Decode a JSON string into an associative array representing JWT headers.
-     *
-     * @return array<mixed>
-     *
-     * @throws InvalidFormatException
-     */
-    private static function jsonDecode(string $json): array
-    {
-        try {
-            /** @var array<mixed> $data */
-            $data = JsonEncoder::decode($json, true, 0, self::ENCODE_JSON_DEPTH);
-        } catch (JsonException) {
-            throw new InvalidFormatException('Token header is not valid JSON');
-        }
-
-        return $data;
     }
 }

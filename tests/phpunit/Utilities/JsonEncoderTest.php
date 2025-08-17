@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Utilities;
 
+use JsonException;
 use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use Phithi92\JsonWebToken\Exceptions\Json\DecodingException;
-use Phithi92\JsonWebToken\Exceptions\Json\EncodingException;
 
 class JsonEncoderTest extends TestCase
 {
@@ -22,7 +22,7 @@ class JsonEncoderTest extends TestCase
 
     public function testEncodeThrowsEncodingException(): void
     {
-        $this->expectException(EncodingException::class);
+        $this->expectException(JsonException::class);
 
         // Create an array with a value that cannot be JSON encoded
         $data = ['key' => "\xB1\x31"];
