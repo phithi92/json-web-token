@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Config;
 
 use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
+use Phithi92\JsonWebToken\Exceptions\Config\AlgorithmConfigFileNotFoundException;
+use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigFormatException;
 
 /**
  * Provides a default configuration loader for algorithms.
@@ -47,15 +49,21 @@ class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInterface
         return isset($this->config[$algorithm]);
     }
 
+    /**
+     * 
+     * @param string $configFile
+     * @return array<mixed>
+     * @throws \RuntimeException
+     */
     private function loadedAndValidatedConfiguration(string $configFile): array
     {
         if (! is_file($configFile)) {
-            throw new \RuntimeException("Algorithm config file not found: {$configFile}");
+            throw new AlgorithmConfigFileNotFoundException($configFile);
         }
 
         $config = include $configFile;
         if (! is_array($config)) {
-            throw new \RuntimeException('Algorithm config file must return an array.');
+            throw new InvalidAlgorithmConfigFormatException($configFile);
         }
 
         return $config;
