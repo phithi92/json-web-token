@@ -8,9 +8,9 @@ use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Handler\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
+use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 /**

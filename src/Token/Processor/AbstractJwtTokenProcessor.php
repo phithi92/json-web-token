@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Handler\Processor;
+namespace Phithi92\JsonWebToken\Token\Processor;
 
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;

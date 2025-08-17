@@ -9,10 +9,10 @@ use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Handler\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 /**
