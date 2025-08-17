@@ -9,6 +9,7 @@ use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerClassDefinitionExcept
 use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerImplementationException;
 use Phithi92\JsonWebToken\Exceptions\Handler\MissingHandlerConfigurationException;
 use Phithi92\JsonWebToken\Exceptions\Handler\UndefinedHandlerMethodException;
+use Phithi92\JsonWebToken\Factory\ClassFactory;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use RuntimeException;
 
@@ -79,16 +80,17 @@ final class HandlerDispatcher
             throw new MissingHandlerConfigurationException();
         }
 
-        $class = $config[$interface]['handler'];
-        if (! is_string($class)) {
-            throw new InvalidHandlerClassDefinitionException(gettype($class));
+        $classString = $config[$interface]['handler'];
+        if (! is_string($classString)) {
+            throw new InvalidHandlerClassDefinitionException(gettype($classString));
         }
 
-        if (! is_subclass_of($class, $interface)) {
-            throw new InvalidHandlerImplementationException($class, $interface);
+        if (! is_subclass_of($classString, $interface)) {
+            throw new InvalidHandlerImplementationException($classString, $interface);
         }
 
-        return new $class($manager);
+        $factory = new ClassFactory();
+        return $factory->create($classString, [$manager]);
     }
 
     /**
