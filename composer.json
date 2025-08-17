@@ -38,7 +38,9 @@
 
         "benchmark": "@php vendor/bin/phpbench --config config/phpbench.json run tests/phpbench/* --report=benchmark",
 
-        "generate-keys": "@php bin/generate-keys.php"
+        "generate-keys": "@php bin/generate-keys.php",
+        
+        "lefthook": "lefthook run pre-push"
     },
     "config": {
         "allow-plugins": {

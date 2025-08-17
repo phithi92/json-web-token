@@ -1,0 +1,17 @@
+# .lefthook.yml (im Repo-Root)
+pre-commit:
+  parallel: true
+  commands:
+    php-lint:
+      run: |
+        find src -name "*.php" -print0 | xargs -0 -n1 php -l
+    phpstan:
+      run: vendor/bin/phpstan analyse --configuration=config/phpstan.neon --memory-limit=1G
+    phpunit:
+      run: vendor/bin/phpunit --configuration config/phpunit.xml --colors=always
+
+pre-push:
+  commands:
+    security-audit:
+      files: git ls-files
+      run: composer audit
