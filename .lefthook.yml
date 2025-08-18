@@ -15,7 +15,7 @@ pre-commit:
       
     fix-code-psr12:
       glob: "*.php"
-      run: php vendor/bin/phpcbf --standard=PSR12 --exit-zero "{staged_files}" || true
+      run: php vendor/bin/phpcbf --standard=PSR12 -q "{staged_files}" || true
       stage_fixed: true
 
     fix-code-style:
