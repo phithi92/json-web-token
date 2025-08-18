@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Security;
 
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
+use SensitiveParameter;
 
 final class KeyIdentifier
 {
-    public static function fromPem(#[\SensitiveParameter] string $pem): string
+    public static function fromPem(#[SensitiveParameter] string $pem): string
     {
         return Base64UrlEncoder::encode(self::hashKey($pem));
     }
 
-    public static function fromSecret(#[\SensitiveParameter] string $secret): string
+    public static function fromSecret(#[SensitiveParameter] string $secret): string
     {
         return Base64UrlEncoder::encode(self::hashKey($secret));
     }

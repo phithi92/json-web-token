@@ -61,7 +61,7 @@ final class KeyStore
         return $this->keys;
     }
 
-    public function getKey(#[\SensitiveParameter] string $kid, string $role): OpenSSLAsymmetricKey
+    public function getKey(#[SensitiveParameter] string $kid, string $role): OpenSSLAsymmetricKey
     {
         if (! isset($this->keys[$kid][$role])) {
             throw new RuntimeException("Key [{$kid}:{$role}] not found.");
@@ -70,7 +70,7 @@ final class KeyStore
         return $this->keys[$kid][$role]['key'];
     }
 
-    public function getType(#[\SensitiveParameter] string $kid, string $role): string
+    public function getType(#[SensitiveParameter] string $kid, string $role): string
     {
         return $this->keys[$kid][$role]['type'] ?? throw new RuntimeException("Key [{$kid}:{$role}] not found.");
     }
@@ -80,7 +80,7 @@ final class KeyStore
      *
      * @throws RuntimeException
      */
-    public function getMetadata(#[\SensitiveParameter] string $kid, ?string $role): array
+    public function getMetadata(#[SensitiveParameter] string $kid, ?string $role): array
     {
         if (! isset($this->keys[$kid])) {
             throw new RuntimeException("Key with ID [{$kid}] not found.");
@@ -94,7 +94,7 @@ final class KeyStore
         return $entries[$role];
     }
 
-    public function hasKey(#[\SensitiveParameter] string $kid, ?string $role = null): bool
+    public function hasKey(#[SensitiveParameter] string $kid, ?string $role = null): bool
     {
         if ($role === null) {
             return isset($this->keys[$kid]);

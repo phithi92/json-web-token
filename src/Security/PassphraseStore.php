@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Security;
 
 use Phithi92\JsonWebToken\Exception\Security\PassphraseNotFoundException;
+use SensitiveParameter;
 
 final class PassphraseStore
 {
@@ -21,7 +22,7 @@ final class PassphraseStore
      *
      * @return string The resolved key ID
      */
-    public function addPassphrase(#[\SensitiveParameter] string $passphrase, ?string $kid = null): string
+    public function addPassphrase(#[SensitiveParameter] string $passphrase, ?string $kid = null): string
     {
         $resolvedKid = $kid ?? KeyIdentifier::fromSecret($passphrase);
         $this->phrases[$resolvedKid] = $passphrase;
@@ -36,7 +37,7 @@ final class PassphraseStore
      *
      * @throws PassphraseNotFoundException If no passphrase is found for the given key ID
      */
-    public function getPassphrase(#[\SensitiveParameter] string $kid): string
+    public function getPassphrase(#[SensitiveParameter] string $kid): string
     {
         return $this->phrases[$kid]
             ?? throw new PassphraseNotFoundException($kid);
@@ -47,7 +48,7 @@ final class PassphraseStore
      *
      * @param string $kid The key ID
      */
-    public function hasPassphrase(#[\SensitiveParameter] string $kid): bool
+    public function hasPassphrase(#[SensitiveParameter] string $kid): bool
     {
         return isset($this->phrases[$kid]);
     }
