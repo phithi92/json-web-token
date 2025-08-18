@@ -53,7 +53,7 @@ class JwtPayload
      * Time based claims (exp, nbf, iat) are validated and stored
      * as timestamps or strings. Other claims are set directly.
      *
-     * @param array<mixed> $data Claims input
+     * @param array<string, mixed> $data Claims input
      *
      * @throws InvalidValueTypeException If a time claim has an unsupported type
      */
@@ -63,12 +63,12 @@ class JwtPayload
             // throws if claim or type is invalid
             $this->claimValidator->ensureValidClaim($key, $value);
 
-            if (! in_array($key, DateClaimHelper::TIME_CLAIMS, true)) {
+            if (! $this->isTimeClaimKey($key)) {
                 $this->setClaim($key, $value);
                 continue; // process remaining claims
             }
 
-            if (! is_int($value) && ! is_string($value)) {
+            if (! $this->isTimeClaimValue($value)) {
                 throw new InvalidDateTimeException($key);
             }
 
@@ -251,7 +251,7 @@ class JwtPayload
      */
     public function hasClaim(string|int $field): bool
     {
-        return isset($this->claims[$field]);
+        return array_key_exists($field, $this->claims);
     }
 
     /**
@@ -286,6 +286,19 @@ class JwtPayload
     public function getEncryptedPayload(): string
     {
         return $this->encryptedPayload ?? throw new EncryptedPayloadNotSetException();
+    }
+
+    private function isTimeClaimKey(string $key): bool
+    {
+        return in_array($key, DateClaimHelper::TIME_CLAIMS, true);
+    }
+
+    /**
+     * @phpstan-assert-if-true string|int $value
+     */
+    private function isTimeClaimValue(mixed $value): bool
+    {
+        return is_int($value) || is_string($value);
     }
 
     /**
