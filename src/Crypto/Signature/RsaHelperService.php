@@ -62,25 +62,7 @@ class RsaHelperService
 
         $key = $role === 'public' ? $this->manager->getPublicKey($kid) : $this->manager->getPrivateKey($kid);
 
-        $details = openssl_pkey_get_details($key);
-
-        if (
-            ! is_array($details)
-            || ! isset($details['rsa'])
-            || ! is_array($details['rsa'])
-            || ! isset($details['rsa']['n'])
-            || ! is_string($details['rsa']['n'])
-        ) {
-            throw new InvalidSignatureException("Key [{$kid}] is not a valid RSA key.");
-        }
-
-        $modulusLength = strlen($details['rsa']['n']);
-        $expectedKeySize = $this->getRequiredRsaKeySize($algorithm);
-        $actualKeySize = $modulusLength * 8;
-        // Bytes to bits
-        if ($actualKeySize < $expectedKeySize) {
-            throw new InvalidSignatureException("RSA key must be at least {$expectedKeySize} bits long");
-        }
+        $this->assertValidKeySize($key, $kid, $algorithm);
 
         $this->cacheRsaKeyValidation($kid, $key);
 
@@ -98,5 +80,33 @@ class RsaHelperService
     public function cacheRsaKeyValidation(string $kid, OpenSSLAsymmetricKey $key): void
     {
         $this->checkedKeys[$kid] = $key;
+    }
+
+    private function assertValidKeySize(OpenSSLAsymmetricKey $key, string $kid, string $algorithm): void
+    {
+        $keysize = $this->getValidatedKeySize($key, $kid);
+
+        $modulusLength = strlen($keysize);
+        $expectedKeySize = $this->getRequiredRsaKeySize($algorithm);
+        $actualKeySize = $modulusLength * 8;
+        // Bytes to bits
+        if ($actualKeySize < $expectedKeySize) {
+            throw new InvalidSignatureException("RSA key must be at least {$expectedKeySize} bits long");
+        }
+    }
+
+    /**
+     * @throws InvalidSignatureException
+     */
+    private function getValidatedKeySize(OpenSSLAsymmetricKey $key, string $kid): string
+    {
+        /** @var array{rsa: array{n: string}}|false $details */
+        $details = openssl_pkey_get_details($key);
+
+        if ($details === false) {
+            throw new InvalidSignatureException("Key [{$kid}] is not a valid RSA key.");
+        }
+
+        return $details['rsa']['n'];
     }
 }

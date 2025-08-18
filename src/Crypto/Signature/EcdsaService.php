@@ -18,6 +18,8 @@ class EcdsaService extends SignatureService
     private array $checkedKeys = [];
 
     /**
+     * Create a digital signature over the bundle using ECDSA.
+     *
      * @throws SignatureComputationFailedException
      */
     public function computeSignature(EncryptedJwtBundle $bundle, array $config): void
@@ -26,21 +28,15 @@ class EcdsaService extends SignatureService
         $data = $this->getSigningInput($bundle);
         $algorithm = $this->getConfiguredHashAlgorithm($config);
 
-        $privateKey = $this->assertEcdsaKeyIsValid($kid, $algorithm, 'private');
+        $privateKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, 'private');
+        $signature = $this->signData($data, $privateKey, $algorithm);
 
-        $success = openssl_sign($data, $signature, $privateKey, $algorithm);
-        if (! $success) {
-            $message = OpenSslErrorHelper::getFormattedErrorMessage('Compute Signature Failed: ');
-            throw new SignatureComputationFailedException($message);
-        }
-
-        /**
-         * @var string $signature
-         */
         $bundle->setSignature($signature);
     }
 
     /**
+     * Verify the bundle’s digital signature using ECDSA.
+     *
      * @throws InvalidSignatureException
      */
     public function validateSignature(EncryptedJwtBundle $bundle, array $config): void
@@ -48,12 +44,19 @@ class EcdsaService extends SignatureService
         $kid = $this->resolveKid($bundle, $config);
 
         $signature = $bundle->getSignature();
-
         $data = $bundle->getEncryption()->getAad();
         $algorithm = $this->getConfiguredHashAlgorithm($config);
 
-        $publicKey = $this->assertEcdsaKeyIsValid($kid, $algorithm, 'public');
+        $publicKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, 'public');
+        $this->verifySignature($data, $signature, $publicKey, $algorithm);
+    }
 
+    private function verifySignature(
+        string $data,
+        string $signature,
+        OpenSSLAsymmetricKey $publicKey,
+        string $algorithm
+    ): void {
         $verified = openssl_verify($data, $signature, $publicKey, $algorithm);
         if ($verified !== 1) {
             $message = OpenSslErrorHelper::getFormattedErrorMessage('Validate Signature Failed: ');
@@ -61,61 +64,112 @@ class EcdsaService extends SignatureService
         }
     }
 
+    private function signData(string $data, OpenSSLAsymmetricKey $privateKey, string $algorithm): string
+    {
+        /** @var string|null $signature */
+        $signature = null;
+        $success = openssl_sign($data, $signature, $privateKey, $algorithm);
+
+        if ($success === false || ! is_string($signature)) {
+            $message = OpenSslErrorHelper::getFormattedErrorMessage('Compute Signature Failed: ');
+            throw new SignatureComputationFailedException($message);
+        }
+
+        return $signature;
+    }
+
     /**
+     * Load an EC key and validate its curve against the expected curve for the hash algorithm.
+     *
      * @throws InvalidSignatureException
      */
-    private function assertEcdsaKeyIsValid(string $kid, string $hashAlgorithm, string $role): OpenSSLAsymmetricKey
+    private function loadAndValidateEcdsaKey(string $kid, string $hashAlgorithm, string $role): OpenSSLAsymmetricKey
     {
-        $cachedKey = $this->getCachedEcdsaKey($kid);
+        $cachedKey = $this->getCachedKey($kid);
         if ($cachedKey !== null) {
             return $cachedKey;
         }
 
-        $expectedCurve = $this->resolveExpectedCurve($hashAlgorithm);
+        $key = $this->loadOpensslKey($kid, $role);
 
-        $key = $role === 'public' ? $this->manager->getPublicKey($kid) : $this->manager->getPrivateKey($kid);
+        $details = $this->extractKeyDetails($key, $kid);
+        $actualCurve = $this->extractCurveNameFromKeyDetails($details, $kid);
 
-        $details = openssl_pkey_get_details($key);
+        $this->assertValidKey($actualCurve, $hashAlgorithm, $kid);
 
-        if (! is_array($details) || ! isset($details['ec']) || ! is_array($details['ec'])) {
-            throw new InvalidSignatureException("Key [{$kid}] is not a valid EC key.");
-        }
+        $this->cacheValidatedKey($kid, $key);
 
-        $actualCurve = $details['ec']['curve_name'] ?? null;
-        if (! is_string($actualCurve)) {
-            throw new InvalidSignatureException("Key [{$kid}] has no valid curve name.");
-        }
+        return $key;
+    }
+
+    private function assertValidKey(string $actualCurve, string $hashAlgorithm, string $kid): void
+    {
+        $expectedCurve = $this->mapHashAlgorithmToCurve($hashAlgorithm);
 
         if ($actualCurve !== $expectedCurve) {
             throw new InvalidSignatureException(
                 "Invalid EC curve for [{$kid}]: expected [{$expectedCurve}], got [{$actualCurve}]."
             );
         }
-
-        $this->cacheEcdsaKeyValidation($kid, $key);
-
-        return $key;
     }
 
-    private function getCachedEcdsaKey(string $kid): ?OpenSSLAsymmetricKey
+    private function loadOpensslKey(string $kid, string $role): OpenSSLAsymmetricKey
+    {
+        return $role === 'public'
+            ? $this->manager->getPublicKey($kid)
+            : $this->manager->getPrivateKey($kid);
+    }
+
+    /**
+     * @param array<mixed> $details
+     *
+     * @throws InvalidSignatureException
+     */
+    private function extractCurveNameFromKeyDetails(array $details, string $kid): string
+    {
+        if (! is_array($details['ec'])) {
+            throw new InvalidSignatureException('Key is no valid EC key.');
+        }
+        $actualCurve = $details['ec']['curve_name'] ?? null;
+        if (! is_string($actualCurve)) {
+            throw new InvalidSignatureException("Key [{$kid}] has no valid curve name.");
+        }
+
+        return $actualCurve;
+    }
+
+    /**
+     * @return array<mixed>
+     *
+     * @throws InvalidSignatureException
+     */
+    private function extractKeyDetails(OpenSSLAsymmetricKey $key, string $kid): array
+    {
+        $details = openssl_pkey_get_details($key);
+
+        if (! is_array($details) || ! isset($details['ec']) || ! is_array($details['ec'])) {
+            throw new InvalidSignatureException("Key [{$kid}] is not a valid EC key.");
+        }
+
+        return $details;
+    }
+
+    private function getCachedKey(string $kid): ?OpenSSLAsymmetricKey
     {
         return $this->checkedKeys[$kid] ?? null;
     }
 
-    private function cacheEcdsaKeyValidation(string $kid, OpenSSLAsymmetricKey $key): void
+    private function cacheValidatedKey(string $kid, OpenSSLAsymmetricKey $key): void
     {
         $this->checkedKeys[$kid] = $key;
     }
 
-    private function resolveExpectedCurve(string $hashAlgorithm): string
+    private function mapHashAlgorithmToCurve(string $hashAlgorithm): string
     {
         return match (strtolower($hashAlgorithm)) {
-            'sha256' => 'prime256v1',
-            // ES256
-            'sha384' => 'secp384r1',
-            // ES384
-            'sha512' => 'secp521r1',
-            // ES512
+            'sha256' => 'prime256v1', // ES256
+            'sha384' => 'secp384r1',  // ES384
+            'sha512' => 'secp521r1',  // ES512
             default => throw new InvalidSignatureException("Unsupported hash algorithm for EC key: {$hashAlgorithm}."),
         };
     }

@@ -139,7 +139,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         $descriptors = [];
 
         foreach (self::HANDLER_CONFIG_MAP as [$type, $priority]) {
-            if (isset($config[$type->interface()])) {
+            if (isset($config[$type->interfaceClass()])) {
                 $descriptors[] = new HandlerDescriptor($type, $this->getOperation(), $priority);
             }
         }

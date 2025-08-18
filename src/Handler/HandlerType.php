@@ -24,7 +24,7 @@ enum HandlerType
     case Key;
     case Payload;
 
-    public function interface(): string
+    public function interfaceClass(): string
     {
         return match ($this) {
             self::Signature => SignatureHandlerInterface::class,

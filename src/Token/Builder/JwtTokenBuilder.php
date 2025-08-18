@@ -141,11 +141,17 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      */
     private function assertResolvableHeaderConfig(mixed $tokenType, mixed $alg, mixed $enc): void
     {
-        if (! is_string($tokenType) || (! is_string($alg) && $alg !== null) || (! is_string($enc) && $enc !== null)) {
+        if (! $this->isValidHeaderConfig($tokenType, $alg, $enc)) {
             throw new LogicException('Invalid header configuration');
         }
     }
 
+    private function isValidHeaderConfig(mixed $tokenType, mixed $alg, mixed $enc): bool
+    {
+        return is_string($tokenType)
+            && (is_string($alg) || $alg === null)
+            && (is_string($enc) || $enc === null);
+    }
     /**
      * Creates a JwtHeader based on input and defaults.
      *

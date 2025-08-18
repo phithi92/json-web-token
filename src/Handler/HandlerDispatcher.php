@@ -77,7 +77,7 @@ final class HandlerDispatcher
         JwtAlgorithmManager $manager,
         HandlerType $type
     ): object {
-        $interface = $type->interface();
+        $interface = $type->interfaceClass();
 
         if (! isset($config[$interface]) || ! is_array($config[$interface])) {
             throw new MissingHandlerConfigurationException();
@@ -100,7 +100,7 @@ final class HandlerDispatcher
      */
     private function isHandlerConfigured(array $config, HandlerType $type): bool
     {
-        return isset($config[$type->interface()]);
+        return isset($config[$type->interfaceClass()]);
     }
 
     /**
@@ -117,7 +117,7 @@ final class HandlerDispatcher
         $bundle = $context['bundle'];
 
         /** @var array<string,string> $methodConfig */
-        $methodConfig = $config[$type->interface()];
+        $methodConfig = $config[$type->interfaceClass()];
 
         $handlerConf = [$bundle, $methodConfig];
 

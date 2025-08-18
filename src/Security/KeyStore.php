@@ -189,12 +189,14 @@ final class KeyStore
     private function detectKeyRole(#[SensitiveParameter] OpenSSLAsymmetricKey|string $pem): array
     {
         // Try private key
-        if (($private = openssl_pkey_get_private($pem)) !== false) {
+        $private = openssl_pkey_get_private($pem);
+        if ($private !== false) {
             return [$private, self::PRIVATE_ROLE];
         }
 
         // Fallback: public key
-        if (($public = openssl_pkey_get_public($pem)) !== false) {
+        $public = openssl_pkey_get_public($pem);
+        if ($public !== false) {
             return [$public, self::PUBLIC_ROLE];
         }
 

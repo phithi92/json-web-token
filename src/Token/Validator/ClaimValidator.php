@@ -94,13 +94,37 @@ class ClaimValidator
 
     private function isJsonValue(mixed $data): bool
     {
+        if ($this->isJsonScalar($data)) {
+            return true;
+        }
+
+        if (is_array($data)) {
+            return $this->isJsonArray($data);
+        }
+
+        return false;
+    }
+
+    private function isJsonScalar(mixed $data): bool
+    {
         return is_bool($data)
             || is_float($data)
             || is_int($data)
             || is_string($data)
-            || is_null($data)
-            || (is_array($data)
-                && array_reduce($data, fn ($carry, $v) => $carry && $this->isJsonValue($v), true));
+            || $data === null;
+    }
+
+    /**
+     * @param array<mixed> $data
+     */
+    private function isJsonArray(array $data): bool
+    {
+        foreach ($data as $v) {
+            if (! $this->isJsonValue($v)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private function isEmpty(mixed $value): bool

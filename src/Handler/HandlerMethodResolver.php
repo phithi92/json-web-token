@@ -4,33 +4,37 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Handler;
 
-use Phithi92\JsonWebToken\Exceptions\Handler\UnsupportedHandlerMethodException;
-
 final class HandlerMethodResolver
 {
+    private const METHOD_MAP = [
+        HandlerType::Signature->name => [
+            HandlerOperation::Perform->name => 'computeSignature',
+            HandlerOperation::Reverse->name => 'validateSignature',
+        ],
+        HandlerType::Cek->name => [
+            HandlerOperation::Perform->name => 'initializeCek',
+            HandlerOperation::Reverse->name => 'validateCek',
+        ],
+        HandlerType::Iv->name => [
+            HandlerOperation::Perform->name => 'initializeIv',
+            HandlerOperation::Reverse->name => 'validateIv',
+        ],
+        HandlerType::Key->name => [
+            HandlerOperation::Perform->name => 'wrapKey',
+            HandlerOperation::Reverse->name => 'unwrapKey',
+        ],
+        HandlerType::Payload->name => [
+            HandlerOperation::Perform->name => 'encryptPayload',
+            HandlerOperation::Reverse->name => 'decryptPayload',
+        ],
+    ];
+
     /**
      * Resolves the method name that should be called on a handler
      * based on its type and the operation direction.
      */
     public function resolve(HandlerType $type, HandlerOperation $operation): string
     {
-        return match (true) {
-            $type === HandlerType::Signature && $operation === HandlerOperation::Perform => 'computeSignature',
-            $type === HandlerType::Signature && $operation === HandlerOperation::Reverse => 'validateSignature',
-
-            $type === HandlerType::Cek && $operation === HandlerOperation::Perform => 'initializeCek',
-            $type === HandlerType::Cek && $operation === HandlerOperation::Reverse => 'validateCek',
-
-            $type === HandlerType::Iv && $operation === HandlerOperation::Perform => 'initializeIv',
-            $type === HandlerType::Iv && $operation === HandlerOperation::Reverse => 'validateIv',
-
-            $type === HandlerType::Key && $operation === HandlerOperation::Perform => 'wrapKey',
-            $type === HandlerType::Key && $operation === HandlerOperation::Reverse => 'unwrapKey',
-
-            $type === HandlerType::Payload && $operation === HandlerOperation::Perform => 'encryptPayload',
-            $type === HandlerType::Payload && $operation === HandlerOperation::Reverse => 'decryptPayload',
-
-            default => throw new UnsupportedHandlerMethodException(),
-        };
+        return self::METHOD_MAP[$type->name][$operation->name];
     }
 }
