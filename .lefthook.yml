@@ -1,27 +1,26 @@
-# .lefthook.yml
 pre-commit:
   parallel: false
   skip:
     - merge
     - rebase
   commands:
-    lint-code:
-      glob: "*.php"
-      run: php -l $(git ls-files '*.php')
-      
-    lint-code-psr12:
-      glob: "*.php"
-      run: php vendor/bin/phpcs --standard=PSR12 "{staged_files}"
-      
-    fix-code-psr12:
-      glob: "*.php"
-      run: php vendor/bin/phpcbf --standard=PSR12 -q "{staged_files}" || true
-      stage_fixed: true
-
     fix-code-style:
       glob: "*.php"
       run: php vendor/bin/phpinsights --no-interaction --quiet fix src || true
       stage_fixed: true
+      
+    fix-code-psr12:
+      glob: "*.php"
+      run: php vendor/bin/phpcbf --standard=PSR12 -q {staged_files}; exit 0
+      stage_fixed: true
+
+    lint-code:
+      glob: "*.php"
+      run: php -l {staged_files}
+  
+    lint-code-psr12:
+      glob: "*.php"
+      run: php vendor/bin/phpcs --standard=PSR12 {staged_files}
 
 pre-push:
   parallel: true
