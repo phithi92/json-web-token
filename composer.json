@@ -35,7 +35,7 @@
 
       "lint": "php -l $(git ls-files '*.php')",
       "cs:check": "php vendor/bin/phpcs --standard=PSR12 src",
-      "cs:fix": "php vendor/bin/phpcbf --standard=PSR12 -q src",
+      "cs:fix": "php vendor/bin/phpcbf --standard=PSR12 -q src || exit 0",
 
       "analyse": "php vendor/bin/phpstan analyse -c config/phpstan.neon --memory-limit=1G",
       "insights": "php vendor/bin/phpinsights analyse -c config/phpinsights.php",
