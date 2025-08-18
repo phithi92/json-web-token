@@ -6,6 +6,7 @@ namespace Tests\phpunit\Utilities;
 
 use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
+use Phithi92\JsonWebToken\Exceptions\Base64\InvalidBase64UrlFormatException;
 
 /**
  * Class Base64UrlEncoderTest
@@ -128,5 +129,12 @@ class Base64UrlEncoderTest extends TestCase
             $decoded,
             'The decoded string for an empty input does not match the original input string.'
         );
+    }
+
+    public function testDecodeInvalidStringThrowsException(): void
+    {
+        $this->expectException(InvalidBase64UrlFormatException::class);
+
+        Base64UrlEncoder::decode('@@@');
     }
 }

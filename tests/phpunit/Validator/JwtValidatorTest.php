@@ -163,4 +163,13 @@ final class JwtValidatorTest extends TestCase
         $this->expectException(InvalidPrivateClaimException::class);
         $validator->assertValid($payload);
     }
+
+    public function testPrivateClaimPresenceWithoutSpecificValueIsAccepted(): void
+    {
+        $payload = $this->createPayload(['role' => 'guest']);
+        $validator = new JwtValidator(null, null, 0, ['role' => null]);
+
+        $validator->assertValid($payload);
+        $this->assertTrue($validator->isValid($payload));
+    }
 }
