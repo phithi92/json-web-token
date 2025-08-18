@@ -17,7 +17,7 @@ enum JsonErrorCode: int
     case UTF8 = JSON_ERROR_UTF8;
     case DEPTH = JSON_ERROR_DEPTH;
 
-    public function toException(?int $depth, ?Throwable $previous = null): Throwable
+    public function toException(?int $depth): Throwable
     {
         return match ($this) {
             self::SYNTAX,

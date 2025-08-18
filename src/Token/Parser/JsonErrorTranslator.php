@@ -33,7 +33,7 @@ final class JsonErrorTranslator
     {
         $codeEnum = JsonErrorCode::tryFrom((int) $e->getCode());
         if ($codeEnum instanceof JsonErrorCode) {
-            return $codeEnum->toException($depth, $e);
+            return $codeEnum->toException($depth);
         }
 
         /** @param class-string $fb */
