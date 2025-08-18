@@ -209,7 +209,8 @@ final class JwtTokenFactory
         ?JwtValidator $validator = null,
         array $retainedClaims = []
     ): EncryptedJwtBundle {
-        $payload = self::buildFilteredPayload($bundle, $retainedClaims);
+        $payload = self::buildFilteredPayload($bundle, $retainedClaims)
+            ->setExpiration($interval);
 
         $newBundle = new EncryptedJwtBundle($bundle->getHeader(), $payload);
 
@@ -225,10 +226,8 @@ final class JwtTokenFactory
      */
     private static function buildFilteredPayload(EncryptedJwtBundle $bundle, array $retained): JwtPayload
     {
-        $payloadArray = $bundle->getPayload()->toArray();
-
         $oldPayload = $bundle->getPayload();
-        $newPayload = new JwtPayload($oldPayload->claimHelper->getReferenceTime());
+        $newPayload = new JwtPayload($oldPayload->getDateClaimHelper()->getReferenceTime());
 
         $retainedClaims = array_merge(self::RETAINED_CLAIMS, $retained);
 
