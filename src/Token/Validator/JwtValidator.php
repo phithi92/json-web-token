@@ -91,7 +91,9 @@ class JwtValidator
         $methods = $this->getValidationMethods();
 
         foreach ($methods as $method) {
-            $this->invoker->invoke($this, $method, [$payload]);
+            if ($this->invoker->invoke($this, $method, [$payload]) === false) {
+                return false;
+            }
         }
 
         return true;
