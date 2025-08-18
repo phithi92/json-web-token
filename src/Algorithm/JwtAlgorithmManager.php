@@ -93,7 +93,7 @@ final class JwtAlgorithmManager
      *     key: OpenSSLAsymmetricKey
      * }
      */
-    public function getKeyMetadata(string $kid, ?string $role = null): array
+    public function getKeyMetadata(string $kid, string $role): array
     {
         return $this->keyStore->getMetadata($kid, $role);
     }
