@@ -18,6 +18,13 @@ use Throwable;
  */
 class DateClaimHelper
 {
+    /**
+     * Standardized time-based claims (NumericDate) as defined in RFC 7519
+     * and OpenID Connect (OIDC). All of them must be treated as timestamps
+     * and must never be retained from previous tokens when reissuing.
+     */
+    public const TIME_CLAIMS = ['exp', 'nbf', 'iat', 'auth_time'];
+
     /** Reference time used for relative calculations (UTC). */
     private readonly DateTimeImmutable $dateTimeImmutable;
 
@@ -32,8 +39,9 @@ class DateClaimHelper
     /**
      * Set a timestamp claim (iat/nbf/exp) from a date expression or timestamp.
      *
-     * @param string      $key       Claim name (e.g., "iat", "nbf", "exp").
-     * @param string|int  $dateTime  Relative/absolute datetime (e.g., "+5 minutes", "2025-08-16 12:00") or Unix timestamp.
+     * @param string     $key      Claim name (e.g., "iat", "nbf", "exp").
+     * @param string|int $dateTime Relative/absolute datetime (e.g., "+5 minutes", "2025-08-16 12:00")
+     *                             or Unix timestamp.
      *
      * @throws InvalidDateTimeException
      * @throws InvalidValueTypeException
@@ -97,8 +105,10 @@ class DateClaimHelper
      *
      * @throws InvalidDateTimeException
      */
-    private static function assertDateTimeImmutable(DateTimeImmutable|false|null $value, string|int $input): DateTimeImmutable
-    {
+    private static function assertDateTimeImmutable(
+        DateTimeImmutable|false|null $value,
+        string|int $input
+    ): DateTimeImmutable {
         if (! $value instanceof DateTimeImmutable) {
             throw new InvalidDateTimeException((string) $input);
         }

@@ -23,8 +23,7 @@ use Phithi92\JsonWebToken\Token\Validator\ClaimValidator;
  */
 class JwtPayload
 {
-    private const TIME_CLAIMS = ['exp', 'nbf', 'iat'];
-    public readonly DateClaimHelper $claimHelper;
+    private readonly DateClaimHelper $claimHelper;
     private ?string $encryptedPayload = null;
 
     /** @var array<string, mixed> Claims data */
@@ -43,6 +42,11 @@ class JwtPayload
         $this->claimHelper = new DateClaimHelper($dateTime);
     }
 
+    public function getDateClaimHelper(): DateClaimHelper
+    {
+        return $this->claimHelper;
+    }
+
     /**
      * Populate this payload from an associative array.
      *
@@ -59,7 +63,7 @@ class JwtPayload
             // throws if claim or type is invalid
             $this->claimValidator->ensureValidClaim($key, $value);
 
-            if (! in_array($key, self::TIME_CLAIMS, true)) {
+            if (! in_array($key, DateClaimHelper::TIME_CLAIMS, true)) {
                 $this->setClaim($key, $value);
                 continue; // process remaining claims
             }
