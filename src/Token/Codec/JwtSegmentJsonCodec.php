@@ -31,18 +31,37 @@ abstract class JwtSegmentJsonCodec
      */
     protected function rethrowJsonException(Throwable $e, string $fallback, ?int $depth = null): never
     {
-        match ($e->getCode()) {
+        throw match ($e->getCode()) {
             JSON_ERROR_SYNTAX,
             JSON_ERROR_CTRL_CHAR,
-            JSON_ERROR_STATE_MISMATCH => throw new MalformedTokenException(),
+            JSON_ERROR_STATE_MISMATCH => new MalformedTokenException(),
 
-            JSON_ERROR_UTF8 => throw new MalformedUtf8Exception(),
+            JSON_ERROR_UTF8 => new MalformedUtf8Exception(),
 
-            JSON_ERROR_DEPTH => throw new InvalidDepthException($depth ?? 0),
+            JSON_ERROR_DEPTH => new InvalidDepthException($depth ?? 0),
 
-            default => null,
+            default => $this->createThrowableFromFactory($fallback, [$e->getMessage()])
         };
+    }
 
-        throw $this->classFactory->create($fallback, [$e->getMessage()]);
+    /**
+     * @param class-string $fallback
+     * @param list<string> $args
+     *
+     * @throws \LogicException
+     */
+    private function createThrowableFromFactory(string $fallback, array $args): Throwable
+    {
+        $exception = $this->classFactory->create($fallback, $args);
+
+        if (! $exception instanceof Throwable) {
+            throw new \LogicException(sprintf(
+                'ClassFactory did not return a Throwable for "%s". Got: %s',
+                $fallback,
+                $exception::class
+            ));
+        }
+
+        return $exception;
     }
 }
