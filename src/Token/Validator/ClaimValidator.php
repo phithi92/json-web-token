@@ -25,22 +25,22 @@ class ClaimValidator
      * semantically meaningless in the context of JWT claims. Also ensures that the
      * value is either a scalar or an array.
      *
-     * @param mixed $key   The claim key being validated (used for error context).
+     * @param int|string $key   The claim key being validated (used for error context).
      * @param mixed $value The claim value to validate.
      *
      * @throws EmptyFieldException       If the value is null, empty string, or empty array.
      * @throws InvalidValueTypeException If the value is neither scalar nor array.
      */
-    public function ensureValidClaim(mixed $key, mixed $value): void
+    public function ensureValidClaim(int|string $key, mixed $value): void
     {
-        $key = $this->assertJsonKey($key);
+        $resolvedKey = $this->assertJsonKey($key);
 
         if ($this->isEmpty($value)) {
-            throw new EmptyFieldException((string) $key);
+            throw new EmptyFieldException((string) $resolvedKey);
         }
 
         if (! $this->isJsonValue($value)) {
-            throw new InvalidValueTypeException((string) $key, gettype($value));
+            throw new InvalidValueTypeException((string) $resolvedKey, gettype($value));
         }
     }
 

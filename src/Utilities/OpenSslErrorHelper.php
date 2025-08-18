@@ -6,6 +6,8 @@ namespace Phithi92\JsonWebToken\Utilities;
 
 final class OpenSslErrorHelper
 {
+    private const MESSAGE_PREFIX = 'OpenSSL error(s):';
+
     /**
      * Collects all OpenSSL errors currently stored in the error queue.
      *
@@ -27,7 +29,7 @@ final class OpenSslErrorHelper
      *
      * @param string $prefix Optional text before the error string
      */
-    public static function getFormattedErrorMessage(?string $prefix = 'OpenSSL error(s):'): string
+    public static function getFormattedErrorMessage(?string $prefix = self::MESSAGE_PREFIX): string
     {
         $errors = self::collectErrors();
 

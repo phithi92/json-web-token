@@ -176,14 +176,14 @@ final class JwtHeader
     }
 
     /**
-     * @param array<mixed> $data
+     * @param array<string,mixed> $data
      */
     public static function fromArray(array $data): self
     {
         $invoker = new HandlerInvoker();
         $instance = new self();
 
-        $headerFields = self::extractValidHeaderFields($data);
+        $headerFields = self::filterStringMap($data);
 
         foreach (self::HEADER_MAP as $jsonKey => $setter) {
             if (isset($headerFields[$jsonKey])) {
@@ -224,32 +224,50 @@ final class JwtHeader
     }
 
     /**
-     * @param array<mixed> $data
+     * @param array<string,mixed> $data
      *
      * @return array<string,string>
      *
      * @throws InvalidFormatException
      */
-    private static function extractValidHeaderFields(array $data): array
+    private static function filterStringMap(array $data): array
     {
+        $resolvedData = self::assertStringMap($data);
         $allowedKeys = array_keys(self::HEADER_MAP);
 
         $filtered = [];
-
         foreach ($allowedKeys as $key) {
-            if (! isset($data[$key])) {
+            if (! isset($resolvedData[$key])) {
                 continue;
             }
 
-            $value = $data[$key];
-
-            if (! is_string($value)) {
-                throw new InvalidFormatException("Header field '{$key}' must be a string.");
-            }
+            $value = $resolvedData[$key];
 
             $filtered[$key] = $value;
         }
 
         return $filtered;
+    }
+
+    /**
+     * @param array<mixed> $data
+     *
+     * @return array<string,string>
+     *
+     * @throws InvalidFormatException
+     *
+     * @phpstan-assert array<string,string> $data
+     */
+    private static function assertStringMap(array $data): array
+    {
+        $result = [];
+        foreach ($data as $key => $value) {
+            if (! is_string($key) || ! is_string($value)) {
+                throw new InvalidFormatException('Expected array<string,string>.');
+            }
+            $result[$key] = $value;
+        }
+
+        return $result;
     }
 }

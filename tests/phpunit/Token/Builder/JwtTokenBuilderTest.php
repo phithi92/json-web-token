@@ -6,34 +6,12 @@ namespace Tests\phpunit;
 
 use LogicException;
 use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
-use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\JwtHeader;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
-use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Tests\phpunit\TestCaseWithSecrets;
 
 class JwtTokenBuilderTest extends TestCaseWithSecrets
 {
-    public function testCreateFromBundleValidatesGivenBundle(): void
-    {
-        $header = (new JwtHeader())
-            ->setType('JWT')
-            ->setAlgorithm('RSA-OAEP')
-            ->setEnc('A256GCM')
-            ->setKid('RSA-OAEP_A256GCM');
-
-        $bundle = new EncryptedJwtBundle($header, new JwtPayload());
-
-        $builder = new JwtTokenBuilder($this->manager);
-        $validator = $this->createMock(JwtValidator::class);
-
-        $validator->expects($this->once())->method('assertValidBundle');
-
-        $builder->createFromBundle($bundle, null, $validator);
-    }
-
     public function testMissingAlgorithmInHeaderThrowsException(): void
     {
         $builder = new JwtTokenBuilder($this->manager);

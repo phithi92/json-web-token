@@ -91,8 +91,6 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         string $algorithm,
         EncryptedJwtBundle $bundle
     ): void {
-        /** @var array<string,mixed> $config */
-        /** @var array<int, HandlerDescriptor> $descriptors */
         [$config, $descriptors] = $this->resolveConfigAndHandlers($algorithm);
 
         foreach ($descriptors as $descriptor) {
@@ -115,7 +113,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      * @param string $algorithm The algorithm to use for configuration resolution.
      *
      * @return array{
-     *     0: array<string, mixed>,
+     *     0: array<string, string|array<string,string>>,
      *     1: array<int, HandlerDescriptor>
      * }
      */
