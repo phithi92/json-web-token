@@ -1,17 +1,35 @@
-# .lefthook.yml (im Repo-Root)
+# .lefthook.yml
 pre-commit:
-  parallel: true
+  parallel: false
+  skip:
+    - merge
+    - rebase
   commands:
-    php-lint:
-      run: |
-        find src -name "*.php" -print0 | xargs -0 -n1 php -l
-    phpstan:
-      run: vendor/bin/phpstan analyse --configuration=config/phpstan.neon --memory-limit=1G
-    phpunit:
-      run: vendor/bin/phpunit --configuration config/phpunit.xml --colors=always
+    lint-code:
+      glob: "*.php"
+      run: php -l $(git ls-files '*.php')
+      
+    lint-code-psr12:
+      glob: "*.php"
+      run: php vendor/bin/phpcs --standard=PSR12 "{staged_files}"
+      
+    fix-code-psr12:
+      glob: "*.php"
+      run: php vendor/bin/phpcbf --standard=PSR12 --exit-zero "{staged_files}" || true
+      stage_fixed: true
+
+    fix-code-style:
+      glob: "*.php"
+      run: php vendor/bin/phpinsights --no-interaction --quiet fix src || true
+      stage_fixed: true
 
 pre-push:
+  parallel: true
   commands:
-    security-audit:
-      files: git ls-files
-      run: composer audit
+    analyse-code:
+      glob: "*.{php,neon}"
+      run: php vendor/bin/phpstan analyse --configuration=config/phpstan.neon --memory-limit=1G
+
+    test-code:
+      glob: "*.{php,xml,neon}"
+      run: XDEBUG_MODE=off php vendor/bin/phpunit --configuration config/phpunit.xml --colors=always

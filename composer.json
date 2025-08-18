@@ -31,16 +31,30 @@
          }
     },
     "scripts": {
-        "test": "phpunit --configuration config/phpunit.xml",
+      "generate-keys": "php bin/generate-keys.php",
 
-        "analyse": "@php vendor/bin/phpstan analyse --configuration=config/phpstan.neon --memory-limit=1G",
-        "style": "phpcs --standard=PSR12 src tests",
+      "lint": "php -l $(git ls-files '*.php')",
+      "style": "php vendor/bin/phpcs --standard=PSR12 src",
+      "analyse": "php vendor/bin/phpstan analyse --configuration=config/phpstan.neon --memory-limit=1G",
 
-        "benchmark": "@php vendor/bin/phpbench --config config/phpbench.json run tests/phpbench/* --report=benchmark",
+      "benchmark": "php vendor/bin/phpbench --config config/phpbench.json run tests/phpbench/* --report=benchmark",
 
-        "generate-keys": "@php bin/generate-keys.php",
-        
-        "lefthook": "lefthook run pre-push"
+      "test": "XDEBUG_MODE=off php vendor/bin/phpunit --configuration=config/phpunit.xml --colors=always",
+      "test:coverage": "XDEBUG_MODE=coverage php vendor/bin/phpunit --configuration=config/phpunit.xml --coverage-text --colors=always",
+
+      "fix:cs": "php vendor/bin/phpcbf --standard=PSR12 -q src tests",
+      "fix:insights": "php vendor/bin/phpinsights --quiet fix",
+
+      "fix": [
+        "@fix:cs",
+        "@fix:insights"
+      ],
+
+      "qa": [
+        "@style",
+        "@analyse",
+        "@test"
+      ]
     },
     "config": {
         "allow-plugins": {
