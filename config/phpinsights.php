@@ -37,6 +37,7 @@ return [
         ForbiddenNormalClasses::class => [
             'exclude' => [
                 'src/Exceptions',
+                'src/Crypto',
             ],
         ],
         DisallowMixedTypeHintSniff::class => [

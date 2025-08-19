@@ -21,7 +21,7 @@ use Phithi92\JsonWebToken\Token\Validator\ClaimValidator;
  * and allows custom claims to be added. Time based claims are
  * handled using DateTimeImmutable for consistency.
  */
-class JwtPayload
+final class JwtPayload
 {
     private readonly DateClaimHelper $claimHelper;
     private ?string $encryptedPayload = null;

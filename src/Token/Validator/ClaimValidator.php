@@ -14,7 +14,7 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
  *
  * @author phillipthiele
  */
-class ClaimValidator
+final class ClaimValidator
 {
     private const DECODE_JSON_DEPTH = 4;
 

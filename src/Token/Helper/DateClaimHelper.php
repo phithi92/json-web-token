@@ -16,7 +16,7 @@ use Throwable;
  * Helper to convert date expressions into Unix timestamps for JWT claims.
  * All calculations are based on a UTC reference time.
  */
-class DateClaimHelper
+final class DateClaimHelper
 {
     /**
      * Standardized time-based claims (NumericDate) as defined in RFC 7519

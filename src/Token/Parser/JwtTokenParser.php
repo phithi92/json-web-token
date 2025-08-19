@@ -12,7 +12,7 @@ use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
-class JwtTokenParser
+final class JwtTokenParser
 {
     private const JWS_PART_COUNT = 3;
     private const JWS_TYPE = 'JWS';

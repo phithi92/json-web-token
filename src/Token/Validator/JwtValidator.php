@@ -29,7 +29,7 @@ use Phithi92\JsonWebToken\Token\JwtPayload;
  *
  * Intended for post-decryption and post-signature verification.
  */
-class JwtValidator
+final class JwtValidator
 {
     private const IS_METHODS = [
         'isValidPrivateClaims',
