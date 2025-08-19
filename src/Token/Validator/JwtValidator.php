@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Validator;
 
+use InvalidArgumentException;
 use LogicException;
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
@@ -30,27 +31,43 @@ use Phithi92\JsonWebToken\Token\JwtPayload;
  */
 class JwtValidator
 {
-    private const VALIDATE_METHODS = [
-        'ValidPrivateClaims',
-        'NotExpired',
-        'NotBeforeValid',
-        'IssuedAtValid',
-        'ValidIssuer',
-        'ValidAudience',
+    private const IS_METHODS = [
+        'isValidPrivateClaims',
+        'isNotExpired',
+        'isNotBeforeValid',
+        'isIssuedAtValid',
+        'isValidIssuer',
+        'isValidAudience',
     ];
-    private ?string $expectedIssuer = null;
+
+    private const ASSERT_METHODS = [
+        'assertValidPrivateClaims',
+        'assertNotExpired',
+        'assertNotBeforeValid',
+        'assertIssuedAtValid',
+        'assertValidIssuer',
+        'assertValidAudience',
+    ];
 
     // The expected issuer value (public claim iss).
-    private ?string $expectedAudience = null;
+    private ?string $expectedIssuer = null;
 
     // The expected audience value (public claim aud).
-    private int $clockSkew = 0;
+    private ?string $expectedAudience = null;
+    //
     // Allowed clock skew in seconds.
+    private int $clockSkew = 0;
 
     /**
      * @var array<string, scalar|null>
      */
     private array $expectedClaims;
+
+    /**
+     * Frozen timestamp for one validation run.
+     * Set in isValid()/assertValid(), cleared afterwards.
+     */
+    private ?int $currentTime = null;
 
     private HandlerInvoker $invoker;
 
@@ -74,9 +91,12 @@ class JwtValidator
         int $clockSkew = 0,
         array $expectedClaims = []
     ) {
+        if ($clockSkew < 0) {
+            throw new InvalidArgumentException('clockSkew must be >= 0');
+        }
+        $this->clockSkew = $clockSkew;
         $this->expectedIssuer = $expectedIssuer;
         $this->expectedAudience = $expectedAudience;
-        $this->clockSkew = $clockSkew;
         $this->expectedClaims = $expectedClaims;
         $this->invoker = new HandlerInvoker();
     }
@@ -88,15 +108,17 @@ class JwtValidator
      */
     public function isValid(JwtPayload $payload): bool
     {
-        $methods = $this->getValidationMethods();
-
-        foreach ($methods as $method) {
-            if ($this->invoker->invoke($this, $method, [$payload]) === false) {
-                return false;
+        $this->currentTime = time();
+        try {
+            foreach (self::IS_METHODS as $method) {
+                if ($this->invoker->invoke($this, $method, [$payload]) === false) {
+                    return false;
+                }
             }
+            return true;
+        } finally {
+            $this->currentTime = null;
         }
-
-        return true;
     }
 
     /**
@@ -107,7 +129,7 @@ class JwtValidator
     public function isNotExpired(JwtPayload $payload): bool
     {
         $exp = $payload->getExpiration();
-        return $exp === null || ($exp + $this->clockSkew) > time();
+        return $exp === null || ($exp + $this->clockSkew) > $this->now();
     }
 
     /**
@@ -118,7 +140,7 @@ class JwtValidator
     public function isNotBeforeValid(JwtPayload $payload): bool
     {
         $nbf = $payload->getNotBefore();
-        return $nbf === null || ($nbf - $this->clockSkew) <= time();
+        return $nbf === null || ($nbf - $this->clockSkew) <= $this->now();
     }
 
     /**
@@ -129,7 +151,7 @@ class JwtValidator
     public function isIssuedAtValid(JwtPayload $payload): bool
     {
         $iat = $payload->getIssuedAt();
-        return $iat === null || ($iat - $this->clockSkew) <= time();
+        return $iat === null || ($iat - $this->clockSkew) <= $this->now();
     }
 
     /**
@@ -177,10 +199,13 @@ class JwtValidator
      */
     public function assertValid(JwtPayload $payload): void
     {
-        $methods = $this->getAssertValidationMethods();
-
-        foreach ($methods as $method) {
-            $this->invoker->invoke($this, $method, [$payload]);
+        $this->currentTime = time();
+        try {
+            foreach (self::ASSERT_METHODS as $method) {
+                $this->invoker->invoke($this, $method, [$payload]);
+            }
+        } finally {
+            $this->currentTime = null;
         }
     }
 
@@ -270,7 +295,7 @@ class JwtValidator
             throw new NotBeforeOlderThanIatException();
         }
 
-        if ($nbf - $this->clockSkew > time()) {
+        if ($nbf - $this->clockSkew > $this->now()) {
             throw new NotYetValidException();
         }
     }
@@ -320,31 +345,9 @@ class JwtValidator
         }
     }
 
-    /**
-     * @return array<string>
-     */
-    private function getValidationMethods(): array
+    private function now(): int
     {
-        return $this->mapMethodNames('is');
-    }
-
-    /**
-     * @return array<string>
-     */
-    private function getAssertValidationMethods(): array
-    {
-        return $this->mapMethodNames('assert');
-    }
-
-    /**
-     * @return array<string>
-     */
-    private function mapMethodNames(string $prefix): array
-    {
-        return array_map(
-            static fn (string $suffix): string => $prefix . $suffix,
-            self::VALIDATE_METHODS
-        );
+        return $this->currentTime ?? time();
     }
 
     private function validateClaim(string $key, JwtPayload $payload, string|int|null $expectedValue): void
