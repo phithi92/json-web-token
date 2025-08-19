@@ -43,7 +43,7 @@ final class JwtHeaderJsonCodec extends JwtSegmentJsonCodec implements JwtHeaderC
     public function encode(JwtHeader $header, ?int $depth = null): string
     {
         try {
-            return JsonEncoder::encode($header->toArray(), self::JSON_OPTIONS, $depth ?? self::JSON_DEPTH);
+            return JsonEncoder::encode($header, self::JSON_OPTIONS, $depth ?? self::JSON_DEPTH);
         } catch (JsonException $e) {
             $this->jsonErrorTranslator->rethrow($e, $depth, InvalidFormatException::class);
         }

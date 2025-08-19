@@ -63,7 +63,7 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
      */
     public function encode(JwtPayload $payload): string
     {
-        return JsonEncoder::encode($payload->toArray(), $this->options, $this->depth);
+        return JsonEncoder::encode($payload, $this->options, $this->depth);
     }
 
     /**

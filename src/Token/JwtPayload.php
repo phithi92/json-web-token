@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token;
 
 use DateTimeImmutable;
+use JsonSerializable;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
@@ -21,7 +22,7 @@ use Phithi92\JsonWebToken\Token\Validator\ClaimValidator;
  * and allows custom claims to be added. Time based claims are
  * handled using DateTimeImmutable for consistency.
  */
-final class JwtPayload
+final class JwtPayload implements JsonSerializable
 {
     private readonly DateClaimHelper $claimHelper;
     private ?string $encryptedPayload = null;
@@ -96,6 +97,14 @@ final class JwtPayload
         }
 
         return $this->claims;
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 
     /**
