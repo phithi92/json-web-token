@@ -3,7 +3,6 @@
     "description": "Handles the generation of JSON Web Tokens (JWT), including both JWS (JSON Web Signature) and JWE (JSON Web Encryption). Provides methods for creating and validating tokens.",
     "type": "library",
     "license": "MIT",
-    "version": "0.2.8",
     "authors": [
         {
             "name": "Phillip Thiele",
