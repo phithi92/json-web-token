@@ -42,6 +42,29 @@ class JwtPayloadTest extends TestCase
         $this->assertEquals(['aud1', 'aud2'], $payload->getClaim('aud'));
     }
 
+    public function testSetAudienceWithString()
+    {
+        $payload = new JwtPayload();
+        $payload->setAudience('single');
+
+        $this->assertSame('single', $payload->getAudience());
+    }
+
+    public function testGetAudienceReturnsNullWhenNotSet()
+    {
+        $payload = new JwtPayload();
+
+        $this->assertNull($payload->getAudience());
+    }
+
+    public function testGetAudienceReturnsArrayWhenSetWithArray()
+    {
+        $payload = new JwtPayload();
+        $payload->setAudience(['one', 'two']);
+
+        $this->assertSame(['one', 'two'], $payload->getAudience());
+    }
+
     public function testSetIssuedAt()
     {
         $payload = new JwtPayload();

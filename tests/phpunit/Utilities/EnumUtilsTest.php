@@ -28,4 +28,10 @@ class EnumUtilsTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         EnumUtils::fromName(\stdClass::class, 'BAR');
     }
+
+    public function testFromNameDifferentCaseThrowsException(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        EnumUtils::fromName(TokenErrorMessagesEnum::class, 'invalid_signature');
+    }
 }

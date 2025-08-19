@@ -52,7 +52,7 @@ class Base64UrlEncoderTest extends TestCase
         // String mit tatsächlichem Padding (mit '=')
         $inputWithPadding = 'U29tZSBkYXRhCg=='; // "Some data\n" in Base64 mit Padding
         $expected = "Some data\n";
-        $actual = Base64UrlEncoder::decode($inputWithPadding, true);
+        $actual = Base64UrlEncoder::decode($inputWithPadding);
         $this->assertEquals(
             $expected,
             $actual,
@@ -62,7 +62,7 @@ class Base64UrlEncoderTest extends TestCase
         // String, bei dem Padding benötigt wird (kein explizites '=' vorhanden)
         $inputMissingPadding = 'U29tZSBkYXRhCg'; // "Some data\n" in Base64 ohne Padding
         $expected = "Some data\n";
-        $actual = Base64UrlEncoder::decode($inputMissingPadding, true);
+        $actual = Base64UrlEncoder::decode($inputMissingPadding);
         $this->assertEquals(
             $expected,
             $actual,
@@ -72,7 +72,7 @@ class Base64UrlEncoderTest extends TestCase
         // String, der durch Base64-Kodierung explizites Padding erzeugt
         $originalInput = "Pad this";
         $encodedWithPadding = Base64UrlEncoder::encode($originalInput); // Sollte auf URL-konformes Base64 konvertieren
-        $expectedDecoded = Base64UrlEncoder::decode($encodedWithPadding, true);
+        $expectedDecoded = Base64UrlEncoder::decode($encodedWithPadding);
         $this->assertEquals(
             $originalInput,
             $expectedDecoded,

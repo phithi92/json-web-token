@@ -82,6 +82,14 @@ final class JwtValidatorTest extends TestCase
         $validator->assertValid($payload);
     }
 
+    public function testIsValidReturnsFalseForExpiredToken(): void
+    {
+        $payload = $this->createPayload(['exp' => '-1 hour']);
+        $validator = new JwtValidator();
+
+        $this->assertFalse($validator->isValid($payload));
+    }
+
     public function testNotYetValidTokenThrowsException(): void
     {
         $payload = $this->createPayload(
@@ -126,6 +134,14 @@ final class JwtValidatorTest extends TestCase
 
         $this->expectException(InvalidIssuerException::class);
         $validator->assertValid($payload);
+    }
+
+    public function testIsValidReturnsFalseForInvalidIssuer(): void
+    {
+        $payload = $this->createPayload(['iss' => 'wrong']);
+        $validator = new JwtValidator('correct');
+
+        $this->assertFalse($validator->isValid($payload));
     }
 
     public function testInvalidAudienceThrowsException(): void
