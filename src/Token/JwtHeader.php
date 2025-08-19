@@ -220,7 +220,7 @@ final class JwtHeader
 
     private function isKidFormatValid(string $kid): bool
     {
-        return preg_match('/^[a-zA-Z0-9._-]+$/', $kid) === 1;
+        return ($s = str_replace(['.', '_', '-'], '', $kid)) !== '' && ctype_alnum($s);
     }
 
     /**
