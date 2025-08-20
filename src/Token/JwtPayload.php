@@ -11,6 +11,7 @@ use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
 use Phithi92\JsonWebToken\Exceptions\Token\EncryptedPayloadAlreadySetException;
 use Phithi92\JsonWebToken\Exceptions\Token\EncryptedPayloadNotSetException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
 use Phithi92\JsonWebToken\Token\Validator\ClaimValidator;
 
@@ -48,35 +49,10 @@ final class JwtPayload implements JsonSerializable
         return $this->claimHelper;
     }
 
-    /**
-     * Populate this payload from an associative array.
-     *
-     * Time based claims (exp, nbf, iat) are validated and stored
-     * as timestamps or strings. Other claims are set directly.
-     *
-     * @param array<string, mixed> $data Claims input
-     *
-     * @throws InvalidValueTypeException If a time claim has an unsupported type
-     */
-    public function fromArray(array $data): self
+    public function fromArray(mixed $data): self
     {
-        foreach ($data as $key => $value) {
-            // throws if claim or type is invalid
-            $this->claimValidator->ensureValidClaim($key, $value);
-
-            if (! $this->isTimeClaimKey($key)) {
-                $this->setClaim($key, $value);
-                continue; // process remaining claims
-            }
-
-            if (! $this->isTimeClaimValue($value)) {
-                throw new InvalidDateTimeException($key);
-            }
-
-            // normalize time-based claims via helper (accepts string|int)
-            $this->setClaimTimestamp($key, $value);
-        }
-
+        $validated = $this->validatePayloadData($data);
+        $this->applyPayload($validated);
         return $this;
     }
 
@@ -295,6 +271,86 @@ final class JwtPayload implements JsonSerializable
     public function getEncryptedPayload(): string
     {
         return $this->encryptedPayload ?? throw new EncryptedPayloadNotSetException();
+    }
+
+    /**
+     * Validates that the given data (typically the result of json_decode)
+     * is a proper JWT payload object.
+     *
+     * Rules:
+     *  - Must be an array
+     *  - All top-level keys must be strings
+     *  - All values must be scalar or arrays of scalars (recursively)
+     *  - Nested arrays may have int|string keys
+     *
+     * @return array<string, scalar|array<array-key, scalar>>
+     *
+     * @throws InvalidFormatException
+     */
+    private function validatePayloadData(mixed $data): array
+    {
+        if (! is_array($data)) {
+            throw new InvalidFormatException('Decoded JWT payload must be an object (assoc array).');
+        }
+
+        foreach ($data as $key => $value) {
+            if (! is_string($key)) {
+                throw new InvalidFormatException('All JWT claim keys must be strings.');
+            }
+
+            if (! $this->isScalarOrScalarArray($value)) {
+                throw new InvalidFormatException(
+                    sprintf("JWT claim value for key '%s' must be scalar or array of scalars.", $key)
+                );
+            }
+        }
+
+        /** @var array<string, scalar|array<array-key, scalar>> $data */
+        return $data;
+    }
+
+    /**
+     * Applies validated claims into the payload object.
+     *
+     * @param array<string, scalar|array<array-key, scalar>> $claims
+     *
+     * @throws InvalidDateTimeException
+     * @throws InvalidValueTypeException
+     * @throws EmptyFieldException
+     */
+    private function applyPayload(array $claims): void
+    {
+        foreach ($claims as $key => $value) {
+            $this->claimValidator->ensureValidClaim($key, $value);
+
+            if ($this->isTimeClaimKey($key)) {
+                if (! $this->isTimeClaimValue($value)) {
+                    throw new InvalidDateTimeException($key);
+                }
+                $this->setClaimTimestamp($key, $value);
+            } else {
+                $this->setClaim($key, $value);
+            }
+        }
+    }
+
+    private function isScalarOrScalarArray(mixed $v): bool
+    {
+        if (is_scalar($v)) {
+            return true;
+        }
+
+        if (! is_array($v)) {
+            return false;
+        }
+
+        foreach ($v as $inner) {
+            if (! $this->isScalarOrScalarArray($inner)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function isTimeClaimKey(string $key): bool

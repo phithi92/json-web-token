@@ -185,7 +185,7 @@ final class JwtHeader implements JsonSerializable
     }
 
     /**
-     * @param array<string,mixed> $data
+     * @param array<mixed> $data
      */
     public static function fromArray(array $data): self
     {
@@ -233,50 +233,36 @@ final class JwtHeader implements JsonSerializable
     }
 
     /**
-     * @param array<string,mixed> $data
+     * Filters the given data array down to allowed header keys
+     * and ensures both keys and values are strings.
+     *
+     * @param array<mixed> $data
      *
      * @return array<string,string>
      *
-     * @throws InvalidFormatException
+     * @throws InvalidFormatException if a value is not a string
      */
     private static function filterStringMap(array $data): array
     {
-        $resolvedData = self::assertStringMap($data);
         $allowedKeys = array_keys(self::HEADER_MAP);
 
         $filtered = [];
         foreach ($allowedKeys as $key) {
-            if (! isset($resolvedData[$key])) {
+            if (! array_key_exists($key, $data)) {
                 continue;
             }
 
-            $value = $resolvedData[$key];
+            $value = $data[$key];
+
+            if (! is_string($value)) {
+                throw new InvalidFormatException(
+                    sprintf("Invalid type for header key '%s': expected string, got %s", $key, gettype($value))
+                );
+            }
 
             $filtered[$key] = $value;
         }
 
         return $filtered;
-    }
-
-    /**
-     * @param array<mixed> $data
-     *
-     * @return array<string,string>
-     *
-     * @throws InvalidFormatException
-     *
-     * @phpstan-assert array<string,string> $data
-     */
-    private static function assertStringMap(array $data): array
-    {
-        $result = [];
-        foreach ($data as $key => $value) {
-            if (! is_string($key) || ! is_string($value)) {
-                throw new InvalidFormatException('Expected array<string,string>.');
-            }
-            $result[$key] = $value;
-        }
-
-        return $result;
     }
 }

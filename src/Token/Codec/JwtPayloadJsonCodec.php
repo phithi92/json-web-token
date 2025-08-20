@@ -164,35 +164,16 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
      *
      * @param string $json The JSON string to decode.
      *
-     * @return array<string, mixed> The decoded data.
+     * @return array<mixed> The decoded data.
      *
      * @throws InvalidFormatException If the JSON cannot be decoded.
      */
     private function decodeJson(string $json): array
     {
         try {
-            /** @var array<mixed> */
-            $result = JsonEncoder::decode($json, true, 0, $this->depth);
+            return JsonEncoder::decode($json, true, 0, $this->depth);
         } catch (JsonException) {
             throw new InvalidFormatException('Token payload is not valid JSON');
-        }
-
-        $this->assertStringKeys($result);
-
-        return $result;
-    }
-
-    /**
-     * @phpstan-assert array<string, mixed> $value
-     *
-     * @param array<mixed> $value
-     *
-     * @throws InvalidFormatException
-     */
-    private function assertStringKeys(array $value): void
-    {
-        if (count(array_filter(array_keys($value), 'is_int')) > 0) {
-            throw new InvalidFormatException('Decoded JSON contains non-string keys');
         }
     }
 
