@@ -16,6 +16,7 @@ final class JsonEncoder
     private const DEFAULT_DEPTH = 512;
     private const DEFAULT_ENCODE_OPTIONS = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
     private const DEFAULT_DECODE_OPTIONS = 0;
+    private const DEFAULT_OPTIONS = JSON_THROW_ON_ERROR;
 
     /**
      * Decodes a JSON string into an associative array or stdClass object.
@@ -23,7 +24,7 @@ final class JsonEncoder
      * @template TAssoc of bool
      *
      * @param TAssoc $associative When true, returns an associative array; when false, returns an object.
-     * @param int    $options     Additional json_decode flags.
+     * @param int    $flags     Additional json_decode flags.
      * @param int    $depth       Maximum decoding depth (>= 1).
      *
      * @return (TAssoc is true ? array<mixed> : stdClass)
@@ -34,96 +35,59 @@ final class JsonEncoder
     public static function decode(
         string $json,
         bool $associative = false,
-        int $options = self::DEFAULT_DECODE_OPTIONS,
+        int $flags = self::DEFAULT_DECODE_OPTIONS,
         int $depth = self::DEFAULT_DEPTH
     ): array|stdClass {
-        $resolvedDepth = self::validatedDepth($depth);
+        $resolvedDepth = self::assertValidDepth($depth);
 
         try {
-            return self::decodeJson($json, $associative, $resolvedDepth, $options);
+            $result = json_decode($json, $associative, $resolvedDepth, $flags | self::DEFAULT_OPTIONS);
         } catch (JsonException $e) {
             throw new DecodingException($e->getMessage());
         }
+
+        return self::ensureJsonRootIsObjectOrArray($result);
     }
 
     /**
      * Encodes data to a JSON string.
      *
-     * @param array<mixed>|JsonSerializable $data Data to encode.
-     * @param int $options Additional json_encode flags.
+     * @param array<array-key, mixed>|JsonSerializable $data Data to encode.
+     * @param int $flags Additional json_encode flags.
      * @param int $depth   Maximum encoding depth (>= 1).
      *
      * @throws EncodingException
      * @throws InvalidDepthException
+     * @throws JsonException
      */
     public static function encode(
         array|JsonSerializable $data,
-        int $options = self::DEFAULT_ENCODE_OPTIONS,
+        int $flags = self::DEFAULT_ENCODE_OPTIONS,
         int $depth = self::DEFAULT_DEPTH
     ): string {
-        $resolvedDepth = self::validatedDepth($depth);
+        $resolvedDepth = self::assertValidDepth($depth);
+        $value = $data instanceof JsonSerializable ? $data->jsonSerialize() : $data;
 
-        return self::encodeJson($data, $options, $resolvedDepth);
+        try {
+            return json_encode($value, $flags | self::DEFAULT_OPTIONS, $resolvedDepth);
+        } catch (JsonException $e) {
+            throw new EncodingException($e->getMessage()); // previous setzen
+        }
     }
 
     /**
-     * @template TAssoc of bool
+     * @param mixed $value the unvalidaded type of json answer
      *
-     * @param TAssoc $associative When true, returns an associative array; when false, returns an object.
-     * @param int<1,max> $depth   Maximum decoding depth.
-     * @param int $flags        Flags for json_decode.
-     *
-     * @return (TAssoc is true ? array<mixed> : stdClass)
-     *
-     * @throws JsonException
-     * @throws DecodingException
-     */
-    private static function decodeJson(string $json, bool $associative, int $depth, int $flags): array|stdClass
-    {
-        $result = json_decode($json, $associative, $depth, $flags | JSON_THROW_ON_ERROR);
-
-        if ($associative) {
-            return self::validatedArray($result);
-        }
-
-        if (! $result instanceof stdClass) {
-            throw new DecodingException('Expected top-level JSON object when $associative=false.');
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return array<mixed>
+     * @return array<mixed>|stdClass the validaed json answer
      *
      * @throws DecodingException
      */
-    private static function validatedArray(mixed $array): array
+    private static function ensureJsonRootIsObjectOrArray(mixed $value): array|stdClass
     {
-        if (! is_array($array)) {
-            throw new DecodingException('Expected top-level JSON array when $associative=true.');
+        if (! is_array($value) && ! $value instanceof stdClass) {
+            throw new DecodingException('Top-level JSON must be an object or array.');
         }
-
-        return $array;
-    }
-
-    /**
-     * @param array<mixed>|JsonSerializable $value
-     * @param int<1, max> $depth
-     *
-     * @return string json encoded string
-     *
-     * @throws JsonException
-     * @throws EncodingException
-     */
-    private static function encodeJson(array|JsonSerializable $value, int $flags, int $depth): string
-    {
-        if ($value instanceof JsonSerializable) {
-            $value = $value->jsonSerialize();
-        }
-
-        // json encode return string, otherwise throw JsonException on error.
-        return json_encode($value, $flags | JSON_THROW_ON_ERROR, $depth);
+        return $value;
     }
 
     /**
@@ -131,11 +95,10 @@ final class JsonEncoder
      *
      * @throws InvalidDepthException
      */
-    private static function validatedDepth(?int $depth = null): int
+    private static function assertValidDepth(int $depth): int
     {
-        if (! is_int($depth) || $depth < 1) {
-            $resolvedDepth = is_int($depth) ? $depth : 0;
-            throw new InvalidDepthException($resolvedDepth);
+        if ($depth < 1) {
+            throw new InvalidDepthException($depth);
         }
 
         return $depth;

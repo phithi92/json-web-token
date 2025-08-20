@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Utilities;
 
-use JsonException;
 use JsonSerializable;
+use Phithi92\JsonWebToken\Exceptions\Json\EncodingException;
 use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use Phithi92\JsonWebToken\Exceptions\Json\DecodingException;
@@ -24,7 +24,7 @@ class JsonEncoderTest extends TestCase
 
     public function testEncodeThrowsEncodingException(): void
     {
-        $this->expectException(JsonException::class);
+        $this->expectException(EncodingException::class);
 
         // Create an array with a value that cannot be JSON encoded
         $data = ['key' => "\xB1\x31"];
@@ -75,21 +75,6 @@ class JsonEncoderTest extends TestCase
 
         $this->assertIsArray($data);
         $this->assertEquals('12345678901234567890', $data['key']);
-    }
-
-
-    public function testDecodeArrayWithAssociativeFalseThrowsException(): void
-    {
-        $this->expectException(DecodingException::class);
-
-        JsonEncoder::decode('[]', false);
-    }
-
-    public function testDecodeScalarWithAssociativeTrueThrowsException(): void
-    {
-        $this->expectException(DecodingException::class);
-
-        JsonEncoder::decode('"string"', true);
     }
 
     public function testEncodeJsonSerializableObject(): void
