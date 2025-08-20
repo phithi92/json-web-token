@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Security;
 
-use Phithi92\JsonWebToken\Exception\Security\PassphraseNotFoundException;
+use Phithi92\JsonWebToken\Exceptions\Security\PassphraseNotFoundException;
 use SensitiveParameter;
 
 final class PassphraseStore

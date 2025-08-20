@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Exceptions\Payload;
+namespace Phithi92\JsonWebToken\Exceptions\Security;
 
 use Exception;
-use Phithi92\JsonWebToken\Exceptions\Security\SecurityErrorMessagesEnum;
 use Phithi92\JsonWebToken\Utilities\EnumUtils;
 
 /**

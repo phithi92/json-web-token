@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Exception\Security;
-
-use Phithi92\JsonWebToken\Exceptions\Payload\SecurityException;
+namespace Phithi92\JsonWebToken\Exceptions\Security;
 
 final class PassphraseNotFoundException extends SecurityException
 {
