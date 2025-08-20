@@ -26,8 +26,6 @@ use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
  */
 final class JwtTokenFactory
 {
-    private const RETAINED_CLAIMS = ['sub', 'aud', 'iss'];
-
     private static ?JwtTokenBuilder $builderCache = null;
 
     private static ?JwtTokenDecryptor $decryptorCache = null;
@@ -198,7 +196,6 @@ final class JwtTokenFactory
      * @param EncryptedJwtBundle  $bundle          Existing JWT bundle to refresh.
      * @param JwtAlgorithmManager $manager         Algorithm manager instance.
      * @param JwtValidator|null   $validator       Optional validator to check the bundle before refreshing.
-     * @param array<int, string>  $retainedClaims  Expiration interval (e.g., "+1 hour").
      *
      * @return EncryptedJwtBundle New JWT bundle with refreshed timestamps.
      */
@@ -206,10 +203,9 @@ final class JwtTokenFactory
         string $interval,
         EncryptedJwtBundle $bundle,
         JwtAlgorithmManager $manager,
-        ?JwtValidator $validator = null,
-        array $retainedClaims = []
+        ?JwtValidator $validator = null
     ): EncryptedJwtBundle {
-        $payload = self::buildFilteredPayload($bundle, $retainedClaims)
+        $payload = self::buildFilteredPayload($bundle)
             ->setExpiration($interval);
 
         $newBundle = new EncryptedJwtBundle($bundle->getHeader(), $payload);
@@ -221,23 +217,18 @@ final class JwtTokenFactory
         return $builder->createFromBundle($newBundle);
     }
 
-    /**
-     * @param array<int, string> $retained
-     */
-    private static function buildFilteredPayload(EncryptedJwtBundle $bundle, array $retained): JwtPayload
+    private static function buildFilteredPayload(EncryptedJwtBundle $bundle): JwtPayload
     {
         $oldPayload = $bundle->getPayload();
         $newPayload = new JwtPayload($oldPayload->getDateClaimHelper()->getReferenceTime());
 
-        $retainedClaims = array_merge(self::RETAINED_CLAIMS, $retained);
+        $timeClaims = $newPayload->getDateClaimHelper()::TIME_CLAIMS;
 
-        foreach ($retainedClaims as $claim) {
-            if ($oldPayload->hasClaim($claim)) {
-                $newPayload->addClaim($claim, $oldPayload->getClaim($claim));
-            }
-        }
+        $claims = $oldPayload->toArray();
 
-        return $newPayload;
+        $cleanedClaims = array_diff_key($claims, array_flip($timeClaims));
+
+        return $newPayload->fromArray($cleanedClaims);
     }
 
     private static function getBuilder(JwtAlgorithmManager $manager): JwtTokenBuilder
