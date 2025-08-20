@@ -48,39 +48,38 @@ final class ClaimValidator
     {
         return self::DECODE_JSON_DEPTH;
     }
-
     /**
-     * Recursively calculates the maximum depth of a nested array.
-     */
-    public function getArrayDepth(mixed $data): int
-    {
-        if (! is_array($data)) {
-            return 0;
-        }
-
-        $maxDepth = 1;
-        foreach ($data as $value) {
-            $depth = $this->getArrayDepth($value) + 1;
-            if ($depth > $maxDepth) {
-                $maxDepth = $depth;
-            }
-        }
-
-        return $maxDepth + 1;
-    }
-
-    /**
-     * @param array<mixed> $array
+     * @param array<string,scalar|array<key-string,scalar>> $array
      *
      * @throws InvalidFormatException
      */
     public function assertValidPayloadDepth(array $array): void
     {
-        if ($this->getArrayDepth($array) > self::DECODE_JSON_DEPTH) {
+        if ($this->computeJsonDepth($array) > self::DECODE_JSON_DEPTH) {
             throw new InvalidFormatException(
                 sprintf('Payload exceeds maximum allowed depth of %d', self::DECODE_JSON_DEPTH)
             );
         }
+    }
+
+    /**
+     * Recursively calculates the maximum depth of a nested array.
+     */
+    private function computeJsonDepth(mixed $value): int
+    {
+        if (! is_array($value)) {
+            return 0; // scalars do not increase depth
+        }
+
+        $max = 0;
+        foreach ($value as $v) {
+            $d = $this->computeJsonDepth($v);
+            if ($d > $max) {
+                $max = $d;
+            }
+        }
+
+        return $max + 1; // +1 for this array level
     }
 
     private function assertJsonKey(mixed $key): string|int
