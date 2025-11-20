@@ -134,11 +134,11 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
         /** @var RSAPrivateKey|RSAPublicKey $key */
         $key = $this->loadRsaKey($pem, $role)->withPadding($padding);
 
-        if ($hash !== null && $role === 'private' && $key instanceof RSAPrivateKey) {
-            /** @var RSAPrivateKey $key */
+        if ($hash !== null) {
+            /** @var RSAPrivateKey|RSAPublicKey $key */
             $key = $key->withHash($hash);
 
-            /** @var RSAPrivateKey $key */
+            /** @var RSAPrivateKey|RSAPublicKey $key */
             $key = $key->withMGFHash($hash);
         }
 
