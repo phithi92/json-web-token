@@ -16,7 +16,7 @@ pre-commit:
 
     lint-code:
       glob: "*.php"
-      run: php -l {staged_files}
+      run: php vendor/bin/parallel-lint {staged_files}
   
     lint-code-psr12:
       glob: "*.php"
