@@ -163,13 +163,13 @@ return [
         ],
 
         IvHandlerInterface::class => [
-            'length' => 128, // bits
+            'length' => 96, // bits
             'handler' => IvService::class,
         ],
 
         CekHandlerInterface::class => [
             'length' => 256, // bits
-            'strict_length' => false,
+            'strict_length' => true,
             'handler' => DefaultCekHandler::class,
         ],
 
@@ -193,13 +193,13 @@ return [
         ],
 
         IvHandlerInterface::class => [
-            'length' => 128, // bits
+            'length' => 96, // bits
             'handler' => IvService::class,
         ],
 
         CekHandlerInterface::class => [
             'length' => 256, // bits
-            'strict_length' => false,
+            'strict_length' => true,
             'handler' => DefaultCekHandler::class,
         ],
 
@@ -222,13 +222,13 @@ return [
         ],
 
         IvHandlerInterface::class => [
-            'length' => 128, // bits
+            'length' => 96, // bits
             'handler' => IvService::class,
         ],
 
         CekHandlerInterface::class => [
             'length' => 256, // bits
-            'strict_length' => false,
+            'strict_length' => true,
             'handler' => DefaultCekHandler::class,
         ],
 
@@ -258,7 +258,7 @@ return [
 
         CekHandlerInterface::class => [
             'length' => 128,// bits
-            'strict_length' => false,
+            'strict_length' => true,
             'handler' => DefaultCekHandler::class,
         ],
     ],
@@ -282,7 +282,7 @@ return [
 
         CekHandlerInterface::class => [
             'length' => 192,
-            'strict_length' => false,
+            'strict_length' => true,
             'handler' => DefaultCekHandler::class,
         ],
     ],
@@ -307,7 +307,7 @@ return [
 
         CekHandlerInterface::class => [
             'length' => 256,
-            'strict_length' => false,
+            'strict_length' => true,
             'handler' => DefaultCekHandler::class,
         ],
     ],
