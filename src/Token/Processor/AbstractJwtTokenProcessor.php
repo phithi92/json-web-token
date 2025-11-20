@@ -28,11 +28,11 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      * The integer values define execution order (lower = earlier).
      */
     private const HANDLER_CONFIG_MAP = [
-        'cek' => [HandlerType::Cek, 10],
-        'key' => [HandlerType::Key, 20],
-        'iv' => [HandlerType::Iv, 30],
-        'payload' => [HandlerType::Payload, 40],
-        'signature' => [HandlerType::Signature, 50],
+        [HandlerType::Cek, 1],
+        [HandlerType::Key, 2],
+        [HandlerType::Iv, 3],
+        [HandlerType::Payload, 4],
+        [HandlerType::Signature, 5],
     ];
 
     /** @var HandlerOperation Encapsulates the operation mode (e.g., encrypt or decrypt). */
