@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Helpers;
+declare(strict_types=1);
 
-require_once __DIR__ . '/PemProvider.php';
+namespace Tests\Helpers;
 
 use Tests\Helpers\PemProvider;
 
@@ -40,7 +40,6 @@ class KeyProvider
             self::createAsymetricKeysItem('PS384', 'rsa/3072'),
             self::createAsymetricKeysItem('PS512', 'rsa/4096'),
             //rsa
-            self::createAsymetricKeysItem('RSA1_5_A256GCM', 'rsa/2048'),
             self::createAsymetricKeysItem('RSA-OAEP_A256GCM', 'rsa/3072'),
             self::createAsymetricKeysItem('RSA-OAEP-256_A256GCM', 'rsa/4096'),
             //ec

@@ -209,35 +209,6 @@ return [
         ],
     ],
 
-    'RSA1_5_A256GCM' => [
-        'token_type' => 'JWE',
-        'algorithm_type' => 'RSA',
-
-        'alg' => 'RSA1_5',
-        'enc' => 'A256GCM',
-
-        KeyHandlerInterface::class => [
-            'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_PKCS1,
-            'handler' => PhpseclibRsaEncryptionService::class,
-        ],
-
-        IvHandlerInterface::class => [
-            'length' => 96, // bits
-            'handler' => IvService::class,
-        ],
-
-        CekHandlerInterface::class => [
-            'length' => 256, // bits
-            'strict_length' => true,
-            'handler' => DefaultCekHandler::class,
-        ],
-
-        PayloadHandlerInterface::class => [
-            'length' => 256, // bits
-            'handler' => AesGcmService::class,
-        ],
-    ],
-
     // AES GCM
     'A128GCM' => [
         'token_type' => 'JWE',
