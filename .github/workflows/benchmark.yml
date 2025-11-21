@@ -22,7 +22,7 @@ jobs:
       - name: Install PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           tools: phpbench
           extensions: opcache
           coverage: none
@@ -33,12 +33,12 @@ jobs:
         
       - name: Generate Keys & Passwords
         run: php bin/generate-keys.php
-
+        
       - name: Run PHPBench
         run: php vendor/bin/phpbench --config config/phpbench.json run tests/phpbench/* --report=aggregate
 
       - name: Upload Benchmark Results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: phpbench-results
           path: build/benchmark/aggregate
