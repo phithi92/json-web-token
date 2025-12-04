@@ -54,12 +54,12 @@ final class JwtAlgorithmManager
         return $this->keyStore->hasKey($kid, 'private');
     }
 
-    public function addPrivateKey(string $pemContent, ?string $kid): void
+    public function addPrivateKey(string $pemContent, ?string $kid = null): void
     {
         $this->keyStore->addKey($pemContent, 'private', $kid);
     }
 
-    public function addPublicKey(string $pemContent, ?string $kid): void
+    public function addPublicKey(string $pemContent, ?string $kid = null): void
     {
         $this->keyStore->addKey($pemContent, 'public', $kid);
     }
@@ -103,7 +103,7 @@ final class JwtAlgorithmManager
         return $this->passphraseStore->hasPassphrase($kid);
     }
 
-    public function addPassphrase(string $passphrase, ?string $kid): void
+    public function addPassphrase(string $passphrase, ?string $kid = null): void
     {
         $this->passphraseStore->addPassphrase($passphrase, $kid);
     }

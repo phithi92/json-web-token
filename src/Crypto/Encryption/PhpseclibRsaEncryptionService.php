@@ -113,20 +113,30 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
         return is_string($cek) && $cek !== '';
     }
 
-    private function buildPrivateKey(string $pem, int $padding, ?string $hash): RsaPrivateKey
-    {
+    private function buildPrivateKey(
+        string $pem,
+        int $padding,
+        ?string $hash = null
+    ): RsaPrivateKey {
         /** @var RSAPrivateKey */
         return $this->buildKey('private', $pem, $padding, $hash);
     }
 
-    private function buildPublicKey(string $pem, int $padding, ?string $hash): RsaPublicKey
-    {
+    private function buildPublicKey(
+        string $pem,
+        int $padding,
+        ?string $hash = null
+    ): RsaPublicKey {
         /** @var RSAPublicKey */
         return $this->buildKey('public', $pem, $padding, $hash);
     }
 
-    private function buildKey(string $role, string $pem, int $padding, ?string $hash): RSAPrivateKey|RSAPublicKey
-    {
+    private function buildKey(
+        string $role,
+        string $pem,
+        int $padding,
+        ?string $hash = null
+    ): RSAPrivateKey|RSAPublicKey {
         if (! in_array($role, ['private','public'], true)) {
             throw new LogicException('No valid role for key');
         }
