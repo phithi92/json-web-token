@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Helper;
 
+use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
+use Exception;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
@@ -66,6 +68,24 @@ final class DateClaimHelper
     }
 
     /**
+     * PHPStan workaround: DateTimeImmutable throws different exception types
+     * depending on the PHP version.
+     *
+     * @throws DateMalformedStringException  PHP 8.3+
+     * @throws Exception                     Prior to PHP 8.3
+     */
+    public function buildDate(DateTimeImmutable $ref, string $dateTime): DateTimeImmutable
+    {
+        $result = @$ref->modify($dateTime);
+        if (! $result instanceof DateTimeImmutable) {
+            // Convert failure to a consistent exception for PHPStan (and runtime)
+            throw new Exception("Invalid date modification string: {$dateTime}");
+        }
+
+        return $result;
+    }
+
+    /**
      * Normalize a date expression or timestamp to a DateTimeImmutable anchored to the reference time.
      *
      * @throws InvalidDateTimeException
@@ -86,7 +106,7 @@ final class DateClaimHelper
         }
 
         try {
-            $adjustedDateTime = @$ref->modify($dateTime);
+            $adjustedDateTime = $this->buildDate($ref, $dateTime);
         } catch (Throwable) {
             throw new InvalidDateTimeException($dateTime);
         }
