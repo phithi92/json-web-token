@@ -32,31 +32,31 @@ final class HandlerDispatcher
      * @param array<string,mixed> $context
      */
     public function dispatch(
-        HandlerTarget $type,
+        HandlerTarget $target,
         HandlerOperation $operation,
         JwtAlgorithmManager $manager,
         array $config,
         array $context = []
     ): mixed {
-        if (! $this->isHandlerConfigured($config, $type)) {
+        if (! $this->isHandlerConfigured($config, $target)) {
             return null;
         }
 
-        $handler = $this->buildHandler($config, $manager, $type);
-        $method = $this->resolveMethod($type, $operation);
+        $handler = $this->buildHandler($config, $manager, $target);
+        $method = $this->resolveMethod($target, $operation);
 
         $this->assertValidHandlerMethod($handler, $method);
 
-        $args = $this->resolveArguments($type, $context, $config);
+        $args = $this->resolveArguments($target, $context, $config);
 
         return $this->invoker->invoke($handler, $method, $args);
     }
 
     private function resolveMethod(
-        HandlerTarget $type,
+        HandlerTarget $target,
         HandlerOperation $operation,
     ): string {
-        return $this->methodResolver->resolve($type, $operation);
+        return $this->methodResolver->resolve($target, $operation);
     }
 
     private function assertValidHandlerMethod(object $handler, string $method): void
@@ -74,9 +74,9 @@ final class HandlerDispatcher
     private function buildHandler(
         array $config,
         JwtAlgorithmManager $manager,
-        HandlerTarget $type
+        HandlerTarget $target
     ): object {
-        $interface = $type->interfaceClass();
+        $interface = $target->interfaceClass();
 
         if (! isset($config[$interface]) || ! is_array($config[$interface])) {
             throw new MissingHandlerConfigurationException();
@@ -97,9 +97,9 @@ final class HandlerDispatcher
     /**
      * @param array<string,mixed> $config
      */
-    private function isHandlerConfigured(array $config, HandlerTarget $type): bool
+    private function isHandlerConfigured(array $config, HandlerTarget $target): bool
     {
-        return isset($config[$type->interfaceClass()]);
+        return isset($config[$target->interfaceClass()]);
     }
 
     /**
@@ -110,17 +110,20 @@ final class HandlerDispatcher
      *
      * @return array{EncryptedJwtBundle, array<string,string>}
      */
-    private function resolveArguments(HandlerTarget $type, array $context, array $config): array
-    {
+    private function resolveArguments(
+        HandlerTarget $target,
+        array $context,
+        array $config
+    ): array {
         /** @var EncryptedJwtBundle $bundle */
         $bundle = $context['bundle'];
 
         /** @var array<string,string> $methodConfig */
-        $methodConfig = $config[$type->interfaceClass()];
+        $methodConfig = $config[$target->interfaceClass()];
 
         $handlerConf = [$bundle, $methodConfig];
 
-        return match ($type) {
+        return match ($target) {
             HandlerTarget::Signature,
             HandlerTarget::Cek,
             HandlerTarget::Iv,

@@ -95,7 +95,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 
         foreach ($descriptors as $descriptor) {
             $this->dispatcher->dispatch(
-                type: $descriptor->type,
+                target: $descriptor->target,
                 operation: $descriptor->operation,
                 manager: $this->manager,
                 config: $config,

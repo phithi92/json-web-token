@@ -33,8 +33,8 @@ final class HandlerMethodResolver
      * Resolves the method name that should be called on a handler
      * based on its type and the operation direction.
      */
-    public function resolve(HandlerTarget $type, HandlerOperation $operation): string
+    public function resolve(HandlerTarget $target, HandlerOperation $operation): string
     {
-        return self::METHOD_MAP[$type->name][$operation->name];
+        return self::METHOD_MAP[$target->name][$operation->name];
     }
 }
