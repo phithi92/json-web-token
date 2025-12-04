@@ -36,13 +36,21 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     ];
 
     /** @var HandlerOperation Encapsulates the operation mode (e.g., encrypt or decrypt). */
-    protected readonly HandlerOperation $operation;
+    public readonly HandlerOperation $operation;
 
     /** @var JwtAlgorithmManager Manages algorithm-specific configurations. */
     protected readonly JwtAlgorithmManager $manager;
 
     /** @var HandlerDispatcher Responsible for invoking the correct handler methods. */
     protected readonly HandlerDispatcher $dispatcher;
+
+    /**
+     * Caches resolved configurations and handler descriptors per algorithm to
+     * avoid rebuilding immutable structures on repeated invocations.
+     *
+     * @var array<string,array<int,HandlerDescriptor>>
+     */
+    private array $resolvedHandlerCache = [];
 
     public function __construct(
         HandlerOperation $operation,
@@ -51,14 +59,6 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         $this->manager = $manager;
         $this->operation = $operation;
         $this->dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
-    }
-
-    /**
-     * Returns the operation associated with the processor.
-     */
-    public function getOperation(): HandlerOperation
-    {
-        return $this->operation;
     }
 
     /**
@@ -112,17 +112,18 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      *
      * @param string $algorithm The algorithm to use for configuration resolution.
      *
-     * @return array{
-     *     0: array<string, mixed>,
-     *     1: array<HandlerDescriptor>
-     * }
+     * @return array{array<string, mixed>, array<int,HandlerDescriptor>}
      */
     private function resolveConfigAndHandlers(string $algorithm): array
     {
         $config = $this->manager->getConfiguration($algorithm);
-        $descriptors = $this->resolveApplicableHandlers($config);
+        if (! isset($this->resolvedHandlerCache[$algorithm])) {
+            $this->resolvedHandlerCache[$algorithm] = $this->resolveApplicableHandlers($config);
+        }
 
-        return [$config, $descriptors];
+        // Return a fresh configuration array on every call to avoid leaking
+        // mutations between requests, while still reusing descriptor metadata.
+        return [$config, $this->resolvedHandlerCache[$algorithm]];
     }
 
     /**
@@ -138,7 +139,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 
         foreach (self::HANDLER_CONFIG_MAP as [$type, $priority]) {
             if (isset($config[$type->interfaceClass()])) {
-                $descriptors[] = new HandlerDescriptor($type, $this->getOperation(), $priority);
+                $descriptors[] = new HandlerDescriptor($type, $this->operation, $priority);
             }
         }
 
