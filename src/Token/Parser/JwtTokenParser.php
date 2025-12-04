@@ -171,7 +171,6 @@ final class JwtTokenParser
     private static function parseSignatureToken(EncryptedJwtBundle $bundle, array $tokenArray): EncryptedJwtBundle
     {
         if (count($tokenArray) !== self::JWS_PART_COUNT) {
-            throw new InvalidFormatException('Invalid JWS token structure.');
             throw new MalformedTokenException('Invalid JWS token structure.');
         }
 
