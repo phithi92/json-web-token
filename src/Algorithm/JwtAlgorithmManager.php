@@ -36,9 +36,9 @@ final class JwtAlgorithmManager
         ?KeyStore $keyStore = null,
         ?PassphraseStore $passphraseStore = null
     ) {
-        $this->algorithmRegistry = ($algConfig ?? new DefaultAlgorithmConfiguration());
-        $this->keyStore = ($keyStore ?? new KeyStore());
-        $this->passphraseStore = ($passphraseStore ?? new PassphraseStore());
+        $this->algorithmRegistry = $algConfig ?? new DefaultAlgorithmConfiguration();
+        $this->keyStore = $keyStore ?? new KeyStore();
+        $this->passphraseStore = $passphraseStore ?? new PassphraseStore();
     }
 
     /**
