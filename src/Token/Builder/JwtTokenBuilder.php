@@ -6,7 +6,6 @@ namespace Phithi92\JsonWebToken\Token\Builder;
 
 use LogicException;
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
@@ -14,6 +13,7 @@ use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
+use UnexpectedValueException;
 
 /**
  * JwtTokenBuilder is responsible for creating encrypted JWT tokens.
@@ -143,8 +143,11 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      *
      * @throws LogicException On invalid types or missing values
      */
-    private function assertResolvableHeaderConfig(mixed $tokenType, mixed $alg, mixed $enc): void
-    {
+    private function assertResolvableHeaderConfig(
+        mixed $tokenType,
+        mixed $alg,
+        mixed $enc
+    ): void {
         if (! $this->isValidHeaderConfig($tokenType, $alg, $enc)) {
             throw new LogicException('Invalid header configuration');
         }
@@ -159,12 +162,17 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     /**
      * Creates a JwtHeader based on input and defaults.
      *
-     * @throws InvalidFormatException If algorithm is missing
+     * @throws UnexpectedValueException If token header not valid
+     * @throws UnresolvableKeyException If kid not found
      */
-    private function createHeader(string $typ, ?string $alg, ?string $kid, ?string $enc): JwtHeader
-    {
+    private function createHeader(
+        string $typ,
+        ?string $alg,
+        ?string $kid,
+        ?string $enc
+    ): JwtHeader {
         if ($alg === null) {
-            throw new InvalidFormatException('Incomplete token header configuration');
+            throw new UnexpectedValueException('Incomplete token header configuration');
         }
 
         $kid ??= $this->buildDefaultKid($alg, $enc);
@@ -197,8 +205,12 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     /**
      * Assembles the JwtHeader object from parameters.
      */
-    private function buildHeader(string $typ, string $alg, ?string $enc, string $kid): JwtHeader
-    {
+    private function buildHeader(
+        string $typ,
+        string $alg,
+        ?string $enc,
+        string $kid
+    ): JwtHeader {
         $header = (new JwtHeader())->setType($typ)->setAlgorithm($alg);
 
         if ($enc !== null) {
@@ -213,8 +225,11 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      *
      * Example: "RSA_OAEP_A256GCM"
      */
-    private function buildDefaultKid(string $alg, ?string $enc): string
-    {
+    private function buildDefaultKid(
+        string $alg,
+        ?string $enc = null,
+        string $seperator = self::KID_PART_SEPARATOR
+    ): string {
         $parts = [];
 
         if (strtolower($alg) !== 'dir') {
@@ -225,6 +240,6 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
             $parts[] = $enc;
         }
 
-        return implode(self::KID_PART_SEPARATOR, $parts);
+        return implode($seperator, $parts);
     }
 }

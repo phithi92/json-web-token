@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\phpunit;
 
 use LogicException;
+use UnexpectedValueException;
 use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Tests\phpunit\TestCaseWithSecrets;
 
@@ -20,7 +20,7 @@ class JwtTokenBuilderTest extends TestCaseWithSecrets
         $method = $reflection->getMethod('createHeader');
         $method->setAccessible(true);
 
-        $this->expectException(InvalidFormatException::class);
+        $this->expectException(UnexpectedValueException::class);
         $this->expectExceptionMessage('Incomplete token header configuration');
 
         $method->invoke($builder, 'JWT', null, 'some-kid', 'A256GCM');
