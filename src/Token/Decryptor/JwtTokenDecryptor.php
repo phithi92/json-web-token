@@ -27,6 +27,12 @@ use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
 {
     /**
+     * Specifies that the handler chain should be executed in reverse order,
+     * which is required to *decrypt* a previously encrypted JWT token.
+     */
+    private const OPERATION = HandlerOperation::Reverse;
+
+    /**
      * JwtTokenDecryptor constructor.
      *
      * @param JwtAlgorithmManager $manager   Provides cryptographic handler configurations.
@@ -35,8 +41,7 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
         JwtAlgorithmManager $manager,
     ) {
         // Initialize token decryptor with "reverse" handler operation
-        $operation = HandlerOperation::Reverse;
-        parent::__construct($operation, $manager);
+        parent::__construct(self::OPERATION, $manager);
     }
 
     /**

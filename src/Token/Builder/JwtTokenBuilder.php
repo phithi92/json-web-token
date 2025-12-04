@@ -34,12 +34,16 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     // Separator used when building a default KID (Key ID) from algorithm components
     private const KID_PART_SEPARATOR = '_';
 
+    /**
+     * Indicates that the handler chain should be executed in its normal
+     * forward order, enabling the *creation* (signing/encrypting) of JWT tokens.
+     */
+    private const OPERATION = HandlerOperation::Perform;
+
     public function __construct(
         JwtAlgorithmManager $manager
     ) {
-        // Initialize token builder with "perform" handler operation
-        $operation = HandlerOperation::Perform;
-        parent::__construct($operation, $manager);
+        parent::__construct(self::OPERATION, $manager);
     }
 
     /**
