@@ -9,4 +9,6 @@ parameters:
     bootstrapFiles:
         - ../vendor/autoload.php
 
+    phpVersion: 80200
+
     reportUnmatchedIgnoredErrors: true
