@@ -18,6 +18,11 @@ final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInter
 {
     private const CONFIG_FILE = __DIR__ . '/algorithms.php';
 
+    /**
+     * @var array<string, array<string, array<string, string>>>
+     */
+    private static array $cache = [];
+
     /** @var array<string, array<string, string>> Configuration for algorithms. */
     private readonly array $config;
 
@@ -25,13 +30,14 @@ final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInter
      * Loads algorithm configuration from the given PHP file.
      *
      * @param string $configFile Path to the PHP config file returning an array.
+     * @param bool   $forceReload Whether to bypass the static cache (useful for tests).
      *
      * @throws AlgorithmConfigFileNotFoundException
      * @throws InvalidAlgorithmConfigFormatException
      */
-    public function __construct(string $configFile = self::CONFIG_FILE)
+    public function __construct(string $configFile = self::CONFIG_FILE, bool $forceReload = false)
     {
-        $this->config = $this->loadedAndValidatedConfiguration($configFile);
+        $this->config = $this->loadedAndValidatedConfiguration($configFile, $forceReload);
     }
 
     /**
@@ -53,8 +59,14 @@ final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInter
      * @throws AlgorithmConfigFileNotFoundException
      * @throws InvalidAlgorithmConfigFormatException
      */
-    private function loadedAndValidatedConfiguration(string $configFile): array
-    {
+    private function loadedAndValidatedConfiguration(
+        string $configFile,
+        bool $forceReload = false
+    ): array {
+        if (! $forceReload && isset(self::$cache[$configFile])) {
+            return self::$cache[$configFile];
+        }
+
         if (! is_file($configFile)) {
             throw new AlgorithmConfigFileNotFoundException($configFile);
         }
