@@ -16,7 +16,7 @@ use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
  * Each type maps to a specific handler interface,
  * which is used as a key in the algorithm configuration.
  */
-enum HandlerType
+enum HandlerTarget
 {
     case Signature;
     case Cek;

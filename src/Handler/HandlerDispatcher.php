@@ -32,7 +32,7 @@ final class HandlerDispatcher
      * @param array<string,mixed> $context
      */
     public function dispatch(
-        HandlerType $type,
+        HandlerTarget $type,
         HandlerOperation $operation,
         JwtAlgorithmManager $manager,
         array $config,
@@ -53,7 +53,7 @@ final class HandlerDispatcher
     }
 
     private function resolveMethod(
-        HandlerType $type,
+        HandlerTarget $type,
         HandlerOperation $operation,
     ): string {
         return $this->methodResolver->resolve($type, $operation);
@@ -74,7 +74,7 @@ final class HandlerDispatcher
     private function buildHandler(
         array $config,
         JwtAlgorithmManager $manager,
-        HandlerType $type
+        HandlerTarget $type
     ): object {
         $interface = $type->interfaceClass();
 
@@ -97,7 +97,7 @@ final class HandlerDispatcher
     /**
      * @param array<string,mixed> $config
      */
-    private function isHandlerConfigured(array $config, HandlerType $type): bool
+    private function isHandlerConfigured(array $config, HandlerTarget $type): bool
     {
         return isset($config[$type->interfaceClass()]);
     }
@@ -110,7 +110,7 @@ final class HandlerDispatcher
      *
      * @return array{EncryptedJwtBundle, array<string,string>}
      */
-    private function resolveArguments(HandlerType $type, array $context, array $config): array
+    private function resolveArguments(HandlerTarget $type, array $context, array $config): array
     {
         /** @var EncryptedJwtBundle $bundle */
         $bundle = $context['bundle'];
@@ -121,11 +121,11 @@ final class HandlerDispatcher
         $handlerConf = [$bundle, $methodConfig];
 
         return match ($type) {
-            HandlerType::Signature,
-            HandlerType::Cek,
-            HandlerType::Iv,
-            HandlerType::Key,
-            HandlerType::Payload => $handlerConf,
+            HandlerTarget::Signature,
+            HandlerTarget::Cek,
+            HandlerTarget::Iv,
+            HandlerTarget::Key,
+            HandlerTarget::Payload => $handlerConf,
         };
     }
 }

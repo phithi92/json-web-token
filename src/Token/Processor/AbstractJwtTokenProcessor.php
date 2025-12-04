@@ -10,7 +10,7 @@ use Phithi92\JsonWebToken\Handler\HandlerDescriptor;
 use Phithi92\JsonWebToken\Handler\HandlerDispatcher;
 use Phithi92\JsonWebToken\Handler\HandlerMethodResolver;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Handler\HandlerType;
+use Phithi92\JsonWebToken\Handler\HandlerTarget;
 use Phithi92\JsonWebToken\Interfaces\JwtTokenOperation;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 
@@ -28,11 +28,11 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      * The integer values define execution order (lower = earlier).
      */
     private const HANDLER_CONFIG_MAP = [
-        [HandlerType::Cek, 1],
-        [HandlerType::Key, 2],
-        [HandlerType::Iv, 3],
-        [HandlerType::Payload, 4],
-        [HandlerType::Signature, 5],
+        [HandlerTarget::Cek, 1],
+        [HandlerTarget::Key, 2],
+        [HandlerTarget::Iv, 3],
+        [HandlerTarget::Payload, 4],
+        [HandlerTarget::Signature, 5],
     ];
 
     /** @var HandlerOperation Encapsulates the operation mode (e.g., encrypt or decrypt). */
