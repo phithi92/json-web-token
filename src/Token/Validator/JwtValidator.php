@@ -17,7 +17,6 @@ use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
-use Phithi92\JsonWebToken\Handler\HandlerInvoker;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 
@@ -31,24 +30,6 @@ use Phithi92\JsonWebToken\Token\JwtPayload;
  */
 final class JwtValidator
 {
-    private const IS_METHODS = [
-        'isValidPrivateClaims',
-        'isNotExpired',
-        'isNotBeforeValid',
-        'isIssuedAtValid',
-        'isValidIssuer',
-        'isValidAudience',
-    ];
-
-    private const ASSERT_METHODS = [
-        'assertValidPrivateClaims',
-        'assertNotExpired',
-        'assertNotBeforeValid',
-        'assertIssuedAtValid',
-        'assertValidIssuer',
-        'assertValidAudience',
-    ];
-
     // The expected issuer value (public claim iss).
     private ?string $expectedIssuer = null;
 
@@ -69,7 +50,10 @@ final class JwtValidator
      */
     private ?int $currentTime = null;
 
-    private HandlerInvoker $invoker;
+    /** @var array<callable(JwtPayload): bool> */
+    private array $isValidators;
+    /** @var array<callable(JwtPayload): void> */
+    private array $assertValidators;
 
     /**
      * JwtValidator constructor.
@@ -98,7 +82,22 @@ final class JwtValidator
         $this->expectedIssuer = $expectedIssuer;
         $this->expectedAudience = $expectedAudience;
         $this->expectedClaims = $expectedClaims;
-        $this->invoker = new HandlerInvoker();
+        $this->isValidators = [
+            fn (JwtPayload $payload): bool => $this->isValidPrivateClaims($payload),
+            fn (JwtPayload $payload): bool => $this->isNotExpired($payload),
+            fn (JwtPayload $payload): bool => $this->isNotBeforeValid($payload),
+            fn (JwtPayload $payload): bool => $this->isIssuedAtValid($payload),
+            fn (JwtPayload $payload): bool => $this->isValidIssuer($payload),
+            fn (JwtPayload $payload): bool => $this->isValidAudience($payload),
+        ];
+        $this->assertValidators = [
+            fn (JwtPayload $payload) => $this->assertValidPrivateClaims($payload),
+            fn (JwtPayload $payload) => $this->assertNotExpired($payload),
+            fn (JwtPayload $payload) => $this->assertNotBeforeValid($payload),
+            fn (JwtPayload $payload) => $this->assertIssuedAtValid($payload),
+            fn (JwtPayload $payload) => $this->assertValidIssuer($payload),
+            fn (JwtPayload $payload) => $this->assertValidAudience($payload),
+        ];
     }
 
     /**
@@ -110,8 +109,8 @@ final class JwtValidator
     {
         $this->currentTime = time();
         try {
-            foreach (self::IS_METHODS as $method) {
-                if ($this->invoker->invoke($this, $method, [$payload]) === false) {
+            foreach ($this->isValidators as $validator) {
+                if ($validator($payload) === false) {
                     return false;
                 }
             }
@@ -201,8 +200,8 @@ final class JwtValidator
     {
         $this->currentTime = time();
         try {
-            foreach (self::ASSERT_METHODS as $method) {
-                $this->invoker->invoke($this, $method, [$payload]);
+            foreach ($this->assertValidators as $validator) {
+                $validator($payload);
             }
         } finally {
             $this->currentTime = null;
