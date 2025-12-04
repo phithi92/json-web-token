@@ -16,6 +16,9 @@ final class HandlerDispatcher
 {
     private HandlerInvoker $invoker;
 
+    /** @var array<class-string, object> */
+    private array $handlerCache = [];
+
     public function __construct(
         private readonly HandlerMethodResolver $methodResolver,
     ) {
@@ -88,7 +91,7 @@ final class HandlerDispatcher
             throw new InvalidHandlerImplementationException($classString, $interface);
         }
 
-        return new $classString($manager);
+        return $this->handlerCache[$classString] ??= new $classString($manager);
     }
 
     /**
