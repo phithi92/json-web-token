@@ -16,9 +16,9 @@ use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
  */
 final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInterface
 {
-    /**
-     * @var array<string, array<string, string>> Configuration for algorithms.
-     */
+    private const CONFIG_FILE = __DIR__ . '/algorithms.php';
+
+    /** @var array<string, array<string, string>> Configuration for algorithms. */
     private readonly array $config;
 
     /**
@@ -26,14 +26,12 @@ final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInter
      *
      * @param string $configFile Path to the PHP config file returning an array.
      *
-     * @throws \RuntimeException If the config file does not return an array.
+     * @throws AlgorithmConfigFileNotFoundException
+     * @throws InvalidAlgorithmConfigFormatException
      */
-    public function __construct(string $configFile = __DIR__ . '/algorithms.php')
+    public function __construct(string $configFile = self::CONFIG_FILE)
     {
-        /** @var array<string, array<string, string>> $config */
-        $config = $this->loadedAndValidatedConfiguration($configFile);
-
-        $this->config = $config;
+        $this->config = $this->loadedAndValidatedConfiguration($configFile);
     }
 
     /**
@@ -50,9 +48,10 @@ final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInter
     }
 
     /**
-     * @return array<mixed>
+     * @return array<string, array<string, string>>
      *
-     * @throws \RuntimeException
+     * @throws AlgorithmConfigFileNotFoundException
+     * @throws InvalidAlgorithmConfigFormatException
      */
     private function loadedAndValidatedConfiguration(string $configFile): array
     {
@@ -65,6 +64,7 @@ final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInter
             throw new InvalidAlgorithmConfigFormatException($configFile);
         }
 
+        /** @var array<string, array<string, string>> $config */
         return $config;
     }
 }
