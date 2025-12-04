@@ -9,7 +9,6 @@ use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerClassDefinitionExcept
 use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerImplementationException;
 use Phithi92\JsonWebToken\Exceptions\Handler\MissingHandlerConfigurationException;
 use Phithi92\JsonWebToken\Exceptions\Handler\UndefinedHandlerMethodException;
-use Phithi92\JsonWebToken\Factory\ClassFactory;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use RuntimeException;
 
@@ -17,13 +16,10 @@ final class HandlerDispatcher
 {
     private HandlerInvoker $invoker;
 
-    private ClassFactory $classFactory;
-
     public function __construct(
         private readonly HandlerMethodResolver $methodResolver,
     ) {
         $this->invoker = new HandlerInvoker();
-        $this->classFactory = new ClassFactory();
     }
 
     /**
@@ -92,7 +88,7 @@ final class HandlerDispatcher
             throw new InvalidHandlerImplementationException($classString, $interface);
         }
 
-        return $this->classFactory->create($classString, [$manager]);
+        return new $classString($manager);
     }
 
     /**

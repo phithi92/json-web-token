@@ -75,7 +75,7 @@ final class DateClaimHelper
         $ref = $this->getReferenceTime();
 
         // Numeric input: treat as Unix timestamp.
-        if (is_int($dateTime) || preg_match('/^-?\d+$/', $dateTime) === 1) {
+        if (\is_int($dateTime) || \preg_match('/^-?\d+$/', $dateTime) === 1) {
             $timestamp = (int) $dateTime;
 
             try {
@@ -85,7 +85,6 @@ final class DateClaimHelper
             }
         }
 
-        // Relative or absolute string: derive from the reference time.
         try {
             $adjustedDateTime = @$ref->modify($dateTime);
         } catch (Throwable) {

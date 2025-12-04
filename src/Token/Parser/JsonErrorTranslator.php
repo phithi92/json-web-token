@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Parser;
 
 use InvalidArgumentException;
-use Phithi92\JsonWebToken\Factory\ClassFactory;
 use Throwable;
 
 final class JsonErrorTranslator
 {
-    private ClassFactory $factory;
-
     /** @var class-string<Throwable> */
     private readonly string $defaultFallback;
 
@@ -19,10 +16,8 @@ final class JsonErrorTranslator
      * @param class-string<Throwable>|null     $defaultFallback
      */
     public function __construct(
-        ClassFactory $factory,
         ?string $defaultFallback = null
     ) {
-        $this->factory = $factory;
         $this->defaultFallback = $defaultFallback ?? InvalidArgumentException::class;
     }
 
@@ -37,8 +32,9 @@ final class JsonErrorTranslator
         }
 
         /** @param class-string $fb */
-        $fb = $fallback ?? $this->defaultFallback;
-        return $this->factory->create($fb, [$e->getMessage(), $e]);
+        $class = $fallback ?? $this->defaultFallback;
+
+        return new $class(...[$e->getMessage(), $e]);
     }
 
     /**

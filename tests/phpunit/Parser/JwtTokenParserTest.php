@@ -8,9 +8,9 @@ use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
+use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Tests\phpunit\TestCaseWithSecrets;
 
 final class JwtTokenParserTest extends TestCaseWithSecrets
@@ -61,7 +61,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
     public function testParseInvalidTokenThrowsException(): void
     {
-        $this->expectException(InvalidFormatException::class);
+        $this->expectException(MalformedTokenException::class);
 
         // Ungültige Struktur (nur 2 Teile)
         $invalidToken = 'part1.part2';
@@ -84,7 +84,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
     public function testInvalidBase64InTokenPartThrowsException(): void
     {
-        $this->expectException(InvalidFormatException::class);
+        $this->expectException(MalformedTokenException::class);
 
         $parts = [
             '!!invalid_base64@@', // ungültig
@@ -99,7 +99,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
     public function testInvalidJsonInHeaderThrowsException(): void
     {
-        $this->expectException(InvalidFormatException::class);
+        $this->expectException(MalformedTokenException::class);
 
         $invalidJson = '{"alg": "dir", "typ": "JWE",'; // fehlendes schließendes Objekt
         $parts = [
@@ -134,7 +134,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
     public function testJwsWithInvalidJsonPayloadThrowsException(): void
     {
-        $this->expectException(InvalidFormatException::class);
+        $this->expectException(MalformedTokenException::class);
 
         $header = ['alg' => 'HS256', 'typ' => 'JWS'];
         $headerJson = JsonEncoder::encode($header);
@@ -153,7 +153,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
     public function testInvalidTypInHeaderThrowsException(): void
     {
-        $this->expectException(InvalidFormatException::class);
+        $this->expectException(MalformedTokenException::class);
 
         $header = ['alg' => 'none', 'typ' => 'XYZ'];
         $payload = ['data' => 'value'];
@@ -170,13 +170,13 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
     public function testParseEmptyTokenThrowsException(): void
     {
-        $this->expectException(InvalidFormatException::class);
+        $this->expectException(MalformedTokenException::class);
         JwtTokenParser::parse('');
     }
 
     public function testParseEmptyArrayThrowsException(): void
     {
-        $this->expectException(InvalidFormatException::class);
+        $this->expectException(MalformedTokenException::class);
         JwtTokenParser::parse([]);
     }
 }

@@ -33,4 +33,5 @@ enum TokenErrorMessagesEnum: string
     case ENCRYPTED_PAYLOAD_NOT_SET = 'Encrypted payload has not been set.';
     case MISSING_TOKEN_PART = 'No %1$s configured. ';
     case ENCRYPTED_PAYLOAD_ALREADY_SET = 'Encrypted payload already set';
+    case INDIVIDUAL_MESSAGE = '%s';
 }

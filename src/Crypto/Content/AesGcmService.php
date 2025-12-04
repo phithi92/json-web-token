@@ -160,7 +160,7 @@ final class AesGcmService extends ContentCryptoService
             throw new EncryptionException($message);
         }
 
-        /** @var string $authTag */
+        /** @var non-empty-string $authTag */
         return [$sealedPayload, $authTag];
     }
 }

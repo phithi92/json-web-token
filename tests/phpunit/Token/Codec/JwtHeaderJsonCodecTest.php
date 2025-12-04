@@ -8,6 +8,8 @@ use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 
 final class JwtHeaderJsonCodecTest extends TestCase
 {
@@ -62,8 +64,8 @@ final class JwtHeaderJsonCodecTest extends TestCase
         $invalid = '{"alg":"HS256",'; // absichtlich kaputt
 
         // Assert
-        $this->expectException(InvalidFormatException::class);
-        $this->expectExceptionMessage('Syntax error');
+        $this->expectException(MalformedTokenException::class);
+        $this->expectExceptionMessage('Header is not valid JSON');
 
         // Act
         $this->codec->decode($invalid);

@@ -7,7 +7,7 @@ namespace Tests\phpunit;
 use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
+use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 
 class JwtPayloadJsonCodecTest extends TestCase
 {
@@ -46,7 +46,7 @@ class JwtPayloadJsonCodecTest extends TestCase
 
     public function testDecodeThrowsOnInvalidJson(): void
     {
-        $this->expectException(InvalidFormatException::class);
+        $this->expectException(MalformedTokenException::class);
         $this->expectExceptionMessage('Token payload is not valid JSON');
 
         $codec = new JwtPayloadJsonCodec();
@@ -86,8 +86,8 @@ class JwtPayloadJsonCodecTest extends TestCase
         $payload = new JwtPayload();
         $payload->fromArray(['cached' => true]);
 
-        $first = JwtPayloadJsonCodec::encodeStatic($payload, 0, 2);
-        $second = JwtPayloadJsonCodec::encodeStatic($payload, 0, 2);
+        $first = JwtPayloadJsonCodec::encodeStatic($payload, 2);
+        $second = JwtPayloadJsonCodec::encodeStatic($payload, 2);
 
         $this->assertSame($first, $second);
     }

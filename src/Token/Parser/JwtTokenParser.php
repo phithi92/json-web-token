@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Parser;
 
 use Phithi92\JsonWebToken\Exceptions\Base64\InvalidBase64UrlFormatException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
+use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
@@ -25,7 +25,7 @@ final class JwtTokenParser
      *
      * @return EncryptedJwtBundle configured bundle
      *
-     * @throws InvalidFormatException
+     * @throws MalformedTokenException
      */
     public static function parse(string|array $token): EncryptedJwtBundle
     {
@@ -43,7 +43,7 @@ final class JwtTokenParser
     }
 
     /**
-     * @throws InvalidFormatException
+     * @throws MalformedTokenException
      *
      * @return string Serialized token
      */
@@ -52,7 +52,7 @@ final class JwtTokenParser
         return match ($bundle->getHeader()->getType()) {
             self::JWE_TYPE => self::serializeEncodedToken($bundle),
             self::JWS_TYPE => self::serializeSignatureToken($bundle),
-            default => throw new InvalidFormatException('Invalid or unsupported token type'),
+            default => throw new MalformedTokenException('Invalid or unsupported token type'),
         };
     }
 
@@ -61,13 +61,13 @@ final class JwtTokenParser
      *
      * @return array<int,string> normalized token array
      *
-     * @throws InvalidFormatException
+     * @throws MalformedTokenException
      */
     private static function normalizeTokenInput(string|array $token): array
     {
         $tokenArray = is_string($token) ? explode('.', $token) : $token;
         if (! isset($tokenArray[0])) {
-            throw new InvalidFormatException('Token is malformed or incomplete');
+            throw new MalformedTokenException('Token is malformed or incomplete');
         }
         return $tokenArray;
     }
@@ -89,7 +89,7 @@ final class JwtTokenParser
         try {
             return Base64UrlEncoder::decode($base64);
         } catch (InvalidBase64UrlFormatException) {
-            throw new InvalidFormatException('Cannot decode: invalid Base64Url content.');
+            throw new MalformedTokenException('Cannot decode: invalid Base64Url content.');
         }
     }
 
@@ -101,7 +101,7 @@ final class JwtTokenParser
         return match ($bundle->getHeader()->getType()) {
             self::JWS_TYPE => self::parseSignatureToken($bundle, $tokenArray),
             self::JWE_TYPE => self::parseEncodedToken($bundle, $tokenArray),
-            default => throw new InvalidFormatException('Invalid or unsupported token type'),
+            default => throw new MalformedTokenException('Invalid or unsupported token type'),
         };
     }
 
@@ -113,19 +113,19 @@ final class JwtTokenParser
         return match (count($tokenArray)) {
             self::JWS_PART_COUNT => self::parseSignatureToken($bundle, $tokenArray),
             self::JWE_PART_COUNT => self::parseEncodedToken($bundle, $tokenArray),
-            default => throw new InvalidFormatException('Invalid or unsupported token type'),
+            default => throw new MalformedTokenException('Invalid or unsupported token type'),
         };
     }
 
     /**
      * @param array<int,string> $tokenArray
      *
-     * @throws InvalidFormatException
+     * @throws MalformedTokenException
      */
     private static function parseEncodedToken(EncryptedJwtBundle $bundle, array $tokenArray): EncryptedJwtBundle
     {
         if (count($tokenArray) !== self::JWE_PART_COUNT) {
-            throw new InvalidFormatException('Invalid JWE token structure.');
+            throw new MalformedTokenException('Invalid JWE token structure.');
         }
 
         // AAD must be the Base64Url-encoded protected header, per RFC 7516 §5.1
@@ -166,12 +166,13 @@ final class JwtTokenParser
     /**
      * @param array<int,string> $tokenArray
      *
-     * @throws InvalidFormatException
+     * @throws MalformedTokenException
      */
     private static function parseSignatureToken(EncryptedJwtBundle $bundle, array $tokenArray): EncryptedJwtBundle
     {
         if (count($tokenArray) !== self::JWS_PART_COUNT) {
             throw new InvalidFormatException('Invalid JWS token structure.');
+            throw new MalformedTokenException('Invalid JWS token structure.');
         }
 
         $headerB64 = array_shift($tokenArray);
