@@ -1,13 +1,12 @@
 <?php
 
+namespace Tests\phpbench;
+
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
-
-require_once __DIR__ . '/../Helpers/KeyProvider.php';
-
 use Tests\Helpers\KeyProvider;
 
 abstract class BenchmarkBase

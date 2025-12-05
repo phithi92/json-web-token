@@ -1,12 +1,13 @@
 <?php
 
-require_once __DIR__ . '/BenchmarkBase.php';
+namespace Tests\phpbench;
 
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use PhpBench\Attributes as Bench;
+use Tests\phpbench\BenchmarkBase;
 
 #[Bench\Revs(1000)]
 #[Bench\Iterations(5)]
@@ -14,19 +15,19 @@ use PhpBench\Attributes as Bench;
 #[Bench\ParamProviders('provideAlgs')]
 class BenchSupportedAgorithms extends BenchmarkBase
 {
-    public function bench_create(array $params): void
+    public function benchCreate(array $params): void
     {
         $this->getValidToken($params['alg']);
     }
 
-    public function bench_verify(array $params): void
+    public function benchVerify(array $params): void
     {
         $token = $this->getValidToken($params['alg']);
 
         JwtTokenFactory::decryptToken($token, $this->getManager());
     }
 
-    public function bench_expired(array $params): void
+    public function benchExpired(array $params): void
     {
         $token = $this->getExpiredToken($params['alg']);
 
@@ -37,7 +38,7 @@ class BenchSupportedAgorithms extends BenchmarkBase
         }
     }
 
-    public function bench_invalid(array $params): void
+    public function benchInvalid(array $params): void
     {
         $token = $this->getInvalidToken($params['alg']);
 
