@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token;
 
-use PHPUnit\Framework\TestCase;
-use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
+use Phithi92\JsonWebToken\Token\JwtHeader;
+use PHPUnit\Framework\TestCase;
+
+use function str_repeat;
 
 class JwtHeaderTest extends TestCase
 {

@@ -13,7 +13,7 @@ interface CekHandlerInterface
      * and attaches it to the bundle.
      *
      * @param array<string,string|int|class-string<object>> $config
-     *          Configuration array (expects 'length' in bits).
+     *                                                              Configuration array (expects 'length' in bits)
      */
     public function initializeCek(EncryptedJwtBundle $bundle, array $config): void;
 
@@ -21,7 +21,7 @@ interface CekHandlerInterface
      * Validates the CEK against expected configuration (length, format, etc).
      *
      * @param array<string,string|int|class-string<object>> $config
-     *          Configuration array (expects 'length' in bits).
+     *                                                              Configuration array (expects 'length' in bits)
      */
     public function validateCek(EncryptedJwtBundle $bundle, array $config): void;
 }

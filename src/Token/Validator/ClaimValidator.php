@@ -9,8 +9,16 @@ use Phithi92\JsonWebToken\Exceptions\Payload\InvalidKeyTypeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 
+use function gettype;
+use function is_array;
+use function is_bool;
+use function is_float;
+use function is_int;
+use function is_string;
+use function sprintf;
+
 /**
- * Description of PayloadClaimValidator
+ * Description of PayloadClaimValidator.
  *
  * @author phillipthiele
  */
@@ -25,11 +33,11 @@ final class ClaimValidator
      * semantically meaningless in the context of JWT claims. Also ensures that the
      * value is either a scalar or an array.
      *
-     * @param int|string $key   The claim key being validated (used for error context).
-     * @param mixed $value The claim value to validate.
+     * @param int|string $key   the claim key being validated (used for error context)
+     * @param mixed      $value the claim value to validate
      *
-     * @throws EmptyFieldException       If the value is null, empty string, or empty array.
-     * @throws InvalidValueTypeException If the value is neither scalar nor array.
+     * @throws EmptyFieldException       if the value is null, empty string, or empty array
+     * @throws InvalidValueTypeException if the value is neither scalar nor array
      */
     public function ensureValidClaim(int|string $key, mixed $value): void
     {
@@ -48,6 +56,7 @@ final class ClaimValidator
     {
         return self::DECODE_JSON_DEPTH;
     }
+
     /**
      * @param array<string,scalar|array<key-string,scalar>> $array
      *
@@ -57,7 +66,10 @@ final class ClaimValidator
     {
         if ($this->computeJsonDepth($array) > self::DECODE_JSON_DEPTH) {
             throw new InvalidFormatException(
-                sprintf('Payload exceeds maximum allowed depth of %d', self::DECODE_JSON_DEPTH)
+                sprintf(
+                    'Payload exceeds maximum allowed depth of %d',
+                    self::DECODE_JSON_DEPTH
+                )
             );
         }
     }
@@ -123,6 +135,7 @@ final class ClaimValidator
                 return false;
             }
         }
+
         return true;
     }
 

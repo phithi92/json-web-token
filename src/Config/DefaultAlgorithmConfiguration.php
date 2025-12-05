@@ -8,6 +8,9 @@ use Phithi92\JsonWebToken\Exceptions\Config\AlgorithmConfigFileNotFoundException
 use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigFormatException;
 use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
 
+use function is_array;
+use function is_file;
+
 /**
  * Provides a default configuration loader for algorithms.
  *
@@ -29,8 +32,8 @@ final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInter
     /**
      * Loads algorithm configuration from the given PHP file.
      *
-     * @param string $configFile Path to the PHP config file returning an array.
-     * @param bool   $forceReload Whether to bypass the static cache (useful for tests).
+     * @param string $configFile  path to the PHP config file returning an array
+     * @param bool   $forceReload whether to bypass the static cache (useful for tests)
      *
      * @throws AlgorithmConfigFileNotFoundException
      * @throws InvalidAlgorithmConfigFormatException
@@ -61,7 +64,7 @@ final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInter
      */
     private function loadedAndValidatedConfiguration(
         string $configFile,
-        bool $forceReload = false
+        bool $forceReload = false,
     ): array {
         if (! $forceReload && isset(self::$cache[$configFile])) {
             return self::$cache[$configFile];

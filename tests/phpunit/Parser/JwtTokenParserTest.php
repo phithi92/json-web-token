@@ -4,26 +4,29 @@ declare(strict_types=1);
 
 namespace Tests\phpunit;
 
-use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
+use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
-use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
-use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
-use Tests\phpunit\TestCaseWithSecrets;
+
+use function explode;
+use function implode;
+use function json_encode;
 
 final class JwtTokenParserTest extends TestCaseWithSecrets
 {
     public function testParseValidJweToken(): void
     {
         // Simulierter gültiger JWE-Header
-        $header = ['alg' => 'dir', 'typ' => 'JWE', 'enc' => 'A256GCM','kid' => 'A256GCM'];
+        $header = ['alg' => 'dir', 'typ' => 'JWE', 'enc' => 'A256GCM', 'kid' => 'A256GCM'];
         $headerJson = JsonEncoder::encode($header);
 
         $parts = [
             Base64UrlEncoder::encode($headerJson),           // Header
-            Base64UrlEncoder::encode('cek_or_encrypted_key'),// CEK oder Encrypted Key
+            Base64UrlEncoder::encode('cek_or_encrypted_key'), // CEK oder Encrypted Key
             Base64UrlEncoder::encode('iv123'),               // IV
             Base64UrlEncoder::encode('ciphertext'),          // Ciphertext
             Base64UrlEncoder::encode('authtag'),             // AuthTag
@@ -45,7 +48,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
         $parts = [
             Base64UrlEncoder::encode($headerJson),           // Header
-            Base64UrlEncoder::encode('cek_or_encrypted_key'),// CEK oder Encrypted Key
+            Base64UrlEncoder::encode('cek_or_encrypted_key'), // CEK oder Encrypted Key
             Base64UrlEncoder::encode('iv123'),               // IV
             Base64UrlEncoder::encode('ciphertext'),          // Ciphertext
             Base64UrlEncoder::encode('authtag'),             // AuthTag
@@ -57,7 +60,6 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
         $this->assertInstanceOf(EncryptedJwtBundle::class, $bundle);
     }
-
 
     public function testParseInvalidTokenThrowsException(): void
     {

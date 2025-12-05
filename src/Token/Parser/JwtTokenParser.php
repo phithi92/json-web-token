@@ -12,6 +12,14 @@ use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
+use function array_map;
+use function array_shift;
+use function count;
+use function explode;
+use function implode;
+use function is_null;
+use function is_string;
+
 final class JwtTokenParser
 {
     private const JWS_PART_COUNT = 3;
@@ -43,9 +51,9 @@ final class JwtTokenParser
     }
 
     /**
-     * @throws MalformedTokenException
-     *
      * @return string Serialized token
+     *
+     * @throws MalformedTokenException
      */
     public static function serialize(EncryptedJwtBundle $bundle): string
     {
@@ -69,6 +77,7 @@ final class JwtTokenParser
         if (! isset($tokenArray[0])) {
             throw new MalformedTokenException('Token is malformed or incomplete');
         }
+
         return $tokenArray;
     }
 
@@ -160,6 +169,7 @@ final class JwtTokenParser
         // Assign remaining fields
         $bundle->getPayload()->setEncryptedPayload($ciphertext);
         $encryption->setIv($iv)->setAuthTag($authTag);
+
         return $bundle;
     }
 
@@ -205,7 +215,7 @@ final class JwtTokenParser
 
         $encryptedKey = match ($header->getAlgorithm()) {
             'dir' => $encryption->getCek(),
-            default => $encryption->getEncryptedKey()
+            default => $encryption->getEncryptedKey(),
         };
 
         $tokenArray = [
@@ -241,7 +251,7 @@ final class JwtTokenParser
         return implode(
             '.',
             array_map(
-                static fn (?string $v): string => Base64UrlEncoder::encode(($v ?? '')),
+                static fn (?string $v): string => Base64UrlEncoder::encode($v ?? ''),
                 $array
             )
         );

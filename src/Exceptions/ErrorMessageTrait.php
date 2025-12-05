@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Exceptions;
 
+use function count;
+use function sprintf;
+
 /**
- * Trait ErrorMessageTrait
+ * Trait ErrorMessageTrait.
  *
  * This trait provides a `getMessage` method to generate a formatted error message.
  * The method uses `sprintf` to replace placeholders in the error message string (`$this->value`)
@@ -13,7 +16,7 @@ namespace Phithi92\JsonWebToken\Exceptions;
  * of error messages with variable content.
  *
  * @method string getMessage(mixed ...$details) Accepts any number of detail values as parameters
- * and returns a formatted error message as a string.
+ *                                              and returns a formatted error message as a string.
  */
 trait ErrorMessageTrait
 {

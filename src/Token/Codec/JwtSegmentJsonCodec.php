@@ -26,7 +26,7 @@ abstract class JwtSegmentJsonCodec
     public function encodeJson(
         array $payload,
         int $depth,
-        int $options = self::DEFAULT_JSON_OPTIONS
+        int $options = self::DEFAULT_JSON_OPTIONS,
     ): string {
         return JsonEncoder::encode(
             $payload,
@@ -43,7 +43,7 @@ abstract class JwtSegmentJsonCodec
     public function decodeJson(
         string $json,
         int $depth,
-        int $options = self::DEFAULT_JSON_OPTIONS
+        int $options = self::DEFAULT_JSON_OPTIONS,
     ): array {
         return JsonEncoder::decode(
             $json,

@@ -13,6 +13,9 @@ use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
+use function implode;
+use function is_string;
+
 abstract class SignatureService implements SignatureHandlerInterface
 {
     protected JwtAlgorithmManager $manager;

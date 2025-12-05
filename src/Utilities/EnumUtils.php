@@ -7,6 +7,8 @@ namespace Phithi92\JsonWebToken\Utilities;
 use InvalidArgumentException;
 use UnitEnum;
 
+use function enum_exists;
+
 final class EnumUtils
 {
     /**

@@ -7,6 +7,8 @@ namespace Phithi92\JsonWebToken\Security;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use SensitiveParameter;
 
+use function hash;
+
 final class KeyIdentifier
 {
     /**
@@ -18,7 +20,7 @@ final class KeyIdentifier
      * Generates a key identifier from a PEM-encoded key by hashing its contents
      * and encoding the result as Base64URL.
      *
-     * @param string $pem  The PEM-formatted key material.
+     * @param string $pem the PEM-formatted key material
      */
     public static function fromPem(#[SensitiveParameter] string $pem): string
     {
@@ -29,7 +31,7 @@ final class KeyIdentifier
      * Generates a key identifier from a raw secret by hashing its value
      * and encoding the result as Base64URL.
      *
-     * @param string $secret  The raw secret material.
+     * @param string $secret the raw secret material
      */
     public static function fromSecret(#[SensitiveParameter] string $secret): string
     {
@@ -39,10 +41,10 @@ final class KeyIdentifier
     /**
      * Hashes key material using the configured algorithm.
      *
-     * @param string $pem   Raw key or secret material.
-     * @param string $algo  Hash algorithm to use (default: sha256).
+     * @param string $pem  raw key or secret material
+     * @param string $algo hash algorithm to use (default: sha256)
      *
-     * @return string Binary hash output.
+     * @return string binary hash output
      */
     private static function hashKey(#[SensitiveParameter] string $pem, string $algo = self::ALGO): string
     {

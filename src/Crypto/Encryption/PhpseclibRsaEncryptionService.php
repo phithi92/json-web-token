@@ -14,6 +14,10 @@ use phpseclib3\Crypt\RSA\PrivateKey as RSAPrivateKey;
 use phpseclib3\Crypt\RSA\PublicKey as RSAPublicKey;
 use RuntimeException;
 
+use function in_array;
+use function is_int;
+use function is_string;
+
 /**
  * Handles RSA-specific key operations for encrypted JWTs.
  */
@@ -65,10 +69,11 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
         /** @var string $cek */
         return $cek;
     }
+
     /**
      * Loads and validates an RSA public or private key from a PEM string.
      *
-     * @param string $pem PEM-encoded key content
+     * @param string             $pem          PEM-encoded key content
      * @param 'public'|'private' $expectedType
      *
      * @throws RuntimeException if the key type does not match
@@ -116,8 +121,8 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
     private function buildPrivateKey(
         string $pem,
         int $padding,
-        ?string $hash = null
-    ): RsaPrivateKey {
+        ?string $hash = null,
+    ): RSAPrivateKey {
         /** @var RSAPrivateKey */
         return $this->buildKey('private', $pem, $padding, $hash);
     }
@@ -125,8 +130,8 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
     private function buildPublicKey(
         string $pem,
         int $padding,
-        ?string $hash = null
-    ): RsaPublicKey {
+        ?string $hash = null,
+    ): RSAPublicKey {
         /** @var RSAPublicKey */
         return $this->buildKey('public', $pem, $padding, $hash);
     }
@@ -135,9 +140,9 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
         string $role,
         string $pem,
         int $padding,
-        ?string $hash = null
+        ?string $hash = null,
     ): RSAPrivateKey|RSAPublicKey {
-        if (! in_array($role, ['private','public'], true)) {
+        if (! in_array($role, ['private', 'public'], true)) {
             throw new LogicException('No valid role for key');
         }
 

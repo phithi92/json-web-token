@@ -15,6 +15,14 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
 use Phithi92\JsonWebToken\Token\Validator\ClaimValidator;
 
+use function array_key_exists;
+use function in_array;
+use function is_array;
+use function is_int;
+use function is_scalar;
+use function is_string;
+use function sprintf;
+
 /**
  * JwtPayload represents the payload part of a JSON Web Token.
  *
@@ -53,6 +61,7 @@ final class JwtPayload implements JsonSerializable
     {
         $validated = $this->validatePayloadData($data);
         $this->applyPayload($validated);
+
         return $this;
     }
 
@@ -86,20 +95,21 @@ final class JwtPayload implements JsonSerializable
     /**
      * Set a time based claim value as a timestamp.
      *
-     * @param string $key Claim name
+     * @param string     $key   Claim name
      * @param string|int $value Date string or timestamp
      */
     public function setClaimTimestamp(string $key, string|int $value): self
     {
         $this->claimHelper->setClaimTimestamp($this, $key, $value);
+
         return $this;
     }
 
     /**
      * Add a claim to the payload.
      *
-     * @param string $key Claim name
-     * @param mixed $value Claim value
+     * @param string $key   Claim name
+     * @param mixed  $value Claim value
      *
      * @throws InvalidValueTypeException
      * @throws EmptyFieldException
@@ -138,6 +148,7 @@ final class JwtPayload implements JsonSerializable
     public function getIssuer(): ?string
     {
         $issuer = $this->getClaim('iss');
+
         return is_string($issuer) ? $issuer : null;
     }
 
@@ -162,6 +173,7 @@ final class JwtPayload implements JsonSerializable
     public function getAudience(): string|array|null
     {
         $audience = $this->getClaim('aud');
+
         return is_string($audience) || is_array($audience) ? $audience : null;
     }
 
@@ -178,10 +190,11 @@ final class JwtPayload implements JsonSerializable
     /**
      * Get the issued at claim.
      */
-    public function getIssuedAt(): int|null
+    public function getIssuedAt(): ?int
     {
         $issued = $this->getClaim('iat');
         $resolvedIssued = is_int($issued) ? $issued : 0;
+
         return $resolvedIssued > 0 ? $resolvedIssued : null;
     }
 
@@ -200,10 +213,11 @@ final class JwtPayload implements JsonSerializable
     /**
      * Get the expiration claim.
      */
-    public function getExpiration(): int|null
+    public function getExpiration(): ?int
     {
         $expires = $this->getClaim('exp');
         $resolvedExpires = is_int($expires) ? $expires : 0;
+
         return $resolvedExpires > 0 ? $resolvedExpires : null;
     }
 
@@ -222,10 +236,11 @@ final class JwtPayload implements JsonSerializable
     /**
      * Get the not before claim.
      */
-    public function getNotBefore(): int|null
+    public function getNotBefore(): ?int
     {
         $nbf = $this->getClaim('nbf');
         $resolvedNbf = is_int($nbf) ? $nbf : 0;
+
         return $resolvedNbf > 0 ? $resolvedNbf : null;
     }
 
@@ -243,7 +258,7 @@ final class JwtPayload implements JsonSerializable
      * Set the encrypted payload string.
      *
      * @param string $sealedPayload Encrypted payload value
-     * @param bool $overwrite Whether to overwrite existing value
+     * @param bool   $overwrite     Whether to overwrite existing value
      *
      * @throws EncryptedPayloadAlreadySetException
      */
@@ -260,6 +275,7 @@ final class JwtPayload implements JsonSerializable
         }
 
         $this->encryptedPayload = $sealedPayload;
+
         return $this;
     }
 
@@ -300,7 +316,10 @@ final class JwtPayload implements JsonSerializable
 
             if (! $this->isScalarOrScalarArray($value)) {
                 throw new InvalidFormatException(
-                    sprintf("JWT claim value for key '%s' must be scalar or array of scalars.", $key)
+                    sprintf(
+                        "JWT claim value for key '%s' must be scalar or array of scalars.",
+                        $key
+                    )
                 );
             }
         }
@@ -369,9 +388,9 @@ final class JwtPayload implements JsonSerializable
     /**
      * Set a claim value.
      *
-     * @param string $key Claim name
-     * @param mixed $value Claim value
-     * @param bool $overwrite Whether to overwrite existing value
+     * @param string $key       Claim name
+     * @param mixed  $value     Claim value
+     * @param bool   $overwrite Whether to overwrite existing value
      *
      * @throws EmptyFieldException
      * @throws InvalidValueTypeException

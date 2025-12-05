@@ -10,6 +10,9 @@ use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
+use function openssl_sign;
+use function openssl_verify;
+
 class RsaSignatureService extends SignatureService
 {
     private RsaHelperService $rsaHelper;
@@ -36,9 +39,7 @@ class RsaSignatureService extends SignatureService
             throw new SignatureComputationFailedException($message);
         }
 
-        /**
-         * @var string $signature
-         */
+        /** @var string $signature */
         $bundle->setSignature($signature);
     }
 

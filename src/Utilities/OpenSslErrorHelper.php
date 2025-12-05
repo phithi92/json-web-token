@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Utilities;
 
+use function implode;
+use function openssl_error_string;
+
 final class OpenSslErrorHelper
 {
     private const MESSAGE_PREFIX = 'OpenSSL error(s):';
@@ -17,7 +20,7 @@ final class OpenSslErrorHelper
     {
         $errors = [];
 
-        while ($error = \openssl_error_string()) {
+        while ($error = openssl_error_string()) {
             $errors[] = $error;
         }
 

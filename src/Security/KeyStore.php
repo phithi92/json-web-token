@@ -8,6 +8,15 @@ use OpenSSLAsymmetricKey;
 use RuntimeException;
 use SensitiveParameter;
 
+use function in_array;
+use function is_array;
+use function is_int;
+use function is_string;
+use function openssl_pkey_get_details;
+use function openssl_pkey_get_private;
+use function openssl_pkey_get_public;
+use function sprintf;
+
 final class KeyStore
 {
     private const PRIVATE_ROLE = 'private';
@@ -31,7 +40,7 @@ final class KeyStore
         #[SensitiveParameter]
         string $pem,
         ?string $role = null,
-        string|array|null $kid = null
+        string|array|null $kid = null,
     ): string {
         $parsed = $this->buildKeyMetadata($pem, $role);
         $resolvedRole = $role ?? $parsed['role'];
@@ -122,7 +131,7 @@ final class KeyStore
     private function buildKeyMetadata(
         #[SensitiveParameter]
         string|OpenSSLAsymmetricKey $pem,
-        ?string $role = null
+        ?string $role = null,
     ): array {
         $this->assertValidRole($role);
 
@@ -146,7 +155,7 @@ final class KeyStore
     private function resolveKey(
         #[SensitiveParameter]
         string|OpenSSLAsymmetricKey $pem,
-        ?string $role = null
+        ?string $role = null,
     ): array {
         return match ($role) {
             self::PRIVATE_ROLE => [$this->ensureKey(openssl_pkey_get_private($pem)), self::PRIVATE_ROLE],
@@ -160,6 +169,7 @@ final class KeyStore
         if ($key === false) {
             throw new RuntimeException('Could not load OpenSSL key.');
         }
+
         return $key;
     }
 
@@ -180,7 +190,7 @@ final class KeyStore
             throw new RuntimeException('Could not determine key details.');
         }
 
-        return [$this->mapKeyType($details['type']),$details['bits'], $details['key']];
+        return [$this->mapKeyType($details['type']), $details['bits'], $details['key']];
     }
 
     /**

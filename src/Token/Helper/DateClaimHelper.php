@@ -14,6 +14,9 @@ use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Throwable;
 
+use function is_int;
+use function preg_match;
+
 /**
  * Helper to convert date expressions into Unix timestamps for JWT claims.
  * All calculations are based on a UTC reference time.
@@ -31,7 +34,7 @@ final class DateClaimHelper
     private readonly DateTimeImmutable $dateTimeImmutable;
 
     /**
-     * @param DateTimeImmutable|null $dateTime Optional reference time; defaults to now (UTC).
+     * @param DateTimeImmutable|null $dateTime optional reference time; defaults to now (UTC)
      */
     public function __construct(?DateTimeImmutable $dateTime = null)
     {
@@ -71,8 +74,8 @@ final class DateClaimHelper
      * PHPStan workaround: DateTimeImmutable throws different exception types
      * depending on the PHP version.
      *
-     * @throws DateMalformedStringException  PHP 8.3+
-     * @throws Exception                     Prior to PHP 8.3
+     * @throws DateMalformedStringException PHP 8.3+
+     * @throws Exception                    Prior to PHP 8.3
      */
     public function buildDate(DateTimeImmutable $ref, string $dateTime): DateTimeImmutable
     {
@@ -95,7 +98,7 @@ final class DateClaimHelper
         $ref = $this->getReferenceTime();
 
         // Numeric input: treat as Unix timestamp.
-        if (\is_int($dateTime) || \preg_match('/^-?\d+$/', $dateTime) === 1) {
+        if (is_int($dateTime) || preg_match('/^-?\d+$/', $dateTime) === 1) {
             $timestamp = (int) $dateTime;
 
             try {
@@ -119,14 +122,14 @@ final class DateClaimHelper
     /**
      * Ensures the value is a DateTimeImmutable; otherwise throws.
      *
-     * @param DateTimeImmutable|false|null $value Result of DateTimeImmutable::modify() on older PHP versions.
-     * @param string|int                   $input Original input for error context.
+     * @param DateTimeImmutable|false|null $value result of DateTimeImmutable::modify() on older PHP versions
+     * @param string|int                   $input original input for error context
      *
      * @throws InvalidDateTimeException
      */
     private static function assertDateTimeImmutable(
         DateTimeImmutable|false|null $value,
-        string|int $input
+        string|int $input,
     ): DateTimeImmutable {
         if (! $value instanceof DateTimeImmutable) {
             throw new InvalidDateTimeException((string) $input);

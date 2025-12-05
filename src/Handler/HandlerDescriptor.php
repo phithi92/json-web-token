@@ -9,7 +9,7 @@ final class HandlerDescriptor
     public function __construct(
         public readonly HandlerTarget $target,
         public readonly HandlerOperation $operation,
-        public readonly int $priority = 100 // default priority
+        public readonly int $priority = 100, // default priority
     ) {
     }
 }

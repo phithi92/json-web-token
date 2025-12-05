@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\phpunit;
 
 use LogicException;
-use UnexpectedValueException;
-use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
-use Tests\phpunit\TestCaseWithSecrets;
+use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
+use ReflectionClass;
+use UnexpectedValueException;
 
 class JwtTokenBuilderTest extends TestCaseWithSecrets
 {
@@ -16,7 +16,7 @@ class JwtTokenBuilderTest extends TestCaseWithSecrets
     {
         $builder = new JwtTokenBuilder($this->manager);
 
-        $reflection = new \ReflectionClass($builder);
+        $reflection = new ReflectionClass($builder);
         $method = $reflection->getMethod('createHeader');
         $method->setAccessible(true);
 
@@ -33,7 +33,7 @@ class JwtTokenBuilderTest extends TestCaseWithSecrets
         $this->expectException(UnresolvableKeyException::class);
         $this->expectExceptionMessage('INVALID_KID');
 
-        $reflection = new \ReflectionClass($builder);
+        $reflection = new ReflectionClass($builder);
         $method = $reflection->getMethod('createHeader');
         $method->setAccessible(true);
 
@@ -44,7 +44,7 @@ class JwtTokenBuilderTest extends TestCaseWithSecrets
     {
         $builder = new JwtTokenBuilder($this->manager);
 
-        $reflection = new \ReflectionClass($builder);
+        $reflection = new ReflectionClass($builder);
         $method = $reflection->getMethod('extractHeaderParams');
         $method->setAccessible(true);
 
@@ -62,7 +62,7 @@ class JwtTokenBuilderTest extends TestCaseWithSecrets
     {
         $builder = new JwtTokenBuilder($this->manager);
 
-        $reflection = new \ReflectionClass($builder);
+        $reflection = new ReflectionClass($builder);
         $method = $reflection->getMethod('buildDefaultKid');
         $method->setAccessible(true);
 

@@ -15,6 +15,10 @@ use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use UnexpectedValueException;
 
+use function implode;
+use function is_string;
+use function strtolower;
+
 /**
  * JwtTokenBuilder is responsible for creating encrypted JWT tokens.
  *
@@ -41,7 +45,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     private const OPERATION = HandlerOperation::Perform;
 
     public function __construct(
-        JwtAlgorithmManager $manager
+        JwtAlgorithmManager $manager,
     ) {
         parent::__construct(self::OPERATION, $manager);
     }
@@ -49,16 +53,16 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     /**
      * Creates an encrypted JWT bundle with validation.
      *
-     * @param string $algorithm  Algorithm to be used for encryption
-     * @param JwtPayload|null $payload  Optional payload
-     * @param JwtValidator|null $validator  Optional custom validator
-     * @param string|null $kid  Optional key ID
+     * @param string            $algorithm Algorithm to be used for encryption
+     * @param JwtPayload|null   $payload   Optional payload
+     * @param JwtValidator|null $validator Optional custom validator
+     * @param string|null       $kid       Optional key ID
      */
     public function create(
         string $algorithm,
         ?JwtPayload $payload = null,
         ?JwtValidator $validator = null,
-        ?string $kid = null
+        ?string $kid = null,
     ): EncryptedJwtBundle {
         $validator ??= new JwtValidator();
         $bundle = $this->createWithoutValidation($algorithm, $payload, $kid);
@@ -71,14 +75,14 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     /**
      * Creates a validated token from an existing bundle.
      *
-     * @param EncryptedJwtBundle $bundle  Pre-built bundle
-     * @param string|null $algorithm  Algorithm override (optional)
-     * @param JwtValidator|null $validator  Optional validator
+     * @param EncryptedJwtBundle $bundle    Pre-built bundle
+     * @param string|null        $algorithm Algorithm override (optional)
+     * @param JwtValidator|null  $validator Optional validator
      */
     public function createFromBundle(
         EncryptedJwtBundle $bundle,
         ?string $algorithm = null,
-        ?JwtValidator $validator = null
+        ?JwtValidator $validator = null,
     ): EncryptedJwtBundle {
         $algorithm ??= $bundle->getHeader()->getAlgorithm() ?? '';
 
@@ -100,7 +104,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     public function createWithoutValidation(
         string $algorithm,
         ?JwtPayload $payload = null,
-        ?string $kid = null
+        ?string $kid = null,
     ): EncryptedJwtBundle {
         $config = $this->manager->getConfiguration($algorithm);
 
@@ -146,7 +150,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     private function assertResolvableHeaderConfig(
         mixed $tokenType,
         mixed $alg,
-        mixed $enc
+        mixed $enc,
     ): void {
         if (! $this->isValidHeaderConfig($tokenType, $alg, $enc)) {
             throw new LogicException('Invalid header configuration');
@@ -159,6 +163,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
             && (is_string($alg) || $alg === null)
             && (is_string($enc) || $enc === null);
     }
+
     /**
      * Creates a JwtHeader based on input and defaults.
      *
@@ -169,7 +174,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
         string $typ,
         ?string $alg,
         ?string $kid,
-        ?string $enc
+        ?string $enc,
     ): JwtHeader {
         if ($alg === null) {
             throw new UnexpectedValueException('Incomplete token header configuration');
@@ -209,7 +214,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
         string $typ,
         string $alg,
         ?string $enc,
-        string $kid
+        string $kid,
     ): JwtHeader {
         $header = (new JwtHeader())->setType($typ)->setAlgorithm($alg);
 
@@ -228,7 +233,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     private function buildDefaultKid(
         string $alg,
         ?string $enc = null,
-        string $seperator = self::KID_PART_SEPARATOR
+        string $seperator = self::KID_PART_SEPARATOR,
     ): string {
         $parts = [];
 

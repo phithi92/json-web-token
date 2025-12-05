@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\phpunit;
 
-use PHPUnit\Framework\TestCase;
+use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
+use PHPUnit\Framework\TestCase;
 
 class JwtPayloadJsonCodecTest extends TestCase
 {

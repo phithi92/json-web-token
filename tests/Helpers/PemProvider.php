@@ -2,6 +2,16 @@
 
 namespace Tests\Helpers;
 
+use RuntimeException;
+
+use function basename;
+use function file_exists;
+use function file_get_contents;
+use function getenv;
+use function glob;
+use function realpath;
+use function trim;
+
 final class PemProvider
 {
     private static string $resolvedBasePath;
@@ -31,7 +41,7 @@ final class PemProvider
         $path = self::getBasePath() . "/{$alg}/secret.key";
 
         if (!file_exists($path)) {
-            throw new \RuntimeException("Passphrase file not found: $path");
+            throw new RuntimeException("Passphrase file not found: $path");
         }
 
         return trim(file_get_contents($path));
@@ -59,7 +69,7 @@ final class PemProvider
         $path = self::getBasePath() . '/' . $relativePath;
 
         if (!file_exists($path)) {
-            throw new \RuntimeException("PEM file not found: $path");
+            throw new RuntimeException("PEM file not found: $path");
         }
 
         return file_get_contents($path);

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token;
 
-use PHPUnit\Framework\TestCase;
-use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
+use Phithi92\JsonWebToken\Token\JwtEncryptionData;
+use PHPUnit\Framework\TestCase;
 
 final class JwtEncryptionDataTest extends TestCase
 {

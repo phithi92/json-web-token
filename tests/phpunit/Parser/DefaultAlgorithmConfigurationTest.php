@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Config;
 
-use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Config\DefaultAlgorithmConfiguration;
+use PHPUnit\Framework\TestCase;
 use RuntimeException;
+
+use function file_put_contents;
+use function unlink;
 
 class DefaultAlgorithmConfigurationTest extends TestCase
 {

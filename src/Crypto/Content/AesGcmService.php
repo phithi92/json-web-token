@@ -12,6 +12,10 @@ use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
+use function openssl_decrypt;
+use function openssl_encrypt;
+use function sprintf;
+
 /**
  * AES-GCM implementation for JWE content encryption (RFC 7516 §5.3).
  *
@@ -71,6 +75,7 @@ final class AesGcmService extends ContentCryptoService
     {
         /** @var int $bits */
         $bits = $config['length'];
+
         return sprintf('aes-%s-gcm', $bits);
     }
 
@@ -111,7 +116,7 @@ final class AesGcmService extends ContentCryptoService
         string $cek,
         string $iv,
         string $authTag,
-        string $aad
+        string $aad,
     ): string {
         $unsealedPayload = openssl_decrypt(
             $sealedPayload,
@@ -142,7 +147,7 @@ final class AesGcmService extends ContentCryptoService
         string $jsonPayload,
         string $cek,
         string $iv,
-        string $aad
+        string $aad,
     ): array {
         $authTag = '';
         $sealedPayload = openssl_encrypt(

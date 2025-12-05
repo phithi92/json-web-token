@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Helpers;
 
-use Tests\Helpers\PemProvider;
+use function array_keys;
+use function array_merge;
 
 class KeyProvider
 {
@@ -13,8 +14,8 @@ class KeyProvider
         return [
             $kid => [
                 'private' => PemProvider::getPrivateKey($path),
-                'public' => PemProvider::getPublicKey($path)
-            ]
+                'public' => PemProvider::getPublicKey($path),
+            ],
         ];
     }
 
@@ -31,22 +32,22 @@ class KeyProvider
     public static function getAll(): array
     {
         return array_merge(
-            //rs
+            // rs
             self::createAsymetricKeysItem('RS256', 'rsa/2048'),
             self::createAsymetricKeysItem('RS384', 'rsa/3072'),
             self::createAsymetricKeysItem('RS512', 'rsa/4096'),
-            //ps
+            // ps
             self::createAsymetricKeysItem('PS256', 'rsa/2048'),
             self::createAsymetricKeysItem('PS384', 'rsa/3072'),
             self::createAsymetricKeysItem('PS512', 'rsa/4096'),
-            //rsa
+            // rsa
             self::createAsymetricKeysItem('RSA-OAEP_A256GCM', 'rsa/3072'),
             self::createAsymetricKeysItem('RSA-OAEP-256_A256GCM', 'rsa/4096'),
-            //ec
+            // ec
             self::createAsymetricKeysItem('ES256', 'ec/prime256v1'),
             self::createAsymetricKeysItem('ES384', 'ec/secp384r1'),
             self::createAsymetricKeysItem('ES512', 'ec/secp521r1'),
-            //hmac
+            // hmac
             self::createSymmetricKeyItem('HS256', 'hmac/hs256'),
             self::createSymmetricKeyItem('HS384', 'hmac/hs384'),
             self::createSymmetricKeyItem('HS512', 'hmac/hs512'),

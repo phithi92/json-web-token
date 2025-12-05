@@ -2,11 +2,12 @@
 
 namespace Tests\phpunit;
 
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
-use Tests\Helpers\TokenStorage;
+use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Tests\Helpers\KeyProvider;
-use Tests\phpunit\TestCaseWithSecrets;
+use Tests\Helpers\TokenStorage;
+
+use function array_map;
 
 class SupportedAlgorithmsTest extends TestCaseWithSecrets
 {
@@ -16,7 +17,7 @@ class SupportedAlgorithmsTest extends TestCaseWithSecrets
     {
         // korrektes Format erzeugen:
         return self::$supportedAlgorithms = array_map(
-            fn(string $alg): array => [$alg],
+            fn (string $alg): array => [$alg],
             KeyProvider::getSupportedAlgorithms()
         );
     }

@@ -10,6 +10,9 @@ use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
+use function openssl_private_decrypt;
+use function openssl_public_encrypt;
+
 final class RsaEncryptionService extends ContentCryptoService
 {
     /**

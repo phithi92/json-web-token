@@ -10,15 +10,15 @@ use SensitiveParameter;
 final class PassphraseStore
 {
     /**
-     * @var array<string, string> $phrases Map of key ID to passphrase
+     * @var array<string, string> Map of key ID to passphrase
      */
     private array $phrases = [];
 
     /**
      * Adds a passphrase and returns the resolved key ID.
      *
-     * @param string $passphrase The secret passphrase
-     * @param string|null $kid Optional key ID. If null, it will be derived from the passphrase
+     * @param string      $passphrase The secret passphrase
+     * @param string|null $kid        Optional key ID. If null, it will be derived from the passphrase
      *
      * @return string The resolved key ID
      */

@@ -7,7 +7,7 @@ namespace Phithi92\JsonWebToken\Token;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 
 /**
- * EncryptedJwtBundle
+ * EncryptedJwtBundle.
  *
  * Internal representation of a JSON-based token during its lifecycle,
  * supporting both JWS and JWE formats. Used for building, decoding,
@@ -38,7 +38,7 @@ final class EncryptedJwtBundle
     /**
      * Retrieves the JWT header.
      *
-     * @return JwtHeader The JWT header.
+     * @return JwtHeader the JWT header
      */
     public function getHeader(): JwtHeader
     {
@@ -56,18 +56,19 @@ final class EncryptedJwtBundle
     /**
      * Sets the JWT signature.
      *
-     * @param string $signature The signature of the JWT.
+     * @param string $signature the signature of the JWT
      */
     public function setSignature(string $signature): self
     {
         $this->signature = $signature;
+
         return $this;
     }
 
     /**
      * Retrieves the payload.
      *
-     * @return JwtPayload The JWT payload.
+     * @return JwtPayload the JWT payload
      */
     public function getPayload(): JwtPayload
     {
@@ -77,7 +78,7 @@ final class EncryptedJwtBundle
     /**
      * Retrieves the JWT signature.
      *
-     * @return string The signature.
+     * @return string the signature
      */
     public function getSignature(): string
     {

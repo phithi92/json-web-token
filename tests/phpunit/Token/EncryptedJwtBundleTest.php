@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token;
 
-use PHPUnit\Framework\TestCase;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\JwtEncryptionData;
-use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
+use PHPUnit\Framework\TestCase;
 
 class EncryptedJwtBundleTest extends TestCase
 {

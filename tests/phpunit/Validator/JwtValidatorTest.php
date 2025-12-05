@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Validator;
 
-use PHPUnit\Framework\TestCase;
-use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
-use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
-use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
-use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuerException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuedAtException;
+use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuerException;
 use Phithi92\JsonWebToken\Exceptions\Payload\NotBeforeOlderThanIatException;
+use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
+use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
+use PHPUnit\Framework\TestCase;
 
 final class JwtValidatorTest extends TestCase
 {
@@ -57,12 +57,12 @@ final class JwtValidatorTest extends TestCase
     {
         $payload = $this->createPayload(
             [
-            'exp' => '+1 hour',
-            'nbf' => '+1 second',
-            'iat' => 'now',
-            'iss' => 'trusted-issuer',
-            'aud' => 'my-app',
-            'customClaim' => 'abc'
+                'exp' => '+1 hour',
+                'nbf' => '+1 second',
+                'iat' => 'now',
+                'iss' => 'trusted-issuer',
+                'aud' => 'my-app',
+                'customClaim' => 'abc',
             ]
         );
 
@@ -94,8 +94,8 @@ final class JwtValidatorTest extends TestCase
     {
         $payload = $this->createPayload(
             [
-            'nbf' => '+1 minutes',
-            'iat' => 'now'
+                'nbf' => '+1 minutes',
+                'iat' => 'now',
             ]
         );
 
@@ -117,8 +117,8 @@ final class JwtValidatorTest extends TestCase
     {
         $payload = $this->createPayload(
             [
-            'nbf' => '-1 minutes',
-            'iat' => 'now'
+                'nbf' => '-1 minutes',
+                'iat' => 'now',
             ]
         );
 

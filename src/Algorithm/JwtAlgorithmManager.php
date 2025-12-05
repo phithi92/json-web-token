@@ -34,7 +34,7 @@ final class JwtAlgorithmManager
     public function __construct(
         ?AlgorithmConfigurationInterface $algConfig = null,
         ?KeyStore $keyStore = null,
-        ?PassphraseStore $passphraseStore = null
+        ?PassphraseStore $passphraseStore = null,
     ) {
         $this->algorithmRegistry = $algConfig ?? new DefaultAlgorithmConfiguration();
         $this->keyStore = $keyStore ?? new KeyStore();

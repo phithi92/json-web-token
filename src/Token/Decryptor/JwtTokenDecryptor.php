@@ -35,7 +35,7 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
     /**
      * JwtTokenDecryptor constructor.
      *
-     * @param JwtAlgorithmManager $manager   Provides cryptographic handler configurations.
+     * @param JwtAlgorithmManager $manager provides cryptographic handler configurations
      */
     public function __construct(
         JwtAlgorithmManager $manager,
@@ -47,9 +47,9 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
     /**
      * Fully decrypts and validates a JWT token.
      *
-     * @param string $token The encrypted JWT string.
+     * @param string $token the encrypted JWT string
      *
-     * @return EncryptedJwtBundle The fully decrypted and validated JWT payload bundle.
+     * @return EncryptedJwtBundle the fully decrypted and validated JWT payload bundle
      */
     public function decrypt(string $token, ?JwtValidator $validator = null): EncryptedJwtBundle
     {
@@ -65,9 +65,9 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      *
      * Useful for debugging or low-trust environments where validation is handled elsewhere.
      *
-     * @param string $token The encrypted JWT string.
+     * @param string $token the encrypted JWT string
      *
-     * @return EncryptedJwtBundle The decrypted JWT payload bundle.
+     * @return EncryptedJwtBundle the decrypted JWT payload bundle
      */
     public function decryptWithoutClaimValidation(string $token): EncryptedJwtBundle
     {
@@ -84,11 +84,11 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      *
      * Uses the provided validator if given, otherwise falls back to a default JwtValidator.
      *
-     * @param EncryptedJwtBundle $bundle   The token bundle to validate
-     * @param JwtValidator|null $validator Optional custom validator
+     * @param EncryptedJwtBundle $bundle    The token bundle to validate
+     * @param JwtValidator|null  $validator Optional custom validator
      *
      * @throws PayloadException If payload-related validation fails
-     * @throws TokenException If token structure or format is invalid
+     * @throws TokenException   If token structure or format is invalid
      */
     private function assertValidBundle(EncryptedJwtBundle $bundle, ?JwtValidator $validator = null): void
     {

@@ -11,6 +11,16 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 use Phithi92\JsonWebToken\Handler\HandlerInvoker;
 
+use function array_filter;
+use function array_key_exists;
+use function array_keys;
+use function ctype_alnum;
+use function gettype;
+use function is_string;
+use function sprintf;
+use function str_replace;
+use function strlen;
+
 /**
  * Represents the header of a JWT (JSON Web Token).
  *
@@ -53,12 +63,12 @@ final class JwtHeader implements JsonSerializable
      *
      * If the format or length of the Key ID is invalid, an exception is thrown.
      *
-     * @param string $kid The Key ID to set.
+     * @param string $kid the Key ID to set
      *
-     * @return self                    Returns the instance for method chaining.
+     * @return self returns the instance for method chaining
      *
-     * @throws InvalidKidFormatException If the Key ID contains invalid characters.
-     * @throws InvalidKidLengthException If the Key ID is shorter than 3 or longer than 64 characters.
+     * @throws InvalidKidFormatException if the Key ID contains invalid characters
+     * @throws InvalidKidLengthException if the Key ID is shorter than 3 or longer than 64 characters
      */
     public function setKid(string $kid): self
     {
@@ -66,13 +76,14 @@ final class JwtHeader implements JsonSerializable
         $this->assertValidKid($kid);
 
         $this->kid = $kid;
+
         return $this;
     }
 
     /**
      * Retrieves the kid (key id) from the header.
      *
-     * @return string The token type if set.
+     * @return string the token type if set
      *
      * @throw KidNotSetException when kid is not set
      */
@@ -91,18 +102,19 @@ final class JwtHeader implements JsonSerializable
      *
      * @param string $type The type of the token, e.g., 'JWT' or 'JWS'.
      *
-     * @return self   Returns the instance to allow method chaining.
+     * @return self returns the instance to allow method chaining
      */
     public function setType(string $type): self
     {
         $this->typ = $type;
+
         return $this;
     }
 
     /**
      * Retrieves the token type from the header.
      *
-     * @return string|null The token type if set, otherwise null.
+     * @return string|null the token type if set, otherwise null
      */
     public function getType(): ?string
     {
@@ -114,18 +126,19 @@ final class JwtHeader implements JsonSerializable
      *
      * @param string $algorithm The algorithm identifier, e.g., 'HS256'.
      *
-     * @return self   Returns the instance to allow method chaining.
+     * @return self returns the instance to allow method chaining
      */
     public function setAlgorithm(string $algorithm): self
     {
         $this->algorithm = $algorithm;
+
         return $this;
     }
 
     /**
      * Retrieves the algorithm identifier from the header.
      *
-     * @return string|null The algorithm if set, otherwise null.
+     * @return string|null the algorithm if set, otherwise null
      */
     public function getAlgorithm(): ?string
     {
@@ -135,20 +148,21 @@ final class JwtHeader implements JsonSerializable
     /**
      * Sets the encryption method identifier in the header.
      *
-     * @param string $enc The encryption method identifier.
+     * @param string $enc the encryption method identifier
      *
-     * @return self   Returns the instance to allow method chaining.
+     * @return self returns the instance to allow method chaining
      */
     public function setEnc(string $enc): self
     {
         $this->enc = $enc;
+
         return $this;
     }
 
     /**
      * Retrieves the encryption method identifier from the header.
      *
-     * @return string|null The encryption method if set, otherwise null.
+     * @return string|null the encryption method if set, otherwise null
      */
     public function getEnc(): ?string
     {
@@ -161,7 +175,7 @@ final class JwtHeader implements JsonSerializable
      * Includes 'alg' (algorithm) and 'typ' (type) fields. Adds 'enc' (encryption) if present,
      * as well as 'kid' (Key ID) if it is set. The 'kid' field identifies the key used for signing or encryption.
      *
-     * @return array<string,string> The associative array representation of the header.
+     * @return array<string,string> the associative array representation of the header
      */
     public function toArray(): array
     {
@@ -256,7 +270,11 @@ final class JwtHeader implements JsonSerializable
 
             if (! is_string($value)) {
                 throw new InvalidFormatException(
-                    sprintf("Invalid type for header key '%s': expected string, got %s", $key, gettype($value))
+                    sprintf(
+                        "Invalid type for header key '%s': expected string, got %s",
+                        $key,
+                        gettype($value)
+                    )
                 );
             }
 

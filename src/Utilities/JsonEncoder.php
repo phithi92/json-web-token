@@ -11,6 +11,10 @@ use Phithi92\JsonWebToken\Exceptions\Json\EncodingException;
 use Phithi92\JsonWebToken\Exceptions\Json\InvalidDepthException;
 use stdClass;
 
+use function is_array;
+use function json_decode;
+use function json_encode;
+
 final class JsonEncoder
 {
     private const DEFAULT_DEPTH = 512;
@@ -23,9 +27,9 @@ final class JsonEncoder
      *
      * @template TAssoc of bool
      *
-     * @param TAssoc $associative When true, returns an associative array; when false, returns an object.
-     * @param int    $flags     Additional json_decode flags.
-     * @param int    $depth       Maximum decoding depth (>= 1).
+     * @param TAssoc $associative when true, returns an associative array; when false, returns an object
+     * @param int    $flags       additional json_decode flags
+     * @param int    $depth       maximum decoding depth (>= 1)
      *
      * @return (TAssoc is true ? array<mixed> : stdClass)
      *
@@ -36,7 +40,7 @@ final class JsonEncoder
         string $json,
         bool $associative = false,
         int $flags = self::DEFAULT_DECODE_OPTIONS,
-        int $depth = self::DEFAULT_DEPTH
+        int $depth = self::DEFAULT_DEPTH,
     ): array|stdClass {
         $resolvedDepth = self::assertValidDepth($depth);
 
@@ -52,9 +56,9 @@ final class JsonEncoder
     /**
      * Encodes data to a JSON string.
      *
-     * @param array<array-key, mixed>|JsonSerializable $data Data to encode.
-     * @param int $flags Additional json_encode flags.
-     * @param int $depth   Maximum encoding depth (>= 1).
+     * @param array<array-key, mixed>|JsonSerializable $data  data to encode
+     * @param int                                      $flags additional json_encode flags
+     * @param int                                      $depth maximum encoding depth (>= 1)
      *
      * @throws EncodingException
      * @throws InvalidDepthException
@@ -63,7 +67,7 @@ final class JsonEncoder
     public static function encode(
         array|JsonSerializable $data,
         int $flags = self::DEFAULT_ENCODE_OPTIONS,
-        int $depth = self::DEFAULT_DEPTH
+        int $depth = self::DEFAULT_DEPTH,
     ): string {
         $resolvedDepth = self::assertValidDepth($depth);
         $value = $data instanceof JsonSerializable ? $data->jsonSerialize() : $data;
@@ -87,6 +91,7 @@ final class JsonEncoder
         if (! is_array($value) && ! $value instanceof stdClass) {
             throw new DecodingException('Top-level JSON must be an object or array.');
         }
+
         return $value;
     }
 

@@ -10,7 +10,7 @@ use Phithi92\JsonWebToken\Token\JwtPayload;
 use Throwable;
 
 /**
- * Class JwtPayloadJsonCodec
+ * Class JwtPayloadJsonCodec.
  *
  * Provides JSON encoding and decoding for JwtPayload objects.
  * Supports configurable JSON depth and encoding options, with
@@ -24,9 +24,9 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
     /**
      * Encode a JwtPayload instance to a JSON string.
      *
-     * @param JwtPayload $payload The payload to encode.
+     * @param JwtPayload $payload the payload to encode
      *
-     * @return string JSON representation of the payload.
+     * @return string JSON representation of the payload
      */
     public function encode(JwtPayload $payload, int $depth = self::JSON_MAX_DEPTH): string
     {
@@ -40,16 +40,16 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
     /**
      * Decode a JSON string into a new JwtPayload instance.
      *
-     * @param string $json The JSON string to decode.
+     * @param string $json the JSON string to decode
      *
-     * @return JwtPayload Hydrated JwtPayload instance.
+     * @return JwtPayload hydrated JwtPayload instance
      *
-     * @throws MalformedTokenException If the JSON is invalid.
+     * @throws MalformedTokenException if the JSON is invalid
      */
     public function decode(
         string $json,
         int $depth = self::JSON_MAX_DEPTH,
-        ?JwtPayload $payload = null
+        ?JwtPayload $payload = null,
     ): JwtPayload {
         try {
             $data = $this->decodeJson($json, $depth);
@@ -69,15 +69,15 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
      * This method avoids creating a new JwtPayload object, which
      * can be beneficial in high-performance scenarios.
      *
-     * @param string     $json   The JSON string to decode.
-     * @param JwtPayload $target The target instance to populate.
+     * @param string     $json   the JSON string to decode
+     * @param JwtPayload $target the target instance to populate
      *
-     * @throws MalformedTokenException If the JSON is invalid.
+     * @throws MalformedTokenException if the JSON is invalid
      */
     public function decodeInto(
         string $json,
         JwtPayload $target,
-        int $depth = self::JSON_MAX_DEPTH
+        int $depth = self::JSON_MAX_DEPTH,
     ): void {
         $this->decode($json, $depth, $target);
     }
@@ -85,14 +85,14 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
     /**
      * Encode a payload using a cached codec instance.
      *
-     * @param JwtPayload $payload The payload to encode.
-     * @param int   $depth   JSON maximum depth, defaults to class constant.
+     * @param JwtPayload $payload the payload to encode
+     * @param int        $depth   JSON maximum depth, defaults to class constant
      *
-     * @return string JSON representation of the payload.
+     * @return string JSON representation of the payload
      */
     public static function encodeStatic(
         JwtPayload $payload,
-        int $depth = self::JSON_MAX_DEPTH
+        int $depth = self::JSON_MAX_DEPTH,
     ): string {
         return (new self())->encode($payload, $depth);
     }
@@ -100,16 +100,16 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
     /**
      * Decode a JSON string into a new JwtPayload instance using a cached codec.
      *
-     * @param string   $json    The JSON string to decode.
-     * @param int $depth   JSON maximum depth, defaults to class constant.
+     * @param string $json  the JSON string to decode
+     * @param int    $depth JSON maximum depth, defaults to class constant
      *
-     * @return JwtPayload Hydrated JwtPayload instance.
+     * @return JwtPayload hydrated JwtPayload instance
      *
-     * @throws MalformedTokenException If the JSON is invalid.
+     * @throws MalformedTokenException if the JSON is invalid
      */
     public static function decodeStatic(
         string $json,
-        int $depth = self::JSON_MAX_DEPTH
+        int $depth = self::JSON_MAX_DEPTH,
     ): JwtPayload {
         return (new self())->decode($json, $depth);
     }
@@ -117,16 +117,16 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
     /**
      * Decode a JSON string into an existing JwtPayload instance using a cached codec.
      *
-     * @param string     $json    The JSON string to decode.
-     * @param JwtPayload $payload The target instance to populate.
-     * @param int   $depth   JSON maximum depth, defaults to class constant.
+     * @param string     $json    the JSON string to decode
+     * @param JwtPayload $payload the target instance to populate
+     * @param int        $depth   JSON maximum depth, defaults to class constant
      *
-     * @throws MalformedTokenException If the JSON is invalid.
+     * @throws MalformedTokenException if the JSON is invalid
      */
     public static function decodeStaticInto(
         string $json,
         JwtPayload $payload,
-        int $depth = self::JSON_MAX_DEPTH
+        int $depth = self::JSON_MAX_DEPTH,
     ): void {
         (new self())->decodeInto($json, $payload, $depth);
     }

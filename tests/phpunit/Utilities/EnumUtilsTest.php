@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Tests\phpunit\Utilities;
 
 use InvalidArgumentException;
-use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenErrorMessagesEnum;
 use Phithi92\JsonWebToken\Utilities\EnumUtils;
+use PHPUnit\Framework\TestCase;
+use stdClass;
 
 class EnumUtilsTest extends TestCase
 {
@@ -26,7 +27,7 @@ class EnumUtilsTest extends TestCase
     public function testFromNameInvalidClassThrowsException(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        EnumUtils::fromName(\stdClass::class, 'BAR');
+        EnumUtils::fromName(stdClass::class, 'BAR');
     }
 
     public function testFromNameDifferentCaseThrowsException(): void

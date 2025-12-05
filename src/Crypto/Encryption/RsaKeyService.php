@@ -12,6 +12,11 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
+use function in_array;
+use function openssl_private_decrypt;
+use function openssl_public_encrypt;
+use function strlen;
+
 /**
  * Handles RSA-specific key operations for encrypted JWTs.
  */

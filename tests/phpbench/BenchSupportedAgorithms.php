@@ -2,12 +2,13 @@
 
 namespace Tests\phpbench;
 
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
-use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
+use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use PhpBench\Attributes as Bench;
-use Tests\phpbench\BenchmarkBase;
+
+use function assert;
 
 #[Bench\Revs(1000)]
 #[Bench\Iterations(5)]

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\phpunit;
 
-use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Token\JwtPayload;
+use PHPUnit\Framework\TestCase;
 use Tests\Helpers\KeyProvider;
 
 class TestCaseWithSecrets extends TestCase

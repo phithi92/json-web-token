@@ -2,6 +2,19 @@
 
 namespace Tests\Helpers;
 
+use RuntimeException;
+
+use function file_get_contents;
+use function file_put_contents;
+use function getmypid;
+use function glob;
+use function is_dir;
+use function is_file;
+use function mkdir;
+use function preg_replace;
+use function rmdir;
+use function unlink;
+
 final class TokenStorage
 {
     private const BASE_DIR = __DIR__ . '/../.tmp_tokens';
@@ -10,8 +23,8 @@ final class TokenStorage
     {
         self::ensureDirectoryExists();
         $path = self::getPath($algorithm, $key);
-        if (file_put_contents($path, $token) === false) {
-            throw new \RuntimeException("Failed to write token to [$path].");
+        if (false === file_put_contents($path, $token)) {
+            throw new RuntimeException("Failed to write token to [$path].");
         }
     }
 
@@ -19,12 +32,12 @@ final class TokenStorage
     {
         $path = self::getPath($algorithm, $key);
         if (!is_file($path)) {
-            throw new \RuntimeException("Token for [$algorithm/$key] not found.");
+            throw new RuntimeException("Token for [$algorithm/$key] not found.");
         }
 
         $content = file_get_contents($path);
-        if ($content === false) {
-            throw new \RuntimeException("Failed to read token from [$path].");
+        if (false === $content) {
+            throw new RuntimeException("Failed to read token from [$path].");
         }
 
         return $content;
@@ -49,8 +62,9 @@ final class TokenStorage
     private static function getPath(string $algorithm, string $key = ''): string
     {
         $safeAlg = preg_replace('/[^a-zA-Z0-9_]/', '_', $algorithm);
-        $safeKey = $key !== '' ? '_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $key) : '';
+        $safeKey = '' !== $key ? '_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $key) : '';
         $pid = getmypid(); // process id
+
         return self::BASE_DIR . "/token_{$safeAlg}{$safeKey}_{$pid}.jwt";
     }
 
@@ -58,7 +72,7 @@ final class TokenStorage
     {
         if (!is_dir(self::BASE_DIR)) {
             if (!mkdir(self::BASE_DIR, 0777, true) && !is_dir(self::BASE_DIR)) {
-                throw new \RuntimeException("Failed to create directory [" . self::BASE_DIR . "]");
+                throw new RuntimeException('Failed to create directory [' . self::BASE_DIR . ']');
             }
         }
     }

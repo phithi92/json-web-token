@@ -10,7 +10,7 @@ use Phithi92\JsonWebToken\Token\JwtHeader;
 use Throwable;
 
 /**
- * Class JwtHeaderJsonCodec
+ * Class JwtHeaderJsonCodec.
  *
  * Provides JSON encoding and decoding for JwtHeader objects.
  * Supports configurable JSON depth with optional static convenience
@@ -23,12 +23,12 @@ final class JwtHeaderJsonCodec extends JwtSegmentJsonCodec implements JwtHeaderC
     /**
      * Encode a JwtHeader instance to a JSON string.
      *
-     * @param JwtHeader $header The header instance to encode.
-     * @param int  $depth  Optional maximum depth for encoding; defaults to class constant.
+     * @param JwtHeader $header the header instance to encode
+     * @param int       $depth  optional maximum depth for encoding; defaults to class constant
      *
-     * @return string JSON representation of the header.
+     * @return string JSON representation of the header
      *
-     * @throws MalformedTokenException If the JwtHeader cannot be encoded into a valid json.
+     * @throws MalformedTokenException if the JwtHeader cannot be encoded into a valid json
      */
     public function encode(JwtHeader $header, int $depth = self::MAX_JSON_DEPTH): string
     {
@@ -42,12 +42,12 @@ final class JwtHeaderJsonCodec extends JwtSegmentJsonCodec implements JwtHeaderC
     /**
      * Decode a JSON string into a JwtHeader instance.
      *
-     * @param string   $json  The JSON string to decode.
-     * @param int $depth Optional maximum depth for decoding; defaults to class constant.
+     * @param string $json  the JSON string to decode
+     * @param int    $depth optional maximum depth for decoding; defaults to class constant
      *
-     * @return JwtHeader Hydrated JwtHeader instance.
+     * @return JwtHeader hydrated JwtHeader instance
      *
-     * @throws MalformedTokenException If the JSON cannot be decoded into a valid JwtHeader.
+     * @throws MalformedTokenException if the JSON cannot be decoded into a valid JwtHeader
      */
     public function decode(string $json, int $depth = self::MAX_JSON_DEPTH): JwtHeader
     {
@@ -64,10 +64,10 @@ final class JwtHeaderJsonCodec extends JwtSegmentJsonCodec implements JwtHeaderC
      * Static convenience method to encode a JwtHeader to JSON.
      * Creates a new codec instance internally.
      *
-     * @param JwtHeader $header The header instance to encode.
-     * @param int  $depth  Optional maximum depth for encoding; defaults to class constant.
+     * @param JwtHeader $header the header instance to encode
+     * @param int       $depth  optional maximum depth for encoding; defaults to class constant
      *
-     * @return string JSON representation of the header.
+     * @return string JSON representation of the header
      */
     public static function encodeStatic(JwtHeader $header, int $depth = self::MAX_JSON_DEPTH): string
     {
@@ -78,12 +78,12 @@ final class JwtHeaderJsonCodec extends JwtSegmentJsonCodec implements JwtHeaderC
      * Static convenience method to decode JSON into a JwtHeader.
      * Creates a new codec instance internally.
      *
-     * @param string   $json  The JSON string to decode.
-     * @param int $depth Optional maximum depth for decoding; defaults to class constant.
+     * @param string $json  the JSON string to decode
+     * @param int    $depth optional maximum depth for decoding; defaults to class constant
      *
-     * @return JwtHeader Hydrated JwtHeader instance.
+     * @return JwtHeader hydrated JwtHeader instance
      *
-     * @throws MalformedTokenException If the JSON cannot be decoded into a valid JwtHeader.
+     * @throws MalformedTokenException if the JSON cannot be decoded into a valid JwtHeader
      */
     public static function decodeStatic(string $json, int $depth = self::MAX_JSON_DEPTH): JwtHeader
     {

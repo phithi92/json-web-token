@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token;
 
+use DateTime;
+use DateTimeImmutable;
 use Phithi92\JsonWebToken\Exceptions;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use PHPUnit\Framework\TestCase;
-use DateTimeImmutable;
-use DateTime;
+use stdClass;
 
 /**
- * Description of JwtPayloadTest
+ * Description of JwtPayloadTest.
  *
  * @author phillip
  */
@@ -95,7 +96,6 @@ class JwtPayloadTest extends TestCase
         $this->assertEquals($expectedTimestamp, $payload->getClaim('nbf'));
     }
 
-
     public function testToArray()
     {
         $payload = new JwtPayload();
@@ -107,7 +107,6 @@ class JwtPayloadTest extends TestCase
         $this->assertEquals('testIssuer', $array['iss']);
         $this->assertEquals('testAudience', $array['aud']);
     }
-
 
     public function testToArrayIncludesAllFields()
     {
@@ -236,7 +235,7 @@ class JwtPayloadTest extends TestCase
     {
         $this->expectException(Exceptions\Payload\InvalidValueTypeException::class);
 
-        (new JwtPayload())->addClaim('invalid', new \stdClass());
+        (new JwtPayload())->addClaim('invalid', new stdClass());
     }
 
     public function testEncryptedPayloadSetAndGet()

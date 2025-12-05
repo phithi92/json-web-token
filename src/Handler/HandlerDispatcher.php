@@ -12,6 +12,12 @@ use Phithi92\JsonWebToken\Exceptions\Handler\UndefinedHandlerMethodException;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use RuntimeException;
 
+use function gettype;
+use function is_array;
+use function is_string;
+use function is_subclass_of;
+use function method_exists;
+
 final class HandlerDispatcher
 {
     private HandlerInvoker $invoker;
@@ -36,7 +42,7 @@ final class HandlerDispatcher
         HandlerOperation $operation,
         JwtAlgorithmManager $manager,
         array $config,
-        array $context = []
+        array $context = [],
     ): mixed {
         if (! $this->isHandlerConfigured($config, $target)) {
             return null;
@@ -74,7 +80,7 @@ final class HandlerDispatcher
     private function buildHandler(
         array $config,
         JwtAlgorithmManager $manager,
-        HandlerTarget $target
+        HandlerTarget $target,
     ): object {
         $interface = $target->interfaceClass();
 
@@ -113,7 +119,7 @@ final class HandlerDispatcher
     private function resolveArguments(
         HandlerTarget $target,
         array $context,
-        array $config
+        array $config,
     ): array {
         /** @var EncryptedJwtBundle $bundle */
         $bundle = $context['bundle'];

@@ -8,7 +8,7 @@ use Exception;
 use Phithi92\JsonWebToken\Utilities\EnumUtils;
 
 /**
- * Class SecurityException
+ * Class SecurityException.
  *
  * Base exception for security-related errors in the phithi92/json-web-token package.
  */

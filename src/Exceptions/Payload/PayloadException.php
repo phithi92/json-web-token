@@ -8,7 +8,7 @@ use Exception;
 use Phithi92\JsonWebToken\Utilities\EnumUtils;
 
 /**
- * Class PayloadException
+ * Class PayloadException.
  *
  * Base exception for payload-related errors in the phithi92/json-web-token package.
  */

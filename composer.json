@@ -33,10 +33,10 @@
     "scripts": {
       "keys": "php bin/generate-keys.php",
 
-      "lint": "php vendor/bin/parallel-lint src')",
-      "cs:check": "php vendor/bin/phpcs --standard=PSR12 src",
-      "cs:fix": "php vendor/bin/phpcbf --standard=PSR12 -q src || exit 0",
-
+      "lint": "php vendor/bin/parallel-lint src",
+      "cs:check": "php vendor/bin/php-cs-fixer fix --config=config/php-cs-fixer.php --using-cache=no --dry-run --diff",
+      "cs:fix": "php vendor/bin/php-cs-fixer fix --config=config/php-cs-fixer.php --using-cache=no --diff",
+        
       "analyse": "php vendor/bin/phpstan analyse -c config/phpstan.neon --memory-limit=1G",
       "insights": "php vendor/bin/phpinsights analyse -c config/phpinsights.php",
       "insights:fix": "php vendor/bin/phpinsights fix -c config/phpinsights.php --quiet",

@@ -10,6 +10,10 @@ use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorException
 use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 
+use function is_int;
+use function random_bytes;
+use function strlen;
+
 /**
  * Responsible for generating and validating the Initialization Vector (IV)
  * used in content encryption (e.g. AES-GCM).

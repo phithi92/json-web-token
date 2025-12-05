@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Handler;
 
 /**
- * Description of HandlerOperation
+ * Description of HandlerOperation.
  *
  * @author phillipthiele
  */

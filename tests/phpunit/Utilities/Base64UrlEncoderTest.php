@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Utilities;
 
-use PHPUnit\Framework\TestCase;
-use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Exceptions\Base64\InvalidBase64UrlFormatException;
+use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Class Base64UrlEncoderTest
+ * Class Base64UrlEncoderTest.
  *
  * Tests the functionality of the Base64UrlEncoder class.
  */
@@ -70,7 +70,7 @@ class Base64UrlEncoderTest extends TestCase
         );
 
         // String, der durch Base64-Kodierung explizites Padding erzeugt
-        $originalInput = "Pad this";
+        $originalInput = 'Pad this';
         $encodedWithPadding = Base64UrlEncoder::encode($originalInput); // Sollte auf URL-konformes Base64 konvertieren
         $expectedDecoded = Base64UrlEncoder::decode($encodedWithPadding);
         $this->assertEquals(

@@ -10,6 +10,13 @@ use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
+use function is_array;
+use function is_string;
+use function openssl_pkey_get_details;
+use function openssl_sign;
+use function openssl_verify;
+use function strtolower;
+
 class EcdsaService extends SignatureService
 {
     /**
@@ -55,7 +62,7 @@ class EcdsaService extends SignatureService
         string $data,
         string $signature,
         OpenSSLAsymmetricKey $publicKey,
-        string $algorithm
+        string $algorithm,
     ): void {
         $verified = openssl_verify($data, $signature, $publicKey, $algorithm);
         if ($verified !== 1) {

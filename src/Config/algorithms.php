@@ -158,7 +158,7 @@ return [
 
         KeyHandlerInterface::class => [
             'hash' => 'sha1',
-            'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
+            'padding' => phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
             'handler' => PhpseclibRsaEncryptionService::class,
         ],
 
@@ -188,7 +188,7 @@ return [
 
         KeyHandlerInterface::class => [
             'hash' => 'sha256',
-            'padding' => \phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
+            'padding' => phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
             'handler' => PhpseclibRsaEncryptionService::class,
         ],
 
@@ -223,12 +223,12 @@ return [
         ],
 
         IvHandlerInterface::class => [
-            'length' => 96,// bits
+            'length' => 96, // bits
             'handler' => IvService::class,
         ],
 
         CekHandlerInterface::class => [
-            'length' => 128,// bits
+            'length' => 128, // bits
             'strict_length' => true,
             'handler' => DefaultCekHandler::class,
         ],

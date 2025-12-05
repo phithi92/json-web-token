@@ -2,12 +2,21 @@
 
 namespace Tests\phpbench;
 
-use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
-use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
+use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Tests\Helpers\KeyProvider;
+
+use function array_combine;
+use function array_keys;
+use function array_map;
+use function count;
+use function explode;
+use function implode;
+use function is_string;
+use function time;
 
 abstract class BenchmarkBase
 {
@@ -22,7 +31,8 @@ abstract class BenchmarkBase
     public function provideAlgs(): array
     {
         $algs = array_keys($this->getAllProvidedKeys());
-        return array_combine($algs, array_map(fn($alg) => ['alg' => $alg], $algs));
+
+        return array_combine($algs, array_map(fn ($alg) => ['alg' => $alg], $algs));
     }
 
     protected function getAllProvidedKeys(): array
@@ -40,8 +50,8 @@ abstract class BenchmarkBase
             $manager = $this->getManager();
             $payload = (new JwtPayload())->fromArray(
                 [
-                'iat' => time() - 7200,
-                'exp' => time() - 3600,
+                    'iat' => time() - 7200,
+                    'exp' => time() - 3600,
                 ]
             );
 
@@ -55,7 +65,7 @@ abstract class BenchmarkBase
 
     protected function getValidToken(string $alg): string
     {
-        if (!isset($this->cache['valid'][$alg]) || is_string($this->cache['valid'][$alg]) === false) {
+        if (!isset($this->cache['valid'][$alg]) || false === is_string($this->cache['valid'][$alg])) {
             $manager = $this->getManager();
             $payload = self::createPayload();
 
@@ -83,9 +93,9 @@ abstract class BenchmarkBase
             $valid = $this->getValidToken($alg);
             $parts = explode('.', $valid);
 
-            if (count($parts) === 3) {
+            if (3 === count($parts)) {
                 $parts[2] = 'invalidsig';
-            } elseif (count($parts) === 5) {
+            } elseif (5 === count($parts)) {
                 $parts[1] = 'invalidiv';
                 $parts[4] = 'invalidauthtag';
             }
@@ -96,7 +106,6 @@ abstract class BenchmarkBase
 
         return $this->cache['invalid'][$alg];
     }
-
 
     protected function getManager(): JwtAlgorithmManager
     {
@@ -128,7 +137,7 @@ abstract class BenchmarkBase
     {
         return (new JwtPayload())
             ->setIssuer('https://auth.myapp.com')
-            ->setAudience(["frontend", "mobile-app"]);
+            ->setAudience(['frontend', 'mobile-app']);
     }
 
     protected function getValidator(): JwtValidator

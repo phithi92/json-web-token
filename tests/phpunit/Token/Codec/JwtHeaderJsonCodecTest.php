@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token\Codec;
 
-use PHPUnit\Framework\TestCase;
-use Phithi92\JsonWebToken\Token\JwtHeader;
-use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
+use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
+use Phithi92\JsonWebToken\Token\JwtHeader;
+use PHPUnit\Framework\TestCase;
+
+use function json_decode;
+use function json_encode;
 
 final class JwtHeaderJsonCodecTest extends TestCase
 {

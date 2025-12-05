@@ -10,6 +10,9 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidCekLength;
 use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 
+use function random_bytes;
+use function strlen;
+
 final class DefaultCekHandler implements CekHandlerInterface
 {
     public function initializeCek(EncryptedJwtBundle $bundle, array $config): void
@@ -80,6 +83,7 @@ final class DefaultCekHandler implements CekHandlerInterface
         if ($bitLength < 16 || $bitLength % 8 !== 0) {
             throw new LogicException('Invalid CEK bit length: must be >= 16 and divisible by 8');
         }
+
         return $bitLength >> 3;
     }
 

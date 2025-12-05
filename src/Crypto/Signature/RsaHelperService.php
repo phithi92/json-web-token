@@ -10,6 +10,11 @@ use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 
+use function in_array;
+use function openssl_pkey_get_details;
+use function strlen;
+use function strtolower;
+
 class RsaHelperService
 {
     /**
@@ -30,7 +35,7 @@ class RsaHelperService
             'sha256' => OPENSSL_ALGO_SHA256,
             'sha384' => OPENSSL_ALGO_SHA384,
             'sha512' => OPENSSL_ALGO_SHA512,
-            default => throw new \InvalidArgumentException("Unsupported hash algorithm: {$hash}"),
+            default => throw new InvalidArgumentException("Unsupported hash algorithm: {$hash}"),
         };
     }
 
@@ -72,7 +77,7 @@ class RsaHelperService
     /**
      * @return OpenSSLAsymmetricKey|null return OpenSSLAsymmetricKey when exist, else null
      */
-    public function getCachedRsaKey(string $kid): OpenSSLAsymmetricKey|null
+    public function getCachedRsaKey(string $kid): ?OpenSSLAsymmetricKey
     {
         return $this->checkedKeys[$kid] ?? null;
     }
