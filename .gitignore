@@ -31,3 +31,6 @@ Thumbs.db
 
 # ignore certificates and passphrases 
 /tests/keys
+
+#lock files
+composer.lock
