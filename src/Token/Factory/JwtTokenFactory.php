@@ -26,9 +26,11 @@ use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
  */
 final class JwtTokenFactory
 {
-    private static ?JwtTokenBuilder $builderCache = null;
+    /** @var array<int, JwtTokenBuilder> */
+    private static array $builderCache = [];
 
-    private static ?JwtTokenDecryptor $decryptorCache = null;
+    /** @var array<int, JwtTokenDecryptor> */
+    private static array $decryptorCache = [];
 
     /**
      * Creates a signed and/or encrypted JWT using the provided payload and algorithm.
@@ -233,11 +235,18 @@ final class JwtTokenFactory
 
     private static function getBuilder(JwtAlgorithmManager $manager): JwtTokenBuilder
     {
-        return self::$builderCache ??= new JwtTokenBuilder($manager);
+        $cacheId = self::getObjectId($manager);
+        return self::$builderCache[$cacheId] ??= new JwtTokenBuilder($manager);
     }
 
     private static function getDecryptor(JwtAlgorithmManager $manager): JwtTokenDecryptor
     {
-        return self::$decryptorCache ??= new JwtTokenDecryptor($manager);
+        $cacheId = self::getObjectId($manager);
+        return self::$decryptorCache[$cacheId] ??= new JwtTokenDecryptor($manager);
+    }
+
+    private static function getObjectId(object $object): int
+    {
+        return spl_object_id($object);
     }
 }
