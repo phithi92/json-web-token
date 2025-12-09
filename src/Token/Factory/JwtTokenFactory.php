@@ -90,6 +90,8 @@ final class JwtTokenFactory
      *
      * This method **bypasses all internal claim validation checks** and is intended
      * **exclusively** for controlled testing environments, stubbing, or internal tooling.
+     * Signing, encryption, and header construction still run; only payload/claim
+     * validation is skipped.
      *
      * @param string              $algorithm algorithm name
      * @param JwtAlgorithmManager $manager   algorithm manager instance
