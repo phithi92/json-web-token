@@ -44,6 +44,8 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      */
     private const OPERATION = HandlerOperation::Perform;
 
+    private JwtValidator $validator;
+
     public function __construct(
         JwtAlgorithmManager $manager,
     ) {
@@ -64,10 +66,9 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
         ?JwtValidator $validator = null,
         ?string $kid = null,
     ): EncryptedJwtBundle {
-        $validator ??= new JwtValidator();
         $bundle = $this->createWithoutValidation($algorithm, $payload, $kid);
 
-        $validator->assertValidBundle($bundle);
+        $this->getValidator($validator)->assertValidBundle($bundle);
 
         return $bundle;
     }
@@ -88,8 +89,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
 
         $this->dispatchHandlers($algorithm, $bundle);
 
-        $validator ??= new JwtValidator();
-        $validator->assertValidBundle($bundle);
+        $this->getValidator($validator)->assertValidBundle($bundle);
 
         return $bundle;
     }
@@ -116,6 +116,11 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
         $this->dispatchHandlers($algorithm, $bundle);
 
         return $bundle;
+    }
+
+    private function getValidator(?JwtValidator $validator = null): JwtValidator
+    {
+        return $this->validator ??= $validator ?? new JwtValidator();
     }
 
     /**
