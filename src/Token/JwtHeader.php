@@ -9,11 +9,9 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
-use Phithi92\JsonWebToken\Handler\HandlerInvoker;
 
 use function array_filter;
 use function array_key_exists;
-use function array_keys;
 use function ctype_alnum;
 use function gettype;
 use function is_string;
@@ -35,12 +33,7 @@ final class JwtHeader implements JsonSerializable
     private const MIN_KID_LENGTH = 3;
     private const MAX_KID_LENGTH = 64;
 
-    private const HEADER_MAP = [
-        'alg' => 'setAlgorithm',
-        'typ' => 'setType',
-        'enc' => 'setEnc',
-        'kid' => 'setKid',
-    ];
+    private const ALLOWED_KEYS = ['alg', 'typ', 'enc', 'kid'];
 
     // The type of token, typically 'JWT' or 'JWS'
     private ?string $typ = null;
@@ -203,15 +196,23 @@ final class JwtHeader implements JsonSerializable
      */
     public static function fromArray(array $data): self
     {
-        $invoker = new HandlerInvoker();
-        $instance = new self();
+        $instance      = new self();
+        $headerFields  = self::filterStringMap($data);
 
-        $headerFields = self::filterStringMap($data);
+        if (array_key_exists('alg', $headerFields)) {
+            $instance->setAlgorithm($headerFields['alg']);
+        }
 
-        foreach (self::HEADER_MAP as $jsonKey => $setter) {
-            if (isset($headerFields[$jsonKey])) {
-                $invoker->invoke($instance, $setter, [$headerFields[$jsonKey]]);
-            }
+        if (array_key_exists('typ', $headerFields)) {
+            $instance->setType($headerFields['typ']);
+        }
+
+        if (array_key_exists('enc', $headerFields)) {
+            $instance->setEnc($headerFields['enc']);
+        }
+
+        if (array_key_exists('kid', $headerFields)) {
+            $instance->setKid($headerFields['kid']);
         }
 
         return $instance;
@@ -258,24 +259,21 @@ final class JwtHeader implements JsonSerializable
      */
     private static function filterStringMap(array $data): array
     {
-        $allowedKeys = array_keys(self::HEADER_MAP);
-
         $filtered = [];
-        foreach ($allowedKeys as $key) {
-            if (! array_key_exists($key, $data)) {
+
+        foreach (self::ALLOWED_KEYS as $key) {
+            if (!array_key_exists($key, $data)) {
                 continue;
             }
 
             $value = $data[$key];
 
-            if (! is_string($value)) {
-                throw new InvalidFormatException(
-                    sprintf(
-                        "Invalid type for header key '%s': expected string, got %s",
-                        $key,
-                        gettype($value)
-                    )
-                );
+            if (!is_string($value)) {
+                throw new InvalidFormatException(sprintf(
+                    "Invalid type for header key '%s': expected string, got %s",
+                    $key,
+                    gettype($value)
+                ));
             }
 
             $filtered[$key] = $value;
