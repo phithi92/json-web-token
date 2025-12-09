@@ -37,8 +37,7 @@ final class KeyStore
      * @param string|array<int,string>|null $kid
      */
     public function addKey(
-        #[SensitiveParameter]
-        string $pem,
+        #[SensitiveParameter] string $pem,
         ?string $role = null,
         string|array|null $kid = null,
     ): string {
@@ -72,7 +71,7 @@ final class KeyStore
         return $this->keys;
     }
 
-    public function getKey(#[SensitiveParameter] string $kid, string $role): OpenSSLAsymmetricKey
+    public function getKey(string $kid, string $role): OpenSSLAsymmetricKey
     {
         if (! isset($this->keys[$kid][$role])) {
             throw new RuntimeException("Key [{$kid}:{$role}] not found.");
@@ -81,7 +80,7 @@ final class KeyStore
         return $this->keys[$kid][$role]['key'];
     }
 
-    public function getType(#[SensitiveParameter] string $kid, string $role): string
+    public function getType(string $kid, string $role): string
     {
         return $this->keys[$kid][$role]['type']
             ?? throw new RuntimeException("Key [{$kid}:{$role}] not found.");
@@ -92,7 +91,7 @@ final class KeyStore
      *
      * @throws RuntimeException
      */
-    public function getMetadata(#[SensitiveParameter] string $kid, string $role): array
+    public function getMetadata(string $kid, string $role): array
     {
         if (! isset($this->keys[$kid])) {
             throw new RuntimeException("Key with ID [{$kid}] not found.");
@@ -106,7 +105,7 @@ final class KeyStore
         return $entries[$role];
     }
 
-    public function hasKey(#[SensitiveParameter] string $kid, ?string $role = null): bool
+    public function hasKey(string $kid, ?string $role = null): bool
     {
         if ($role === null) {
             return isset($this->keys[$kid]);
@@ -129,8 +128,7 @@ final class KeyStore
      * @throws RuntimeException
      */
     private function buildKeyMetadata(
-        #[SensitiveParameter]
-        string|OpenSSLAsymmetricKey $pem,
+        #[SensitiveParameter] string|OpenSSLAsymmetricKey $pem,
         ?string $role = null,
     ): array {
         $this->assertValidRole($role);
@@ -153,8 +151,7 @@ final class KeyStore
      * @throws RuntimeException
      */
     private function resolveKey(
-        #[SensitiveParameter]
-        string|OpenSSLAsymmetricKey $pem,
+        #[SensitiveParameter] string|OpenSSLAsymmetricKey $pem,
         ?string $role = null,
     ): array {
         return match ($role) {
@@ -164,8 +161,9 @@ final class KeyStore
         };
     }
 
-    private function ensureKey(OpenSSLAsymmetricKey|false $key): OpenSSLAsymmetricKey
-    {
+    private function ensureKey(
+        #[SensitiveParameter] OpenSSLAsymmetricKey|false $key
+    ): OpenSSLAsymmetricKey {
         if ($key === false) {
             throw new RuntimeException('Could not load OpenSSL key.');
         }
