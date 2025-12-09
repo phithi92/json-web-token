@@ -9,6 +9,7 @@ use Phithi92\JsonWebToken\Config\DefaultAlgorithmConfiguration;
 use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
 use Phithi92\JsonWebToken\Security\KeyStore;
 use Phithi92\JsonWebToken\Security\PassphraseStore;
+use SensitiveParameter;
 
 /**
  * Manages JWT cryptographic operations for symmetric and asymmetric algorithms.
@@ -94,8 +95,10 @@ final class JwtAlgorithmManager
      * @param string      $pemContent The private key in PEM format.
      * @param string|null $kid        Optional key identifier.
      */
-    public function addPrivateKey(string $pemContent, ?string $kid = null): void
-    {
+    public function addPrivateKey(
+        #[SensitiveParameter] string $pemContent,
+        ?string $kid = null
+    ): void {
         $this->keyStore->addKey($pemContent, 'private', $kid);
     }
 
@@ -107,8 +110,10 @@ final class JwtAlgorithmManager
      * @param string      $pemContent The public key in PEM format.
      * @param string|null $kid        Optional key identifier.
      */
-    public function addPublicKey(string $pemContent, ?string $kid = null): void
-    {
+    public function addPublicKey(
+        #[SensitiveParameter] string $pemContent,
+        ?string $kid = null
+    ): void {
         $this->keyStore->addKey($pemContent, 'public', $kid);
     }
 
@@ -133,8 +138,11 @@ final class JwtAlgorithmManager
      * @param string      $public  The public key in PEM format.
      * @param string|null $kid     Optional key identifier.
      */
-    public function addKeyPair(string $private, string $public, ?string $kid = null): void
-    {
+    public function addKeyPair(
+        #[SensitiveParameter] string $private,
+        #[SensitiveParameter] string $public,
+        ?string $kid = null
+    ): void {
         $this->addPrivateKey($private, $kid);
         $this->addPublicKey($public, $kid);
     }
@@ -230,8 +238,10 @@ final class JwtAlgorithmManager
      * @param string      $passphrase The passphrase for the private key.
      * @param string|null $kid        Optional key identifier.
      */
-    public function addPassphrase(string $passphrase, ?string $kid = null): void
-    {
+    public function addPassphrase(
+        #[SensitiveParameter] string $passphrase,
+        ?string $kid = null
+    ): void {
         $this->passphraseStore->addPassphrase($passphrase, $kid);
     }
 
