@@ -43,8 +43,8 @@
 
       "bench": "@php vendor/bin/phpbench run tests/phpbench --config=config/phpbench.json --report=benchmark",
 
-      "test": "XDEBUG_MODE=off @php vendor/bin/phpunit -c config/phpunit.xml --colors=always",
-      "test:coverage": "XDEBUG_MODE=coverage @php vendor/bin/phpunit -c config/phpunit.xml --coverage-text --colors=always",
+      "test": "@php -d xdebug.mode=off vendor/bin/phpunit -c config/phpunit.xml --colors=always",
+      "test:coverage": "@php -d xdebug.mode=coverage vendor/bin/phpunit -c config/phpunit.xml --coverage-text --colors=always",
 
       "fix": [
         "@cs:fix",
