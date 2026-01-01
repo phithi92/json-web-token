@@ -42,7 +42,7 @@ final class JwtValidator
 
     // The expected audience value (public claim aud).
     private ?string $expectedAudience = null;
-    //
+
     // Allowed clock skew in seconds.
     private int $clockSkew = 0;
 
@@ -57,30 +57,25 @@ final class JwtValidator
      */
     private ?int $currentTime = null;
 
-    /** @var array<callable(JwtPayload): bool> */
-    private array $isValidators;
-    /** @var array<callable(JwtPayload): void> */
-    private array $assertValidators;
-
     /**
      * JwtValidator constructor.
      *
-     * @param string|null                $expectedIssuer   Optional expected "iss" (issuer) claim value.
-     *                                                     If set, tokens must match this exact issuer.
-     * @param string|null                $expectedAudience Optional expected "aud" (audience) claim value.
-     *                                                     Supports string or array in token payload.
-     * @param int                        $clockSkew        Allowed clock skew (in seconds) when validating
-     *                                                     time-based claims like "exp", "nbf", and "iat".
-     *                                                     Helps tolerate minor time drift.
-     * @param array<string, scalar|null> $expectedClaims   Optional associative array of expected private claims.
-     *                                                     - If value is null, only claim existence is required.
-     *                                                     - If value is set, exact match is required.
+     * @param string|null $expectedIssuer   Optional expected "iss" (issuer) claim value.
+     *                                      If set, tokens must match this exact issuer.
+     * @param string|null $expectedAudience Optional expected "aud" (audience) claim value.
+     *                                      Supports string or array in token payload.
+     * @param int         $clockSkew        Allowed clock skew (in seconds) when validating
+     *                                      time-based claims like "exp", "nbf", and "iat".
+     *                                      Helps tolerate minor time drift.
+     * @param array<string, scalar|null> $expectedClaims Optional associative array of expected private claims.
+     *                                      - If value is null, only claim existence is required.
+     *                                      - If value is set, exact match is required.
      */
     public function __construct(
         ?string $expectedIssuer = null,
         ?string $expectedAudience = null,
         int $clockSkew = 0,
-        array $expectedClaims = [],
+        array $expectedClaims = []
     ) {
         if ($clockSkew < 0) {
             throw new InvalidArgumentException('clockSkew must be >= 0');
@@ -89,37 +84,35 @@ final class JwtValidator
         $this->expectedIssuer = $expectedIssuer;
         $this->expectedAudience = $expectedAudience;
         $this->expectedClaims = $expectedClaims;
-        $this->isValidators = [
-            fn (JwtPayload $payload): bool => $this->isValidPrivateClaims($payload),
-            fn (JwtPayload $payload): bool => $this->isNotExpired($payload),
-            fn (JwtPayload $payload): bool => $this->isNotBeforeValid($payload),
-            fn (JwtPayload $payload): bool => $this->isIssuedAtValid($payload),
-            fn (JwtPayload $payload): bool => $this->isValidIssuer($payload),
-            fn (JwtPayload $payload): bool => $this->isValidAudience($payload),
-        ];
-        $this->assertValidators = [
-            fn (JwtPayload $payload) => $this->assertValidPrivateClaims($payload),
-            fn (JwtPayload $payload) => $this->assertNotExpired($payload),
-            fn (JwtPayload $payload) => $this->assertNotBeforeValid($payload),
-            fn (JwtPayload $payload) => $this->assertIssuedAtValid($payload),
-            fn (JwtPayload $payload) => $this->assertValidIssuer($payload),
-            fn (JwtPayload $payload) => $this->assertValidAudience($payload),
-        ];
     }
 
     /**
      * Validates all supported standard claims.
      *
-     * @return bool true if all checks pass
+     * @return bool True if all checks pass.
      */
     public function isValid(JwtPayload $payload): bool
     {
         $this->currentTime = time();
+
         try {
-            foreach ($this->isValidators as $validator) {
-                if ($validator($payload) === false) {
-                    return false;
-                }
+            if ($this->isValidPrivateClaims($payload) === false) {
+                return false;
+            }
+            if ($this->isNotExpired($payload) === false) {
+                return false;
+            }
+            if ($this->isNotBeforeValid($payload) === false) {
+                return false;
+            }
+            if ($this->isIssuedAtValid($payload) === false) {
+                return false;
+            }
+            if ($this->isValidIssuer($payload) === false) {
+                return false;
+            }
+            if ($this->isValidAudience($payload) === false) {
+                return false;
             }
 
             return true;
@@ -131,43 +124,40 @@ final class JwtValidator
     /**
      * Validates the "exp" (expiration) claim.
      *
-     * @return bool true if token has not expired
+     * @return bool True if token has not expired.
      */
     public function isNotExpired(JwtPayload $payload): bool
     {
         $exp = $payload->getExpiration();
-
         return $exp === null || ($exp + $this->clockSkew) > $this->now();
     }
 
     /**
      * Validates the "nbf" (not before) claim.
      *
-     * @return bool true if token is valid at current time
+     * @return bool True if token is valid at current time.
      */
     public function isNotBeforeValid(JwtPayload $payload): bool
     {
         $nbf = $payload->getNotBefore();
-
         return $nbf === null || ($nbf - $this->clockSkew) <= $this->now();
     }
 
     /**
      * Validates the "iat" (issued at) claim.
      *
-     * @return bool true if token was issued in the past
+     * @return bool True if token was issued in the past.
      */
     public function isIssuedAtValid(JwtPayload $payload): bool
     {
         $iat = $payload->getIssuedAt();
-
         return $iat === null || ($iat - $this->clockSkew) <= $this->now();
     }
 
     /**
      * Validates the "iss" (issuer) claim against the expected value.
      *
-     * @return bool true if issuer is valid or not enforced
+     * @return bool True if issuer is valid or not enforced.
      */
     public function isValidIssuer(JwtPayload $payload): bool
     {
@@ -177,7 +167,7 @@ final class JwtValidator
     /**
      * Validates the "aud" (audience) claim against the expected value.
      *
-     * @return bool true if audience matches or is not enforced
+     * @return bool True if audience matches or is not enforced.
      */
     public function isValidAudience(JwtPayload $payload): bool
     {
@@ -187,14 +177,16 @@ final class JwtValidator
 
         $aud = $payload->getAudience();
 
-        return is_array($aud) ? in_array($this->expectedAudience, $aud, true) : $aud === $this->expectedAudience;
+        return is_array($aud)
+            ? in_array($this->expectedAudience, $aud, true)
+            : $aud === $this->expectedAudience;
     }
 
     /**
      * Validates the given encrypted JWT bundle.
      *
      * @throws PayloadException On any validation failure
-     * @throws TokenException   On any validation failure
+     * @throws TokenException On any validation failure
      */
     public function assertValidBundle(EncryptedJwtBundle $bundle): void
     {
@@ -205,15 +197,19 @@ final class JwtValidator
      * Runs all validation checks on the given JWT payload.
      *
      * @throws PayloadException On any validation failure
-     * @throws TokenException   On any validation failure
+     * @throws TokenException On any validation failure
      */
     public function assertValid(JwtPayload $payload): void
     {
         $this->currentTime = time();
+
         try {
-            foreach ($this->assertValidators as $validator) {
-                $validator($payload);
-            }
+            $this->assertValidPrivateClaims($payload);
+            $this->assertNotExpired($payload);
+            $this->assertNotBeforeValid($payload);
+            $this->assertIssuedAtValid($payload);
+            $this->assertValidIssuer($payload);
+            $this->assertValidAudience($payload);
         } finally {
             $this->currentTime = null;
         }
@@ -225,31 +221,26 @@ final class JwtValidator
      * - If an expected value is null, only the existence of the claim is required.
      * - If an expected value is set, the actual value must match exactly.
      *
-     * @return bool true if all expected private claims are valid
+     * @return bool True if all expected private claims are valid.
      */
     public function isValidPrivateClaims(JwtPayload $payload): bool
     {
         foreach ($this->expectedClaims as $key => $expectedValue) {
-            // Retrieve the actual claim value from the payload
             $actualValue = $payload->getClaim($key);
 
-            // If the claim is missing and we expect existence than invalid
             if ($actualValue === null) {
                 return false;
             }
 
-            // If only checking for existence, and the claim exists than valid
             if ($expectedValue === null) {
                 continue;
             }
 
-            // If the actual value doesn't match the expected one than invalid
             if ($actualValue !== $expectedValue) {
                 return false;
             }
         }
 
-        // All private claims are present and valid
         return true;
     }
 
@@ -277,7 +268,7 @@ final class JwtValidator
      * Validates the 'exp' (expiration) claim.
      *
      * @throws ExpiredPayloadException If the token has expired
-     * @throws ValueNotFoundException  If the 'exp' claim is missing
+     * @throws ValueNotFoundException If the 'exp' claim is missing
      */
     public function assertNotExpired(JwtPayload $payload): void
     {
@@ -290,7 +281,7 @@ final class JwtValidator
      * Validates the 'nbf' (not before) claim relative to 'iat' and current time.
      *
      * @throws NotBeforeOlderThanIatException If 'nbf' is before 'iat' minus clock skew
-     * @throws NotYetValidException           If the token is not yet valid
+     * @throws NotYetValidException If the token is not yet valid
      */
     public function assertNotBeforeValid(JwtPayload $payload): void
     {
@@ -348,7 +339,9 @@ final class JwtValidator
 
         $aud = $payload->getAudience();
 
-        $valid = is_array($aud) ? in_array($this->expectedAudience, $aud, true) : $aud === $this->expectedAudience;
+        $valid = is_array($aud)
+            ? in_array($this->expectedAudience, $aud, true)
+            : $aud === $this->expectedAudience;
 
         if (! $valid) {
             throw new InvalidAudienceException();
