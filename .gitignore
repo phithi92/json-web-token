@@ -30,7 +30,8 @@ Thumbs.db
 .actrc
 
 # ignore certificates and passphrases 
-/tests/keys
+/tests/keys/*
+!/tests/keys/.gitignore
 
 #lock files
 composer.lock
