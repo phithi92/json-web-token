@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\phpunit;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
@@ -36,7 +36,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
         $bundle = JwtTokenParser::parse($jwt);
 
-        $this->assertInstanceOf(EncryptedJwtBundle::class, $bundle);
+        $this->assertInstanceOf(JwtBundle::class, $bundle);
         $this->assertEquals('JWE', $bundle->getHeader()->getType());
     }
 
@@ -58,7 +58,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
         $bundle = JwtTokenParser::parse($jwt);
 
-        $this->assertInstanceOf(EncryptedJwtBundle::class, $bundle);
+        $this->assertInstanceOf(JwtBundle::class, $bundle);
     }
 
     public function testParseInvalidTokenThrowsException(): void

@@ -2,8 +2,8 @@
 
 namespace Tests\phpunit;
 
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Tests\Helpers\KeyProvider;
 use Tests\Helpers\TokenStorage;
 
@@ -45,7 +45,7 @@ class SupportedAlgorithmsTest extends TestCaseWithSecrets
 
         $bundle = JwtTokenFactory::decryptToken($token, $this->manager);
 
-        $this->assertInstanceOf(EncryptedJwtBundle::class, $bundle);
+        $this->assertInstanceOf(JwtBundle::class, $bundle);
     }
 
     public static function tearDownAfterClass(): void
