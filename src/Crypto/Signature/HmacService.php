@@ -6,6 +6,7 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtSignature;
 
 use function hash_equals;
 use function hash_hmac;
@@ -30,7 +31,7 @@ class HmacService extends SignatureService
 
         $signature = hash_hmac($algorithm, $signingInput, $passphrase, true);
 
-        $bundle->setSignature($signature);
+        $bundle->setSignature(new JwtSignature($signature));
     }
 
     /**

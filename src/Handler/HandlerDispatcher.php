@@ -52,7 +52,8 @@ final class HandlerDispatcher
 
         $args = $this->resolveArguments($target, $context, $config);
 
-        return $handler->{$method}(... $args);
+        /** @phpstan-ignore-next-line */
+        return $handler->{$method}(...$args);
     }
 
     private function resolveMethod(

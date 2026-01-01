@@ -8,6 +8,7 @@ use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtSignature;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 use function openssl_sign;
@@ -40,7 +41,7 @@ class RsaSignatureService extends SignatureService
         }
 
         /** @var string $signature */
-        $bundle->setSignature($signature);
+        $bundle->setSignature(new JwtSignature($signature));
     }
 
     public function validateSignature(EncryptedJwtBundle $bundle, array $config): void

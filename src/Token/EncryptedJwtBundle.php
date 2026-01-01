@@ -21,7 +21,7 @@ final class EncryptedJwtBundle
 
     private JwtEncryptionData $encryption;
 
-    private ?string $signature = null;
+    private ?JwtSignature $signature = null;
 
     /**
      * Initializes the JWT header with an optional JwtPayload instance.
@@ -56,9 +56,9 @@ final class EncryptedJwtBundle
     /**
      * Sets the JWT signature.
      *
-     * @param string $signature the signature of the JWT
+     * @param JwtSignature $signature the signature of the JWT
      */
-    public function setSignature(string $signature): self
+    public function setSignature(JwtSignature $signature): self
     {
         $this->signature = $signature;
 
@@ -82,6 +82,6 @@ final class EncryptedJwtBundle
      */
     public function getSignature(): string
     {
-        return $this->signature ?? throw new MissingTokenPart('Signature');
+        return (string) $this->signature ?? throw new MissingTokenPart('Signature');
     }
 }

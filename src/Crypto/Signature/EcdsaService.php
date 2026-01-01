@@ -8,6 +8,7 @@ use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtSignature;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 use function is_array;
@@ -38,7 +39,7 @@ class EcdsaService extends SignatureService
         $privateKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, 'private');
         $signature = $this->signData($data, $privateKey, $algorithm);
 
-        $bundle->setSignature($signature);
+        $bundle->setSignature(new JwtSignature($signature));
     }
 
     /**

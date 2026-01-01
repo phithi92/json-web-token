@@ -10,6 +10,7 @@ use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
+use Phithi92\JsonWebToken\Token\JwtSignature;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
 use function array_map;
@@ -198,7 +199,7 @@ final class JwtTokenParser
         [$payloadJson, $signature] = $decoded;
 
         $bundle->getEncryption()->setAad($aad);
-        $bundle->setSignature($signature);
+        $bundle->setSignature(new JwtSignature($signature));
 
         JwtPayloadJsonCodec::decodeStaticInto($payloadJson, $bundle->getPayload());
 
