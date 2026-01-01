@@ -7,7 +7,7 @@ namespace Phithi92\JsonWebToken\Token;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 
 /**
- * EncryptedJwtBundle.
+ * JwtBundle.
  *
  * Internal representation of a JSON-based token during its lifecycle,
  * supporting both JWS and JWE formats. Used for building, decoding,

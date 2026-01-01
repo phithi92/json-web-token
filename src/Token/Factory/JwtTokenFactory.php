@@ -26,7 +26,7 @@ use function spl_object_id;
  * - Decrypting and verifying existing tokens based on algorithm configuration.
  * - Delegating responsibilities to pluggable handler interfaces.
  *
- * Acts as a central access point to assemble or parse `EncryptedJwtBundle` objects
+ * Acts as a central access point to assemble or parse `JwtBundle` objects
  * using a configured `JwtAlgorithmManager` and optional `JwtValidator`.
  */
 final class JwtTokenFactory

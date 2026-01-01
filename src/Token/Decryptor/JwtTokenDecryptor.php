@@ -17,7 +17,7 @@ use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
  * Component class for decrypting and validating encrypted JWTs.
  *
  * This class handles the reverse lifecycle of a JWT, including:
- * - Parsing tokens into structured `EncryptedJwtBundle` objects.
+ * - Parsing tokens into structured `JwtBundle` objects.
  * - Applying decryption and decoding logic via registered handlers.
  * - Optionally validating claims using a configurable `JwtValidator`.
  *

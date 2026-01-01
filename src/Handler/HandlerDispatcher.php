@@ -112,7 +112,7 @@ final class HandlerDispatcher
      * @param array<string,mixed> $context
      * @param array<string,mixed> $config
      *
-     * @return array{EncryptedJwtBundle, array<string,string>}
+     * @return array{JwtBundle, array<string,string>}
      */
     private function resolveArguments(
         HandlerTarget $target,
