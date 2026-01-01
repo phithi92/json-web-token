@@ -37,7 +37,8 @@ final class KeyStore
      * @param string|array<int,string>|null $kid
      */
     public function addKey(
-        #[SensitiveParameter] string $pem,
+        #[SensitiveParameter]
+        string $pem,
         ?string $role = null,
         string|array|null $kid = null,
     ): string {
@@ -128,7 +129,8 @@ final class KeyStore
      * @throws RuntimeException
      */
     private function buildKeyMetadata(
-        #[SensitiveParameter] string|OpenSSLAsymmetricKey $pem,
+        #[SensitiveParameter]
+        string|OpenSSLAsymmetricKey $pem,
         ?string $role = null,
     ): array {
         $this->assertValidRole($role);
@@ -151,7 +153,8 @@ final class KeyStore
      * @throws RuntimeException
      */
     private function resolveKey(
-        #[SensitiveParameter] string|OpenSSLAsymmetricKey $pem,
+        #[SensitiveParameter]
+        string|OpenSSLAsymmetricKey $pem,
         ?string $role = null,
     ): array {
         return match ($role) {
@@ -162,7 +165,8 @@ final class KeyStore
     }
 
     private function ensureKey(
-        #[SensitiveParameter] OpenSSLAsymmetricKey|false $key
+        #[SensitiveParameter]
+        OpenSSLAsymmetricKey|false $key
     ): OpenSSLAsymmetricKey {
         if ($key === false) {
             throw new RuntimeException('Could not load OpenSSL key.');

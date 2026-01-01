@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token;
 
+use Override;
 use SensitiveParameter;
 use Stringable;
 
@@ -35,7 +36,7 @@ final class JwtSignature implements Stringable
     /**
      * Returns the signature as a string.
      */
-    #[\Override]
+    #[Override]
     public function __toString(): string
     {
         return $this->value;

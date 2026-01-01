@@ -196,8 +196,8 @@ final class JwtHeader implements JsonSerializable
      */
     public static function fromArray(array $data): self
     {
-        $instance      = new self();
-        $headerFields  = self::filterStringMap($data);
+        $instance = new self();
+        $headerFields = self::filterStringMap($data);
 
         if (array_key_exists('alg', $headerFields)) {
             $instance->setAlgorithm($headerFields['alg']);
@@ -262,13 +262,13 @@ final class JwtHeader implements JsonSerializable
         $filtered = [];
 
         foreach (self::ALLOWED_KEYS as $key) {
-            if (!array_key_exists($key, $data)) {
+            if (! array_key_exists($key, $data)) {
                 continue;
             }
 
             $value = $data[$key];
 
-            if (!is_string($value)) {
+            if (! is_string($value)) {
                 throw new InvalidFormatException(sprintf(
                     "Invalid type for header key '%s': expected string, got %s",
                     $key,

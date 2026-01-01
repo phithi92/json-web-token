@@ -96,7 +96,8 @@ final class JwtAlgorithmManager
      * @param string|null $kid        Optional key identifier.
      */
     public function addPrivateKey(
-        #[SensitiveParameter] string $pemContent,
+        #[SensitiveParameter]
+        string $pemContent,
         ?string $kid = null
     ): void {
         $this->keyStore->addKey($pemContent, 'private', $kid);
@@ -111,7 +112,8 @@ final class JwtAlgorithmManager
      * @param string|null $kid        Optional key identifier.
      */
     public function addPublicKey(
-        #[SensitiveParameter] string $pemContent,
+        #[SensitiveParameter]
+        string $pemContent,
         ?string $kid = null
     ): void {
         $this->keyStore->addKey($pemContent, 'public', $kid);
@@ -139,8 +141,10 @@ final class JwtAlgorithmManager
      * @param string|null $kid     Optional key identifier.
      */
     public function addKeyPair(
-        #[SensitiveParameter] string $private,
-        #[SensitiveParameter] string $public,
+        #[SensitiveParameter]
+        string $private,
+        #[SensitiveParameter]
+        string $public,
         ?string $kid = null
     ): void {
         $this->addPrivateKey($private, $kid);
@@ -239,7 +243,8 @@ final class JwtAlgorithmManager
      * @param string|null $kid        Optional key identifier.
      */
     public function addPassphrase(
-        #[SensitiveParameter] string $passphrase,
+        #[SensitiveParameter]
+        string $passphrase,
         ?string $kid = null
     ): void {
         $this->passphraseStore->addPassphrase($passphrase, $kid);
