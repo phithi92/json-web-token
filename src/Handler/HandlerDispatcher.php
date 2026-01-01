@@ -20,15 +20,12 @@ use function method_exists;
 
 final class HandlerDispatcher
 {
-    private HandlerInvoker $invoker;
-
     /** @var array<class-string, object> */
     private array $handlerCache = [];
 
     public function __construct(
         private readonly HandlerMethodResolver $methodResolver,
     ) {
-        $this->invoker = new HandlerInvoker();
     }
 
     /**
@@ -55,7 +52,7 @@ final class HandlerDispatcher
 
         $args = $this->resolveArguments($target, $context, $config);
 
-        return $this->invoker->invoke($handler, $method, $args);
+        return $handler->{$method}(... $args);
     }
 
     private function resolveMethod(
