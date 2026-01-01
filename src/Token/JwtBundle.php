@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
+use Phithi92\JsonWebToken\Exceptions\Token\SignatureAlreadySetException;
 
 /**
  * JwtBundle.
@@ -15,11 +16,11 @@ use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
  */
 final class JwtBundle
 {
-    private JwtHeader $header;
+    private readonly JwtHeader $header;
 
-    private JwtPayload $payload;
+    private readonly JwtPayload $payload;
 
-    private JwtEncryptionData $encryption;
+    private ?JwtEncryptionData $encryption = null;
 
     private ?JwtSignature $signature = null;
 
@@ -28,11 +29,12 @@ final class JwtBundle
      *
      * If a JwtPayload is provided, it sets this payload during instantiation.
      */
-    public function __construct(JwtHeader $header, ?JwtPayload $payload = null)
-    {
+    public function __construct(
+        JwtHeader $header,
+        ?JwtPayload $payload = null,
+    ) {
         $this->header = $header;
         $this->payload = $payload ?? new JwtPayload();
-        $this->encryption = new JwtEncryptionData();
     }
 
     /**
@@ -50,18 +52,23 @@ final class JwtBundle
      */
     public function getEncryption(): JwtEncryptionData
     {
-        return $this->encryption;
+        return $this->encryption ??= new JwtEncryptionData();
     }
 
     /**
      * Sets the JWT signature.
      *
      * @param JwtSignature $signature the signature of the JWT
+     *
+     * @throws SignatureAlreadySetException
      */
     public function setSignature(JwtSignature $signature): self
     {
-        $this->signature = $signature;
+        if ($this->signature !== null) {
+            throw new SignatureAlreadySetException();
+        }
 
+        $this->signature = $signature;
         return $this;
     }
 
@@ -79,11 +86,27 @@ final class JwtBundle
      * Retrieves the JWT signature.
      *
      * @return string the signature
+     *
+     * @throws MissingTokenPart
      */
     public function getSignature(): string
     {
-        return $this->signature !== null
-            ? (string) $this->signature
-            : throw new MissingTokenPart('Signature');
+        return (string) $this->getSignatureObject();
+    }
+
+    public function hasSignature(): bool
+    {
+        return $this->signature !== null;
+    }
+
+    /**
+     *
+     * @return JwtSignature
+     *
+     * @throws MissingTokenPart
+     */
+    public function getSignatureObject(): JwtSignature
+    {
+        return $this->signature ?? throw new MissingTokenPart('Signature');
     }
 }
