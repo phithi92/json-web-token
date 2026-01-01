@@ -8,7 +8,7 @@ use LogicException;
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
@@ -46,7 +46,7 @@ final class JwtTokenFactory
      * @param JwtValidator|null   $validator optional validator instance
      * @param string|null         $kid       optional key ID
      *
-     * @return EncryptedJwtBundle resulting token bundle
+     * @return JwtBundle resulting token bundle
      */
     public static function createToken(
         string $algorithm,
@@ -54,7 +54,7 @@ final class JwtTokenFactory
         ?JwtPayload $payload = null,
         ?JwtValidator $validator = null,
         ?string $kid = null,
-    ): EncryptedJwtBundle {
+    ): JwtBundle {
         $builder = self::getBuilder($manager);
 
         return $builder->create($algorithm, $payload, $validator, $kid);
@@ -69,7 +69,7 @@ final class JwtTokenFactory
      * @param JwtValidator|null    $validator optional validator instance
      * @param string|null          $kid       optional key ID
      *
-     * @return EncryptedJwtBundle resulting token bundle
+     * @return JwtBundle resulting token bundle
      */
     public static function createTokenFromArray(
         string $algorithm,
@@ -77,7 +77,7 @@ final class JwtTokenFactory
         array $claims,
         ?JwtValidator $validator = null,
         ?string $kid = null,
-    ): EncryptedJwtBundle {
+    ): JwtBundle {
         $payload = new JwtPayload();
         $payload->fromArray($claims);
 
@@ -98,7 +98,7 @@ final class JwtTokenFactory
      * @param JwtPayload|null     $payload   optional JWT payload
      * @param string|null         $kid       optional key ID
      *
-     * @return EncryptedJwtBundle resulting token bundle
+     * @return JwtBundle resulting token bundle
      *
      * @throws LogicException if used in production context
      */
@@ -107,7 +107,7 @@ final class JwtTokenFactory
         JwtAlgorithmManager $manager,
         ?JwtPayload $payload = null,
         ?string $kid = null,
-    ): EncryptedJwtBundle {
+    ): JwtBundle {
         $builder = self::getBuilder($manager);
 
         return $builder->createWithoutValidation($algorithm, $payload, $kid);
@@ -143,13 +143,13 @@ final class JwtTokenFactory
      * @param JwtAlgorithmManager $manager   algorithm manager
      * @param JwtValidator|null   $validator optional validator
      *
-     * @return EncryptedJwtBundle decrypted and parsed JWT bundle
+     * @return JwtBundle decrypted and parsed JWT bundle
      */
     public static function decryptToken(
         string $token,
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator = null,
-    ): EncryptedJwtBundle {
+    ): JwtBundle {
         $processor = self::getDecryptor($manager);
 
         return $processor->decrypt($token, $validator);
@@ -161,12 +161,12 @@ final class JwtTokenFactory
      * @param string              $token   serialized JWT string
      * @param JwtAlgorithmManager $manager algorithm manager
      *
-     * @return EncryptedJwtBundle decrypted JWT bundle
+     * @return JwtBundle decrypted JWT bundle
      */
     public static function decryptTokenWithoutClaimValidation(
         string $token,
         JwtAlgorithmManager $manager,
-    ): EncryptedJwtBundle {
+    ): JwtBundle {
         $processor = self::getDecryptor($manager);
 
         return $processor->decryptWithoutClaimValidation($token);
@@ -199,7 +199,7 @@ final class JwtTokenFactory
         string $interval,
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator = null,
-    ): EncryptedJwtBundle {
+    ): JwtBundle {
         $bundle = JwtTokenParser::parse($token);
 
         return self::reissueBundle($interval, $bundle, $manager, $validator);
@@ -209,22 +209,22 @@ final class JwtTokenFactory
      * Refreshes a JWT by cloning its payload and updating the timestamps.
      *
      * @param string              $interval  Expiration interval (e.g., "+1 hour").
-     * @param EncryptedJwtBundle  $bundle    existing JWT bundle to refresh
+     * @param JwtBundle  $bundle    existing JWT bundle to refresh
      * @param JwtAlgorithmManager $manager   algorithm manager instance
      * @param JwtValidator|null   $validator optional validator to check the bundle before refreshing
      *
-     * @return EncryptedJwtBundle new JWT bundle with refreshed timestamps
+     * @return JwtBundle new JWT bundle with refreshed timestamps
      */
     public static function reissueBundle(
         string $interval,
-        EncryptedJwtBundle $bundle,
+        JwtBundle $bundle,
         JwtAlgorithmManager $manager,
         ?JwtValidator $validator = null,
-    ): EncryptedJwtBundle {
+    ): JwtBundle {
         $payload = self::buildFilteredPayload($bundle)
             ->setExpiration($interval);
 
-        $newBundle = new EncryptedJwtBundle($bundle->getHeader(), $payload);
+        $newBundle = new JwtBundle($bundle->getHeader(), $payload);
 
         $validator ??= new JwtValidator();
         $validator->assertValidBundle($newBundle);
@@ -234,7 +234,7 @@ final class JwtTokenFactory
         return $builder->createFromBundle($newBundle);
     }
 
-    private static function buildFilteredPayload(EncryptedJwtBundle $bundle): JwtPayload
+    private static function buildFilteredPayload(JwtBundle $bundle): JwtPayload
     {
         $oldPayload = $bundle->getPayload();
         $newPayload = new JwtPayload($oldPayload->getDateClaimHelper()->getReferenceTime());

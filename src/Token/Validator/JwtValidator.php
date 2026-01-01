@@ -17,7 +17,7 @@ use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 
 use function in_array;
@@ -188,7 +188,7 @@ final class JwtValidator
      * @throws PayloadException On any validation failure
      * @throws TokenException On any validation failure
      */
-    public function assertValidBundle(EncryptedJwtBundle $bundle): void
+    public function assertValidBundle(JwtBundle $bundle): void
     {
         $this->assertValid($bundle->getPayload());
     }

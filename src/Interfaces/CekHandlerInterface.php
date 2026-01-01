@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Interfaces;
 
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 
 interface CekHandlerInterface
 {
@@ -15,7 +15,7 @@ interface CekHandlerInterface
      * @param array<string,string|int|class-string<object>> $config
      *                                                              Configuration array (expects 'length' in bits)
      */
-    public function initializeCek(EncryptedJwtBundle $bundle, array $config): void;
+    public function initializeCek(JwtBundle $bundle, array $config): void;
 
     /**
      * Validates the CEK against expected configuration (length, format, etc).
@@ -23,5 +23,5 @@ interface CekHandlerInterface
      * @param array<string,string|int|class-string<object>> $config
      *                                                              Configuration array (expects 'length' in bits)
      */
-    public function validateCek(EncryptedJwtBundle $bundle, array $config): void;
+    public function validateCek(JwtBundle $bundle, array $config): void;
 }

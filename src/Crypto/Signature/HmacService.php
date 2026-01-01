@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
 
 use function hash_equals;
@@ -20,7 +20,7 @@ class HmacService extends SignatureService
      */
     private array $checkedHmacKeys;
 
-    public function computeSignature(EncryptedJwtBundle $bundle, array $config): void
+    public function computeSignature(JwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
         $algorithm = $this->getConfiguredHashAlgorithm($config);
@@ -37,7 +37,7 @@ class HmacService extends SignatureService
     /**
      * @throws InvalidSignatureException
      */
-    public function validateSignature(EncryptedJwtBundle $bundle, array $config): void
+    public function validateSignature(JwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
         $algorithm = $this->getConfiguredHashAlgorithm($config);

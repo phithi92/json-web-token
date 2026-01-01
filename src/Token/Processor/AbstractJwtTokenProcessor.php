@@ -12,7 +12,7 @@ use Phithi92\JsonWebToken\Handler\HandlerMethodResolver;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Handler\HandlerTarget;
 use Phithi92\JsonWebToken\Interfaces\JwtTokenOperation;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 
 use function usort;
 
@@ -72,7 +72,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      *
      * @throws InvalidTokenException if no algorithm is specified in the JWT header
      */
-    protected function resolveAlgorithm(EncryptedJwtBundle $bundle): string
+    protected function resolveAlgorithm(JwtBundle $bundle): string
     {
         $header = $bundle->getHeader();
         $alg = $header->getAlgorithm() ?? throw new InvalidTokenException('no algorithm');
@@ -87,11 +87,11 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      * executes them in order of their defined priority.
      *
      * @param string             $algorithm the resolved algorithm identifier
-     * @param EncryptedJwtBundle $bundle    the encrypted JWT to process
+     * @param JwtBundle $bundle    the encrypted JWT to process
      */
     protected function dispatchHandlers(
         string $algorithm,
-        EncryptedJwtBundle $bundle,
+        JwtBundle $bundle,
     ): void {
         [$config, $descriptors] = $this->resolveConfigAndHandlers($algorithm);
 

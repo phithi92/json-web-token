@@ -7,7 +7,7 @@ namespace Phithi92\JsonWebToken\Crypto\Content;
 use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 use function openssl_private_decrypt;
@@ -18,7 +18,7 @@ final class RsaEncryptionService extends ContentCryptoService
     /**
      * @param array<string,int|string> $config
      */
-    public function decryptPayload(EncryptedJwtBundle $bundle, array $config): void
+    public function decryptPayload(JwtBundle $bundle, array $config): void
     {
         $kid = $bundle->getHeader()->getKid();
 
@@ -28,7 +28,7 @@ final class RsaEncryptionService extends ContentCryptoService
     /**
      * @param array<string,int|string> $config
      */
-    public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
+    public function encryptPayload(JwtBundle $bundle, array $config): void
     {
         $kid = $bundle->getHeader()->getKid();
 
@@ -40,7 +40,7 @@ final class RsaEncryptionService extends ContentCryptoService
      *
      * @throws DecryptionException
      */
-    public function decrypt(EncryptedJwtBundle $bundle, string $kid, array $config): void
+    public function decrypt(JwtBundle $bundle, string $kid, array $config): void
     {
         $padding = (int) $config['padding'];
         $privateKey = $this->manager->getPrivateKey($kid);
@@ -61,7 +61,7 @@ final class RsaEncryptionService extends ContentCryptoService
      *
      * @throws InvalidTokenException
      */
-    public function encrypt(EncryptedJwtBundle $bundle, string $kid, array $config): void
+    public function encrypt(JwtBundle $bundle, string $kid, array $config): void
     {
         $padding = (int) $config['padding'];
         $publicKey = $this->manager->getPublicKey($kid);

@@ -8,7 +8,7 @@ use LogicException;
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
@@ -65,7 +65,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
         ?JwtPayload $payload = null,
         ?JwtValidator $validator = null,
         ?string $kid = null,
-    ): EncryptedJwtBundle {
+    ): JwtBundle {
         $bundle = $this->createWithoutValidation($algorithm, $payload, $kid);
 
         $this->getValidator($validator)->assertValidBundle($bundle);
@@ -76,15 +76,15 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     /**
      * Creates a validated token from an existing bundle.
      *
-     * @param EncryptedJwtBundle $bundle    Pre-built bundle
+     * @param JwtBundle $bundle    Pre-built bundle
      * @param string|null        $algorithm Algorithm override (optional)
      * @param JwtValidator|null  $validator Optional validator
      */
     public function createFromBundle(
-        EncryptedJwtBundle $bundle,
+        JwtBundle $bundle,
         ?string $algorithm = null,
         ?JwtValidator $validator = null,
-    ): EncryptedJwtBundle {
+    ): JwtBundle {
         $algorithm ??= $bundle->getHeader()->getAlgorithm() ?? '';
 
         $this->dispatchHandlers($algorithm, $bundle);
@@ -105,13 +105,13 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
         string $algorithm,
         ?JwtPayload $payload = null,
         ?string $kid = null,
-    ): EncryptedJwtBundle {
+    ): JwtBundle {
         $config = $this->manager->getConfiguration($algorithm);
 
         [$typ, $alg, $enc] = $this->extractHeaderParams($config);
 
         $header = $this->createHeader($typ, $alg, $kid, $enc);
-        $bundle = new EncryptedJwtBundle($header, $payload);
+        $bundle = new JwtBundle($header, $payload);
 
         $this->dispatchHandlers($algorithm, $bundle);
 

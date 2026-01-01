@@ -8,7 +8,7 @@ use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
@@ -49,9 +49,9 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      *
      * @param string $token the encrypted JWT string
      *
-     * @return EncryptedJwtBundle the fully decrypted and validated JWT payload bundle
+     * @return JwtBundle the fully decrypted and validated JWT payload bundle
      */
-    public function decrypt(string $token, ?JwtValidator $validator = null): EncryptedJwtBundle
+    public function decrypt(string $token, ?JwtValidator $validator = null): JwtBundle
     {
         $bundle = $this->decryptWithoutClaimValidation($token);
 
@@ -67,9 +67,9 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      *
      * @param string $token the encrypted JWT string
      *
-     * @return EncryptedJwtBundle the decrypted JWT payload bundle
+     * @return JwtBundle the decrypted JWT payload bundle
      */
-    public function decryptWithoutClaimValidation(string $token): EncryptedJwtBundle
+    public function decryptWithoutClaimValidation(string $token): JwtBundle
     {
         $bundle = JwtTokenParser::parse($token);
         $algorithm = $this->resolveAlgorithm($bundle);
@@ -84,13 +84,13 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      *
      * Uses the provided validator if given, otherwise falls back to a default JwtValidator.
      *
-     * @param EncryptedJwtBundle $bundle    The token bundle to validate
+     * @param JwtBundle $bundle    The token bundle to validate
      * @param JwtValidator|null  $validator Optional custom validator
      *
      * @throws PayloadException If payload-related validation fails
      * @throws TokenException   If token structure or format is invalid
      */
-    private function assertValidBundle(EncryptedJwtBundle $bundle, ?JwtValidator $validator = null): void
+    private function assertValidBundle(JwtBundle $bundle, ?JwtValidator $validator = null): void
     {
         $validator ??= new JwtValidator();
         $validator->assertValidBundle($bundle);

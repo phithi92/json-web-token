@@ -8,7 +8,7 @@ use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
@@ -30,7 +30,7 @@ final class AesGcmService extends ContentCryptoService
     /**
      * @throws InvalidTokenException
      */
-    public function decryptPayload(EncryptedJwtBundle $bundle, array $config): void
+    public function decryptPayload(JwtBundle $bundle, array $config): void
     {
         $algorithm = $this->buildAlgorithmNameFromKeyLength($config);
 
@@ -49,7 +49,7 @@ final class AesGcmService extends ContentCryptoService
         JwtPayloadJsonCodec::decodeStaticInto($unsealedPayload, $bundle->getPayload());
     }
 
-    public function encryptPayload(EncryptedJwtBundle $bundle, array $config): void
+    public function encryptPayload(JwtBundle $bundle, array $config): void
     {
         $algorithm = $this->buildAlgorithmNameFromKeyLength($config);
 
@@ -82,7 +82,7 @@ final class AesGcmService extends ContentCryptoService
     /**
      * @return array{string,string,string,string,string}
      */
-    private function extractTokenDecryptionComponents(EncryptedJwtBundle $bundle): array
+    private function extractTokenDecryptionComponents(JwtBundle $bundle): array
     {
         return [
             $bundle->getEncryption()->getCek(),
@@ -96,7 +96,7 @@ final class AesGcmService extends ContentCryptoService
     /**
      * @return array{string,string,string,string}
      */
-    private function extractTokenEncryptionComponents(EncryptedJwtBundle $bundle): array
+    private function extractTokenEncryptionComponents(JwtBundle $bundle): array
     {
         return [
             $bundle->getEncryption()->getCek(),

@@ -10,7 +10,7 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
 use function implode;
@@ -25,7 +25,7 @@ abstract class SignatureService implements SignatureHandlerInterface
         $this->manager = $manager;
     }
 
-    public function getSigningInput(EncryptedJwtBundle $bundle): string
+    public function getSigningInput(JwtBundle $bundle): string
     {
         return implode(
             '.',
@@ -43,7 +43,7 @@ abstract class SignatureService implements SignatureHandlerInterface
      *
      * @throws InvalidSignatureException
      */
-    protected function resolveKid(EncryptedJwtBundle $bundle, array $config): string
+    protected function resolveKid(JwtBundle $bundle, array $config): string
     {
         $kid = $bundle->getHeader()->getKid();
 

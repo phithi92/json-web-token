@@ -7,7 +7,7 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
@@ -24,7 +24,7 @@ class RsaSignatureService extends SignatureService
         $this->rsaHelper = new RsaHelperService($manager);
     }
 
-    public function computeSignature(EncryptedJwtBundle $bundle, array $config): void
+    public function computeSignature(JwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
         $algorithm = $this->getConfiguredHashAlgorithm($config);
@@ -44,7 +44,7 @@ class RsaSignatureService extends SignatureService
         $bundle->setSignature(new JwtSignature($signature));
     }
 
-    public function validateSignature(EncryptedJwtBundle $bundle, array $config): void
+    public function validateSignature(JwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
         $algorithm = $this->getConfiguredHashAlgorithm($config);

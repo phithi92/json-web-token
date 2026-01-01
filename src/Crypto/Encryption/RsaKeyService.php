@@ -9,7 +9,7 @@ use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 use function in_array;
@@ -27,7 +27,7 @@ class RsaKeyService extends KeyCryptoService
      *
      * @throws InvalidKidFormatException
      */
-    public function unwrapKey(EncryptedJwtBundle $bundle, array $config): void
+    public function unwrapKey(JwtBundle $bundle, array $config): void
     {
         $kid = $bundle->getHeader()->getKid();
 
@@ -42,7 +42,7 @@ class RsaKeyService extends KeyCryptoService
     /**
      * @param array<string,string|int> $config
      */
-    public function wrapKey(EncryptedJwtBundle $bundle, array $config): void
+    public function wrapKey(JwtBundle $bundle, array $config): void
     {
         $kid = $bundle->getHeader()->getKid();
 

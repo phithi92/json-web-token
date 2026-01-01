@@ -8,7 +8,7 @@ use Phithi92\JsonWebToken\Exceptions\Crypto\EmptyInitializeVectorException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorConfigException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorException;
 use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 
 use function is_int;
 use function random_bytes;
@@ -23,7 +23,7 @@ final class IvService implements IvHandlerInterface
     /**
      * Generate a cryptographically secure IV and store it in the bundle.
      */
-    public function initializeIv(EncryptedJwtBundle $bundle, array $config): void
+    public function initializeIv(JwtBundle $bundle, array $config): void
     {
         $bits = $this->getBitLengthFromConfig($config);
         $bytesLength = $this->normalizeAndValidateBitLength($bits);
@@ -40,7 +40,7 @@ final class IvService implements IvHandlerInterface
      *
      * @throws InvalidInitializationVectorException If the IV is missing or has an unexpected length
      */
-    public function validateIv(EncryptedJwtBundle $bundle, array $config): void
+    public function validateIv(JwtBundle $bundle, array $config): void
     {
         $bits = $this->getBitLengthFromConfig($config);
         $bytesLength = $this->normalizeAndValidateBitLength($bits);

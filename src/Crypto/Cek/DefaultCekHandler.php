@@ -8,14 +8,14 @@ use Exception;
 use LogicException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidCekLength;
 use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 
 use function random_bytes;
 use function strlen;
 
 final class DefaultCekHandler implements CekHandlerInterface
 {
-    public function initializeCek(EncryptedJwtBundle $bundle, array $config): void
+    public function initializeCek(JwtBundle $bundle, array $config): void
     {
         $byteLength = $this->getByteLength($config);
 
@@ -24,7 +24,7 @@ final class DefaultCekHandler implements CekHandlerInterface
         $bundle->getEncryption()->setCek($cek);
     }
 
-    public function validateCek(EncryptedJwtBundle $bundle, array $config): void
+    public function validateCek(JwtBundle $bundle, array $config): void
     {
         $cek = $bundle->getEncryption()->getCek();
 

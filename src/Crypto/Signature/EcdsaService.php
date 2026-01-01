@@ -7,7 +7,7 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
@@ -30,7 +30,7 @@ class EcdsaService extends SignatureService
      *
      * @throws SignatureComputationFailedException
      */
-    public function computeSignature(EncryptedJwtBundle $bundle, array $config): void
+    public function computeSignature(JwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
         $data = $this->getSigningInput($bundle);
@@ -47,7 +47,7 @@ class EcdsaService extends SignatureService
      *
      * @throws InvalidSignatureException
      */
-    public function validateSignature(EncryptedJwtBundle $bundle, array $config): void
+    public function validateSignature(JwtBundle $bundle, array $config): void
     {
         $kid = $this->resolveKid($bundle, $config);
 

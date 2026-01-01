@@ -8,7 +8,7 @@ use Phithi92\JsonWebToken\Exceptions\Base64\InvalidBase64UrlFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtSignature;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
@@ -32,17 +32,17 @@ final class JwtTokenParser
     /**
      * @param string|array<int,string> $token
      *
-     * @return EncryptedJwtBundle configured bundle
+     * @return JwtBundle configured bundle
      *
      * @throws MalformedTokenException
      */
-    public static function parse(string|array $token): EncryptedJwtBundle
+    public static function parse(string|array $token): JwtBundle
     {
         $tokenArray = self::normalizeTokenInput($token);
 
         $header = self::buildHeaderFromTokenArray($tokenArray);
 
-        $bundle = new EncryptedJwtBundle($header);
+        $bundle = new JwtBundle($header);
 
         if (! is_null($header->getType())) {
             return self::parseByType($bundle, $tokenArray);
@@ -56,7 +56,7 @@ final class JwtTokenParser
      *
      * @throws MalformedTokenException
      */
-    public static function serialize(EncryptedJwtBundle $bundle): string
+    public static function serialize(JwtBundle $bundle): string
     {
         return match ($bundle->getHeader()->getType()) {
             self::JWE_TYPE => self::serializeEncodedToken($bundle),
@@ -106,7 +106,7 @@ final class JwtTokenParser
     /**
      * @param array<int,string> $tokenArray
      */
-    private static function parseByType(EncryptedJwtBundle $bundle, array $tokenArray): EncryptedJwtBundle
+    private static function parseByType(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
         return match ($bundle->getHeader()->getType()) {
             self::JWS_TYPE => self::parseSignatureToken($bundle, $tokenArray),
@@ -118,7 +118,7 @@ final class JwtTokenParser
     /**
      * @param array<int,string> $tokenArray
      */
-    private static function parseByStructure(EncryptedJwtBundle $bundle, array $tokenArray): EncryptedJwtBundle
+    private static function parseByStructure(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
         return match (count($tokenArray)) {
             self::JWS_PART_COUNT => self::parseSignatureToken($bundle, $tokenArray),
@@ -132,7 +132,7 @@ final class JwtTokenParser
      *
      * @throws MalformedTokenException
      */
-    private static function parseEncodedToken(EncryptedJwtBundle $bundle, array $tokenArray): EncryptedJwtBundle
+    private static function parseEncodedToken(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
         if (count($tokenArray) !== self::JWE_PART_COUNT) {
             throw new MalformedTokenException('Invalid JWE token structure.');
@@ -153,7 +153,7 @@ final class JwtTokenParser
     /**
      * @param array<int, string> $decoded
      */
-    private static function configureFromDecodedData(EncryptedJwtBundle $bundle, array $decoded): EncryptedJwtBundle
+    private static function configureFromDecodedData(JwtBundle $bundle, array $decoded): JwtBundle
     {
         $encryption = $bundle->getEncryption();
         $header = $bundle->getHeader();
@@ -179,7 +179,7 @@ final class JwtTokenParser
      *
      * @throws MalformedTokenException
      */
-    private static function parseSignatureToken(EncryptedJwtBundle $bundle, array $tokenArray): EncryptedJwtBundle
+    private static function parseSignatureToken(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
         if (count($tokenArray) !== self::JWS_PART_COUNT) {
             throw new MalformedTokenException('Invalid JWS token structure.');
@@ -209,7 +209,7 @@ final class JwtTokenParser
     /**
      * @return string serialized and encoded token
      */
-    private static function serializeEncodedToken(EncryptedJwtBundle $bundle): string
+    private static function serializeEncodedToken(JwtBundle $bundle): string
     {
         $header = $bundle->getHeader();
         $encryption = $bundle->getEncryption();
@@ -230,7 +230,7 @@ final class JwtTokenParser
         return self::encodeAndSerialize($tokenArray);
     }
 
-    private static function serializeSignatureToken(EncryptedJwtBundle $bundle): string
+    private static function serializeSignatureToken(JwtBundle $bundle): string
     {
         /*
          * @param array<string> $tokenArray

@@ -9,7 +9,7 @@ use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerClassDefinitionExcept
 use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerImplementationException;
 use Phithi92\JsonWebToken\Exceptions\Handler\MissingHandlerConfigurationException;
 use Phithi92\JsonWebToken\Exceptions\Handler\UndefinedHandlerMethodException;
-use Phithi92\JsonWebToken\Token\EncryptedJwtBundle;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 use RuntimeException;
 
 use function gettype;
@@ -119,7 +119,7 @@ final class HandlerDispatcher
         array $context,
         array $config,
     ): array {
-        /** @var EncryptedJwtBundle $bundle */
+        /** @var JwtBundle $bundle */
         $bundle = $context['bundle'];
 
         /** @var array<string,string> $methodConfig */

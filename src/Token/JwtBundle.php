@@ -13,7 +13,7 @@ use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
  * supporting both JWS and JWE formats. Used for building, decoding,
  * encrypting, decrypting, signing, and verifying tokens.
  */
-final class EncryptedJwtBundle
+final class JwtBundle
 {
     private JwtHeader $header;
 
