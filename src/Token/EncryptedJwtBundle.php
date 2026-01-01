@@ -82,6 +82,8 @@ final class EncryptedJwtBundle
      */
     public function getSignature(): string
     {
-        return (string) $this->signature ?? throw new MissingTokenPart('Signature');
+        return $this->signature !== null
+            ? (string) $this->signature
+            : throw new MissingTokenPart('Signature');
     }
 }
