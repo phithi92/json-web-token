@@ -1,290 +1,181 @@
-# Json-Web-Token
-
 [![PHP Version](https://img.shields.io/packagist/php-v/phithi92/json-web-token.svg?style=for-the-badge)](https://packagist.org/packages/phithi92/json-web-token) [![Latest Version](https://img.shields.io/packagist/v/phithi92/json-web-token.svg?style=for-the-badge)](https://github.com/phithi92/json-web-token/releases) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=for-the-badge)](LICENSE) [![Issues](https://img.shields.io/github/issues/phithi92/json-web-token.svg?style=for-the-badge)](https://github.com/phithi92/json-web-token/issues) [![Build](https://img.shields.io/github/actions/workflow/status/phithi92/json-web-token/php.yml?branch=main&style=for-the-badge)](https://github.com/phithi92/json-web-token/actions) [![Total Downloads](https://img.shields.io/packagist/dt/phithi92/json-web-token.svg?style=for-the-badge)](https://packagist.org/packages/phithi92/json-web-token)
 
-The `JsonWebToken` PHP library enables seamless creation, signing, and validation of JSON Web Tokens (JWT) with support for JSON Web Signature (JWS) and JSON Web Encryption (JWE). Designed with a focus on security, it utilizes various cryptographic algorithms to ensure data integrity and confidentiality.
+# JSON Web Token (JWT) Library
 
----
+A security-focused PHP 8.2+ library for creating, signing, encrypting, decrypting, and validating JSON Web Tokens (JWT). The package supports both JSON Web Signature (JWS) and JSON Web Encryption (JWE) flows with a pluggable algorithm registry and explicit key management.
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Security Considerations](#security-considerations)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Usage Guide](#usage-guide)
-  - [Generate a Token](#generate-a-token)
-  - [Validate a Token](#validate-a-token)
-    - [Verify Structure and encryption](#verify-structure-and-encryption)
-    - [Verify Payload](#verify-payload)
-  - [Refresh a Token](#refresh-a-token)
-  - [Error Handling](#error-handling)
-- [Supported Algorithms](#supported-algorithms)
-- [Running Tests and Benchmarks](#running-tests-and-benchmarks)
-  - [PHPUnit Tests](#phpunit-tests)
-  - [PHPBench Tests](#phpbench-tests)
-- [Benchmark](#benchmark)
-- [Support](#support)
-
----
-
-## Overview
-
-This library adheres to the standards in [**RFC 7519**](https://datatracker.ietf.org/doc/html/rfc7519) (JWT), [**RFC 7515**](https://datatracker.ietf.org/doc/html/rfc7515) (JWS), and [**RFC 7516**](https://datatracker.ietf.org/doc/html/rfc7516) (JWE). It uses HMAC algorithms like HS256 for **token signing** (JWS) and AES-based methods for **token encryption** (JWE), ensuring both data integrity and confidentiality.
-
----
-
-## Security Considerations
-
-When working with JWTs, consider the following best practices:
-
-- **Store keys securely**: Ensure private keys are stored securely and are not hardcoded in your application code.
-- **Use HTTPS**: Always transmit tokens over HTTPS to prevent interception.
-- **Set expiration times**: Limit token lifespans by setting expiration times to reduce risk in case of token compromise.
-
----
-
-## Prerequisites
-
-Before using this library, ensure your environment meets the following requirements:
-
-- **PHP Version**: 8.2 or higher
-- **PHP Extensions**: `openssl`
-- **Composer**: For managing dependencies
-
----
+## Why this library?
+- Implements the core requirements of RFC 7515 (JWS), RFC 7516 (JWE), and RFC 7519 (JWT).
+- Clear separation between algorithm configuration, payload handling, token building/parsing, and validation.
+- Defaults to safe behavior (claim validation, strict key handling) with escape hatches clearly marked as **testing-only**.
 
 ## Installation
-
-To integrate this library into your project, clone the repository or download the necessary files. It is recommended to use Composer for managing dependencies.
-
-### Step 1: Clone the Repository
-
-Clone the project to your local environment:
-
-```bash
-git clone https://github.com/phithi92/json-web-token.git
-```
-
-Or, install the library directly via Composer:
-
 ```bash
 composer require phithi92/json-web-token
 ```
 
-### Step 2: Install Dependencies
+## Quick start
+The typical flow is:
 
-Ensure [Composer](https://getcomposer.org/) is installed, and then run:
+1. Configure algorithms and keys with `JwtKeyManager`.
+2. Build a payload with `JwtPayload`.
+3. Create, serialize, and later decrypt/validate tokens via `JwtTokenFactory`.
+4. Apply additional business checks using `JwtValidator`.
 
-```bash
-composer update
-```
-
-The project uses the following dependencies (defined in `composer.json`):
-
-**PHPUnit**: Used for unit testing to ensure robustness.
-**PHPBench**: Used for benchmark to ensure efficiency.
-
----
-
-## Usage Guide
-
-### Generate a Token
-
-To create a JWT, set up the signing algorithm and payload, then generate the token.
+### 1) Configure algorithms and keys
+`JwtKeyManager` keeps the algorithm registry and an in-memory key/passphrase store. Keys must be provided in PEM format.
 
 ```php
-use Phithi92\JsonWebToken\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\JwtPayload;
-use Phithi92\JsonWebToken\JwtTokenFactory;
+use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 
-$manager = new JwtAlgorithmManager(
-    'RS256',        // Specify the algorithm
-    null,           // Passphrase for symmetric algorithms (optional for asymmetric)
-    'public-key',  // Private key for asymmetric algorithms
-    'private-key'    // Public key for asymmetric algorithms
+$manager = new JwtKeyManager();
+
+// For asymmetric algorithms (RS*, ES*, PS*, RSA-OAEP-256_A256GCM)
+$manager->addKeyPair(
+    private: file_get_contents('/path/to/private.pem'),
+    public: file_get_contents('/path/to/public.pem'),
+    kid: 'main-key'
 );
+
+// For symmetric algorithms (HS*, A*GCM), register a single key
+$manager->addPrivateKey(
+    pemContent: file_get_contents('/path/to/hmac.key'),
+    kid: 'hmac-key'
+);
+```
+
+### 2) Build a payload
+`JwtPayload` exposes helpers for standard claims and type-safe validation. Time-based claims accept `"now"`, relative expressions (e.g. `"+15 minutes"`), or UNIX timestamps.
+
+```php
+use Phithi92\JsonWebToken\Token\JwtPayload;
 
 $payload = (new JwtPayload())
-    ->setIssuer('https://myapp.com')
-    ->setAudience('https://myapi.com')
-    ->setNotBefore('+3 minutes')
-    ->setExpiration('+15 minutes');
-
-$token = JwtTokenFactory::createToken($manager, $payload);
+    ->setIssuer('https://issuer.example')
+    ->setAudience(['https://service.example'])
+    ->setIssuedAt('now')
+    ->setNotBefore('+1 minute')
+    ->setExpiration('+15 minutes')
+    ->addClaim('role', 'admin');
 ```
 
-### Refresh a Token
-
-Refresh an existing JWT by extending its expiration.
+### 3) Create and serialize a token
+`JwtTokenFactory` orchestrates token building. Provide the algorithm identifier defined in `src/Config/algorithms.php`.
 
 ```php
-use Phithi92\JsonWebToken\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
-$manager = new JwtAlgorithmManager(
-    'RS256',        // Specify the algorithm
-    null,           // Passphrase for symmetric algorithms (optional for asymmetric)
-    'public-key',  // Private key for asymmetric algorithms
-    'private-key'    // Public key for asymmetric algorithms
+$validator = new JwtValidator();
+
+$bundle = JwtTokenFactory::createToken(
+    algorithm: 'RS256',
+    manager: $manager,
+    payload: $payload,
+    validator: $validator,
+    kid: 'main-key'
 );
 
-$token = JwtTokenFactory::refreshToken($manager,$encodedToken,'+15 minutes');
+$tokenString = JwtTokenFactory::createTokenString(
+    algorithm: 'RS256',
+    manager: $manager,
+    payload: $payload,
+    validator: $validator,
+    kid: 'main-key'
+);
 ```
 
-### Validate a Token
-
-##### Verify Structure and encryption
-
-To validate and decrypt a JWT, configure the algorithm manager and retrieve the payload.  
-**Note:** This validation covers only time-based claims (such as `exp`, `nbf`, and `iat`).  
-Validation of `audience` and `issuer` claims can be performed manually if required.
+### 4) Decrypt and validate
+Decrypts the compact string back into a `JwtBundle` while performing signature/encryption verification and claim checks.
 
 ```php
-use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
-use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
-use Phithi92\JsonWebToken\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\JwtTokenFactory;
-
-
-$manager = new JwtAlgorithmManager(
-    'RS256',        // Specify the algorithm
-    null,           // Passphrase for symmetric algorithms (optional for asymmetric)
-    'public-key',   // Private key for asymmetric algorithms
-    'private-key'   // Public key for asymmetric algorithms
+$bundle = JwtTokenFactory::decryptToken(
+    token: $tokenString,
+    manager: $manager,
+    validator: $validator
 );
 
-try {
-    $token = JwtTokenFactory::decryptToken($manager, $encodedToken);
-    $payload = $token->getPayload();
-} catch(TokenException){
-    ...
-} catch(PayloadException){
-    ...
-}
+$payload = $bundle->getPayload();
 ```
 
-Once the token has been decrypted, further validations can be performed directly on the JwtPayload as needed. This allows for flexible, custom checks beyond the standard validation methods provided.
+To run only structural checks (no claim validation), call `decryptTokenWithoutClaimValidation()`—this should be restricted to non-production tooling.
 
-##### Verify Payload
-
-Validation of `audience` and `issuer` claims can be performed manually if you need.
-
-**Validate Issuer**
+### 5) Business validation
+`JwtValidator` lets you enforce issuer and audience expectations and verifies time-based claims.
 
 ```php
-use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuerException;
-
-try {
-    $token->getPayload()->validateIssuer($issuer);
-} catch(InvalidIssuerException){
-    ...
-}
+$validator->assertValidIssuer($payload, 'https://issuer.example');
+$validator->assertValidAudience($payload, ['https://service.example']);
 ```
 
-**Validate Audience**
+### Refresh / reissue
+`JwtTokenFactory::reissueBundle()` clones an existing bundle, strips time-based claims, and applies a new expiration window.
 
 ```php
-use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
-
-try {
-    $token->getPayload()->validateAudience($audience);
-} catch(InvalidAudienceException){
-    ...
-}
+$newBundle = JwtTokenFactory::reissueBundle(
+    interval: '+30 minutes',
+    bundle: $bundle,
+    manager: $manager,
+    validator: $validator
+);
 ```
 
-The `$audience` parameter can be either a single value or an array. The validateAudience(`$audience`) method checks whether the audience value specified in the token matches the given `$audience`. If $audience is an array, the validation will pass if any one value in the array matches the audience value in the token.
+## Core classes
+- **`JwtKeyManager`** — central registry for supported algorithms, key pairs, and passphrases. Throws if keys are missing or invalid.
+- **`JwtPayload`** — mutable payload representation with helpers for standard claims and type enforcement. Raises dedicated exceptions for empty or malformed values.
+- **`JwtTokenFactory`** — high-level entry point for building, serializing, decrypting, and reissuing tokens. Provides testing-only methods that bypass claim validation (`createTokenWithoutClaimValidation`, `decryptTokenWithoutClaimValidation`).
+- **`JwtValidator`** — reusable validator for issuer, audience, and time-based constraints. `assert*` methods throw typed exceptions to help you differentiate failure causes.
+- **`JwtBundle`** — aggregate of header, payload, signatures, and encryption artifacts returned by the factory/parsers.
 
-**Example:**
+## Supported algorithms
+Algorithm identifiers map to handlers via `src/Config/algorithms.php`:
 
-Suppose the token’s payload contains the audience value "example.com", and we pass the following array to validateAudience:
+- **HMAC (JWS):** `HS256`, `HS384`, `HS512`
+- **RSA PKCS#1 (JWS):** `RS256`, `RS384`, `RS512`
+- **ECDSA (JWS):** `ES256`, `ES384`, `ES512`
+- **RSA-PSS (JWS):** `PS256`, `PS384`, `PS512`
+- **RSA-OAEP + AES-GCM (JWE):** `RSA-OAEP-256_A128GCM`, `RSA-OAEP-256_A192GCM`, `RSA-OAEP-256_A256GCM`
+- **Direct AES-GCM (JWE):** `A128GCM`, `A192GCM`, `A256GCM`
 
-```php
-$audience = ["example.com", "anotherdomain.com"];
-$token->getPayload()->validateAudience($audience);
-```
+## Security checklist
+- **Protect keys and passphrases.** Use environment variables or a secrets manager; never commit keys. `JwtKeyManager` keeps keys only in memory.
+- **Always validate claims.** Use `JwtValidator` (default in factory methods) and explicitly check issuer/audience. Avoid the `*WithoutClaimValidation` methods outside tests.
+- **Enforce HTTPS and short lifetimes.** Tokens should be transported only over TLS, with tight `nbf`/`exp` windows and frequent reissuing.
+- **Pin algorithms and key IDs.** Store the expected algorithm and `kid` per client to block downgrade or key-mixup attacks.
+- **Handle errors explicitly.** Catch the domain-specific exceptions (e.g., `TokenException`, `PayloadException`) to log and react safely without leaking sensitive details.
 
-### Error Handling
-
-Handle exceptions for robust error management in your application:
-
-```php
-use Phithi92\JsonWebToken\Exception\Json\JsonException;
-use Phithi92\JsonWebToken\Exception\Token\TokenException;
-use Phithi92\JsonWebToken\Exception\Payload\PayloadException;
-use Phithi92\JsonWebToken\Exception\Cryptography\CryptographyException;
-
-try {
-    // ...   
-} catch (JsonException $e) {
-    // JSON errors during JWT processing
-} catch (PayloadException $e) {
-    // Errors with the JWT payload
-} catch (CryptographyException $e) {
-    // Issues with the signing algorithm
-} catch (TokenException $e) {
-    // General token error
-}
-```
-
----
-
-## Supported Algorithms
-
-The `JsonWebToken` class supports a variety of cryptographic algorithms for both JSON Web Signature (JWS) and JSON Web Encryption (JWE). Below are the lists of supported algorithms:
-
-**JSON Web Signature (JWS) Algorithmen:**
-
-`HS256`, `HS384`, `HS512`, `RS256`, `RS384`, `RS512`, `ES256`, `ES384`, `ES512`, `PS256`, `PS384`, `PS512`
-
-**JSON Web Encryption (JWE) Algorithmen:**
-
-`RSA-OAEP`, `RSA-OAEP+A192GCM`, `RSA-OAEP+A256GCM`, `RSA1_5`, `A128GCM`, `A192GCM`, `A256GCM`
-
----
-
-## Running Tests and Benchmarks
-
-This project includes both unit tests and benchmarks to ensure reliability and performance.
-
-### PHPUnit Tests
-
-Unit tests are included to verify the functionality of the library. These tests cover token creation, validation, and error handling. To run the unit tests, use the following command:
+## Development
+Install dependencies and generate local test keys:
 
 ```bash
-composer test
+composer install
+composer run keys
 ```
 
-All PHPUnit test cases are located in the tests/phpunit directory and ensure that the library functions correctly across various scenarios.
-
-### PHPBench Tests
-
-Benchmarks are included to measure the performance of different algorithms and operations within the library. To run the benchmarks, use the following command:
+Run quality checks:
 
 ```bash
-composer benchmark
+composer run lint
+composer run cs:check
+composer run analyse
+composer run test
 ```
 
----
+Benchmark (optional):
 
-## Benchmarking
+```bash
+composer run bench
+```
 
-This project uses automated benchmarks that run with each new commit or pull request via GitHub Actions. You can view the benchmark results in the **GitHub Actions Workflow**.
+## Troubleshooting tips
+- **Invalid key or padding errors:** verify that the PEM file matches the chosen algorithm (e.g., RSA keys for `RS*`/`PS*`, EC keys for `ES*`).
+- **Claim validation failures:** ensure `iat`, `nbf`, and `exp` are in sync with server time. Override the reference time by passing a `DateTimeImmutable` into `JwtPayload` for deterministic tests.
+- **Audience/issuer mismatches:** the validator accepts single values or arrays; provide all allowed entries for multi-tenant systems.
 
-### How to Find the Results
+## License
+Released under the MIT License. See [LICENSE](LICENSE).
 
-1. Go to the **Actions** tab in this repository.
-2. Select the latest **Benchmark Workflow** run.
-3. Here, you’ll find detailed results for the current benchmarks.
-
-> Note: Benchmarks are updated automatically, so the latest results are always available in the most recent workflow run.
-
----
-
-## Support
-
-Donations are a great way to support creators and their work. Every contribution helps sustain projects and shows appreciation for their efforts, making a real difference.
+#If this library helps you, consider supporting the project
 
 | [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R414XGWN) | ![image](https://storage.ko-fi.com/cdn/useruploads/R6R414XGWN/qrcode.png?v=40dee069-2316-462f-8c3f-29825e00fa10?v=2) |
 | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
