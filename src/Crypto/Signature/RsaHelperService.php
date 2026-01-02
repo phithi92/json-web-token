@@ -7,7 +7,7 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 use Exception;
 use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 
 use function in_array;
@@ -22,9 +22,9 @@ class RsaHelperService
      */
     private array $checkedKeys;
 
-    private JwtAlgorithmManager $manager;
+    private JwtKeyManager $manager;
 
-    public function __construct(JwtAlgorithmManager $manager)
+    public function __construct(JwtKeyManager $manager)
     {
         $this->manager = $manager;
     }

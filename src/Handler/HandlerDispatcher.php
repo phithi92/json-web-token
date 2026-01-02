@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Handler;
 
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerClassDefinitionException;
 use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerImplementationException;
 use Phithi92\JsonWebToken\Exceptions\Handler\MissingHandlerConfigurationException;
@@ -37,7 +37,7 @@ final class HandlerDispatcher
     public function dispatch(
         HandlerTarget $target,
         HandlerOperation $operation,
-        JwtAlgorithmManager $manager,
+        JwtKeyManager $manager,
         array $config,
         array $context = [],
     ): mixed {
@@ -77,7 +77,7 @@ final class HandlerDispatcher
      */
     private function buildHandler(
         array $config,
-        JwtAlgorithmManager $manager,
+        JwtKeyManager $manager,
         HandlerTarget $target,
     ): object {
         $interface = $target->interfaceClass();

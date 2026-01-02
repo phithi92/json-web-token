@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Builder;
 
 use LogicException;
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Token\JwtBundle;
@@ -47,7 +47,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     private JwtValidator $validator;
 
     public function __construct(
-        JwtAlgorithmManager $manager,
+        JwtKeyManager $manager,
     ) {
         parent::__construct(self::OPERATION, $manager);
     }

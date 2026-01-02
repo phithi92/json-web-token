@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Processor;
 
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Handler\HandlerDescriptor;
 use Phithi92\JsonWebToken\Handler\HandlerDispatcher;
@@ -40,8 +40,8 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     /** @var HandlerOperation Encapsulates the operation mode (e.g., encrypt or decrypt). */
     public readonly HandlerOperation $operation;
 
-    /** @var JwtAlgorithmManager Manages algorithm-specific configurations. */
-    protected readonly JwtAlgorithmManager $manager;
+    /** @var JwtKeyManager Manages algorithm-specific configurations. */
+    protected readonly JwtKeyManager $manager;
 
     /** @var HandlerDispatcher Responsible for invoking the correct handler methods. */
     protected readonly HandlerDispatcher $dispatcher;
@@ -56,7 +56,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 
     public function __construct(
         HandlerOperation $operation,
-        JwtAlgorithmManager $manager,
+        JwtKeyManager $manager,
     ) {
         $this->manager = $manager;
         $this->operation = $operation;

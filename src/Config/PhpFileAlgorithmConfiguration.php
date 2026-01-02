@@ -6,7 +6,7 @@ namespace Phithi92\JsonWebToken\Config;
 
 use Phithi92\JsonWebToken\Exceptions\Config\AlgorithmConfigFileNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigFormatException;
-use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
+use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationProvider;
 
 use function is_array;
 use function is_file;
@@ -17,7 +17,7 @@ use function is_file;
  * This class loads algorithm configurations from a PHP file and provides
  * access to individual algorithm settings.
  */
-final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInterface
+final class PhpFileAlgorithmConfiguration implements AlgorithmConfigurationProvider
 {
     private const CONFIG_FILE = __DIR__ . '/algorithms.php';
 
@@ -80,6 +80,6 @@ final class DefaultAlgorithmConfiguration implements AlgorithmConfigurationInter
         }
 
         /** @var array<string, array<string, string>> $config */
-        return $config;
+        return self::$cache[$configFile] = $config;
     }
 }

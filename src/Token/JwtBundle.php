@@ -100,9 +100,6 @@ final class JwtBundle
     }
 
     /**
-     *
-     * @return JwtSignature
-     *
      * @throws MissingTokenPart
      */
     public function getSignatureObject(): JwtSignature

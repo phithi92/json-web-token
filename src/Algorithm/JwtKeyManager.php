@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Algorithm;
 
 use OpenSSLAsymmetricKey;
-use Phithi92\JsonWebToken\Config\DefaultAlgorithmConfiguration;
-use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationInterface;
+use Phithi92\JsonWebToken\Config\PhpFileAlgorithmConfiguration;
+use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationProvider;
 use Phithi92\JsonWebToken\Security\KeyStore;
 use Phithi92\JsonWebToken\Security\PassphraseStore;
 use SensitiveParameter;
@@ -23,7 +23,7 @@ use SensitiveParameter;
  * integrity and security of cryptographic operations, and prevents the use of
  * unsupported or malformed keys.
  */
-final class JwtAlgorithmManager
+final class JwtKeyManager
 {
     /**
      * Stores private and public keys in memory.
@@ -40,22 +40,22 @@ final class JwtAlgorithmManager
     /**
      * Holds the configuration registry for supported algorithms.
      *
-     * @var AlgorithmConfigurationInterface
+     * @var AlgorithmConfigurationProvider
      */
-    private readonly AlgorithmConfigurationInterface $algorithmRegistry;
+    private readonly AlgorithmConfigurationProvider $algorithmRegistry;
 
     /**
-     * JwtAlgorithmManager constructor.
+     * JwtKeyManager constructor.
      *
      * Initializes the algorithm configuration, key store and passphrase store.
      * If no custom configuration or stores are provided, default implementations are used.
      */
     public function __construct(
-        ?AlgorithmConfigurationInterface $algConfig = null,
+        ?AlgorithmConfigurationProvider $algConfig = null,
         ?KeyStore $keyStore = null,
         ?PassphraseStore $passphraseStore = null,
     ) {
-        $this->algorithmRegistry = $algConfig ?? new DefaultAlgorithmConfiguration();
+        $this->algorithmRegistry = $algConfig ?? new PhpFileAlgorithmConfiguration();
         $this->keyStore = $keyStore ?? new KeyStore();
         $this->passphraseStore = $passphraseStore ?? new PassphraseStore();
     }

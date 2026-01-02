@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\phpunit;
 
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use PHPUnit\Framework\TestCase;
 use Tests\Helpers\KeyProvider;
@@ -14,11 +14,11 @@ class TestCaseWithSecrets extends TestCase
     public array $publicKeys = [];
     public array $privateKeys = [];
 
-    protected JwtAlgorithmManager $manager;
+    protected JwtKeyManager $manager;
 
     public function setUp(): void
     {
-        $manager = new JwtAlgorithmManager();
+        $manager = new JwtKeyManager();
 
         $configArray = KeyProvider::getAll();
 

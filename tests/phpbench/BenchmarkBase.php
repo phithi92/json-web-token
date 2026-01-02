@@ -2,7 +2,7 @@
 
 namespace Tests\phpbench;
 
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
@@ -26,7 +26,7 @@ abstract class BenchmarkBase
 
     private JwtValidator $validator;
 
-    protected JwtAlgorithmManager $manager;
+    protected JwtKeyManager $manager;
 
     public function provideAlgs(): array
     {
@@ -107,13 +107,13 @@ abstract class BenchmarkBase
         return $this->cache['invalid'][$alg];
     }
 
-    protected function getManager(): JwtAlgorithmManager
+    protected function getManager(): JwtKeyManager
     {
         if (isset($this->manager)) {
             return $this->manager;
         }
 
-        $manager = new JwtAlgorithmManager();
+        $manager = new JwtKeyManager();
         $configArray = $this->getAllProvidedKeys();
 
         foreach ($configArray as $algorithm => $data) {

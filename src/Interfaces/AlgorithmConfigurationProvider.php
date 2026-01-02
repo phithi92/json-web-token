@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Interfaces;
 
-interface AlgorithmConfigurationInterface
+interface AlgorithmConfigurationProvider
 {
     /**
      * Returns the configuration array for the given algorithm.

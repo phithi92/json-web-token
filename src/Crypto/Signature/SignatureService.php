@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
@@ -18,9 +18,9 @@ use function is_string;
 
 abstract class SignatureService implements SignatureHandlerInterface
 {
-    protected JwtAlgorithmManager $manager;
+    protected JwtKeyManager $manager;
 
-    public function __construct(JwtAlgorithmManager $manager)
+    public function __construct(JwtKeyManager $manager)
     {
         $this->manager = $manager;
     }
