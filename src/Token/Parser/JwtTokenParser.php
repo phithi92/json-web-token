@@ -74,7 +74,7 @@ final class JwtTokenParser
      */
     private static function normalizeTokenInput(string|array $token): array
     {
-        $tokenArray = is_string($token) ? explode('.', $token) : $token;
+        $tokenArray = is_string($token) ? explode('.', $token, 6) : $token;
         if (! isset($tokenArray[0])) {
             throw new MalformedTokenException('Token is malformed or incomplete');
         }
