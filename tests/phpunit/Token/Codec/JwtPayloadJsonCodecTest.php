@@ -14,7 +14,7 @@ class JwtPayloadJsonCodecTest extends TestCase
     public function testEncodeProducesString(): void
     {
         $payload = new JwtPayload();
-        $payload->fromArray(['sub' => '1234567890']);
+        $payload->hydrateFromArray(['sub' => '1234567890']);
 
         $codec = new JwtPayloadJsonCodec();
         $result = $codec->encode($payload);
@@ -56,7 +56,7 @@ class JwtPayloadJsonCodecTest extends TestCase
     public function testEncodeStaticProducesString(): void
     {
         $payload = new JwtPayload();
-        $payload->fromArray(['key' => 'val']);
+        $payload->hydrateFromArray(['key' => 'val']);
 
         $result = JwtPayloadJsonCodec::encodeStatic($payload);
 
@@ -84,7 +84,7 @@ class JwtPayloadJsonCodecTest extends TestCase
     public function testStaticInstanceCacheBehavior(): void
     {
         $payload = new JwtPayload();
-        $payload->fromArray(['cached' => true]);
+        $payload->hydrateFromArray(['cached' => true]);
 
         $first = JwtPayloadJsonCodec::encodeStatic($payload, 2);
         $second = JwtPayloadJsonCodec::encodeStatic($payload, 2);

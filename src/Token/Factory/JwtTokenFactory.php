@@ -8,6 +8,7 @@ use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
+use Phithi92\JsonWebToken\Token\Helper\UtcClock;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
@@ -34,6 +35,8 @@ final class JwtTokenFactory
 
     /** @var array<int, JwtTokenDecryptor> */
     private static array $decryptorCache = [];
+
+    private static ?UtcClock $utcClock = null;
 
     /**
      * Creates a signed and/or encrypted JWT using the provided payload and algorithm.
@@ -81,7 +84,7 @@ final class JwtTokenFactory
         ?JwtValidator $validator = null,
         ?string $kid = null,
     ): JwtBundle {
-        $payload = (new JwtPayload())->fromArray(claims: $claims);
+        $payload = (new JwtPayload())->hydrateFromArray(claims: $claims);
 
         return self::createToken(
             algorithm: $algorithm,
@@ -256,15 +259,18 @@ final class JwtTokenFactory
         return $builder->createFromBundle(bundle: $newBundle);
     }
 
+    private static function getUtcClock(): UtcClock
+    {
+        return self::$utcClock ??= new UtcClock();
+    }
+
     private static function buildFilteredPayload(JwtBundle $bundle): JwtPayload
     {
         $referencePayload = $bundle->getPayload();
 
-        $datetime = $referencePayload->getDateClaimHelper()->getNowInReferenceTimezone();
-
-        $payload = new JwtPayload(dateTime: $datetime);
+        $payload = new JwtPayload();
         $filteredClaims = self::filterClaims(payload: $referencePayload);
-        $payload->fromArray(claims: $filteredClaims);
+        $payload->hydrateFromArray(claims: $filteredClaims);
         return $payload;
     }
 

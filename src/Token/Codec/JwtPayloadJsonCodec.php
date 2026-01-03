@@ -58,7 +58,7 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
         }
 
         $payload ??= new JwtPayload();
-        $payload->fromArray($data);
+        $payload->hydrateFromArray($data);
 
         return $payload;
     }

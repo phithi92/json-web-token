@@ -6,7 +6,6 @@ namespace Phithi92\JsonWebToken\Token\Helper;
 
 use DateMalformedStringException;
 use DateTimeImmutable;
-use DateTimeZone;
 use Exception;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
@@ -38,7 +37,7 @@ final class DateClaimHelper
      */
     public function __construct(?DateTimeImmutable $dateTime = null)
     {
-        $this->dateTimeImmutable = $dateTime ?? $this->createReferenceTime();
+        $this->dateTimeImmutable = $dateTime ?? (new UtcClock())->now();
     }
 
     /**
@@ -143,11 +142,5 @@ final class DateClaimHelper
         }
 
         return $value;
-    }
-
-    /** Create the default UTC reference time. */
-    private function createReferenceTime(): DateTimeImmutable
-    {
-        return new DateTimeImmutable('now', new DateTimeZone('UTC'));
     }
 }

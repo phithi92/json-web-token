@@ -48,7 +48,7 @@ abstract class BenchmarkBase
     {
         if (!isset($this->cache['expired'][$alg])) {
             $manager = $this->getManager();
-            $payload = (new JwtPayload())->fromArray(
+            $payload = (new JwtPayload())->hydrateFromArray(
                 [
                     'iat' => time() - 7200,
                     'exp' => time() - 3600,

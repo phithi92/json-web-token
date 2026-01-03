@@ -218,7 +218,7 @@ class JwtPayloadTest extends TestCase
         ];
 
         $payload = new JwtPayload();
-        $payload->fromArray($array);
+        $payload->hydrateFromArray($array);
 
         $this->assertEquals('arrayIssuer', $payload->getIssuer());
         $this->assertEquals('arrayAudience', $payload->getAudience());
@@ -248,9 +248,10 @@ class JwtPayloadTest extends TestCase
     {
         $payload = new JwtPayload();
         $payload->addClaim('claim1', 'original');
-        $payload->addClaim('claim1', 'new'); // overwrite = false
 
-        $this->assertEquals('original', $payload->getClaim('claim1'));
+        $this->expectException(Exceptions\Payload\ClaimAlreadyExistsException::class);
+
+        $payload->addClaim('claim1', 'new');
     }
 
     public function testHasClaimReturnsCorrectResult()
@@ -267,7 +268,7 @@ class JwtPayloadTest extends TestCase
         $payload = new JwtPayload();
         $payload->setIssuer('issuer');
 
-        $array = $payload->toArray();
+        $array = $payload->toArrayWithDefaults();
 
         $this->assertArrayHasKey('iat', $array);
         $this->assertGreaterThan(0, $array['iat']);
