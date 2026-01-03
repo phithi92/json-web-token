@@ -51,7 +51,7 @@ class EcdsaService extends SignatureService
     {
         $kid = $this->resolveKid($bundle, $config);
 
-        $signature = $bundle->getSignature();
+        $signature = (string) $bundle->getSignature();
         $data = $bundle->getEncryption()->getAad();
         $algorithm = $this->getConfiguredHashAlgorithm($config);
 

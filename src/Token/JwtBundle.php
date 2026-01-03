@@ -89,9 +89,9 @@ final class JwtBundle
      *
      * @throws MissingTokenPart
      */
-    public function getSignature(): string
+    public function getSignature(): JwtSignature
     {
-        return (string) $this->getSignatureObject();
+        return $this->getSignatureObject();
     }
 
     public function hasSignature(): bool

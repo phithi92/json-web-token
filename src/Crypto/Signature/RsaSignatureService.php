@@ -48,7 +48,7 @@ class RsaSignatureService extends SignatureService
     {
         $kid = $this->resolveKid($bundle, $config);
         $algorithm = $this->getConfiguredHashAlgorithm($config);
-        $signature = $bundle->getSignature();
+        $signature = (string) $bundle->getSignature();
 
         $publicKey = $this->rsaHelper->assertRsaKeyIsValid($kid, $algorithm, 'public');
 

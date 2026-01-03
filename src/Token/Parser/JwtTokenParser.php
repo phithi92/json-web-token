@@ -238,7 +238,7 @@ final class JwtTokenParser
         $tokenArray = [
             JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
             JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
-            $bundle->getSignature(),
+            (string) $bundle->getSignature(),
         ];
 
         return self::encodeAndSerialize($tokenArray);

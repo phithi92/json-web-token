@@ -41,7 +41,7 @@ class HmacService extends SignatureService
     {
         $kid = $this->resolveKid($bundle, $config);
         $algorithm = $this->getConfiguredHashAlgorithm($config);
-        $signature = $bundle->getSignature();
+        $signature = (string) $bundle->getSignature();
         $aad = $bundle->getEncryption()->getAad();
 
         $passphrase = $this->manager->getPassphrase($kid);
