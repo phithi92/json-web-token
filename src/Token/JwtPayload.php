@@ -57,9 +57,9 @@ final class JwtPayload implements JsonSerializable
         return $this->claimHelper;
     }
 
-    public function fromArray(mixed $data): self
+    public function fromArray(mixed $claims): self
     {
-        $validated = $this->validatePayloadData($data);
+        $validated = $this->validatePayloadData($claims);
         $this->applyPayload($validated);
 
         return $this;
@@ -201,13 +201,13 @@ final class JwtPayload implements JsonSerializable
     /**
      * Set the expiration claim.
      *
-     * @param string $dateTime Date value
+     * @param string $interval Date value
      *
      * @throws InvalidDateTimeException
      */
-    public function setExpiration(string $dateTime): self
+    public function setExpiration(string $interval): self
     {
-        return $this->setClaimTimestamp('exp', $dateTime);
+        return $this->setClaimTimestamp('exp', $interval);
     }
 
     /**

@@ -88,6 +88,13 @@ final class DateClaimHelper
         return $result;
     }
 
+    public function getNowInReferenceTimezone(): DateTimeImmutable
+    {
+        $timezone = $this->dateTimeImmutable->getTimezone();
+
+        return new DateTimeImmutable('now', $timezone);
+    }
+
     /**
      * Normalize a date expression or timestamp to a DateTimeImmutable anchored to the reference time.
      *

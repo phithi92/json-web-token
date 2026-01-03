@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Factory;
 
-use LogicException;
 use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
+use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
-use function array_diff_key;
-use function array_flip;
 use function spl_object_id;
 
 /**
@@ -55,9 +53,14 @@ final class JwtTokenFactory
         ?JwtValidator $validator = null,
         ?string $kid = null,
     ): JwtBundle {
-        $builder = self::getBuilder($manager);
+        $builder = self::getBuilder(manager: $manager);
 
-        return $builder->create($algorithm, $payload, $validator, $kid);
+        return $builder->create(
+            algorithm: $algorithm,
+            payload: $payload,
+            validator: $validator,
+            kid: $kid
+        );
     }
 
     /**
@@ -65,7 +68,7 @@ final class JwtTokenFactory
      *
      * @param string               $algorithm algorithm name
      * @param JwtKeyManager  $manager   algorithm manager instance
-     * @param array<string,string> $claims    associative array of JWT claims
+     * @param array<string,mixed> $claims    associative array of JWT claims
      * @param JwtValidator|null    $validator optional validator instance
      * @param string|null          $kid       optional key ID
      *
@@ -78,10 +81,15 @@ final class JwtTokenFactory
         ?JwtValidator $validator = null,
         ?string $kid = null,
     ): JwtBundle {
-        $payload = new JwtPayload();
-        $payload->fromArray($claims);
+        $payload = (new JwtPayload())->fromArray(claims: $claims);
 
-        return self::createToken($algorithm, $manager, $payload, $validator, $kid);
+        return self::createToken(
+            algorithm: $algorithm,
+            manager: $manager,
+            payload: $payload,
+            validator: $validator,
+            kid: $kid
+        );
     }
 
     /**
@@ -99,8 +107,6 @@ final class JwtTokenFactory
      * @param string|null         $kid       optional key ID
      *
      * @return JwtBundle resulting token bundle
-     *
-     * @throws LogicException if used in production context
      */
     public static function createTokenWithoutClaimValidation(
         string $algorithm,
@@ -108,9 +114,13 @@ final class JwtTokenFactory
         ?JwtPayload $payload = null,
         ?string $kid = null,
     ): JwtBundle {
-        $builder = self::getBuilder($manager);
+        $builder = self::getBuilder(manager: $manager);
 
-        return $builder->createWithoutValidation($algorithm, $payload, $kid);
+        return $builder->createWithoutValidation(
+            algorithm: $algorithm,
+            payload: $payload,
+            kid: $kid
+        );
     }
 
     /**
@@ -131,9 +141,15 @@ final class JwtTokenFactory
         ?JwtValidator $validator = null,
         ?string $kid = null,
     ): string {
-        $bundle = self::createToken($algorithm, $manager, $payload, $validator, $kid);
+        $bundle = self::createToken(
+            algorithm: $algorithm,
+            manager: $manager,
+            payload: $payload,
+            validator: $validator,
+            kid: $kid
+        );
 
-        return JwtTokenParser::serialize($bundle);
+        return JwtTokenParser::serialize(bundle: $bundle);
     }
 
     /**
@@ -150,9 +166,9 @@ final class JwtTokenFactory
         JwtKeyManager $manager,
         ?JwtValidator $validator = null,
     ): JwtBundle {
-        $processor = self::getDecryptor($manager);
+        $processor = self::getDecryptor(manager: $manager);
 
-        return $processor->decrypt($token, $validator);
+        return $processor->decrypt(token: $token, validator: $validator);
     }
 
     /**
@@ -167,9 +183,9 @@ final class JwtTokenFactory
         string $token,
         JwtKeyManager $manager,
     ): JwtBundle {
-        $processor = self::getDecryptor($manager);
+        $processor = self::getDecryptor(manager: $manager);
 
-        return $processor->decryptWithoutClaimValidation($token);
+        return $processor->decryptWithoutClaimValidation(token: $token);
     }
 
     /**
@@ -181,17 +197,20 @@ final class JwtTokenFactory
      *
      * @return bool true if the token is valid, false otherwise
      */
-    public static function validateTokenClaim(
+    public static function validateTokenClaims(
         string $token,
         JwtKeyManager $manager,
         ?JwtValidator $validator = null,
     ): bool {
-        $processor = self::getDecryptor($manager);
-        $bundle = $processor->decrypt($token, $validator);
-
         $validator ??= new JwtValidator();
 
-        return $validator->isValid($bundle->getPayload());
+        $bundle = self::decryptToken(
+            token: $token,
+            manager: $manager,
+            validator: $validator
+        );
+
+        return $validator->isValid(payload: $bundle->getPayload());
     }
 
     public static function reissueBundleFromToken(
@@ -200,9 +219,12 @@ final class JwtTokenFactory
         JwtKeyManager $manager,
         ?JwtValidator $validator = null,
     ): JwtBundle {
-        $bundle = JwtTokenParser::parse($token);
-
-        return self::reissueBundle($interval, $bundle, $manager, $validator);
+        return self::reissueBundle(
+            interval: $interval,
+            bundle: JwtTokenParser::parse($token),
+            manager: $manager,
+            validator: $validator
+        );
     }
 
     /**
@@ -221,45 +243,55 @@ final class JwtTokenFactory
         JwtKeyManager $manager,
         ?JwtValidator $validator = null,
     ): JwtBundle {
-        $payload = self::buildFilteredPayload($bundle)
-            ->setExpiration($interval);
+        $payload = self::buildFilteredPayload(bundle: $bundle)
+            ->setExpiration(interval: $interval);
 
-        $newBundle = new JwtBundle($bundle->getHeader(), $payload);
-
+        $newBundle = new JwtBundle(header: $bundle->getHeader(), payload: $payload);
         $validator ??= new JwtValidator();
-        $validator->assertValidBundle($newBundle);
 
-        $builder = self::getBuilder($manager);
+        $validator->assertValidBundle(bundle: $newBundle);
 
-        return $builder->createFromBundle($newBundle);
+        $builder = self::getBuilder(manager: $manager);
+
+        return $builder->createFromBundle(bundle: $newBundle);
     }
 
     private static function buildFilteredPayload(JwtBundle $bundle): JwtPayload
     {
-        $oldPayload = $bundle->getPayload();
-        $newPayload = new JwtPayload($oldPayload->getDateClaimHelper()->getReferenceTime());
+        $referencePayload = $bundle->getPayload();
 
-        $timeClaims = $newPayload->getDateClaimHelper()::TIME_CLAIMS;
+        $datetime = $referencePayload->getDateClaimHelper()->getNowInReferenceTimezone();
 
-        $claims = $oldPayload->toArray();
+        $payload = new JwtPayload(dateTime: $datetime);
+        $filteredClaims = self::filterClaims(payload: $referencePayload);
+        $payload->fromArray(claims: $filteredClaims);
+        return $payload;
+    }
 
-        $cleanedClaims = array_diff_key($claims, array_flip($timeClaims));
+    /** @return array<string, mixed> */
+    private static function filterClaims(JwtPayload $payload): array
+    {
+        $claims = $payload->toArray();
 
-        return $newPayload->fromArray($cleanedClaims);
+        foreach (DateClaimHelper::TIME_CLAIMS as $key) {
+            unset($claims[$key]);
+        }
+
+        return $claims;
     }
 
     private static function getBuilder(JwtKeyManager $manager): JwtTokenBuilder
     {
-        $cacheId = self::getObjectId($manager);
+        $cacheId = self::getObjectId(object: $manager);
 
-        return self::$builderCache[$cacheId] ??= new JwtTokenBuilder($manager);
+        return self::$builderCache[$cacheId] ??= new JwtTokenBuilder(manager: $manager);
     }
 
     private static function getDecryptor(JwtKeyManager $manager): JwtTokenDecryptor
     {
-        $cacheId = self::getObjectId($manager);
+        $cacheId = self::getObjectId(object: $manager);
 
-        return self::$decryptorCache[$cacheId] ??= new JwtTokenDecryptor($manager);
+        return self::$decryptorCache[$cacheId] ??= new JwtTokenDecryptor(manager: $manager);
     }
 
     private static function getObjectId(object $object): int
