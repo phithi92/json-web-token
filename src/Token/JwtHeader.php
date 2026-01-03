@@ -87,7 +87,7 @@ final class JwtHeader implements JsonSerializable
 
     public function hasKid(): bool
     {
-        return is_string($this->kid);
+        return $this->kid !== null;
     }
 
     /**
