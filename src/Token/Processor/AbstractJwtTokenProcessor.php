@@ -24,36 +24,21 @@ use function usort;
  */
 abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 {
-    /**
-     * Maps JWT component keys to handler types and priorities.
-     *
-     * The integer values define execution order (lower = earlier).
-     */
-    private const HANDLER_CONFIG_MAP = [
-        [HandlerTarget::Cek, 1],
-        [HandlerTarget::Key, 2],
-        [HandlerTarget::Iv, 3],
-        [HandlerTarget::Payload, 4],
-        [HandlerTarget::Signature, 5],
-    ];
-
     /** @var HandlerOperation Encapsulates the operation mode (e.g., encrypt or decrypt). */
     public readonly HandlerOperation $operation;
 
+    /** @var HandlerDispatcher Responsible for invoking the correct handler methods. */
+    protected readonly HandlerDispatcher $dispatcher;
+    
     /** @var JwtKeyManager Manages algorithm-specific configurations. */
     protected readonly JwtKeyManager $manager;
 
-    /** @var HandlerDispatcher Responsible for invoking the correct handler methods. */
-    protected readonly HandlerDispatcher $dispatcher;
-
     /**
-     * Caches resolved configurations and handler descriptors per algorithm to
-     * avoid rebuilding immutable structures on repeated invocations.
+     * Creates a JWT token processor for the given operation mode.
      *
-     * @var array<string,array<int,HandlerDescriptor>>
+     * @param HandlerOperation $operation The operation to perform (e.g. encrypt or decrypt).
+     * @param JwtKeyManager    $manager   Provides algorithm-specific configuration and keys.
      */
-    private array $resolvedHandlerCache = [];
-
     public function __construct(
         HandlerOperation $operation,
         JwtKeyManager $manager,
@@ -83,11 +68,11 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     /**
      * Dispatches all applicable handlers for the given JWT bundle and algorithm.
      *
-     * Resolves configuration and handlers based on the provided algorithm, and
-     * executes them in order of their defined priority.
+     * Resolves the algorithm-specific configuration and its applicable handlers,
+     * then dispatches them in priority order.
      *
-     * @param string             $algorithm the resolved algorithm identifier
-     * @param JwtBundle $bundle    the encrypted JWT to process
+     * @param string   $algorithm the resolved algorithm identifier
+     * @param JwtBundle $bundle   the JWT bundle to process
      */
     protected function dispatchHandlers(
         string $algorithm,
@@ -110,53 +95,49 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     }
 
     /**
-     * Resolves both the handler configuration and corresponding handler descriptors.
+     * Resolves both the algorithm configuration and the corresponding handler descriptors.
+     *
+     * The configuration is always retrieved from the manager, and handler descriptors are
+     * rebuilt on every call to avoid stale handler lists when config changes dynamically.
      *
      * @param string $algorithm the algorithm to use for configuration resolution
      *
-     * @return array{array<string, mixed>, array<int,HandlerDescriptor>}
+     * @return array{array<string, mixed>, array<int, HandlerDescriptor>}
      */
     private function resolveConfigAndHandlers(string $algorithm): array
     {
         $config = $this->manager->getConfiguration($algorithm);
-        if (! isset($this->resolvedHandlerCache[$algorithm])) {
-            $this->resolvedHandlerCache[$algorithm] = $this->resolveApplicableHandlers($config);
-        }
+        $descriptors = $this->resolveApplicableHandlers($config);
 
-        // Return a fresh configuration array on every call to avoid leaking
-        // mutations between requests, while still reusing descriptor metadata.
-        return [$config, $this->resolvedHandlerCache[$algorithm]];
+        return [$config, $descriptors];
     }
 
     /**
-     * Builds a list of handler descriptors based on available config keys.
+     * Builds an ordered list of handler descriptors based on the available config keys.
+     *
+     * Only targets whose interface class is present in the configuration are included.
+     * The resulting list is sorted by {@see HandlerDescriptor::$priority}.
      *
      * @param array<string, mixed> $config
      *
-     * @return array<int,HandlerDescriptor>
+     * @return array<int, HandlerDescriptor>
      */
     private function resolveApplicableHandlers(array $config): array
     {
         $descriptors = [];
 
-        foreach (self::HANDLER_CONFIG_MAP as [$type, $priority]) {
-            if (isset($config[$type->interfaceClass()])) {
-                $descriptors[] = new HandlerDescriptor($type, $this->operation, $priority);
+        foreach (HandlerTarget::cases() as $target) {
+            if (! isset($config[$target->interfaceClass()])) {
+                continue;
             }
+
+            $descriptors[] = new HandlerDescriptor(
+                $target,
+                $this->operation,
+                $target->priority()
+            );
         }
 
-        return $this->orderByPriority($descriptors);
-    }
-
-    /**
-     * Orders handler descriptors by ascending priority.
-     *
-     * @param array<int,HandlerDescriptor> $descriptors
-     *
-     * @return array<int,HandlerDescriptor> sorted descriptor list
-     */
-    private function orderByPriority(array $descriptors): array
-    {
         usort($descriptors, static fn ($a, $b) => $a->priority <=> $b->priority);
 
         return $descriptors;

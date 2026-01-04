@@ -34,4 +34,15 @@ enum HandlerTarget
             self::Payload => PayloadHandlerInterface::class,
         };
     }
+
+    public function priority(): int
+    {
+        return match ($this) {
+            self::Cek       => 1,
+            self::Key       => 2,
+            self::Iv        => 3,
+            self::Payload   => 4,
+            self::Signature => 5,
+        };
+    }
 }
