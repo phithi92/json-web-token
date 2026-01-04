@@ -9,12 +9,12 @@ use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtBundle;
+use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtSignature;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
 use function array_map;
-use function array_shift;
 use function count;
 use function explode;
 use function implode;
@@ -74,6 +74,9 @@ final class JwtTokenParser
      */
     private static function normalizeTokenInput(string|array $token): array
     {
+        // The limit of 6 is intentionally chosen so we can detect
+        // if a token contains more dots than expected.
+        // Any additional parts will be grouped into the last element.
         $tokenArray = is_string($token) ? explode('.', $token, 6) : $token;
         if (! isset($tokenArray[0])) {
             throw new MalformedTokenException('Token is malformed or incomplete');
@@ -138,38 +141,20 @@ final class JwtTokenParser
             throw new MalformedTokenException('Invalid JWE token structure.');
         }
 
-        // AAD must be the Base64Url-encoded protected header, per RFC 7516 §5.1
-        $header = array_shift($tokenArray);
-        $bundle->getEncryption()->setAad($header);
+        $encryptionData = new JwtEncryptionData(
+            aad: $tokenArray[0],
+            iv: self::decodeBase64Url($tokenArray[2]),
+            authTag: self::decodeBase64Url($tokenArray[4])
+        );
 
-        $decoded = [];
-        foreach ($tokenArray as $part) {
-            $decoded[] = self::decodeBase64Url($part);
+        if ($bundle->getHeader()->getEnc() !== null && $bundle->getHeader()->getAlgorithm() !== 'dir') {
+            $encryptionData = $encryptionData->withEncryptedKey(self::decodeBase64Url($tokenArray[1]));
         }
 
-        return self::configureFromDecodedData($bundle, $decoded);
-    }
+        $bundle->setEncryption($encryptionData);
 
-    /**
-     * @param array<int, string> $decoded
-     */
-    private static function configureFromDecodedData(JwtBundle $bundle, array $decoded): JwtBundle
-    {
-        $encryption = $bundle->getEncryption();
-        $header = $bundle->getHeader();
-
-        [$key, $iv, $ciphertext, $authTag] = $decoded;
-
-        // Set key or CEK depending on algorithm
-        if ($header->getAlgorithm() === 'dir') {
-            $encryption->setCek($key);
-        } else {
-            $encryption->setEncryptedKey($key);
-        }
-
-        // Assign remaining fields
-        $bundle->getPayload()->setEncryptedPayload($ciphertext);
-        $encryption->setIv($iv)->setAuthTag($authTag);
+        $encryptedPayload = self::decodeBase64Url($tokenArray[3]);
+        $bundle->getPayload()->setEncryptedPayload($encryptedPayload);
 
         return $bundle;
     }
@@ -185,22 +170,12 @@ final class JwtTokenParser
             throw new MalformedTokenException('Invalid JWS token structure.');
         }
 
-        $headerB64 = array_shift($tokenArray);
+        $bundle->setEncryption(new JwtEncryptionData(aad: $tokenArray[0] . '.' . $tokenArray[1]));
 
-        [$payloadB64] = $tokenArray;
-
-        $aad = "{$headerB64}.{$payloadB64}";
-
-        $decoded = [];
-        foreach ($tokenArray as $part) {
-            $decoded[] = self::decodeBase64Url($part);
-        }
-
-        [$payloadJson, $signature] = $decoded;
-
-        $bundle->getEncryption()->setAad($aad);
+        $signature = self::decodeBase64Url($tokenArray[2]);
         $bundle->setSignature(new JwtSignature($signature));
 
+        $payloadJson = self::decodeBase64Url($tokenArray[1]);
         JwtPayloadJsonCodec::decodeStaticInto($payloadJson, $bundle->getPayload());
 
         return $bundle;
@@ -211,12 +186,9 @@ final class JwtTokenParser
      */
     private static function serializeEncodedToken(JwtBundle $bundle): string
     {
-        $header = $bundle->getHeader();
-        $encryption = $bundle->getEncryption();
-
-        $encryptedKey = match ($header->getAlgorithm()) {
-            'dir' => $encryption->getCek(),
-            default => $encryption->getEncryptedKey(),
+        $encryptedKey = match ($bundle->getHeader()->getAlgorithm()) {
+            'dir' => '',
+            default => $bundle->getEncryption()->getEncryptedKey(),
         };
 
         $tokenArray = [
@@ -232,9 +204,7 @@ final class JwtTokenParser
 
     private static function serializeSignatureToken(JwtBundle $bundle): string
     {
-        /*
-         * @param array<string> $tokenArray
-         */
+        /** @param array<string> $tokenArray */
         $tokenArray = [
             JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
             JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),

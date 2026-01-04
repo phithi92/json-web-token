@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\phpunit;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
@@ -115,15 +116,14 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
         JwtTokenParser::parse(implode('.', $parts));
     }
 
-    public function testParseDirectAlgSetsCek(): void
+    public function testParseDirectAlgDoesNotUseEncryptedKeyPart(): void
     {
-        $cek = 'my_cek_secret';
         $header = ['alg' => 'dir', 'typ' => 'JWE', 'enc' => 'A256GCM'];
         $headerJson = JsonEncoder::encode($header);
 
         $parts = [
             Base64UrlEncoder::encode($headerJson),
-            Base64UrlEncoder::encode($cek),
+            '', // encrypted_key MUST be empty for dir
             Base64UrlEncoder::encode('iv123'),
             Base64UrlEncoder::encode('ciphertext123'),
             Base64UrlEncoder::encode('authtag123'),
@@ -131,7 +131,13 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
         $bundle = JwtTokenParser::parse(implode('.', $parts));
 
-        $this->assertEquals($cek, $bundle->getEncryption()->getCek());
+        $this->expectException(MissingTokenPart::class);
+        // parser should not set a CEK from token for dir
+        $bundle->getEncryption()->getEncryptedKey();
+
+        $this->expectException(MissingTokenPart::class);
+        // and CEK should remain unset at parse-time (comes from key store later)
+        $bundle->getEncryption()->getCek();
     }
 
     public function testJwsWithInvalidJsonPayloadThrowsException(): void
