@@ -8,16 +8,19 @@ use LogicException;
 use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
+use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtBundle;
+use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
+use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use UnexpectedValueException;
 
 use function implode;
 use function is_string;
-use function strtolower;
 
 /**
  * JwtTokenBuilder is responsible for creating encrypted JWT tokens.
@@ -44,7 +47,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      */
     private const OPERATION = HandlerOperation::Perform;
 
-    private JwtValidator $validator;
+    private ?JwtValidator $validator = null;
 
     public function __construct(
         JwtKeyManager $manager,
@@ -66,9 +69,16 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
         ?JwtValidator $validator = null,
         ?string $kid = null,
     ): JwtBundle {
-        $bundle = $this->createWithoutValidation($algorithm, $payload, $kid);
+        $config = $this->manager->getConfiguration($algorithm);
 
-        $this->getValidator($validator)->assertValidBundle($bundle);
+        $bundle = $this->buildBundle(
+            algorithm: $algorithm,
+            config: $config,
+            payload: $payload,
+            kid: $kid
+        );
+
+        $this->resolveValidator($validator)->assertValidBundle($bundle);
 
         return $bundle;
     }
@@ -89,7 +99,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
 
         $this->dispatchHandlers($algorithm, $bundle);
 
-        $this->getValidator($validator)->assertValidBundle($bundle);
+        $this->resolveValidator($validator)->assertValidBundle($bundle);
 
         return $bundle;
     }
@@ -108,17 +118,60 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     ): JwtBundle {
         $config = $this->manager->getConfiguration($algorithm);
 
-        [$typ, $alg, $enc] = $this->extractHeaderParams($config);
+        return $this->buildBundle(
+            algorithm: $algorithm,
+            config: $config,
+            payload: $payload,
+            kid: $kid
+        );
+    }
 
-        $header = $this->createHeader($typ, $alg, $kid, $enc);
+    private function buildBundle(
+        string $algorithm,
+        array $config,
+        ?JwtPayload $payload = null,
+        ?string $kid = null,
+    ): JwtBundle {
+        [$typ, $alg, $enc] = $this->resolveHeaderParamsFromConfig($config);
+
+        $header = $this->buildHeader($typ, $alg, $kid, $enc);
+
         $bundle = new JwtBundle($header, $payload);
+        $encryptionData = new JwtEncryptionData(aad: $this->encodeAad($bundle));
+
+        $bundle->setEncryption($encryptionData);
 
         $this->dispatchHandlers($algorithm, $bundle);
 
         return $bundle;
     }
 
-    private function getValidator(?JwtValidator $validator = null): JwtValidator
+    private function encodeAad(JwtBundle $bundle): string
+    {
+        $typ = $bundle->getHeader()->getType();
+
+        return match ($typ) {
+            'JWE' => $this->encodeJweAad($bundle),
+            'JWS' => $this->encodeJwsAad($bundle),
+            default => throw new LogicException("Unsupported token type: $typ"),
+        };
+    }
+
+    private function encodeJweAad(JwtBundle $bundle): string
+    {
+        $jsonHeader = JwtHeaderJsonCodec::encodeStatic($bundle->getHeader());
+        return Base64UrlEncoder::encode($jsonHeader);
+    }
+
+    private function encodeJwsAad(JwtBundle $bundle): string
+    {
+        $jsonHeader = JwtHeaderJsonCodec::encodeStatic($bundle->getHeader());
+        $jsonPayload = JwtPayloadJsonCodec::encodeStatic($bundle->getPayload());
+        return Base64UrlEncoder::encode($jsonHeader) . '.' .
+                Base64UrlEncoder::encode($jsonPayload);
+    }
+
+    private function resolveValidator(?JwtValidator $validator = null): JwtValidator
     {
         return $this->validator ??= $validator ?? new JwtValidator();
     }
@@ -132,13 +185,13 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      *
      * @throws LogicException If required keys are missing
      */
-    private function extractHeaderParams(array $config): array
+    private function resolveHeaderParamsFromConfig(array $config): array
     {
         $tokenType = $config['token_type'] ?? null;
         $alg = $config['alg'] ?? null;
         $enc = $config['enc'] ?? null;
 
-        $this->assertResolvableHeaderConfig($tokenType, $alg, $enc);
+        $this->assertValidHeaderConfig($tokenType, $alg, $enc);
 
         /** @var string $tokenType */
         /** @var string|null $alg */
@@ -152,17 +205,17 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      *
      * @throws LogicException On invalid types or missing values
      */
-    private function assertResolvableHeaderConfig(
+    private function assertValidHeaderConfig(
         mixed $tokenType,
         mixed $alg,
         mixed $enc,
     ): void {
-        if (! $this->isValidHeaderConfig($tokenType, $alg, $enc)) {
+        if (! $this->isValidHeaderConfigShape($tokenType, $alg, $enc)) {
             throw new LogicException('Invalid header configuration');
         }
     }
 
-    private function isValidHeaderConfig(mixed $tokenType, mixed $alg, mixed $enc): bool
+    private function isValidHeaderConfigShape(mixed $tokenType, mixed $alg, mixed $enc): bool
     {
         return is_string($tokenType)
             && (is_string($alg) || $alg === null)
@@ -175,7 +228,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
      * @throws UnexpectedValueException If token header not valid
      * @throws UnresolvableKeyException If kid not found
      */
-    private function createHeader(
+    private function buildHeader(
         string $typ,
         ?string $alg,
         ?string $kid,
@@ -185,42 +238,10 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
             throw new UnexpectedValueException('Incomplete token header configuration');
         }
 
-        $kid ??= $this->buildDefaultKid($alg, $enc);
+        $kid ??= $this->deriveDefaultKid($alg, $enc);
 
-        $this->assertResolvableKid($kid);
+        $this->assertKnownKid($kid);
 
-        return $this->buildHeader($typ, $alg, $enc, $kid);
-    }
-
-    /**
-     * Validates whether the given KID refers to a known key or passphrase.
-     *
-     * @throws UnresolvableKeyException
-     */
-    private function assertResolvableKid(string $kid): void
-    {
-        if (! $this->isResolvableKid($kid)) {
-            throw new UnresolvableKeyException($kid);
-        }
-    }
-
-    /**
-     * Checks if the key ID maps to a valid key or passphrase.
-     */
-    private function isResolvableKid(string $kid): bool
-    {
-        return $this->manager->hasKey($kid) || $this->manager->hasPassphrase($kid);
-    }
-
-    /**
-     * Assembles the JwtHeader object from parameters.
-     */
-    private function buildHeader(
-        string $typ,
-        string $alg,
-        ?string $enc,
-        string $kid,
-    ): JwtHeader {
         $header = (new JwtHeader())->setType($typ)->setAlgorithm($alg);
 
         if ($enc !== null) {
@@ -231,18 +252,38 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     }
 
     /**
+     * Validates whether the given KID refers to a known key or passphrase.
+     *
+     * @throws UnresolvableKeyException
+     */
+    private function assertKnownKid(string $kid): void
+    {
+        if (! $this->canResolveKid($kid)) {
+            throw new UnresolvableKeyException($kid);
+        }
+    }
+
+    /**
+     * Checks if the key ID maps to a valid key or passphrase.
+     */
+    private function canResolveKid(string $kid): bool
+    {
+        return $this->manager->hasKey($kid) || $this->manager->hasPassphrase($kid);
+    }
+
+    /**
      * Builds a default KID string from algorithm and encryption method.
      *
      * Example: "RSA_OAEP_A256GCM"
      */
-    private function buildDefaultKid(
+    private function deriveDefaultKid(
         string $alg,
         ?string $enc = null,
         string $seperator = self::KID_PART_SEPARATOR,
     ): string {
         $parts = [];
 
-        if (strtolower($alg) !== 'dir') {
+        if ($alg !== 'dir') {
             $parts[] = $alg;
         }
 
