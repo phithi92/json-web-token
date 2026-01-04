@@ -10,13 +10,9 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 
-use function array_filter;
-use function array_key_exists;
-use function ctype_alnum;
 use function gettype;
 use function is_string;
 use function sprintf;
-use function str_replace;
 use function strlen;
 
 /**
@@ -172,15 +168,22 @@ final class JwtHeader implements JsonSerializable
      */
     public function toArray(): array
     {
-        return array_filter(
-            [
-                'alg' => $this->algorithm,
-                'typ' => $this->typ,
-                'enc' => $this->enc,
-                'kid' => $this->kid,
-            ],
-            static fn ($value) => $value !== null && $value !== ''
-        );
+        $out = [];
+
+        if ($this->algorithm !== null && $this->algorithm !== '') {
+            $out['alg'] = $this->algorithm;
+        }
+        if ($this->typ !== null && $this->typ !== '') {
+            $out['typ'] = $this->typ;
+        }
+        if ($this->enc !== null && $this->enc !== '') {
+            $out['enc'] = $this->enc;
+        }
+        if ($this->kid !== null && $this->kid !== '') {
+            $out['kid'] = $this->kid;
+        }
+
+        return $out;
     }
 
     /**
@@ -196,26 +199,23 @@ final class JwtHeader implements JsonSerializable
      */
     public static function fromArray(array $data): self
     {
-        $instance = new self();
-        $headerFields = self::filterStringMap($data);
+        $i = new self();
+        $f = self::filterStringMap($data);
 
-        if (array_key_exists('alg', $headerFields)) {
-            $instance->setAlgorithm($headerFields['alg']);
+        if (isset($f['alg'])) {
+            $i->setAlgorithm($f['alg']);
+        }
+        if (isset($f['typ'])) {
+            $i->setType($f['typ']);
+        }
+        if (isset($f['enc'])) {
+            $i->setEnc($f['enc']);
+        }
+        if (isset($f['kid'])) {
+            $i->setKid($f['kid']);
         }
 
-        if (array_key_exists('typ', $headerFields)) {
-            $instance->setType($headerFields['typ']);
-        }
-
-        if (array_key_exists('enc', $headerFields)) {
-            $instance->setEnc($headerFields['enc']);
-        }
-
-        if (array_key_exists('kid', $headerFields)) {
-            $instance->setKid($headerFields['kid']);
-        }
-
-        return $instance;
+        return $i;
     }
 
     /**
@@ -244,7 +244,7 @@ final class JwtHeader implements JsonSerializable
 
     private function isKidFormatValid(string $kid): bool
     {
-        return ($s = str_replace(['.', '_', '-'], '', $kid)) !== '' && ctype_alnum($s);
+        return $kid !== '' && preg_match('/^[A-Za-z0-9._-]+$/', $kid) === 1;
     }
 
     /**
@@ -262,7 +262,7 @@ final class JwtHeader implements JsonSerializable
         $filtered = [];
 
         foreach (self::ALLOWED_KEYS as $key) {
-            if (! array_key_exists($key, $data)) {
+            if (! isset($data[$key])) {
                 continue;
             }
 
