@@ -32,10 +32,7 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
     {
         $keyDetails = $this->manager->getKeyMetadata($kid, 'public');
 
-        [$padding,$hash] = $this->extractPaddingAndHash($config);
-        $pem = $keyDetails['pem'];
-
-        $publicKey = $this->buildPublicKey($pem, $padding, $hash);
+        $publicKey = $this->buildKey(role: 'public', pem: $keyDetails['pem'], config: $config);
 
         $wrappedKey = $publicKey->encrypt($cek);
         if (! is_string($wrappedKey) || $wrappedKey === '') {
@@ -55,14 +52,11 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
     {
         $keyDetails = $this->manager->getKeyMetadata($kid, 'private');
 
-        [$padding,$hash] = $this->extractPaddingAndHash($config);
-        $pem = $keyDetails['pem'];
-
-        $privateKey = $this->buildPrivateKey($pem, $padding, $hash);
+        $privateKey = $this->buildKey(role: 'private', pem: $keyDetails['pem'], config: $config);
 
         $cek = $privateKey->decrypt($wrappedKey);
 
-        if (! $this->isValidDecryptedCek($cek)) {
+        if (! is_string($cek) || $cek === '') {
             throw new DecryptionException('RSA unwrap failed – empty CEK.');
         }
 
@@ -113,35 +107,13 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
         return [$padding, $hash];
     }
 
-    private function isValidDecryptedCek(mixed $cek): bool
-    {
-        return is_string($cek) && $cek !== '';
-    }
-
-    private function buildPrivateKey(
-        string $pem,
-        int $padding,
-        ?string $hash = null,
-    ): RSAPrivateKey {
-        /** @var RSAPrivateKey */
-        return $this->buildKey('private', $pem, $padding, $hash);
-    }
-
-    private function buildPublicKey(
-        string $pem,
-        int $padding,
-        ?string $hash = null,
-    ): RSAPublicKey {
-        /** @var RSAPublicKey */
-        return $this->buildKey('public', $pem, $padding, $hash);
-    }
-
     private function buildKey(
         string $role,
         string $pem,
-        int $padding,
-        ?string $hash = null,
+        array $config
     ): RSAPrivateKey|RSAPublicKey {
+        [$padding,$hash] = $this->extractPaddingAndHash($config);
+
         if (! in_array($role, ['private', 'public'], true)) {
             throw new LogicException('No valid role for key');
         }

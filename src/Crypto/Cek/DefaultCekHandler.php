@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Cek;
 
-use Exception;
 use LogicException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidCekLength;
 use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
@@ -17,15 +16,31 @@ final class DefaultCekHandler implements CekHandlerInterface
 {
     public function initializeCek(JwtBundle $bundle, array $config): void
     {
-        $byteLength = $this->getByteLength($config);
+        if ($bundle->getHeader()->getAlgorithm() === 'dir') {
+            return;
+        }
 
-        $cek = $this->generateRandomCek($byteLength);
+        // Non-dir: generate random CEK of exact required size
+        $cek = $this->generateRandomCek($config);
 
-        $bundle->getEncryption()->setCek($cek);
+        $bundle->setEncryption($bundle->getEncryption()->withCek($cek));
     }
 
+    /**
+     *
+     * @param JwtBundle $bundle
+     * @param array $config
+     * @return void
+     *
+     * @throws InvalidCekLength
+     * @throws MissingTokenPart
+     */
     public function validateCek(JwtBundle $bundle, array $config): void
     {
+        if ($bundle->getHeader()->getAlgorithm() === 'dir') {
+            return;
+        }
+
         $cek = $bundle->getEncryption()->getCek();
 
         $this->validateCekLength($cek, $config);
@@ -87,21 +102,10 @@ final class DefaultCekHandler implements CekHandlerInterface
         return $bitLength >> 3;
     }
 
-    /**
-     * Generates a cryptographically secure random CEK (Content Encryption Key).
-     *
-     * Uses PHP's random_bytes() to generate a binary string of the given byte length.
-     *
-     * @param int $byteLength The length of the CEK in bytes (must be ≥ 1)
-     *
-     * @phpstan-param int<1, max> $byteLength
-     *
-     * @return string Binary-encoded CEK
-     *
-     * @throws Exception If random_bytes() fails (e.g. due to system entropy issues)
-     */
-    private function generateRandomCek(int $byteLength): string
+    private function generateRandomCek(array $config): string
     {
+        $byteLength = $this->getByteLength($config);
+
         return random_bytes($byteLength);
     }
 }

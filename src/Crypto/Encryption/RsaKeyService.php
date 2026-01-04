@@ -36,7 +36,7 @@ class RsaKeyService extends KeyCryptoService
         // Decrypt CEK with RSA private key
         $cek = $this->unwrap($wrappedKey, $kid, $config);
 
-        $bundle->getEncryption()->setCek($cek);
+        $bundle->setEncryption($bundle->getEncryption()->withCek($cek));
     }
 
     /**
@@ -51,7 +51,7 @@ class RsaKeyService extends KeyCryptoService
         // Encrypt CEK with RSA public key
         $wrappedKey = $this->wrap($cek, $kid, $config);
 
-        $bundle->getEncryption()->setEncryptedKey($wrappedKey);
+        $bundle->setEncryption($bundle->getEncryption()->withEncryptedKey($wrappedKey));
     }
 
     /**

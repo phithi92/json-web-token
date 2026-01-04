@@ -37,6 +37,7 @@ class JwtBundleTest extends TestCase
     {
         $header = new JwtHeader();
         $bundle = new JwtBundle($header);
+        $bundle->setEncryption(new JwtEncryptionData());
 
         $this->assertInstanceOf(JwtEncryptionData::class, $bundle->getEncryption());
     }

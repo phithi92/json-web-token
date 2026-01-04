@@ -22,32 +22,14 @@ final class RsaEncryptionService extends ContentCryptoService
     {
         $kid = $bundle->getHeader()->getKid();
 
-        $this->decrypt($bundle, $kid, $config);
-    }
-
-    /**
-     * @param array<string,int|string> $config
-     */
-    public function encryptPayload(JwtBundle $bundle, array $config): void
-    {
-        $kid = $bundle->getHeader()->getKid();
-
-        $this->encrypt($bundle, $kid, $config);
-    }
-
-    /**
-     * @param array<string,int|string> $config
-     *
-     * @throws DecryptionException
-     */
-    public function decrypt(JwtBundle $bundle, string $kid, array $config): void
-    {
-        $padding = (int) $config['padding'];
-        $privateKey = $this->manager->getPrivateKey($kid);
-        $sealedPayload = $bundle->getPayload()->getEncryptedPayload();
-
         $unsealedPayload = '';
-        if (! openssl_private_decrypt($sealedPayload, $unsealedPayload, $privateKey, $padding)) {
+        $decrypted = openssl_private_decrypt(
+            data: $bundle->getPayload()->getEncryptedPayload(),
+            decrypted_data: $unsealedPayload,
+            private_key: $this->manager->getPrivateKey($kid),
+            padding: (int) $config['padding']
+        );
+        if (! $decrypted) {
             $message = OpenSslErrorHelper::getFormattedErrorMessage('Decrypt Payload Failed: ');
             throw new DecryptionException($message);
         }
@@ -58,17 +40,19 @@ final class RsaEncryptionService extends ContentCryptoService
 
     /**
      * @param array<string,int|string> $config
-     *
-     * @throws InvalidTokenException
      */
-    public function encrypt(JwtBundle $bundle, string $kid, array $config): void
+    public function encryptPayload(JwtBundle $bundle, array $config): void
     {
-        $padding = (int) $config['padding'];
-        $publicKey = $this->manager->getPublicKey($kid);
-        $payloadJson = JwtPayloadJsonCodec::encodeStatic($bundle->getPayload());
-
+        $kid = $bundle->getHeader()->getKid();
         $sealedPayload = '';
-        if (! openssl_public_encrypt($payloadJson, $sealedPayload, $publicKey, $padding)) {
+
+        $encrypted = openssl_public_encrypt(
+            data: JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
+            encrypted_data: $sealedPayload,
+            public_key: $this->manager->getPublicKey($kid),
+            padding: (int) $config['padding']
+        );
+        if (! $encrypted) {
             $message = OpenSslErrorHelper::getFormattedErrorMessage('Encrypt Payload Failed: ');
             throw new InvalidTokenException($message);
         }

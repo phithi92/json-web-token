@@ -25,14 +25,15 @@ final class IvService implements IvHandlerInterface
      */
     public function initializeIv(JwtBundle $bundle, array $config): void
     {
-        $bits = $this->getBitLengthFromConfig($config);
-        $bytesLength = $this->normalizeAndValidateBitLength($bits);
+        $byteLength = $this->normalizeAndValidateBitLength($config);
 
         // Secure random IV
-        $iv = $this->generateRandomIv($bytesLength);
+        $iv = random_bytes($byteLength);
+
+        $this->assertValidIvLength($iv, $byteLength);
 
         // Store IV in the bundle
-        $bundle->getEncryption()->setIv($iv);
+        $bundle->setEncryption($bundle->getEncryption()->withIv($iv));
     }
 
     /**
@@ -42,12 +43,10 @@ final class IvService implements IvHandlerInterface
      */
     public function validateIv(JwtBundle $bundle, array $config): void
     {
-        $bits = $this->getBitLengthFromConfig($config);
-        $bytesLength = $this->normalizeAndValidateBitLength($bits);
+        $bytesLength = $this->normalizeAndValidateBitLength($config);
 
         $iv = $bundle->getEncryption()->getIv();
 
-        // validate iv
         $this->assertValidIvLength($iv, $bytesLength);
     }
 
@@ -88,26 +87,13 @@ final class IvService implements IvHandlerInterface
      *
      * @throws InvalidInitializationVectorConfigException
      */
-    private function normalizeAndValidateBitLength(int $bits): int
+    private function normalizeAndValidateBitLength(array $config): int
     {
-        $expectedBytes = ($bits >> 3);
+        $expectedBytes = ($this->getBitLengthFromConfig($config) >> 3);
         if ($expectedBytes < 1) {
             throw new InvalidInitializationVectorConfigException(0, $expectedBytes);
         }
 
         return $expectedBytes;
-    }
-
-    /**
-     * @param int<1, max> $byteLength
-     */
-    private function generateRandomIv(int $byteLength): string
-    {
-        $iv = random_bytes($byteLength);
-        if (strlen($iv) !== $byteLength) {
-            throw new InvalidInitializationVectorException(strlen($iv), $byteLength);
-        }
-
-        return $iv;
     }
 }

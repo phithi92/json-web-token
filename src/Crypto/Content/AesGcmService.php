@@ -6,10 +6,8 @@ namespace Phithi92\JsonWebToken\Crypto\Content;
 
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
-use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtBundle;
-use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\OpenSslErrorHelper;
 
 use function openssl_decrypt;
@@ -25,107 +23,23 @@ use function sprintf;
  */
 final class AesGcmService extends ContentCryptoService
 {
-    protected const OPENSSL_OPTIONS = OPENSSL_RAW_DATA;
+    private const OPENSSL_OPTIONS = OPENSSL_RAW_DATA;
+
+    private const AUTH_TAG_LENGTH = 16;
 
     /**
      * @throws InvalidTokenException
      */
     public function decryptPayload(JwtBundle $bundle, array $config): void
     {
-        $algorithm = $this->buildAlgorithmNameFromKeyLength($config);
-
-        [$cek, $iv, $sealedPayload, $authTag, $aad] = $this->extractTokenDecryptionComponents($bundle);
-
-        $unsealedPayload = $this->decrypt(
-            $algorithm,
-            self::OPENSSL_OPTIONS,
-            $sealedPayload,
-            $cek,
-            $iv,
-            $authTag,
-            $aad
-        );
-
-        JwtPayloadJsonCodec::decodeStaticInto($unsealedPayload, $bundle->getPayload());
-    }
-
-    public function encryptPayload(JwtBundle $bundle, array $config): void
-    {
-        $algorithm = $this->buildAlgorithmNameFromKeyLength($config);
-
-        [$cek, $iv, $jsonPayload, $aad] = $this->extractTokenEncryptionComponents($bundle);
-
-        [$sealedPayload, $authTag] = $this->encrypt(
-            $algorithm,
-            self::OPENSSL_OPTIONS,
-            $jsonPayload,
-            $cek,
-            $iv,
-            $aad
-        );
-
-        $bundle->getPayload()->setEncryptedPayload($sealedPayload);
-        $bundle->getEncryption()->setAuthTag($authTag);
-    }
-
-    /**
-     * @param array<string,int|string> $config
-     */
-    private function buildAlgorithmNameFromKeyLength(array $config): string
-    {
-        /** @var int $bits */
-        $bits = $config['length'];
-
-        return sprintf('aes-%s-gcm', $bits);
-    }
-
-    /**
-     * @return array{string,string,string,string,string}
-     */
-    private function extractTokenDecryptionComponents(JwtBundle $bundle): array
-    {
-        return [
-            $bundle->getEncryption()->getCek(),
-            $bundle->getEncryption()->getIv(),
-            $bundle->getPayload()->getEncryptedPayload(),
-            $bundle->getEncryption()->getAuthTag(),
-            $bundle->getEncryption()->getAad(),
-        ];
-    }
-
-    /**
-     * @return array{string,string,string,string}
-     */
-    private function extractTokenEncryptionComponents(JwtBundle $bundle): array
-    {
-        return [
-            $bundle->getEncryption()->getCek(),
-            $bundle->getEncryption()->getIv(),
-            JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
-            Base64UrlEncoder::encode(JwtHeaderJsonCodec::encodeStatic($bundle->getHeader())),
-        ];
-    }
-
-    /**
-     * @throws InvalidTokenException
-     */
-    private function decrypt(
-        string $algorithm,
-        int $options,
-        string $sealedPayload,
-        string $cek,
-        string $iv,
-        string $authTag,
-        string $aad,
-    ): string {
         $unsealedPayload = openssl_decrypt(
-            $sealedPayload,
-            $algorithm,
-            $cek,
-            $options,
-            $iv,
-            $authTag,
-            $aad
+            data: $bundle->getPayload()->getEncryptedPayload(),
+            cipher_algo: $this->buildAesGcmAlgorithm($config),
+            passphrase: $this->resolveCek($bundle),
+            options: self::OPENSSL_OPTIONS,
+            iv: $bundle->getEncryption()->getIv(),
+            tag: $bundle->getEncryption()->getAuthTag(),
+            aad: $bundle->getEncryption()->getAad(),
         );
 
         if ($unsealedPayload === false) {
@@ -133,31 +47,22 @@ final class AesGcmService extends ContentCryptoService
             throw new InvalidTokenException($message);
         }
 
-        return $unsealedPayload;
+        JwtPayloadJsonCodec::decodeStaticInto($unsealedPayload, $bundle->getPayload());
     }
 
-    /**
-     * @return array{string,string}
-     *
-     * @throws EncryptionException
-     */
-    private function encrypt(
-        string $algorithm,
-        int $options,
-        string $jsonPayload,
-        string $cek,
-        string $iv,
-        string $aad,
-    ): array {
+    public function encryptPayload(JwtBundle $bundle, array $config): void
+    {
         $authTag = '';
+
         $sealedPayload = openssl_encrypt(
-            $jsonPayload,
-            $algorithm,
-            $cek,
-            $options,
-            $iv,
-            $authTag,
-            $aad
+            data: JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
+            cipher_algo: $this->buildAesGcmAlgorithm($config),
+            passphrase: $this->resolveCek($bundle),
+            options: self::OPENSSL_OPTIONS,
+            iv: $bundle->getEncryption()->getIv(),
+            tag: $authTag,
+            aad: $bundle->getEncryption()->getAad(),
+            tag_length: self::AUTH_TAG_LENGTH
         );
 
         if ($sealedPayload === false) {
@@ -165,7 +70,27 @@ final class AesGcmService extends ContentCryptoService
             throw new EncryptionException($message);
         }
 
-        /** @var non-empty-string $authTag */
-        return [$sealedPayload, $authTag];
+        $bundle->getPayload()->setEncryptedPayload($sealedPayload);
+        $bundle->setEncryption($bundle->getEncryption()->withAuthTag($authTag));
+    }
+
+    private function resolveCek(JwtBundle $bundle): string
+    {
+        if ($bundle->getHeader()->getAlgorithm() === 'dir') {
+            return $this->manager->getPassphrase($bundle->getHeader()->getKid());
+        }
+
+        return $bundle->getEncryption()->getCek();
+    }
+
+    /**
+     * @param array<string,int|string> $config
+     */
+    private function buildAesGcmAlgorithm(array $config): string
+    {
+        /** @var int $bits */
+        $bits = $config['length'];
+
+        return sprintf('aes-%s-gcm', $bits);
     }
 }
