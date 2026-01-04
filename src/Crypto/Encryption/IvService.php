@@ -83,6 +83,9 @@ final class IvService implements IvHandlerInterface
     }
 
     /**
+     * 
+     * @param array<string, int|string> $config
+     * 
      * @return positive-int
      *
      * @throws InvalidInitializationVectorConfigException

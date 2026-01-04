@@ -60,7 +60,6 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
             throw new DecryptionException('RSA unwrap failed – empty CEK.');
         }
 
-        /** @var string $cek */
         return $cek;
     }
 
@@ -107,6 +106,16 @@ class PhpseclibRsaEncryptionService extends RsaKeyService
         return [$padding, $hash];
     }
 
+    /**
+     * 
+     * @param string $role
+     * @param string $pem
+     * @param array<string, string|int> $config
+     * 
+     * @return RSAPrivateKey|RSAPublicKey
+     * 
+     * @throws LogicException
+     */
     private function buildKey(
         string $role,
         string $pem,

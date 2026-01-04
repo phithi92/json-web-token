@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\phpunit;
 
-use LogicException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingHeaderAlgorithmException;
+use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigurationException;
 use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
 use ReflectionClass;
-use UnexpectedValueException;
 
 class JwtTokenBuilderTest extends TestCaseWithSecrets
 {
@@ -17,11 +17,11 @@ class JwtTokenBuilderTest extends TestCaseWithSecrets
         $builder = new JwtTokenBuilder($this->manager);
 
         $reflection = new ReflectionClass($builder);
-        $method = $reflection->getMethod('createHeader');
+        $method = $reflection->getMethod('buildHeader');
         $method->setAccessible(true);
 
-        $this->expectException(UnexpectedValueException::class);
-        $this->expectExceptionMessage('Incomplete token header configuration');
+        $this->expectException(MissingHeaderAlgorithmException::class);
+        $this->expectExceptionMessage('JWT header does not contain an algorithm (alg).');
 
         $method->invoke($builder, 'JWT', null, 'some-kid', 'A256GCM');
     }
@@ -34,22 +34,24 @@ class JwtTokenBuilderTest extends TestCaseWithSecrets
         $this->expectExceptionMessage('INVALID_KID');
 
         $reflection = new ReflectionClass($builder);
-        $method = $reflection->getMethod('createHeader');
+        $method = $reflection->getMethod('buildHeader');
         $method->setAccessible(true);
 
         $method->invoke($builder, 'JWT', 'RSA-OAEP', 'INVALID_KID', 'A256GCM');
     }
 
-    public function testInvalidHeaderConfigThrowsLogicException(): void
+    public function testInvalidHeaderConfigThrowsException(): void
     {
         $builder = new JwtTokenBuilder($this->manager);
 
         $reflection = new ReflectionClass($builder);
-        $method = $reflection->getMethod('extractHeaderParams');
+        $method = $reflection->getMethod('resolveHeaderParamsFromConfig');
         $method->setAccessible(true);
 
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Invalid header configuration');
+        $this->expectException(InvalidAlgorithmConfigurationException::class);
+        $this->expectExceptionMessage(
+            'Invalid algorithm configuration: expected token_type, alg, and enc to be scalar values.'
+        );
 
         $method->invoke($builder, [
             'token_type' => 123,
@@ -63,7 +65,7 @@ class JwtTokenBuilderTest extends TestCaseWithSecrets
         $builder = new JwtTokenBuilder($this->manager);
 
         $reflection = new ReflectionClass($builder);
-        $method = $reflection->getMethod('buildDefaultKid');
+        $method = $reflection->getMethod('deriveDefaultKid');
         $method->setAccessible(true);
 
         $kid = $method->invoke($builder, 'RSA-OAEP', 'A256GCM');

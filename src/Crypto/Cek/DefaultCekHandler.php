@@ -6,6 +6,7 @@ namespace Phithi92\JsonWebToken\Crypto\Cek;
 
 use LogicException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidCekLength;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 
@@ -29,7 +30,7 @@ final class DefaultCekHandler implements CekHandlerInterface
     /**
      *
      * @param JwtBundle $bundle
-     * @param array $config
+     * @param array<string, int|string> $config
      * @return void
      *
      * @throws InvalidCekLength
@@ -102,6 +103,11 @@ final class DefaultCekHandler implements CekHandlerInterface
         return $bitLength >> 3;
     }
 
+    /**
+     * 
+     * @param array<string, int|string> $config
+     * @return string
+     */
     private function generateRandomCek(array $config): string
     {
         $byteLength = $this->getByteLength($config);

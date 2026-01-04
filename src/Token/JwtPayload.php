@@ -246,6 +246,7 @@ final class JwtPayload implements JsonSerializable
      */
     public function getAudience(): string|array|null
     {
+        /** @var mixed $audience */
         $audience = $this->getClaim('aud');
 
         if (is_string($audience)) {
@@ -254,16 +255,18 @@ final class JwtPayload implements JsonSerializable
 
         if (is_array($audience) && array_is_list($audience)) {
             foreach ($audience as $a) {
-                if (! is_string($a)) {
+                if (!is_string($a)) {
                     return null;
                 }
             }
+
+            /** @var list<string> $audience */
             return $audience;
         }
 
         return null;
     }
-
+    
     /**
      * Set the issued-at (iat) claim using a date string.
      */
@@ -424,6 +427,8 @@ final class JwtPayload implements JsonSerializable
 
     /**
      * Apply validated claims to internal state.
+     * 
+     * @param array<string, mixed> $claims
      */
     private function hydrateClaims(array $claims): void
     {
@@ -443,16 +448,17 @@ final class JwtPayload implements JsonSerializable
      */
     private function isValidJsonValue(mixed $v): bool
     {
-        if (
-            is_null($v)
-            || is_bool($v)
-            || is_int($v)
-            || is_float($v)
-            || is_string($v)
-        ) {
+        // JSON supports: null, bool, int/float, string
+        if ($v === null) {
             return true;
         }
 
+        // scalar = bool|int|float|string
+        if (is_scalar($v)) {
+            return true;
+        }
+
+        // arrays are allowed recursively
         if (! is_array($v)) {
             return false;
         }
@@ -468,7 +474,7 @@ final class JwtPayload implements JsonSerializable
 
         return true;
     }
-
+    
     private function isTimeClaim(string $key): bool
     {
         return isset(DateClaimHelper::TIME_CLAIMS[$key]);

@@ -16,6 +16,8 @@ enum TokenErrorMessagesEnum: string
 {
     use ErrorMessageTrait;
 
+    case UNSUPPORTED_TOKEN_TYPE = 'Token type is not supported: "%s".';
+    case MISSING_HEADER_ALGORITHM = 'JWT header does not contain an algorithm (alg).';
     case INVALID_SIGNATURE = 'Signature verification failed: %1$s';
     case INVALID_FORMAT = 'Invalid JWT format: %s.';
     case INVALID_TOKEN = 'Invalid token: %s.';

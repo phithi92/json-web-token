@@ -71,6 +71,7 @@ final class AesGcmService extends ContentCryptoService
         }
 
         $bundle->getPayload()->setEncryptedPayload($sealedPayload);
+        /** @var string $authTag */
         $bundle->setEncryption($bundle->getEncryption()->withAuthTag($authTag));
     }
 
