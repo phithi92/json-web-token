@@ -8,13 +8,11 @@ use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
-use Phithi92\JsonWebToken\Token\Helper\UtcClock;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
-
-use function spl_object_id;
+use WeakMap;
 
 /**
  * Factory class for creating, encrypting, decrypting, and validating JWTs.
@@ -30,24 +28,27 @@ use function spl_object_id;
  */
 final class JwtTokenFactory
 {
-    /** @var array<int, JwtTokenBuilder> */
-    private static array $builderCache = [];
-
-    /** @var array<int, JwtTokenDecryptor> */
-    private static array $decryptorCache = [];
-
-    private static ?UtcClock $utcClock = null;
+    /**
+     * Cache builders per manager without preventing GC of the manager instance.
+     *
+     * @var WeakMap<JwtKeyManager, JwtTokenBuilder>
+     */
+    private static WeakMap $builderCache;
 
     /**
-     * Creates a signed and/or encrypted JWT using the provided payload and algorithm.
+     * Cache decryptors per manager without preventing GC of the manager instance.
      *
-     * @param string              $algorithm Algorithm name (e.g., 'RS256').
-     * @param JwtKeyManager $manager   algorithm manager instance
-     * @param JwtPayload|null     $payload   optional Payload object containing JWT claims
-     * @param JwtValidator|null   $validator optional validator instance
-     * @param string|null         $kid       optional key ID
+     * @var WeakMap<JwtKeyManager, JwtTokenDecryptor>
+     */
+    private static WeakMap $decryptorCache;
+
+    /**
+     * Creates a fully validated JWT bundle.
      *
-     * @return JwtBundle resulting token bundle
+     * This method performs:
+     * - Payload validation
+     * - Claim validation (via JwtValidator)
+     * - Signing and/or encryption according to the algorithm
      */
     public static function createToken(
         string $algorithm,
@@ -67,15 +68,11 @@ final class JwtTokenFactory
     }
 
     /**
-     * Creates a JWT from an associative array of claims.
+     * Convenience method for creating a token directly from an associative array.
      *
-     * @param string               $algorithm algorithm name
-     * @param JwtKeyManager  $manager   algorithm manager instance
-     * @param array<string,mixed> $claims    associative array of JWT claims
-     * @param JwtValidator|null    $validator optional validator instance
-     * @param string|null          $kid       optional key ID
+     * The array is converted into a JwtPayload before normal token creation.
      *
-     * @return JwtBundle resulting token bundle
+     * @param array<string, mixed> $claims
      */
     public static function createTokenFromArray(
         string $algorithm,
@@ -103,13 +100,6 @@ final class JwtTokenFactory
      * **exclusively** for controlled testing environments, stubbing, or internal tooling.
      * Signing, encryption, and header construction still run; only payload/claim
      * validation is skipped.
-     *
-     * @param string              $algorithm algorithm name
-     * @param JwtKeyManager $manager   algorithm manager instance
-     * @param JwtPayload|null     $payload   optional JWT payload
-     * @param string|null         $kid       optional key ID
-     *
-     * @return JwtBundle resulting token bundle
      */
     public static function createTokenWithoutClaimValidation(
         string $algorithm,
@@ -127,15 +117,9 @@ final class JwtTokenFactory
     }
 
     /**
-     * Creates a JWT and returns it as a serialized string (JWT compact format).
+     * Creates and serializes a JWT into its compact string representation.
      *
-     * @param string              $algorithm algorithm name
-     * @param JwtKeyManager $manager   algorithm manager instance
-     * @param JwtPayload|null     $payload   optional JWT payload
-     * @param JwtValidator|null   $validator optional validator
-     * @param string|null         $kid       optional key ID
-     *
-     * @return string JWT as a compact string
+     * This is a shortcut for createToken() + JwtTokenParser::serialize().
      */
     public static function createTokenString(
         string $algorithm,
@@ -156,13 +140,13 @@ final class JwtTokenFactory
     }
 
     /**
-     * Decrypts and validates a JWT string using the provided manager and validator.
+     * Decrypts and validates a JWT string.
      *
-     * @param string              $token     serialized JWT string
-     * @param JwtKeyManager $manager   algorithm manager
-     * @param JwtValidator|null   $validator optional validator
-     *
-     * @return JwtBundle decrypted and parsed JWT bundle
+     * This includes:
+     * - Parsing
+     * - Signature verification
+     * - Decryption (if applicable)
+     * - Claim validation
      */
     public static function decryptToken(
         string $token,
@@ -175,12 +159,11 @@ final class JwtTokenFactory
     }
 
     /**
-     * Decrypts a JWT string without performing validation.
+     * ⚠️ SECURITY WARNING
      *
-     * @param string              $token   serialized JWT string
-     * @param JwtKeyManager $manager algorithm manager
+     * Decrypts a token without validating claims.
      *
-     * @return JwtBundle decrypted JWT bundle
+     * Use ONLY in trusted contexts.
      */
     public static function decryptTokenWithoutClaimValidation(
         string $token,
@@ -192,13 +175,10 @@ final class JwtTokenFactory
     }
 
     /**
-     * Validates a JWT string by decrypting and passing it to a JwtValidator.
+     * Validates only the claims of a JWT.
      *
-     * @param string              $token     serialized JWT string
-     * @param JwtKeyManager $manager   algorithm manager instance
-     * @param JwtValidator        $validator validator instance
-     *
-     * @return bool true if the token is valid, false otherwise
+     * The token is fully decrypted and verified first.
+     * Returns false instead of throwing on validation failure.
      */
     public static function validateTokenClaims(
         string $token,
@@ -216,6 +196,11 @@ final class JwtTokenFactory
         return $validator->isValid(payload: $bundle->getPayload());
     }
 
+    /**
+     * Reissues a JWT directly from a token string.
+     *
+     * The original token is parsed, filtered and re-signed with a new expiration.
+     */
     public static function reissueBundleFromToken(
         string $token,
         string $interval,
@@ -231,14 +216,10 @@ final class JwtTokenFactory
     }
 
     /**
-     * Refreshes a JWT by cloning its payload and updating the timestamps.
+     * Reissues an existing bundle with refreshed temporal claims.
      *
-     * @param string              $interval  Expiration interval (e.g., "+1 hour").
-     * @param JwtBundle  $bundle    existing JWT bundle to refresh
-     * @param JwtKeyManager $manager   algorithm manager instance
-     * @param JwtValidator|null   $validator optional validator to check the bundle before refreshing
-     *
-     * @return JwtBundle new JWT bundle with refreshed timestamps
+     * Time-based claims are removed and regenerated.
+     * Non-temporal claims are preserved.
      */
     public static function reissueBundle(
         string $interval,
@@ -259,11 +240,6 @@ final class JwtTokenFactory
         return $builder->createFromBundle(bundle: $newBundle);
     }
 
-    private static function getUtcClock(): UtcClock
-    {
-        return self::$utcClock ??= new UtcClock();
-    }
-
     private static function buildFilteredPayload(JwtBundle $bundle): JwtPayload
     {
         $referencePayload = $bundle->getPayload();
@@ -271,6 +247,7 @@ final class JwtTokenFactory
         $payload = new JwtPayload();
         $filteredClaims = self::filterClaims(payload: $referencePayload);
         $payload->hydrateFromArray(claims: $filteredClaims);
+
         return $payload;
     }
 
@@ -288,20 +265,15 @@ final class JwtTokenFactory
 
     private static function getBuilder(JwtKeyManager $manager): JwtTokenBuilder
     {
-        $cacheId = self::getObjectId(object: $manager);
+        self::$builderCache ??= new WeakMap();
 
-        return self::$builderCache[$cacheId] ??= new JwtTokenBuilder(manager: $manager);
+        return self::$builderCache[$manager] ??= new JwtTokenBuilder(manager: $manager);
     }
 
     private static function getDecryptor(JwtKeyManager $manager): JwtTokenDecryptor
     {
-        $cacheId = self::getObjectId(object: $manager);
+        self::$decryptorCache ??= new WeakMap();
 
-        return self::$decryptorCache[$cacheId] ??= new JwtTokenDecryptor(manager: $manager);
-    }
-
-    private static function getObjectId(object $object): int
-    {
-        return spl_object_id($object);
+        return self::$decryptorCache[$manager] ??= new JwtTokenDecryptor(manager: $manager);
     }
 }
