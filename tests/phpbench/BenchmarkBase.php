@@ -5,7 +5,7 @@ namespace Tests\phpbench;
 use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
+use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Tests\Helpers\KeyProvider;
 
@@ -56,7 +56,7 @@ abstract class BenchmarkBase
             );
 
             $bundle = JwtTokenFactory::createTokenWithoutClaimValidation($alg, $manager, $payload);
-            $token = JwtTokenParser::serialize($bundle);
+            $token = JwtBundleCodec::serialize($bundle);
             $this->cache['expired'][$alg] = $token;
         }
 
@@ -79,7 +79,7 @@ abstract class BenchmarkBase
 
             $bundle = JwtTokenFactory::createToken($alg, $manager, $payload);
 
-            $token = JwtTokenParser::serialize($bundle);
+            $token = JwtBundleCodec::serialize($bundle);
 
             $this->cache['valid'][$alg] = $token;
         }

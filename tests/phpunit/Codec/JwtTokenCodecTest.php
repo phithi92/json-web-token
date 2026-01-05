@@ -9,7 +9,7 @@ use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
+use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
@@ -17,7 +17,7 @@ use function explode;
 use function implode;
 use function json_encode;
 
-final class JwtTokenParserTest extends TestCaseWithSecrets
+final class JwtTokenCodecTest extends TestCaseWithSecrets
 {
     public function testParseValidJweToken(): void
     {
@@ -35,7 +35,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
         $jwt = implode('.', $parts);
 
-        $bundle = JwtTokenParser::parse($jwt);
+        $bundle = JwtBundleCodec::parse($jwt);
 
         $this->assertInstanceOf(JwtBundle::class, $bundle);
         $this->assertEquals('JWE', $bundle->getHeader()->getType());
@@ -57,7 +57,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
         $jwt = implode('.', $parts);
 
-        $bundle = JwtTokenParser::parse($jwt);
+        $bundle = JwtBundleCodec::parse($jwt);
 
         $this->assertInstanceOf(JwtBundle::class, $bundle);
     }
@@ -69,7 +69,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
         // Ungültige Struktur (nur 2 Teile)
         $invalidToken = 'part1.part2';
 
-        JwtTokenParser::parse($invalidToken);
+        JwtBundleCodec::parse($invalidToken);
     }
 
     public function testSerializeJweToken(): void
@@ -79,7 +79,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
 
         $bundle = JwtTokenFactory::createToken('A256GCM', $this->manager, $payload);
 
-        $token = JwtTokenParser::serialize($bundle);
+        $token = JwtBundleCodec::serialize($bundle);
 
         $this->assertIsString($token);
         $this->assertCount(5, explode('.', $token));
@@ -97,7 +97,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
             Base64UrlEncoder::encode('authtag'),
         ];
 
-        JwtTokenParser::parse(implode('.', $parts));
+        JwtBundleCodec::parse(implode('.', $parts));
     }
 
     public function testInvalidJsonInHeaderThrowsException(): void
@@ -113,7 +113,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
             Base64UrlEncoder::encode('authtag'),
         ];
 
-        JwtTokenParser::parse(implode('.', $parts));
+        JwtBundleCodec::parse(implode('.', $parts));
     }
 
     public function testParseDirectAlgDoesNotUseEncryptedKeyPart(): void
@@ -129,7 +129,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
             Base64UrlEncoder::encode('authtag123'),
         ];
 
-        $bundle = JwtTokenParser::parse(implode('.', $parts));
+        $bundle = JwtBundleCodec::parse(implode('.', $parts));
 
         $this->expectException(MissingTokenPart::class);
         // parser should not set a CEK from token for dir
@@ -156,7 +156,7 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
             Base64UrlEncoder::encode($signature),
         ];
 
-        JwtTokenParser::parse(implode('.', $parts));
+        JwtBundleCodec::parse(implode('.', $parts));
     }
 
     public function testInvalidTypInHeaderThrowsException(): void
@@ -173,18 +173,18 @@ final class JwtTokenParserTest extends TestCaseWithSecrets
             Base64UrlEncoder::encode($signature),
         ];
 
-        JwtTokenParser::parse(implode('.', $parts));
+        JwtBundleCodec::parse(implode('.', $parts));
     }
 
     public function testParseEmptyTokenThrowsException(): void
     {
         $this->expectException(MalformedTokenException::class);
-        JwtTokenParser::parse('');
+        JwtBundleCodec::parse('');
     }
 
     public function testParseEmptyArrayThrowsException(): void
     {
         $this->expectException(MalformedTokenException::class);
-        JwtTokenParser::parse([]);
+        JwtBundleCodec::parse([]);
     }
 }

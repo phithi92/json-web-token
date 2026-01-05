@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Factory;
 
 use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
-use Phithi92\JsonWebToken\Token\Builder\JwtTokenBuilder;
+use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
+use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use WeakMap;
 
@@ -31,7 +31,7 @@ final class JwtTokenFactory
     /**
      * Cache builders per manager without preventing GC of the manager instance.
      *
-     * @var WeakMap<JwtKeyManager, JwtTokenBuilder>
+     * @var WeakMap<JwtKeyManager, JwtTokenIssuer>
      */
     private static WeakMap $builderCache;
 
@@ -119,7 +119,7 @@ final class JwtTokenFactory
     /**
      * Creates and serializes a JWT into its compact string representation.
      *
-     * This is a shortcut for createToken() + JwtTokenParser::serialize().
+     * This is a shortcut for createToken() + JwtBundleCodec::serialize().
      */
     public static function createTokenString(
         string $algorithm,
@@ -136,7 +136,7 @@ final class JwtTokenFactory
             kid: $kid
         );
 
-        return JwtTokenParser::serialize(bundle: $bundle);
+        return JwtBundleCodec::serialize(bundle: $bundle);
     }
 
     /**
@@ -209,7 +209,7 @@ final class JwtTokenFactory
     ): JwtBundle {
         return self::reissueBundle(
             interval: $interval,
-            bundle: JwtTokenParser::parse($token),
+            bundle: JwtBundleCodec::parse($token),
             manager: $manager,
             validator: $validator
         );
@@ -263,11 +263,11 @@ final class JwtTokenFactory
         return $claims;
     }
 
-    private static function getBuilder(JwtKeyManager $manager): JwtTokenBuilder
+    private static function getBuilder(JwtKeyManager $manager): JwtTokenIssuer
     {
         self::$builderCache ??= new WeakMap();
 
-        return self::$builderCache[$manager] ??= new JwtTokenBuilder(manager: $manager);
+        return self::$builderCache[$manager] ??= new JwtTokenIssuer(manager: $manager);
     }
 
     private static function getDecryptor(JwtKeyManager $manager): JwtTokenDecryptor

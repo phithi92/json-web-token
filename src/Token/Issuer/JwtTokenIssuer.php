@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Token\Builder;
+namespace Phithi92\JsonWebToken\Token\Issuer;
 
 use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Exceptions\Config\MissingAlgorithmException;
@@ -15,13 +15,11 @@ use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtEncryptionData;
-use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
-use function implode;
 use function is_string;
 
 /**
@@ -40,22 +38,17 @@ use function is_string;
  *
  * ⚠ createWithoutValidation() should only be used in tests or controlled environments.
  */
-final class JwtTokenBuilder extends AbstractJwtTokenProcessor
+final class JwtTokenIssuer extends AbstractJwtTokenProcessor
 {
-    /**
-     * Separator used when deriving a default KID from algorithm components.
-     */
-    private const KID_PART_SEPARATOR = '_';
-
     /**
      * Handler chain operation for building tokens (signing/encrypting).
      */
     private const OPERATION = HandlerOperation::Perform;
 
     private ?JwtValidator $validator = null;
-
+    
     public function __construct(
-        JwtKeyManager $manager,
+        JwtKeyManager $manager
     ) {
         parent::__construct(self::OPERATION, $manager);
     }
@@ -164,7 +157,7 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
 
         [$typ, $alg, $enc] = $this->resolveHeaderParamsFromConfig($config);
 
-        $header = $this->buildHeader($typ, $alg, $kid, $enc);
+        $header = $this->headerFactory()->create($typ, $alg, $kid, $enc);
 
         $bundle = new JwtBundle($header, $payload);
         $encryptionData = new JwtEncryptionData(aad: $this->encodeAad($bundle));
@@ -184,6 +177,9 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
     private function encodeAad(JwtBundle $bundle): string
     {
         $type = $bundle->getHeader()->getType();
+        if ($type === null) {
+            throw new UnsupportedTokenTypeException('null');
+        }
 
         return match ($type) {
             'JWE' => $this->encodeJweAad($bundle),
@@ -237,104 +233,32 @@ final class JwtTokenBuilder extends AbstractJwtTokenProcessor
         $alg = $config['alg'] ?? null;
         $enc = $config['enc'] ?? null;
 
-        $this->assertValidHeaderConfig($tokenType, $alg, $enc);
-
-        return [$tokenType, $alg, $enc];
+        return [
+            $this->normalizeTokenType($tokenType),
+            $this->normalizeOptionalString($alg),
+            $this->normalizeOptionalString($enc),
+        ];
     }
-
-    /**
-     * Ensures the header configuration has the expected scalar types.
-     *
-     * @throws InvalidAlgorithmConfigurationException
-     */
-    private function assertValidHeaderConfig(
-        mixed $tokenType,
-        mixed $alg,
-        mixed $enc,
-    ): void {
-        if (! $this->isValidHeaderConfigShape($tokenType, $alg, $enc)) {
+    
+    private function normalizeTokenType(mixed $tokenType): string
+    {
+        if (! is_string($tokenType)) {
             throw new InvalidAlgorithmConfigurationException();
         }
+
+        return $tokenType;
     }
 
-    private function isValidHeaderConfigShape(mixed $tokenType, mixed $alg, mixed $enc): bool
+    private function normalizeOptionalString(mixed $value): ?string
     {
-        return is_string($tokenType)
-            && (is_string($alg) || $alg === null)
-            && (is_string($enc) || $enc === null);
-    }
-
-    /**
-     * Builds a JwtHeader and ensures the KID can be resolved.
-     *
-     * @throws MissingHeaderAlgorithmException If the header algorithm (alg) is missing.
-     * @throws UnresolvableKeyException If the resolved or derived KID cannot be found.
-     */
-    private function buildHeader(
-        string $typ,
-        ?string $alg,
-        ?string $kid,
-        ?string $enc,
-    ): JwtHeader {
-        if ($alg === null) {
-            throw new MissingHeaderAlgorithmException('header.alg');
+        if ($value === null) {
+            return null;
         }
 
-        $kid ??= $this->deriveDefaultKid($alg, $enc);
-
-        $this->assertKnownKid($kid);
-
-        $header = (new JwtHeader())
-            ->setType($typ)
-            ->setAlgorithm($alg);
-
-        if ($enc !== null) {
-            $header->setEnc($enc);
+        if (! is_string($value)) {
+            throw new InvalidAlgorithmConfigurationException();
         }
 
-        return $header->setKid($kid);
-    }
-
-    /**
-     * Ensures the given KID refers to a known key or passphrase.
-     *
-     * @throws UnresolvableKeyException
-     */
-    private function assertKnownKid(string $kid): void
-    {
-        if (! $this->canResolveKid($kid)) {
-            throw new UnresolvableKeyException($kid);
-        }
-    }
-
-    /**
-     * Checks whether the given KID can be resolved to a key or passphrase.
-     */
-    private function canResolveKid(string $kid): bool
-    {
-        return $this->manager->hasKey($kid) || $this->manager->hasPassphrase($kid);
-    }
-
-    /**
-     * Derives a default KID from algorithm and encryption method.
-     *
-     * Example: "RSA_OAEP_A256GCM"
-     */
-    private function deriveDefaultKid(
-        string $alg,
-        ?string $enc = null,
-        string $separator = self::KID_PART_SEPARATOR,
-    ): string {
-        $parts = [];
-
-        if ($alg !== 'dir') {
-            $parts[] = $alg;
-        }
-
-        if ($enc !== null && $enc !== '') {
-            $parts[] = $enc;
-        }
-
-        return implode($separator, $parts);
-    }
+        return $value;
+    }    
 }

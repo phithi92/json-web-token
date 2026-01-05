@@ -14,10 +14,8 @@ use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtSignature;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
-use function array_map;
 use function count;
 use function explode;
-use function implode;
 use function is_null;
 use function is_string;
 
@@ -32,8 +30,6 @@ final class JwtTokenParser
     /**
      * @param string|array<int,string> $token
      *
-     * @return JwtBundle configured bundle
-     *
      * @throws MalformedTokenException
      */
     public static function parse(string|array $token): JwtBundle
@@ -41,7 +37,6 @@ final class JwtTokenParser
         $tokenArray = self::normalizeTokenInput($token);
 
         $header = self::buildHeaderFromTokenArray($tokenArray);
-
         $bundle = new JwtBundle($header);
 
         if (! is_null($header->getType())) {
@@ -52,32 +47,17 @@ final class JwtTokenParser
     }
 
     /**
-     * @return string Serialized token
-     *
-     * @throws MalformedTokenException
-     */
-    public static function serialize(JwtBundle $bundle): string
-    {
-        return match ($bundle->getHeader()->getType()) {
-            self::JWE_TYPE => self::serializeEncodedToken($bundle),
-            self::JWS_TYPE => self::serializeSignatureToken($bundle),
-            default => throw new MalformedTokenException('Invalid or unsupported token type'),
-        };
-    }
-
-    /**
      * @param string|array<int,string> $token
      *
-     * @return array<int,string> normalized token array
+     * @return array<int,string>
      *
      * @throws MalformedTokenException
      */
     private static function normalizeTokenInput(string|array $token): array
     {
-        // The limit of 6 is intentionally chosen so we can detect
-        // if a token contains more dots than expected.
-        // Any additional parts will be grouped into the last element.
+        // limit=6: detect "too many dots" by grouping extras into last element
         $tokenArray = is_string($token) ? explode('.', $token, 6) : $token;
+
         if (! isset($tokenArray[0])) {
             throw new MalformedTokenException('Token is malformed or incomplete');
         }
@@ -91,7 +71,6 @@ final class JwtTokenParser
     private static function buildHeaderFromTokenArray(array $tokenArray): JwtHeader
     {
         $headerB64 = $tokenArray[0];
-
         $headerJson = self::decodeBase64Url($headerB64);
 
         return JwtHeaderJsonCodec::decodeStatic($headerJson);
@@ -179,52 +158,5 @@ final class JwtTokenParser
         JwtPayloadJsonCodec::decodeStaticInto($payloadJson, $bundle->getPayload());
 
         return $bundle;
-    }
-
-    /**
-     * @return string serialized and encoded token
-     */
-    private static function serializeEncodedToken(JwtBundle $bundle): string
-    {
-        $encryptedKey = match ($bundle->getHeader()->getAlgorithm()) {
-            'dir' => '',
-            default => $bundle->getEncryption()->getEncryptedKey(),
-        };
-
-        $tokenArray = [
-            JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
-            $encryptedKey,
-            $bundle->getEncryption()->getIv(),
-            $bundle->getPayload()->getEncryptedPayload(),
-            $bundle->getEncryption()->getAuthTag(),
-        ];
-
-        return self::encodeAndSerialize($tokenArray);
-    }
-
-    private static function serializeSignatureToken(JwtBundle $bundle): string
-    {
-        /** @param array<string> $tokenArray */
-        $tokenArray = [
-            JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
-            JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
-            (string) $bundle->getSignature(),
-        ];
-
-        return self::encodeAndSerialize($tokenArray);
-    }
-
-    /**
-     * @param array<int,string|null> $array
-     */
-    private static function encodeAndSerialize(array $array): string
-    {
-        return implode(
-            '.',
-            array_map(
-                static fn (?string $v): string => Base64UrlEncoder::encode($v ?? ''),
-                $array
-            )
-        );
     }
 }
