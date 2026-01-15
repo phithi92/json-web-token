@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token;
 
-use JsonSerializable;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
@@ -23,7 +22,7 @@ use function strlen;
  * It provides methods to set and retrieve these properties, ensuring consistency with
  * JWT standards.
  */
-final class JwtHeader implements JsonSerializable
+final class JwtHeader
 {
     // Min/Max length for KID validation
     private const MIN_KID_LENGTH = 3;
@@ -184,14 +183,6 @@ final class JwtHeader implements JsonSerializable
         }
 
         return $out;
-    }
-
-    /**
-     * @return array{typ?:string, alg?:string, kid?:string, enc?:string}
-     */
-    public function jsonSerialize(): array
-    {
-        return $this->toArray();
     }
 
     /**
