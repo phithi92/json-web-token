@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\phpunit;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use PHPUnit\Framework\TestCase;
@@ -13,8 +14,7 @@ class JwtPayloadJsonCodecTest extends TestCase
 {
     public function testEncodeProducesString(): void
     {
-        $payload = new JwtPayload();
-        $payload->hydrateFromArray(['sub' => '1234567890']);
+        $payload = (new JwtPayloadCodec())->decode(['sub' => '1234567890']);
 
         $codec = new JwtPayloadJsonCodec();
         $result = $codec->encode($payload);
@@ -25,8 +25,8 @@ class JwtPayloadJsonCodecTest extends TestCase
     public function testDecodeReturnsPayload(): void
     {
         $json = '{"sub":"abc"}';
-        $codec = new JwtPayloadJsonCodec();
 
+        $codec = new JwtPayloadJsonCodec();
         $payload = $codec->decode($json);
 
         $this->assertInstanceOf(JwtPayload::class, $payload);
@@ -55,8 +55,8 @@ class JwtPayloadJsonCodecTest extends TestCase
 
     public function testEncodeStaticProducesString(): void
     {
-        $payload = new JwtPayload();
-        $payload->hydrateFromArray(['key' => 'val']);
+        $factory = new JwtPayloadCodec();
+        $payload = $factory->decode(['key' => 'val']);
 
         $result = JwtPayloadJsonCodec::encodeStatic($payload);
 
@@ -83,8 +83,8 @@ class JwtPayloadJsonCodecTest extends TestCase
 
     public function testStaticInstanceCacheBehavior(): void
     {
-        $payload = new JwtPayload();
-        $payload->hydrateFromArray(['cached' => true]);
+        $factory = new JwtPayloadCodec();
+        $payload = $factory->decode(['cached' => true]);
 
         $first = JwtPayloadJsonCodec::encodeStatic($payload, 2);
         $second = JwtPayloadJsonCodec::encodeStatic($payload, 2);

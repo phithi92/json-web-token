@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Handler;
 
-use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
-use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
-use Phithi92\JsonWebToken\Interfaces\KeyHandlerInterface;
-use Phithi92\JsonWebToken\Interfaces\PayloadHandlerInterface;
-use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Content\ContentEncryptionHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Iv\IvHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Key\KeyHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\KeyManagement\CekHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerInterface;
 
 /**
  * Enum representing all supported handler types.
@@ -31,7 +31,7 @@ enum HandlerTarget
             self::Cek => CekHandlerInterface::class,
             self::Iv => IvHandlerInterface::class,
             self::Key => KeyHandlerInterface::class,
-            self::Payload => PayloadHandlerInterface::class,
+            self::Payload => ContentEncryptionHandlerInterface::class,
         };
     }
 

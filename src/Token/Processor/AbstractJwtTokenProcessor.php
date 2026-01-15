@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Processor;
 
-use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Handler\HandlerDescriptor;
 use Phithi92\JsonWebToken\Handler\HandlerDispatcher;
 use Phithi92\JsonWebToken\Handler\HandlerMethodResolver;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Handler\HandlerTarget;
-use Phithi92\JsonWebToken\Interfaces\JwtTokenOperation;
-use Phithi92\JsonWebToken\Token\JwtBundle;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Factory\JwtHeaderFactory;
+use Phithi92\JsonWebToken\Token\JwtBundle;
 
 use function usort;
 
@@ -33,9 +32,9 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 
     /** @var JwtKeyManager Manages algorithm-specific configurations. */
     protected readonly JwtKeyManager $manager;
-    
+
     private ?JwtHeaderFactory $headerFactory = null;
-    
+
     /**
      * Creates a JWT token processor for the given operation mode.
      *
@@ -50,7 +49,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         $this->operation = $operation;
         $this->dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
     }
-    
+
     protected function headerFactory(): JwtHeaderFactory
     {
         return $this->headerFactory ??= new JwtHeaderFactory($this->manager);

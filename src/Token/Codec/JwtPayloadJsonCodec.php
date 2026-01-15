@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Codec;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
-use Phithi92\JsonWebToken\Interfaces\JwtPayloadCodecInterface;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Throwable;
 
@@ -20,6 +19,13 @@ use Throwable;
 final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloadCodecInterface
 {
     private const JSON_MAX_DEPTH = 6;
+
+    private JwtPayloadCodec $codec;
+
+    public function __construct()
+    {
+        $this->codec = new JwtPayloadCodec();
+    }
 
     /**
      * Encode a JwtPayload instance to a JSON string.
@@ -57,10 +63,10 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
             throw new MalformedTokenException('Token payload is not valid JSON');
         }
 
-        $payload ??= new JwtPayload();
-        $payload->hydrateFromArray($data);
+        $resolvedPayload = $this->codec->decode($data, $payload);
 
-        return $payload;
+        return $resolvedPayload;
+
     }
 
     /**

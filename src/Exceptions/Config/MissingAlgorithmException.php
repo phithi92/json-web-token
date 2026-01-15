@@ -13,5 +13,5 @@ class MissingAlgorithmException extends RuntimeException
         parent::__construct(
             sprintf('Missing algorithm (source: %s).', $source)
         );
-    }    
+    }
 }

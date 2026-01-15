@@ -31,4 +31,6 @@ enum PayloadErrorMessagesEnum: string
     case INVALID_KEY_TYPE = 'Invalid key type. Key: "%1$s", Type: %2$s.';
     case EMPTY_VALUE = 'Invalid value. empty value for %s';
     case CLAIM_ALREADY_EXISTS = 'JWT claim "%s" already exists.';
+    case ENCRYPTED_PAYLOAD_NOT_SET = 'Encrypted payload has not been set.';
+    case ENCRYPTED_PAYLOAD_ALREADY_SET = 'Encrypted payload already set';
 }

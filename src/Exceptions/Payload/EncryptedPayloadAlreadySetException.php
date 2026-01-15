@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Exceptions\Payload;
 
-final class EncryptedPayloadNotSetException extends PayloadException
+class EncryptedPayloadAlreadySetException extends PayloadException
 {
     public function __construct()
     {
-        parent::__construct('ENCRYPTED_PAYLOAD_NOT_SET');
+        parent::__construct('ENCRYPTED_PAYLOAD_ALREADY_SET');
     }
 }

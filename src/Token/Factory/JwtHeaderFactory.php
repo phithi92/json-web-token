@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Factory;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MissingHeaderAlgorithmException;
-use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 
 use function implode;
@@ -19,7 +19,8 @@ final class JwtHeaderFactory
 
     public function __construct(
         private readonly JwtKeyManager $manager,
-    ) {}
+    ) {
+    }
 
     /**
      * Builds a JwtHeader and ensures the KID can be resolved.

@@ -4,26 +4,21 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token;
 
-use DateTimeImmutable;
 use JsonSerializable;
 use Phithi92\JsonWebToken\Exceptions\Payload\ClaimAlreadyExistsException;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
+use Phithi92\JsonWebToken\Exceptions\Payload\EncryptedPayloadAlreadySetException;
+use Phithi92\JsonWebToken\Exceptions\Payload\EncryptedPayloadNotSetException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
-use Phithi92\JsonWebToken\Exceptions\Token\EncryptedPayloadAlreadySetException;
-use Phithi92\JsonWebToken\Exceptions\Token\EncryptedPayloadNotSetException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
 use Phithi92\JsonWebToken\Token\Validator\ClaimValidator;
 
 use function array_is_list;
 use function is_array;
-use function is_bool;
 use function is_float;
 use function is_int;
-use function is_null;
 use function is_string;
-use function sprintf;
 
 /**
  * Represents the payload part of a JSON Web Token (JWT).
@@ -54,27 +49,10 @@ final class JwtPayload implements JsonSerializable
      */
     private array $claims = [];
 
-    public function __construct(?DateTimeImmutable $dateTime = null)
+    public function __construct()
     {
         $this->claimValidator = new ClaimValidator();
-        $this->claimHelper    = new DateClaimHelper($dateTime);
-    }
-
-    /**
-     * Hydrate payload from an associative array (e.g. json_decode result).
-     *
-     * This method strictly validates RFC 7519 claim types.
-     *
-     * @throws InvalidFormatException
-     */
-    public function hydrateFromArray(mixed $claims): self
-    {
-        $this->assertValidPayloadStructure($claims);
-
-        /** @var array<string, mixed> $claims */
-        $this->hydrateClaims($claims);
-
-        return $this;
+        $this->claimHelper    = new DateClaimHelper();
     }
 
     /**
@@ -127,28 +105,45 @@ final class JwtPayload implements JsonSerializable
     }
 
     /**
-     * Set a time-based claim.
+     * Set a time-based JWT claim (NumericDate as defined by RFC 7519).
      *
-     * This method is intended for token creation and allows:
-     * - date strings
-     * - integers
-     * - floats (NumericDate with fractional seconds)
+     * This method is intended for token creation and supports the following
+     * value types **exclusively for registered time-based claims**
+     * (e.g. "iat", "nbf", "exp"):
      *
-     * Hydrated JWT input MUST already contain NumericDate values.
+     * - string : Date/time expressions (e.g. "now", "+1 hour")
+     * - int    : NumericDate (seconds since UNIX epoch)
+     * - float  : NumericDate with fractional seconds
      *
-     * @throws InvalidDateTimeException
+     * Floats are permitted **only** for time-based claims and MUST NOT be used
+     * for non-temporal or custom claims.
+     *
+     * When hydrating a JWT payload from decoded JSON, time-based claims MUST
+     * already be provided as NumericDate values (int or float).
+     *
+     * @throws InvalidDateTimeException If the given value is not valid for a
+     *                                  time-based claim or cannot be converted
+     *                                  to a valid NumericDate.
      */
     public function setClaimTimestamp(string $key, string|int|float $value): self
     {
-        if (is_float($value) && $this->isTimeClaim($key)) {
+        if (is_float($value)) {
+            if (! $this->isTimeClaim($key)) {
+                throw new InvalidDateTimeException($key);
+            }
+
             // NumericDate may be a float according to RFC 7519
-            return $this->setRawClaim($key, $value, true);
+            return $this->setRawClaim(
+                key: $key,
+                value: $value,
+                overwrite: true
+            );
         }
 
         $this->claimHelper->setClaimTimestamp(
-            $this,
-            $key,
-            is_float($value) ? (int) $value : $value
+            payload: $this,
+            key: $key,
+            dateTime: $value
         );
 
         return $this;
@@ -181,7 +176,11 @@ final class JwtPayload implements JsonSerializable
             throw new ClaimAlreadyExistsException($key);
         }
 
-        return $this->setRawClaim($key, $value, false);
+        return $this->setRawClaim(
+            key: $key,
+            value: $value,
+            overwrite: false
+        );
     }
 
     /**
@@ -204,7 +203,11 @@ final class JwtPayload implements JsonSerializable
     public function setClaim(string $key, mixed $value): self
     {
         $this->claimValidator->ensureValidClaim($key, $value);
-        return $this->setRawClaim($key, $value, true);
+        return $this->setRawClaim(
+            key: $key,
+            value: $value,
+            overwrite: true
+        );
     }
 
     /**
@@ -255,7 +258,7 @@ final class JwtPayload implements JsonSerializable
 
         if (is_array($audience) && array_is_list($audience)) {
             foreach ($audience as $a) {
-                if (!is_string($a)) {
+                if (! is_string($a)) {
                     return null;
                 }
             }
@@ -266,7 +269,7 @@ final class JwtPayload implements JsonSerializable
 
         return null;
     }
-    
+
     /**
      * Set the issued-at (iat) claim using a date string.
      */
@@ -349,132 +352,6 @@ final class JwtPayload implements JsonSerializable
         return $this->encryptedPayload ?? throw new EncryptedPayloadNotSetException();
     }
 
-    /**
-     * Validate payload structure and registered claim types according to RFC 7519.
-     *
-     * Rules:
-     * - Payload must be a JSON object (assoc array)
-     * - Keys must be strings
-     * - Values must be valid JSON values
-     * - Registered claims must match RFC-defined types
-     *
-     * @throws InvalidFormatException
-     */
-    private function assertValidPayloadStructure(mixed $data): void
-    {
-        if (! is_array($data)) {
-            throw new InvalidFormatException('Decoded JWT payload must be an object (assoc array).');
-        }
-
-        foreach ($data as $key => $value) {
-            if (! is_string($key)) {
-                throw new InvalidFormatException('All JWT claim keys must be strings.');
-            }
-
-            if (! $this->isValidJsonValue($value)) {
-                throw new InvalidFormatException(
-                    sprintf("JWT claim value for key '%s' must be a valid JSON value.", $key)
-                );
-            }
-
-            // Registered Claim Names (RFC 7519)
-            switch ($key) {
-                case 'iss':
-                case 'sub':
-                case 'jti':
-                    if (! is_string($value)) {
-                        throw new InvalidFormatException(
-                            sprintf("JWT registered claim '%s' must be a string.", $key)
-                        );
-                    }
-                    break;
-
-                case 'aud':
-                    if (is_string($value)) {
-                        break;
-                    }
-                    if (! (is_array($value) && array_is_list($value))) {
-                        throw new InvalidFormatException(
-                            "JWT registered claim 'aud' must be a string or an array of strings."
-                        );
-                    }
-                    foreach ($value as $aud) {
-                        if (! is_string($aud)) {
-                            throw new InvalidFormatException(
-                                "JWT registered claim 'aud' must be an array of strings."
-                            );
-                        }
-                    }
-                    break;
-
-                case 'exp':
-                case 'nbf':
-                case 'iat':
-                    // NumericDate = JSON number
-                    if (! (is_int($value) || is_float($value))) {
-                        throw new InvalidFormatException(
-                            sprintf("JWT registered claim '%s' must be a NumericDate (number).", $key)
-                        );
-                    }
-                    break;
-
-                default:
-                    // Private and public claims: no additional RFC restrictions
-                    break;
-            }
-        }
-    }
-
-    /**
-     * Apply validated claims to internal state.
-     * 
-     * @param array<string, mixed> $claims
-     */
-    private function hydrateClaims(array $claims): void
-    {
-        foreach ($claims as $key => $value) {
-            if ($this->isTimeClaim($key)) {
-                // Time claims are already NumericDate values when hydrated
-                $this->setRawClaim($key, $value, true);
-                continue;
-            }
-
-            $this->addClaim($key, $value);
-        }
-    }
-
-    /**
-     * Validate whether a value can be represented as JSON.
-     */
-    private function isValidJsonValue(mixed $v): bool
-    {
-        // JSON supports: null, bool, int/float, string
-        if ($v === null) {
-            return true;
-        }
-
-        // scalar = bool|int|float|string
-        if (is_scalar($v)) {
-            return true;
-        }
-
-        // arrays are allowed recursively
-        if (! is_array($v)) {
-            return false;
-        }
-
-        foreach ($v as $k => $inner) {
-            if (! (is_int($k) || is_string($k))) {
-                return false;
-            }
-            if (! $this->isValidJsonValue($inner)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-    
     private function isTimeClaim(string $key): bool
     {
         return isset(DateClaimHelper::TIME_CLAIMS[$key]);

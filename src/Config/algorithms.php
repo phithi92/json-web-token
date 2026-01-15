@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-use Phithi92\JsonWebToken\Crypto\Cek\DefaultCekHandler;
-use Phithi92\JsonWebToken\Crypto\Content\AesGcmService;
-use Phithi92\JsonWebToken\Crypto\Encryption\IvService;
-use Phithi92\JsonWebToken\Crypto\Encryption\PhpseclibRsaEncryptionService;
-use Phithi92\JsonWebToken\Crypto\Signature\EcdsaService;
-use Phithi92\JsonWebToken\Crypto\Signature\HmacService;
-use Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureService;
-use Phithi92\JsonWebToken\Interfaces\CekHandlerInterface;
-use Phithi92\JsonWebToken\Interfaces\IvHandlerInterface;
-use Phithi92\JsonWebToken\Interfaces\KeyHandlerInterface;
-use Phithi92\JsonWebToken\Interfaces\PayloadHandlerInterface;
-use Phithi92\JsonWebToken\Interfaces\SignatureHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Content\AesGcmHandler;
+use Phithi92\JsonWebToken\Crypto\Content\ContentEncryptionHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Iv\IvHandler;
+use Phithi92\JsonWebToken\Crypto\Iv\IvHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Key\KeyHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Key\RsaKeyHandler;
+use Phithi92\JsonWebToken\Crypto\KeyManagement\CekHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\KeyManagement\DefaultCekHandler;
+use Phithi92\JsonWebToken\Crypto\Signature\EcdsaSignatureHandler;
+use Phithi92\JsonWebToken\Crypto\Signature\HmacSignatureHandler;
+use Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureHandler;
+use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerInterface;
 
 return [
 
@@ -24,7 +24,7 @@ return [
         'alg' => 'HS256',
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha256',
-            'handler' => HmacService::class,
+            'handler' => HmacSignatureHandler::class,
         ],
     ],
 
@@ -34,7 +34,7 @@ return [
         'alg' => 'HS384',
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha384',
-            'handler' => HmacService::class,
+            'handler' => HmacSignatureHandler::class,
         ],
     ],
 
@@ -44,7 +44,7 @@ return [
         'alg' => 'HS512',
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha512',
-            'handler' => HmacService::class,
+            'handler' => HmacSignatureHandler::class,
         ],
     ],
 
@@ -57,7 +57,7 @@ return [
             'name' => 'RS256',
             'hash_algorithm' => 'sha256',
             'padding' => OPENSSL_PKCS1_PADDING,
-            'handler' => RsaSignatureService::class,
+            'handler' => RsaSignatureHandler::class,
         ],
     ],
 
@@ -69,7 +69,7 @@ return [
             'name' => 'RS384',
             'hash_algorithm' => 'sha384',
             'padding' => OPENSSL_PKCS1_PADDING,
-            'handler' => RsaSignatureService::class,
+            'handler' => RsaSignatureHandler::class,
         ],
     ],
 
@@ -80,7 +80,7 @@ return [
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha512',
             'padding' => OPENSSL_PKCS1_PADDING,
-            'handler' => RsaSignatureService::class,
+            'handler' => RsaSignatureHandler::class,
         ],
     ],
 
@@ -91,7 +91,7 @@ return [
         'alg' => 'ES256',
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha256',
-            'handler' => EcdsaService::class,
+            'handler' => EcdsaSignatureHandler::class,
         ],
     ],
     'ES384' => [
@@ -100,7 +100,7 @@ return [
         'alg' => 'ES384',
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha384',
-            'handler' => EcdsaService::class,
+            'handler' => EcdsaSignatureHandler::class,
         ],
     ],
     'ES512' => [
@@ -109,7 +109,7 @@ return [
         'alg' => 'ES512',
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha512',
-            'handler' => EcdsaService::class,
+            'handler' => EcdsaSignatureHandler::class,
         ],
     ],
 
@@ -121,7 +121,7 @@ return [
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha256',
             'padding' => defined('OPENSSL_PKCS1_PSS_PADDING') ? OPENSSL_PKCS1_PSS_PADDING : 6,
-            'handler' => RsaSignatureService::class,
+            'handler' => RsaSignatureHandler::class,
         ],
     ],
 
@@ -132,7 +132,7 @@ return [
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha384',
             'padding' => defined('OPENSSL_PKCS1_PSS_PADDING') ? OPENSSL_PKCS1_PSS_PADDING : 6,
-            'handler' => RsaSignatureService::class,
+            'handler' => RsaSignatureHandler::class,
         ],
     ],
 
@@ -144,7 +144,7 @@ return [
         SignatureHandlerInterface::class => [
             'hash_algorithm' => 'sha512',
             'padding' => defined('OPENSSL_PKCS1_PSS_PADDING') ? OPENSSL_PKCS1_PSS_PADDING : 6,
-            'handler' => RsaSignatureService::class,
+            'handler' => RsaSignatureHandler::class,
         ],
     ],
 
@@ -159,12 +159,12 @@ return [
         KeyHandlerInterface::class => [
             'hash' => 'sha1',
             'padding' => phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
-            'handler' => PhpseclibRsaEncryptionService::class,
+            'handler' => RsaKeyHandler::class,
         ],
 
         IvHandlerInterface::class => [
             'length' => 96, // bits
-            'handler' => IvService::class,
+            'handler' => IvHandler::class,
         ],
 
         CekHandlerInterface::class => [
@@ -173,9 +173,9 @@ return [
             'handler' => DefaultCekHandler::class,
         ],
 
-        PayloadHandlerInterface::class => [
+        ContentEncryptionHandlerInterface::class => [
             'length' => 256, // bits
-            'handler' => AesGcmService::class,
+            'handler' => AesGcmHandler::class,
         ],
     ],
 
@@ -189,12 +189,12 @@ return [
         KeyHandlerInterface::class => [
             'hash' => 'sha256',
             'padding' => phpseclib3\Crypt\RSA::ENCRYPTION_OAEP,
-            'handler' => PhpseclibRsaEncryptionService::class,
+            'handler' => RsaKeyHandler::class,
         ],
 
         IvHandlerInterface::class => [
             'length' => 96, // bits
-            'handler' => IvService::class,
+            'handler' => IvHandler::class,
         ],
 
         CekHandlerInterface::class => [
@@ -203,9 +203,9 @@ return [
             'handler' => DefaultCekHandler::class,
         ],
 
-        PayloadHandlerInterface::class => [
+        ContentEncryptionHandlerInterface::class => [
             'length' => 256, // bits
-            'handler' => AesGcmService::class,
+            'handler' => AesGcmHandler::class,
         ],
     ],
 
@@ -217,14 +217,14 @@ return [
         'alg' => 'dir',
         'enc' => 'A128GCM',
 
-        PayloadHandlerInterface::class => [
+        ContentEncryptionHandlerInterface::class => [
             'length' => 128,
-            'handler' => AesGcmService::class,
+            'handler' => AesGcmHandler::class,
         ],
 
         IvHandlerInterface::class => [
             'length' => 96, // bits
-            'handler' => IvService::class,
+            'handler' => IvHandler::class,
         ],
 
         CekHandlerInterface::class => [
@@ -241,14 +241,14 @@ return [
         'alg' => 'dir',
         'enc' => 'A192GCM',
 
-        PayloadHandlerInterface::class => [
+        ContentEncryptionHandlerInterface::class => [
             'length' => 192,
             'mac_bit_length' => null,
-            'handler' => AesGcmService::class,
+            'handler' => AesGcmHandler::class,
         ],
         IvHandlerInterface::class => [
             'length' => 96, // bits
-            'handler' => IvService::class,
+            'handler' => IvHandler::class,
         ],
 
         CekHandlerInterface::class => [
@@ -265,15 +265,15 @@ return [
         'alg' => 'dir',
         'enc' => 'A256GCM',
 
-        PayloadHandlerInterface::class => [
+        ContentEncryptionHandlerInterface::class => [
             'length' => 256,
             'mac_bit_length' => null,
-            'handler' => AesGcmService::class,
+            'handler' => AesGcmHandler::class,
         ],
 
         IvHandlerInterface::class => [
             'length' => 96, // bits
-            'handler' => IvService::class,
+            'handler' => IvHandler::class,
         ],
 
         CekHandlerInterface::class => [

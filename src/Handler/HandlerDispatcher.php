@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Handler;
 
-use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
 use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerClassDefinitionException;
 use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerImplementationException;
 use Phithi92\JsonWebToken\Exceptions\Handler\MissingHandlerConfigurationException;
 use Phithi92\JsonWebToken\Exceptions\Handler\UndefinedHandlerMethodException;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use RuntimeException;
 

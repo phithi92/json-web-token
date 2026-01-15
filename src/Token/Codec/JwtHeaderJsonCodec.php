@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Codec;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
-use Phithi92\JsonWebToken\Interfaces\JwtHeaderCodecInterface;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Throwable;
 

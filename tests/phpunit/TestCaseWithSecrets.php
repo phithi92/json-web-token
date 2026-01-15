@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\phpunit;
 
-use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use PHPUnit\Framework\TestCase;
 use Tests\Helpers\KeyProvider;

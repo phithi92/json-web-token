@@ -6,7 +6,6 @@ namespace Phithi92\JsonWebToken\Config;
 
 use Phithi92\JsonWebToken\Exceptions\Config\AlgorithmConfigFileNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigFormatException;
-use Phithi92\JsonWebToken\Interfaces\AlgorithmConfigurationProvider;
 
 use function is_array;
 use function is_file;

@@ -4,8 +4,9 @@ namespace Tests\phpbench;
 
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
+use Phithi92\JsonWebToken\Token\Service\JwtTokenService;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
 use PhpBench\Attributes as Bench;
 
 use function assert;
@@ -25,7 +26,8 @@ class BenchSupportedAgorithms extends BenchmarkBase
     {
         $token = $this->getValidToken($params['alg']);
 
-        JwtTokenFactory::decryptToken($token, $this->getManager());
+        $c = new JwtTokenDecryptor($this->getManager());
+        $c->decrypt($token);
     }
 
     public function benchExpired(array $params): void
@@ -33,7 +35,8 @@ class BenchSupportedAgorithms extends BenchmarkBase
         $token = $this->getExpiredToken($params['alg']);
 
         try {
-            JwtTokenFactory::decryptToken($token, $this->getManager());
+            $c = new JwtTokenDecryptor($this->getManager());
+            $c->decrypt($token);
         } catch (PayloadException $e) {
             assert($e instanceof ExpiredPayloadException);
         }
@@ -44,7 +47,8 @@ class BenchSupportedAgorithms extends BenchmarkBase
         $token = $this->getInvalidToken($params['alg']);
 
         try {
-            JwtTokenFactory::decryptToken($token, $this->getManager());
+            $c = new JwtTokenDecryptor($this->getManager());
+            $c->decrypt($token);
         } catch (TokenException $e) {
             assert($e instanceof TokenException);
         }

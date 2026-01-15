@@ -4,71 +4,50 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Issuer;
 
-use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
-use Phithi92\JsonWebToken\Exceptions\Config\MissingAlgorithmException;
 use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigurationException;
-use Phithi92\JsonWebToken\Exceptions\Token\UnsupportedTokenTypeException;
+use Phithi92\JsonWebToken\Exceptions\Config\MissingAlgorithmException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
-use Phithi92\JsonWebToken\Exceptions\Token\MissingHeaderAlgorithmException;
+use Phithi92\JsonWebToken\Exceptions\Token\UnsupportedTokenTypeException;
 use Phithi92\JsonWebToken\Handler\HandlerOperation;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
-use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
 use function is_string;
 
 /**
- * JwtTokenBuilder builds JWT bundles and runs the handler chain to produce the final token data.
+ * JwtTokenIssuer builds JWT bundles and runs the handler chain to produce the final token data.
  *
- * Public API:
- * - create(): builds a new bundle and validates it
- * - createFromBundle(): processes an existing bundle and validates it
- * - createWithoutValidation(): builds a new bundle without validation (testing only)
- *
- * The builder:
- * - resolves header parameters from algorithm configuration
- * - derives a default KID when none is provided
- * - computes AAD for JWE/JWS and attaches it to the bundle
- * - dispatches handlers for signing/encryption
- *
- * ⚠ createWithoutValidation() should only be used in tests or controlled environments.
+ * DI Option (clean separation):
+ * - This class DOES NOT validate claims/bundles.
+ * - Validation is done outside (e.g. in JwtTokenCreator / JwtTokenService).
  */
 final class JwtTokenIssuer extends AbstractJwtTokenProcessor
 {
-    /**
-     * Handler chain operation for building tokens (signing/encrypting).
-     */
     private const OPERATION = HandlerOperation::Perform;
 
-    private ?JwtValidator $validator = null;
-    
-    public function __construct(
-        JwtKeyManager $manager
-    ) {
+    public function __construct(JwtKeyManager $manager)
+    {
         parent::__construct(self::OPERATION, $manager);
     }
 
     /**
-     * Builds a new JWT bundle and validates it.
+     * Builds a new JWT bundle and runs handler chain (sign/encrypt).
      *
-     * @param string            $algorithm Algorithm identifier.
-     * @param JwtPayload|null   $payload   Optional payload.
-     * @param JwtValidator|null $validator Optional validator override.
-     * @param string|null       $kid       Optional key ID; derived if omitted.
+     * NOTE: No validation is performed here.
      *
-     * @throws InvalidAlgorithmConfigurationException If the algorithm configuration is invalid.
-     * @throws MissingHeaderAlgorithmException        If the header algorithm (alg) is missing.
-     * @throws UnresolvableKeyException               If the resolved or derived KID cannot be found.
+     * @throws InvalidAlgorithmConfigurationException
+     * @throws UnresolvableKeyException
+     * @throws UnsupportedTokenTypeException
      */
-    public function create(
+    public function issue(
         string $algorithm,
         ?JwtPayload $payload = null,
-        ?JwtValidator $validator = null,
         ?string $kid = null,
     ): JwtBundle {
         $bundle = $this->buildBundle(
@@ -77,76 +56,39 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
             kid: $kid
         );
 
-        $this->resolveValidator($validator)->assertValidBundle($bundle);
-
         return $bundle;
     }
 
     /**
-     * Processes an existing bundle (runs handlers) and validates it.
+     * Processes an existing bundle (runs handlers) and returns it.
      *
      * If no algorithm is provided, the algorithm is taken from the bundle header.
      *
-     * @param JwtBundle         $bundle     Pre-built bundle.
-     * @param string|null       $algorithm  Algorithm override (optional).
-     * @param JwtValidator|null $validator  Optional validator override.
+     * NOTE: No validation is performed here.
      *
-     * @throws MissingAlgorithmException If no algorithm is available for processing.
+     * @throws MissingAlgorithmException
      */
-    public function createFromBundle(
+    public function issueFromBundle(
         JwtBundle $bundle,
         ?string $algorithm = null,
-        ?JwtValidator $validator = null,
     ): JwtBundle {
         $algorithm ??= $bundle->getHeader()->getAlgorithm()
             ?? throw new MissingAlgorithmException('header.alg');
 
         $this->dispatchHandlers($algorithm, $bundle);
 
-        $this->resolveValidator($validator)->assertValidBundle($bundle);
-
         return $bundle;
-    }
-
-    /**
-     * Builds a new JWT bundle without running any validation.
-     *
-     * ⚠ Intended for testing only.
-     *
-     * @param string          $algorithm Algorithm identifier.
-     * @param JwtPayload|null $payload   Optional payload.
-     * @param string|null     $kid       Optional key ID; derived if omitted.
-     *
-     * @throws InvalidAlgorithmConfigurationException If the algorithm configuration is invalid.
-     * @throws MissingHeaderAlgorithmException        If the header algorithm (alg) is missing.
-     * @throws UnresolvableKeyException               If the resolved or derived KID cannot be found.
-     */
-    public function createWithoutValidation(
-        string $algorithm,
-        ?JwtPayload $payload = null,
-        ?string $kid = null,
-    ): JwtBundle {
-        return $this->buildBundle(
-            algorithm: $algorithm,
-            payload: $payload,
-            kid: $kid
-        );
     }
 
     /**
      * Builds a JwtBundle for the given algorithm and optional payload.
      *
-     * Resolves the algorithm configuration, builds the JWT header,
-     * computes AAD, and executes the handler chain.
+     * Resolves config, builds header, computes AAD, attaches encryption data,
+     * dispatches handlers.
      *
-     * @param string          $algorithm Algorithm identifier.
-     * @param JwtPayload|null $payload   Optional payload.
-     * @param string|null     $kid       Optional key ID; derived if omitted.
-     *
-     * @throws InvalidAlgorithmConfigurationException If the algorithm configuration is invalid.
-     * @throws MissingHeaderAlgorithmException        If the header algorithm (alg) is missing.
-     * @throws UnresolvableKeyException               If the resolved or derived KID cannot be found.
-     * @throws UnsupportedTokenTypeException          If the token type is not supported.
+     * @throws InvalidAlgorithmConfigurationException
+     * @throws UnresolvableKeyException
+     * @throws UnsupportedTokenTypeException
      */
     private function buildBundle(
         string $algorithm,
@@ -160,9 +102,7 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
         $header = $this->headerFactory()->create($typ, $alg, $kid, $enc);
 
         $bundle = new JwtBundle($header, $payload);
-        $encryptionData = new JwtEncryptionData(aad: $this->encodeAad($bundle));
-
-        $bundle->setEncryption($encryptionData);
+        $bundle->setEncryption(new JwtEncryptionData(aad: $this->encodeAad($bundle)));
 
         $this->dispatchHandlers($algorithm, $bundle);
 
@@ -172,7 +112,7 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
     /**
      * Encodes Additional Authenticated Data (AAD) depending on token type.
      *
-     * @throws UnsupportedTokenTypeException If the token type is not supported.
+     * @throws UnsupportedTokenTypeException
      */
     private function encodeAad(JwtBundle $bundle): string
     {
@@ -188,9 +128,6 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
         };
     }
 
-    /**
-     * Encodes AAD for JWE as Base64Url(header-json).
-     */
     private function encodeJweAad(JwtBundle $bundle): string
     {
         $jsonHeader = JwtHeaderJsonCodec::encodeStatic($bundle->getHeader());
@@ -198,9 +135,6 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
         return Base64UrlEncoder::encode($jsonHeader);
     }
 
-    /**
-     * Encodes AAD for JWS as Base64Url(header-json) + '.' + Base64Url(payload-json).
-     */
     private function encodeJwsAad(JwtBundle $bundle): string
     {
         $jsonHeader = JwtHeaderJsonCodec::encodeStatic($bundle->getHeader());
@@ -211,21 +145,10 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
     }
 
     /**
-     * Resolves the validator instance (uses the provided validator or a cached default).
-     */
-    private function resolveValidator(?JwtValidator $validator = null): JwtValidator
-    {
-        return $this->validator ??= $validator ?? new JwtValidator();
-    }
-
-    /**
-     * Resolves required header parameters from algorithm configuration.
-     *
      * @param array<string, mixed> $config
+     * @return array{string,string|null,string|null}
      *
-     * @return array{string,string|null,string|null} token type, algorithm, encryption method
-     *
-     * @throws InvalidAlgorithmConfigurationException If the configuration shape is invalid.
+     * @throws InvalidAlgorithmConfigurationException
      */
     private function resolveHeaderParamsFromConfig(array $config): array
     {
@@ -239,10 +162,10 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
             $this->normalizeOptionalString($enc),
         ];
     }
-    
+
     private function normalizeTokenType(mixed $tokenType): string
     {
-        if (! is_string($tokenType)) {
+        if (!is_string($tokenType)) {
             throw new InvalidAlgorithmConfigurationException();
         }
 
@@ -255,10 +178,10 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
             return null;
         }
 
-        if (! is_string($value)) {
+        if (!is_string($value)) {
             throw new InvalidAlgorithmConfigurationException();
         }
 
         return $value;
-    }    
+    }
 }

@@ -2,11 +2,13 @@
 
 namespace Tests\phpbench;
 
-use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
-use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
+use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
+use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
+use Phithi92\JsonWebToken\Token\Service\JwtTokenService;
 use Tests\Helpers\KeyProvider;
 
 use function array_combine;
@@ -47,15 +49,14 @@ abstract class BenchmarkBase
     protected function getExpiredToken(string $alg): string
     {
         if (!isset($this->cache['expired'][$alg])) {
-            $manager = $this->getManager();
-            $payload = (new JwtPayload())->hydrateFromArray(
-                [
-                    'iat' => time() - 7200,
-                    'exp' => time() - 3600,
-                ]
-            );
-
-            $bundle = JwtTokenFactory::createTokenWithoutClaimValidation($alg, $manager, $payload);
+            $payload = (new JwtPayloadCodec())->decode([
+                'iat' => time() - 7200,
+                'exp' => time() - 3600,
+            ]);
+            
+            $c = new JwtTokenIssuer($this->getManager());
+            $bundle = $c->issue($alg, $payload);
+            
             $token = JwtBundleCodec::serialize($bundle);
             $this->cache['expired'][$alg] = $token;
         }
@@ -67,7 +68,8 @@ abstract class BenchmarkBase
     {
         if (!isset($this->cache['valid'][$alg]) || false === is_string($this->cache['valid'][$alg])) {
             $manager = $this->getManager();
-            $payload = self::createPayload();
+            
+            $payload = new JwtPayload();
 
             $additionalPayload = [
                 'iat' => time(),
@@ -76,9 +78,10 @@ abstract class BenchmarkBase
             foreach ($additionalPayload as $key => $value) {
                 $payload->addClaim($key, $value);
             }
-
-            $bundle = JwtTokenFactory::createToken($alg, $manager, $payload);
-
+            
+            $c = new JwtTokenIssuer($this->getManager());
+            $bundle = $c->issue($alg, $payload);
+            
             $token = JwtBundleCodec::serialize($bundle);
 
             $this->cache['valid'][$alg] = $token;
