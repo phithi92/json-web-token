@@ -127,12 +127,18 @@ final class JwtPayload implements JsonSerializable
      */
     public function setClaimTimestamp(string $key, string|int|float $value): self
     {
-        if (is_float($value)) {
+        // Accept numeric strings as NumericDate as well (common when coming from JSON / env)
+        if (is_string($value) && is_numeric($value)) {
+            $value = str_contains($value, '.')
+                ? (float) $value
+                : (int) $value;
+        }
+
+        if (is_int($value) || is_float($value)) {
             if (! $this->isTimeClaim($key)) {
                 throw new InvalidDateTimeException($key);
             }
 
-            // NumericDate may be a float according to RFC 7519
             return $this->setRawClaim(
                 key: $key,
                 value: $value,

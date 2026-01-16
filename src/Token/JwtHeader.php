@@ -46,7 +46,6 @@ final class JwtHeader
      * Sets the Key ID ('kid') for the JWT header.
      *
      * Validates that the provided Key ID:
-     * - Consists only of alphanumeric characters, dashes (`-`), or underscores (`_`).
      * - Falls within the allowed length range (3 to 64 characters).
      *
      * If the format or length of the Key ID is invalid, an exception is thrown.
@@ -55,13 +54,14 @@ final class JwtHeader
      *
      * @return self returns the instance for method chaining
      *
-     * @throws InvalidKidFormatException if the Key ID contains invalid characters
      * @throws InvalidKidLengthException if the Key ID is shorter than 3 or longer than 64 characters
      */
     public function setKid(string $kid): self
     {
-        // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
-        $this->assertValidKid($kid);
+        // validate `kid` length
+        if (! $this->isValidKidLength($kid)) {
+            throw new InvalidKidLengthException(self::MIN_KID_LENGTH, self::MAX_KID_LENGTH);
+        }
 
         $this->kid = $kid;
 
@@ -209,33 +209,11 @@ final class JwtHeader
         return $i;
     }
 
-    /**
-     * @throws InvalidKidFormatException
-     * @throws InvalidKidLengthException
-     */
-    private function assertValidKid(string $kid): void
-    {
-        // validate `kid` length
-        if (! $this->isValidKidLength($kid)) {
-            throw new InvalidKidLengthException(self::MIN_KID_LENGTH, self::MAX_KID_LENGTH);
-        }
-
-        // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
-        if (! $this->isKidFormatValid($kid)) {
-            throw new InvalidKidFormatException();
-        }
-    }
-
     private function isValidKidLength(string $kid): bool
     {
         $kidLength = strlen($kid);
 
         return $kidLength >= self::MIN_KID_LENGTH && $kidLength <= self::MAX_KID_LENGTH;
-    }
-
-    private function isKidFormatValid(string $kid): bool
-    {
-        return $kid !== '' && preg_match('/^[A-Za-z0-9._-]+$/', $kid) === 1;
     }
 
     /**

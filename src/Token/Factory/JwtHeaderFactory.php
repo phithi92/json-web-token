@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Factory;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MissingHeaderAlgorithmException;
+use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 
@@ -15,7 +16,7 @@ final class JwtHeaderFactory
     /**
      * Separator used when deriving a default KID from algorithm components.
      */
-    private const KID_PART_SEPARATOR = '_';
+    private const KID_PART_SEPARATOR = '/';
 
     public function __construct(
         private readonly JwtKeyManager $manager,

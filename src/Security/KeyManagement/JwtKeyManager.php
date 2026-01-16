@@ -6,7 +6,7 @@ namespace Phithi92\JsonWebToken\Security\KeyManagement;
 
 use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Config\AlgorithmConfigurationProvider;
-use Phithi92\JsonWebToken\Config\PhpFileAlgorithmConfiguration;
+use Phithi92\JsonWebToken\Config\PhpFileAlgorithmConfigurationProvider;
 use Phithi92\JsonWebToken\Security\KeyStore;
 use Phithi92\JsonWebToken\Security\PassphraseStore;
 use SensitiveParameter;
@@ -55,7 +55,7 @@ final class JwtKeyManager
         ?KeyStore $keyStore = null,
         ?PassphraseStore $passphraseStore = null,
     ) {
-        $this->algorithmRegistry = $algConfig ?? new PhpFileAlgorithmConfiguration();
+        $this->algorithmRegistry = $algConfig ?? new PhpFileAlgorithmConfigurationProvider();
         $this->keyStore = $keyStore ?? new KeyStore();
         $this->passphraseStore = $passphraseStore ?? new PassphraseStore();
     }

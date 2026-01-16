@@ -19,17 +19,17 @@ abstract class JwtSegmentJsonCodec
     protected const DEFAULT_JSON_OPTIONS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
 
     /**
-     * @param array<string,mixed> $payload
+     * @param array<string,mixed> $segment
      *
      * @throws EncodingException
      */
     public function encodeJson(
-        array $payload,
+        array $segment,
         int $depth,
         int $options = self::DEFAULT_JSON_OPTIONS,
     ): string {
         return JsonEncoder::encode(
-            $payload,
+            $segment,
             $options,
             $depth
         );

@@ -1,9 +1,10 @@
 <?php
 
-use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
-use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
-
 namespace Phithi92\JsonWebToken\Token\Service;
+
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
+use Phithi92\JsonWebToken\Token\Reader\JwtTokenReader;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 final class JwtClaimsValidationService
 {

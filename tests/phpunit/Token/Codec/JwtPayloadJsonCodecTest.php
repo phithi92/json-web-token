@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\phpunit;
+namespace Tests\phpunit\Token\Codec;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
@@ -10,85 +10,125 @@ use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use PHPUnit\Framework\TestCase;
 
-class JwtPayloadJsonCodecTest extends TestCase
+final class JwtPayloadJsonCodecTest extends TestCase
 {
-    public function testEncodeProducesString(): void
+    public function testEncodeReturnsJsonForPayload(): void
     {
-        $payload = (new JwtPayloadCodec())->decode(['sub' => '1234567890']);
+        $jsonCodec = new JwtPayloadJsonCodec();
+        
+        $payloadCodec = new JwtPayloadCodec();
+        $payload = $payloadCodec->decode([
+            'sub' => '1234567890',
+            'name' => 'John Doe',
+            'admin' => true,
+            'iat' => 1516239022,
+        ]);
+        
+        $json = $jsonCodec->encode($payload);
 
-        $codec = new JwtPayloadJsonCodec();
-        $result = $codec->encode($payload);
+        self::assertJson($json);
 
-        $this->assertIsString($result);
+        /** @var array<string,mixed> $decoded */
+        $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame($payload->toArray(), $decoded);
     }
 
-    public function testDecodeReturnsPayload(): void
+    public function testDecodeHydratesNewPayload(): void
     {
-        $json = '{"sub":"abc"}';
-
         $codec = new JwtPayloadJsonCodec();
+
+        $data = [
+            'sub' => '123',
+            'roles' => ['user', 'admin'],
+            'exp' => 1700000000,
+        ];
+
+        $json = json_encode($data, JSON_THROW_ON_ERROR);
+
         $payload = $codec->decode($json);
 
-        $this->assertInstanceOf(JwtPayload::class, $payload);
-        $this->assertSame('abc', $payload->getClaim('sub'));
+        self::assertInstanceOf(JwtPayload::class, $payload);
+        self::assertSame($data, $payload->toArray());
     }
 
-    public function testDecodeIntoModifiesTargetPayload(): void
+    public function testDecodeThrowsMalformedTokenExceptionOnInvalidJson(): void
     {
-        $json = '{"role":"user"}';
-        $payload = new JwtPayload();
-
         $codec = new JwtPayloadJsonCodec();
-        $codec->decodeInto($json, $payload);
 
-        $this->assertSame('user', $payload->getClaim('role'));
-    }
-
-    public function testDecodeThrowsOnInvalidJson(): void
-    {
         $this->expectException(MalformedTokenException::class);
         $this->expectExceptionMessage('Token payload is not valid JSON');
 
-        $codec = new JwtPayloadJsonCodec();
-        $codec->decode('{invalid');
+        $codec->decode('{"sub": "123",'); // invalid JSON
     }
 
-    public function testEncodeStaticProducesString(): void
+    public function testDecodeIntoPopulatesTargetInstance(): void
     {
-        $factory = new JwtPayloadCodec();
-        $payload = $factory->decode(['key' => 'val']);
+        $codec = new JwtPayloadJsonCodec();
 
-        $result = JwtPayloadJsonCodec::encodeStatic($payload);
+        $json = json_encode(['foo' => 'bar', 'n' => 1], JSON_THROW_ON_ERROR);
+        
+        $payloadCodec = new JwtPayloadCodec();
+        $target = $payloadCodec->decode(['foo' => 'old', 'keep' => 'value']);
 
-        $this->assertIsString($result);
+        $codec->decodeInto($json, $target);
+
+        // Erwartung: Zielinstanz wurde mit JSON-Daten befüllt.
+        // (Ob "keep" erhalten bleibt oder überschrieben wird, hängt von JwtPayloadCodec::decode ab.
+        // Hier testen wir minimal, dass die JSON-Werte danach vorhanden sind.)
+        $arr = $target->toArray();
+        self::assertSame('bar', $arr['foo'] ?? null);
+        self::assertSame(1, $arr['n'] ?? null);
+    }
+
+    public function testEncodeStaticDelegatesToInstance(): void
+    {
+        $p = new JwtPayloadCodec();
+        $payload = $p->decode(['a' => 1]);
+
+        $json = JwtPayloadJsonCodec::encodeStatic($payload);
+        
+        self::assertJson($json);
+        
+        /** @var array<string,mixed> $decoded */
+        $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(['a' => 1], $decoded);
     }
 
     public function testDecodeStaticReturnsPayload(): void
     {
-        $payload = JwtPayloadJsonCodec::decodeStatic('{"exp":123}');
+        $json = json_encode(['a' => 1, 'b' => true], JSON_THROW_ON_ERROR);
 
-        $this->assertInstanceOf(JwtPayload::class, $payload);
-        $this->assertSame(123, $payload->getClaim('exp'));
+        $payload = JwtPayloadJsonCodec::decodeStatic($json);
+
+        self::assertInstanceOf(JwtPayload::class, $payload);
+        self::assertSame(['a' => 1, 'b' => true], $payload->toArray());
     }
 
-    public function testDecodeStaticIntoWorks(): void
+    public function testDecodeStaticIntoPopulatesProvidedPayload(): void
     {
-        $json = '{"foo":"bar"}';
-        $payload = new JwtPayload();
+        $json = json_encode(['x' => 'y'], JSON_THROW_ON_ERROR);
+        
+        $payloadCodec = new JwtPayloadCodec();
+        $target = $payloadCodec->decode([]);
 
-        JwtPayloadJsonCodec::decodeStaticInto($json, $payload);
+        JwtPayloadJsonCodec::decodeStaticInto($json, $target);
 
-        $this->assertSame('bar', $payload->getClaim('foo'));
+        self::assertSame(['x' => 'y'], $target->toArray());
     }
 
-    public function testStaticInstanceCacheBehavior(): void
+    public function testDecodeRespectsCustomDepthForDeepJson(): void
     {
-        $factory = new JwtPayloadCodec();
-        $payload = $factory->decode(['cached' => true]);
+        $codec = new JwtPayloadJsonCodec();
 
-        $first = JwtPayloadJsonCodec::encodeStatic($payload, 2);
-        $second = JwtPayloadJsonCodec::encodeStatic($payload, 2);
+        $deep = ['a' => ['b' => ['c' => ['d' => ['e' => ['f' => 'g']]]]]]; // depth > 6 je nach Zählweise
 
-        $this->assertSame($first, $second);
+        $json = json_encode($deep, JSON_THROW_ON_ERROR);
+
+        // Wenn der Depth zu klein ist, sollte decodeJson i.d.R. fehlschlagen -> MalformedTokenException
+        $this->expectException(MalformedTokenException::class);
+        $this->expectExceptionMessage('Token payload is not valid JSON');
+
+        $codec->decode($json, 2);
     }
 }

@@ -11,7 +11,7 @@ use RuntimeException;
 use function file_put_contents;
 use function unlink;
 
-class PhpFileAlgorithmConfigurationTest extends TestCase
+class PhpFileAlgorithmConfigurationProviderTest extends TestCase
 {
     private string $validConfigFile;
     private string $invalidConfigFile;

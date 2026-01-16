@@ -133,22 +133,22 @@ final class JwtEncryptionData
     {
         return $this->aad !== null;
     }
-    
+
     public function hasIv(): bool
     {
         return $this->iv !== null;
     }
-    
+
     public function hasCek(): bool
     {
         return $this->cek !== null;
     }
-    
+
     public function hasEncryptedKey(): bool
     {
         return $this->encryptedKey !== null;
     }
-    
+
     public function hasAuthTag(): bool
     {
         return $this->authTag !== null;

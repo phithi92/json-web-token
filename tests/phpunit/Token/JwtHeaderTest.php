@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token;
 
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use PHPUnit\Framework\TestCase;
@@ -42,10 +41,10 @@ class JwtHeaderTest extends TestCase
         $this->assertTrue($jwtHeader->hasKid());
     }
 
-    public function testSetKidWithInvalidCharacters()
+    public function testSetEmptyKid()
     {
-        $this->expectException(InvalidKidFormatException::class);
-        (new JwtHeader())->setKid('invalid kid!');
+        $this->expectException(InvalidKidLengthException::class);
+        (new JwtHeader())->setKid('');
     }
 
     public function testSetKidWithTooShortLength()

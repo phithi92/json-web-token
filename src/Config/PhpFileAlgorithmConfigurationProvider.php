@@ -16,7 +16,7 @@ use function is_file;
  * This class loads algorithm configurations from a PHP file and provides
  * access to individual algorithm settings.
  */
-final class PhpFileAlgorithmConfiguration implements AlgorithmConfigurationProvider
+final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurationProvider
 {
     private const CONFIG_FILE = __DIR__ . '/algorithms.php';
 

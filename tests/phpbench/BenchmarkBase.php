@@ -8,7 +8,6 @@ use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
-use Phithi92\JsonWebToken\Token\Service\JwtTokenService;
 use Tests\Helpers\KeyProvider;
 
 use function array_combine;
@@ -53,10 +52,10 @@ abstract class BenchmarkBase
                 'iat' => time() - 7200,
                 'exp' => time() - 3600,
             ]);
-            
+
             $c = new JwtTokenIssuer($this->getManager());
             $bundle = $c->issue($alg, $payload);
-            
+
             $token = JwtBundleCodec::serialize($bundle);
             $this->cache['expired'][$alg] = $token;
         }
@@ -68,7 +67,7 @@ abstract class BenchmarkBase
     {
         if (!isset($this->cache['valid'][$alg]) || false === is_string($this->cache['valid'][$alg])) {
             $manager = $this->getManager();
-            
+
             $payload = new JwtPayload();
 
             $additionalPayload = [
@@ -78,10 +77,10 @@ abstract class BenchmarkBase
             foreach ($additionalPayload as $key => $value) {
                 $payload->addClaim($key, $value);
             }
-            
+
             $c = new JwtTokenIssuer($this->getManager());
             $bundle = $c->issue($alg, $payload);
-            
+
             $token = JwtBundleCodec::serialize($bundle);
 
             $this->cache['valid'][$alg] = $token;

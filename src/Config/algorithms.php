@@ -78,6 +78,7 @@ return [
         'algorithm_type' => 'RSA',
         'alg' => 'RS512',
         SignatureHandlerInterface::class => [
+            'name' => 'RS512',
             'hash_algorithm' => 'sha512',
             'padding' => OPENSSL_PKCS1_PADDING,
             'handler' => RsaSignatureHandler::class,
@@ -149,7 +150,7 @@ return [
     ],
 
     // RSA Key Management
-    'RSA-OAEP_A256GCM' => [
+    'RSA-OAEP/A256GCM' => [
         'token_type' => 'JWE',
         'algorithm_type' => 'RSA',
 
@@ -179,7 +180,7 @@ return [
         ],
     ],
 
-    'RSA-OAEP-256_A256GCM' => [
+    'RSA-OAEP-256/A256GCM' => [
         'token_type' => 'JWE',
         'algorithm_type' => 'RSA',
 

@@ -4,7 +4,6 @@ namespace Tests\phpbench;
 
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
-use Phithi92\JsonWebToken\Token\Service\JwtTokenService;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
 use PhpBench\Attributes as Bench;

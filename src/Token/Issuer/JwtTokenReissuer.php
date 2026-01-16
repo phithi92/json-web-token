@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Issuer;
 
-namespace Phithi92\JsonWebToken\Token\Issuer;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
+use Phithi92\JsonWebToken\Token\Factory\JwtTokenIssuerFactory;
+use Phithi92\JsonWebToken\Token\JwtBundle;
+use Phithi92\JsonWebToken\Token\Service\JwtTokenCreator;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 /**
  * Description of JwtTokenReissuer
