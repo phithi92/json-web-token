@@ -6,6 +6,7 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
@@ -20,7 +21,7 @@ class RsaSignatureHandler extends AbstractSignatureHandler
     /**
      * @var array<string, OpenSSLAsymmetricKey>
      */
-    private array $checkedKeys;
+    private array $checkedKeys = [];
 
     public function __construct(JwtKeyManager $manager)
     {
