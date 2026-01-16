@@ -96,7 +96,7 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
         ?string $kid = null,
     ): JwtBundle {
         $config = $this->manager->getConfiguration($algorithm);
-        
+
         [$typ, $alg, $enc] = $this->resolveHeaderParamsFromConfig($config);
 
         $header = $this->headerFactory()->create($typ, $alg, $kid, $enc);
@@ -155,7 +155,7 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
         $tokenType = $config['token_type'] ?? null;
         $alg = $config['alg'] ?? null;
         $enc = $config['enc'] ?? null;
-        
+
         return [
             $this->normalizeTokenType($tokenType),
             $this->normalizeOptionalString($alg),

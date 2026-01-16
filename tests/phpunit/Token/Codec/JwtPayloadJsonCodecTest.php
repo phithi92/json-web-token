@@ -15,7 +15,7 @@ final class JwtPayloadJsonCodecTest extends TestCase
     public function testEncodeReturnsJsonForPayload(): void
     {
         $jsonCodec = new JwtPayloadJsonCodec();
-        
+
         $payloadCodec = new JwtPayloadCodec();
         $payload = $payloadCodec->decode([
             'sub' => '1234567890',
@@ -23,7 +23,7 @@ final class JwtPayloadJsonCodecTest extends TestCase
             'admin' => true,
             'iat' => 1516239022,
         ]);
-        
+
         $json = $jsonCodec->encode($payload);
 
         self::assertJson($json);
@@ -67,7 +67,7 @@ final class JwtPayloadJsonCodecTest extends TestCase
         $codec = new JwtPayloadJsonCodec();
 
         $json = json_encode(['foo' => 'bar', 'n' => 1], JSON_THROW_ON_ERROR);
-        
+
         $payloadCodec = new JwtPayloadCodec();
         $target = $payloadCodec->decode(['foo' => 'old', 'keep' => 'value']);
 
@@ -87,9 +87,9 @@ final class JwtPayloadJsonCodecTest extends TestCase
         $payload = $p->decode(['a' => 1]);
 
         $json = JwtPayloadJsonCodec::encodeStatic($payload);
-        
+
         self::assertJson($json);
-        
+
         /** @var array<string,mixed> $decoded */
         $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
         self::assertSame(['a' => 1], $decoded);
@@ -108,7 +108,7 @@ final class JwtPayloadJsonCodecTest extends TestCase
     public function testDecodeStaticIntoPopulatesProvidedPayload(): void
     {
         $json = json_encode(['x' => 'y'], JSON_THROW_ON_ERROR);
-        
+
         $payloadCodec = new JwtPayloadCodec();
         $target = $payloadCodec->decode([]);
 

@@ -6,8 +6,8 @@ namespace Tests\phpunit\Token\Builder;
 
 use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigurationException;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
-use Tests\phpunit\TestCaseWithSecrets;
 use ReflectionClass;
+use Tests\phpunit\TestCaseWithSecrets;
 
 class JwtTokenBuilderTest extends TestCaseWithSecrets
 {

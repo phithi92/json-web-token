@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token;
 
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 
