@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\phpunit\Config;
+namespace Tests\phpunit\Token\Config;
 
-use Phithi92\JsonWebToken\Config\PhpFileAlgorithmConfiguration;
+use Phithi92\JsonWebToken\Config\PhpFileAlgorithmConfigurationProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -40,7 +40,7 @@ class PhpFileAlgorithmConfigurationProviderTest extends TestCase
 
     public function testLoadsValidConfiguration(): void
     {
-        $config = new PhpFileAlgorithmConfiguration($this->validConfigFile);
+        $config = new PhpFileAlgorithmConfigurationProvider($this->validConfigFile);
 
         $alg = $config->get('RSA-OAEP');
 
@@ -52,7 +52,7 @@ class PhpFileAlgorithmConfigurationProviderTest extends TestCase
 
     public function testGetReturnsEmptyArrayForUnknownAlgorithm(): void
     {
-        $config = new PhpFileAlgorithmConfiguration($this->validConfigFile);
+        $config = new PhpFileAlgorithmConfigurationProvider($this->validConfigFile);
 
         $result = $config->get('UNKNOWN');
         $this->assertSame([], $result);
@@ -60,7 +60,7 @@ class PhpFileAlgorithmConfigurationProviderTest extends TestCase
 
     public function testIsSupportedReturnsFalseForUnknownAlgorithm(): void
     {
-        $config = new PhpFileAlgorithmConfiguration($this->validConfigFile);
+        $config = new PhpFileAlgorithmConfigurationProvider($this->validConfigFile);
 
         $this->assertFalse($config->isSupported('FOO'));
     }
@@ -70,7 +70,7 @@ class PhpFileAlgorithmConfigurationProviderTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Algorithm config file not found');
 
-        new PhpFileAlgorithmConfiguration($this->missingConfigFile);
+        new PhpFileAlgorithmConfigurationProvider($this->missingConfigFile);
     }
 
     public function testThrowsExceptionIfFileDoesNotReturnArray(): void
@@ -78,6 +78,6 @@ class PhpFileAlgorithmConfigurationProviderTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('must return an array');
 
-        new PhpFileAlgorithmConfiguration($this->invalidConfigFile);
+        new PhpFileAlgorithmConfigurationProvider($this->invalidConfigFile);
     }
 }
