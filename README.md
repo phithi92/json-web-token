@@ -5,7 +5,7 @@
 A security-focused PHP 8.2+ library for creating, signing, encrypting, decrypting, and validating JSON Web Tokens (JWT). The package supports both JSON Web Signature (JWS) and JSON Web Encryption (JWE) flows with a pluggable algorithm registry and explicit key management.
 
 ## Why this library?
-- Implements the core requirements of RFC 7515 (JWS), RFC 7516 (JWE), and RFC 7519 (JWT).
+- Implements the core requirements of RFC 7515 (JWS), RFC 7516 (JWE), RFC 7518 (JWA), and RFC 7519 (JWT).
 - Clear separation between algorithm configuration, payload handling, token building/parsing, and validation.
 - Defaults to safe behavior (claim validation, strict key handling) with escape hatches clearly marked as **testing-only**.
 
@@ -18,15 +18,17 @@ composer require phithi92/json-web-token
 The typical flow is:
 
 1. Configure algorithms and keys with `JwtKeyManager`.
-2. Build a payload with `JwtPayload`.
-3. Create, serialize, and later decrypt/validate tokens via `JwtTokenFactory`.
-4. Apply additional business checks using `JwtValidator`.
+2. Build a payload with `JwtPayload` (or provide an array of claims).
+3. Create a token service via `JwtTokenServiceFactory`.
+4. Create, serialize, and later decrypt/validate tokens via `JwtTokenService`.
+5. Apply additional business checks using `JwtValidator`.
 
 ### 1) Configure algorithms and keys
 `JwtKeyManager` keeps the algorithm registry and an in-memory key/passphrase store. Keys must be provided in PEM format.
+If you omit the `kid` when issuing tokens, the header factory derives one from the algorithm/enc (for example `RS256` or `RSA-OAEP-256/A256GCM`), so ensure your registered key IDs match or pass a `kid` explicitly.
 
 ```php
-use Phithi92\JsonWebToken\Algorithm\JwtKeyManager;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 
 $manager = new JwtKeyManager();
 
@@ -41,6 +43,12 @@ $manager->addKeyPair(
 $manager->addPrivateKey(
     pemContent: file_get_contents('/path/to/hmac.key'),
     kid: 'hmac-key'
+);
+
+// Optional: add a passphrase for encrypted private keys
+$manager->addPassphrase(
+    passphrase: getenv('JWT_PRIVATE_KEY_PASSPHRASE'),
+    kid: 'main-key'
 );
 ```
 
@@ -60,15 +68,16 @@ $payload = (new JwtPayload())
 ```
 
 ### 3) Create and serialize a token
-`JwtTokenFactory` orchestrates token building. Provide the algorithm identifier defined in `src/Config/algorithms.php`.
+`JwtTokenService` orchestrates token building. Provide the algorithm identifier defined in `src/Config/algorithms.php`.
 
 ```php
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\Factory\JwtTokenServiceFactory;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 $validator = new JwtValidator();
+$service = JwtTokenServiceFactory::createDefault();
 
-$bundle = JwtTokenFactory::createToken(
+$bundle = $service->createToken(
     algorithm: 'RS256',
     manager: $manager,
     payload: $payload,
@@ -76,7 +85,7 @@ $bundle = JwtTokenFactory::createToken(
     kid: 'main-key'
 );
 
-$tokenString = JwtTokenFactory::createTokenString(
+$tokenString = $service->createTokenString(
     algorithm: 'RS256',
     manager: $manager,
     payload: $payload,
@@ -89,7 +98,7 @@ $tokenString = JwtTokenFactory::createTokenString(
 Decrypts the compact string back into a `JwtBundle` while performing signature/encryption verification and claim checks.
 
 ```php
-$bundle = JwtTokenFactory::decryptToken(
+$bundle = $service->decryptToken(
     token: $tokenString,
     manager: $manager,
     validator: $validator
@@ -109,10 +118,10 @@ $validator->assertValidAudience($payload, ['https://service.example']);
 ```
 
 ### Refresh / reissue
-`JwtTokenFactory::reissueBundle()` clones an existing bundle, strips time-based claims, and applies a new expiration window.
+`JwtTokenService::reissueBundle()` clones an existing bundle, strips time-based claims, and applies a new expiration window.
 
 ```php
-$newBundle = JwtTokenFactory::reissueBundle(
+$newBundle = $service->reissueBundle(
     interval: '+30 minutes',
     bundle: $bundle,
     manager: $manager,
@@ -123,7 +132,9 @@ $newBundle = JwtTokenFactory::reissueBundle(
 ## Core classes
 - **`JwtKeyManager`** — central registry for supported algorithms, key pairs, and passphrases. Throws if keys are missing or invalid.
 - **`JwtPayload`** — mutable payload representation with helpers for standard claims and type enforcement. Raises dedicated exceptions for empty or malformed values.
-- **`JwtTokenFactory`** — high-level entry point for building, serializing, decrypting, and reissuing tokens. Provides testing-only methods that bypass claim validation (`createTokenWithoutClaimValidation`, `decryptTokenWithoutClaimValidation`).
+- **`JwtTokenService`** — high-level entry point for building, serializing, decrypting, and reissuing tokens. Provides testing-only methods that bypass claim validation (`createTokenWithoutClaimValidation`, `decryptTokenWithoutClaimValidation`).
+- **`JwtTokenServiceFactory`** — constructs a default service with issuer/reader/validator wiring.
+- **`JwtTokenCreator` / `JwtTokenReader`** — focused helpers for issuance and decryption when you want to wire dependencies yourself.
 - **`JwtValidator`** — reusable validator for issuer, audience, and time-based constraints. `assert*` methods throw typed exceptions to help you differentiate failure causes.
 - **`JwtBundle`** — aggregate of header, payload, signatures, and encryption artifacts returned by the factory/parsers.
 
@@ -134,7 +145,7 @@ Algorithm identifiers map to handlers via `src/Config/algorithms.php`:
 - **RSA PKCS#1 (JWS):** `RS256`, `RS384`, `RS512`
 - **ECDSA (JWS):** `ES256`, `ES384`, `ES512`
 - **RSA-PSS (JWS):** `PS256`, `PS384`, `PS512`
-- **RSA-OAEP + AES-GCM (JWE):** `RSA-OAEP-256_A128GCM`, `RSA-OAEP-256_A192GCM`, `RSA-OAEP-256_A256GCM`
+- **RSA-OAEP + AES-GCM (JWE):** `RSA-OAEP/A256GCM`, `RSA-OAEP-256/A256GCM`
 - **Direct AES-GCM (JWE):** `A128GCM`, `A192GCM`, `A256GCM`
 
 ## Security checklist
