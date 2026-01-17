@@ -36,7 +36,6 @@ final class JwtTokenServiceFactory
         );
 
         $reissuer = new JwtTokenReissuer(
-            creator: $creator,
             payloadCodec: $payloadCodec,
             defaultValidator: $validator,
             issuerFactory: $issuerFactory

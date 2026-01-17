@@ -15,7 +15,7 @@ use Throwable;
  * Supports configurable JSON depth with optional static convenience
  * methods for quick one-off operations.
  */
-final class JwtHeaderJsonCodec extends JwtSegmentJsonCodec implements JwtHeaderCodecInterface
+final class JwtHeaderJsonCodec extends AbstractJwtSegmentJsonCodec implements JwtHeaderCodecInterface
 {
     private const MAX_JSON_DEPTH = 3;
 

@@ -11,7 +11,6 @@ use function array_is_list;
 use function is_array;
 use function is_float;
 use function is_int;
-use function is_scalar;
 use function is_string;
 use function sprintf;
 
@@ -102,7 +101,7 @@ final class JwtPayloadCodec
                 throw new InvalidFormatException('All JWT claim keys must be strings.');
             }
 
-            if (! $this->isValidJsonValue($value)) {
+            if (! $this->isValidPayloadValue($value)) {
                 throw new InvalidFormatException(
                     sprintf("JWT claim value for key '%s' must be a valid JSON value.", $key)
                 );
@@ -159,32 +158,13 @@ final class JwtPayloadCodec
     /**
      * Validate whether a value can be represented as JSON.
      */
-    private function isValidJsonValue(mixed $v): bool
+    private function isValidPayloadValue(mixed $v): bool
     {
-        // JSON supports: null, bool, int/float, string
-        if ($v === null) {
+        try {
+            json_encode($v, JSON_THROW_ON_ERROR);
             return true;
-        }
-
-        // scalar = bool|int|float|string
-        if (is_scalar($v)) {
-            return true;
-        }
-
-        // arrays are allowed recursively
-        if (! is_array($v)) {
+        } catch (\JsonException) {
             return false;
         }
-
-        foreach ($v as $k => $inner) {
-            if (! (is_int($k) || is_string($k))) {
-                return false;
-            }
-            if (! $this->isValidJsonValue($inner)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

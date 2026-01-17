@@ -74,7 +74,7 @@ final class JwtValidator
      * @param array<string, scalar|null> $expectedClaims Optional associative array of expected private claims.
      *                                      - If value is null, only claim existence is required.
      *                                      - If value is set, exact match is required.
-     * @param string|null $expectedJwtId    Optional expected "jti" (JWT ID) claim value.
+     * @param JwtIdValidatorInterface|null $jwtIdValidator Optional expected "jti" (JWT ID) claim value.
      */
     public function __construct(
         ?string $expectedIssuer = null,

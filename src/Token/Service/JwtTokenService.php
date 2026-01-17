@@ -7,6 +7,7 @@ namespace Phithi92\JsonWebToken\Token\Service;
 
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenReissuer;
+use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Reader\JwtTokenReader;
@@ -62,8 +63,8 @@ final class JwtTokenService
         ?string $kid = null,
     ): string {
         $bundle = $this->createToken($algorithm, $manager, $payload, $validator, $kid);
-
-        return JwtBundleCodec::serialize(bundle: $bundle);
+        
+        return JwtBundleCodec::serialize($bundle);
     }
 
     public function decryptToken(

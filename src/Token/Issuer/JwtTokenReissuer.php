@@ -11,7 +11,6 @@ use Phithi92\JsonWebToken\Token\Factory\JwtTokenIssuerFactory;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Service\JwtTokenCreator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 /**
@@ -22,7 +21,6 @@ use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 final class JwtTokenReissuer
 {
     public function __construct(
-        private readonly JwtTokenCreator $creator,
         private readonly JwtPayloadCodec $payloadCodec,
         private readonly JwtValidator $defaultValidator,
         private readonly JwtTokenIssuerFactory $issuerFactory,
@@ -68,21 +66,15 @@ final class JwtTokenReissuer
 
     private function createFromBundle(JwtBundle $bundle, JwtKeyManager $manager): JwtBundle
     {
-        $issuerFactoryProperty = $this->issuerFactory->createIssuer($manager);
+        $issuerFactory = $this->issuerFactory->createIssuer($manager);
 
-        /** @var JwtTokenIssuerFactoryInterface $issuerFactory */
-        $issuerFactory = $issuerFactoryProperty->getValue($this->creator);
-
-        $issuer = $issuerFactory->createIssuer($manager);
-
-        return $issuer->createFromBundle(bundle: $bundle);
+        return $issuerFactory->issueFromBundle($bundle);
     }
 
     private function filterPayload(JwtBundle $bundle): JwtPayload
     {
         $referencePayload = $bundle->getPayload();
 
-        /** @var array<string, mixed> $filteredClaims */
         $filteredClaims = $this->filterClaims(payload: $referencePayload);
 
         return $this->payloadCodec->decode(claims: $filteredClaims);

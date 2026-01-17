@@ -14,6 +14,12 @@ A security-focused PHP 8.2+ library for creating, signing, encrypting, decryptin
 composer require phithi92/json-web-token
 ```
 
+## Requirements
+- PHP 8.2 or newer.
+- The OpenSSL extension enabled (required for signing, encryption, and AES-GCM operations).
+- Composer will install the `phpseclib/phpseclib` dependency automatically.
+
+
 ## Quick start
 The typical flow is:
 
@@ -62,6 +68,7 @@ $payload = (new JwtPayload())
     ->setIssuer('https://issuer.example')
     ->setAudience(['https://service.example'])
     ->setIssuedAt('now')
+    ->setJwtId('token-123')
     ->setNotBefore('+1 minute')
     ->setExpiration('+15 minutes')
     ->addClaim('role', 'admin');
@@ -72,6 +79,7 @@ $payload = (new JwtPayload())
 
 ```php
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenServiceFactory;
+use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 $validator = new JwtValidator();
@@ -110,12 +118,42 @@ $payload = $bundle->getPayload();
 To run only structural checks (no claim validation), call `decryptTokenWithoutClaimValidation()`—this should be restricted to non-production tooling.
 
 ### 5) Business validation
-`JwtValidator` lets you enforce issuer and audience expectations and verifies time-based claims.
+`JwtValidator` lets you enforce issuer, audience, and JWT ID expectations and verifies time-based claims.
 
 ```php
-$validator->assertValidIssuer($payload, 'https://issuer.example');
-$validator->assertValidAudience($payload, ['https://service.example']);
+$validator = new JwtValidator(
+    expectedIssuer: 'https://issuer.example',
+    expectedAudience: 'https://service.example',
+    expectedJwtId: 'token-123'
+);
+
+$validator->assertValidIssuer($payload);
+$validator->assertValidAudience($payload);
+$validator->assertValidJwtId($payload);
 ```
+
+#### Validator configuration options
+`JwtValidator` also supports clock skew, private claim expectations, and JWT ID allow/deny lists for replay protection.
+
+```php
+use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
+
+$jwtIdValidator = new InMemoryJwtIdValidator(
+    allowList: ['known-id-1', 'known-id-2'],
+    denyList: ['revoked-id']
+);
+
+$validator = new JwtValidator(
+    expectedIssuer: 'https://issuer.example',
+    expectedAudience: 'https://service.example',
+    clockSkew: 30,
+    expectedClaims: ['tenant' => 'acme', 'scope' => null],
+    jwtIdValidator: $jwtIdValidator
+);
+```
+
+
 
 ### Refresh / reissue
 `JwtTokenService::reissueBundle()` clones an existing bundle, strips time-based claims, and applies a new expiration window.
@@ -135,7 +173,7 @@ $newBundle = $service->reissueBundle(
 - **`JwtTokenService`** — high-level entry point for building, serializing, decrypting, and reissuing tokens. Provides testing-only methods that bypass claim validation (`createTokenWithoutClaimValidation`, `decryptTokenWithoutClaimValidation`).
 - **`JwtTokenServiceFactory`** — constructs a default service with issuer/reader/validator wiring.
 - **`JwtTokenCreator` / `JwtTokenReader`** — focused helpers for issuance and decryption when you want to wire dependencies yourself.
-- **`JwtValidator`** — reusable validator for issuer, audience, and time-based constraints. `assert*` methods throw typed exceptions to help you differentiate failure causes.
+- **`JwtValidator`** — reusable validator for issuer, audience, JWT ID, allow/deny list checks, and time-based constraints. `assert*` methods throw typed exceptions to help you differentiate failure causes.
 - **`JwtBundle`** — aggregate of header, payload, signatures, and encryption artifacts returned by the factory/parsers.
 
 ## Supported algorithms
@@ -186,7 +224,7 @@ composer run bench
 ## License
 Released under the MIT License. See [LICENSE](LICENSE).
 
-#If this library helps you, consider supporting the project
+## If this library helps you, consider supporting the project
 
 | [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R414XGWN) | ![image](https://storage.ko-fi.com/cdn/useruploads/R6R414XGWN/qrcode.png?v=40dee069-2316-462f-8c3f-29825e00fa10?v=2) |
 | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |

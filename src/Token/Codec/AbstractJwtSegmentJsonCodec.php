@@ -8,7 +8,7 @@ use Phithi92\JsonWebToken\Exceptions\Json\DecodingException;
 use Phithi92\JsonWebToken\Exceptions\Json\EncodingException;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
-abstract class JwtSegmentJsonCodec
+abstract class AbstractJwtSegmentJsonCodec
 {
     /**
      * Default JSON encoding options.
@@ -23,7 +23,7 @@ abstract class JwtSegmentJsonCodec
      *
      * @throws EncodingException
      */
-    public function encodeJson(
+    protected function encodeJson(
         array $segment,
         int $depth,
         int $options = self::DEFAULT_JSON_OPTIONS,
@@ -40,7 +40,7 @@ abstract class JwtSegmentJsonCodec
      *
      * @throws DecodingException
      */
-    public function decodeJson(
+    protected function decodeJson(
         string $json,
         int $depth,
         int $options = self::DEFAULT_JSON_OPTIONS,

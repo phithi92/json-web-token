@@ -53,7 +53,6 @@ final class JwtTokenSerializer
 
     private static function serializeSignatureToken(JwtBundle $bundle): string
     {
-        /** @var array<string> $tokenArray */
         $tokenArray = [
             JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
             JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
