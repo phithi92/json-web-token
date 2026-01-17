@@ -10,6 +10,9 @@ use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 
 abstract class AbstractJwtSegmentJsonCodec
 {
+    /** @var array<class-string, self> */
+    private static array $sharedInstances = [];
+
     /**
      * Default JSON encoding options.
      *
@@ -51,5 +54,10 @@ abstract class AbstractJwtSegmentJsonCodec
             $options,
             $depth
         );
+    }
+    
+    protected static function shared(): static
+    {
+        return self::$sharedInstances[static::class] ??= new static();
     }
 }

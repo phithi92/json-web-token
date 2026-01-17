@@ -70,7 +70,7 @@ final class JwtHeaderJsonCodec extends AbstractJwtSegmentJsonCodec implements Jw
      */
     public static function encodeStatic(JwtHeader $header, int $depth = self::MAX_JSON_DEPTH): string
     {
-        return (new self())->encode($header, $depth);
+        return self::shared()->encode($header, $depth);
     }
 
     /**
@@ -86,6 +86,6 @@ final class JwtHeaderJsonCodec extends AbstractJwtSegmentJsonCodec implements Jw
      */
     public static function decodeStatic(string $json, int $depth = self::MAX_JSON_DEPTH): JwtHeader
     {
-        return (new self())->decode($json, $depth);
+        return self::shared()->decode($json, $depth);
     }
 }

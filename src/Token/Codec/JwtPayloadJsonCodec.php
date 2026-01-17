@@ -16,7 +16,7 @@ use Throwable;
  * optional static convenience methods using a cached instance pool
  * for performance in high-throughput scenarios.
  */
-final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloadCodecInterface
+final class JwtPayloadJsonCodec extends AbstractJwtSegmentJsonCodec implements JwtPayloadCodecInterface
 {
     private const JSON_MAX_DEPTH = 6;
 
@@ -63,10 +63,7 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
             throw new MalformedTokenException('Token payload is not valid JSON');
         }
 
-        $resolvedPayload = $this->codec->decode($data, $payload);
-
-        return $resolvedPayload;
-
+        return $this->codec->decode($data, $payload);
     }
 
     /**
@@ -100,7 +97,7 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
         JwtPayload $payload,
         int $depth = self::JSON_MAX_DEPTH,
     ): string {
-        return (new self())->encode($payload, $depth);
+        return self::shared()->encode($payload, $depth);
     }
 
     /**
@@ -117,7 +114,7 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
         string $json,
         int $depth = self::JSON_MAX_DEPTH,
     ): JwtPayload {
-        return (new self())->decode($json, $depth);
+        return self::shared()->decode($json, $depth);
     }
 
     /**
@@ -134,6 +131,6 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
         JwtPayload $payload,
         int $depth = self::JSON_MAX_DEPTH,
     ): void {
-        (new self())->decodeInto($json, $payload, $depth);
+        self::shared()->decodeInto($json, $payload, $depth);
     }
 }
