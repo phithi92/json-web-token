@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Issuer;
 
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
+use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenIssuerFactory;
+use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
 use Phithi92\JsonWebToken\Token\JwtBundle;
+use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Service\JwtTokenCreator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
@@ -48,26 +51,19 @@ final class JwtTokenReissuer
     ): JwtBundle {
         $validator ??= $this->defaultValidator;
 
-        $payload = $this->buildFilteredPayload(bundle: $bundle)
-            ->setExpiration(interval: $interval);
+        $filterdPayload = $this->filterPayload($bundle);
 
-        $newBundle = new JwtBundle(header: $bundle->getHeader(), payload: $payload);
+        $filterdPayload->setExpiration($interval);
+
+        $reissuedBundle = new JwtBundle(
+            header: $bundle->getHeader(),
+            payload: $filterdPayload
+        );
 
         // Decide policy: reissue always validates the new bundle by default.
-        $validator->assertValidBundle(bundle: $newBundle);
+        $validator->assertValidBundle($reissuedBundle);
 
-        // Re-sign/re-encrypt from bundle using the issuer underneath.
-        // If your JwtTokenIssuer has createFromBundle(), keep using it.
-        // Otherwise you could call createToken() with header/payload separately.
-        // Here we assume createFromBundle exists like in your current codebase.
-        $issuer = ($this->creator) // get issuer via factory in creator
-        ; // placeholder to show intent
-
-        // We don't have direct access to issuer from creator, so we call issuer through factory:
-        // easiest: add a method in creator to "createFromBundle", or re-inject issuerFactory here.
-        // We'll do the clean thing: call a dedicated method on creator.
-
-        return $this->createFromBundle($newBundle, $manager);
+        return $this->createFromBundle($reissuedBundle, $manager);
     }
 
     private function createFromBundle(JwtBundle $bundle, JwtKeyManager $manager): JwtBundle
@@ -82,7 +78,7 @@ final class JwtTokenReissuer
         return $issuer->createFromBundle(bundle: $bundle);
     }
 
-    private function buildFilteredPayload(JwtBundle $bundle): JwtPayload
+    private function filterPayload(JwtBundle $bundle): JwtPayload
     {
         $referencePayload = $bundle->getPayload();
 
