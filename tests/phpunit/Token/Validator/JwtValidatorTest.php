@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\phpunit\Validator;
+namespace Tests\phpunit\Token\Validator;
 
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
@@ -10,9 +10,11 @@ use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuedAtException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuerException;
 use Phithi92\JsonWebToken\Exceptions\Payload\NotBeforeOlderThanIatException;
 use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidJwtIdException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use PHPUnit\Framework\TestCase;
 
@@ -50,6 +52,10 @@ final class JwtValidatorTest extends TestCase
             $payload->addClaim('role', $data['role']);
         }
 
+        if (isset($data['jti'])) {
+            $payload->setJwtId($data['jti']);
+        }
+
         return $payload;
     }
 
@@ -62,11 +68,12 @@ final class JwtValidatorTest extends TestCase
                 'iat' => 'now',
                 'iss' => 'trusted-issuer',
                 'aud' => 'my-app',
+                'jti' => 'token-123',
                 'customClaim' => 'abc',
             ]
         );
 
-        $validator = new JwtValidator('trusted-issuer', 'my-app', 2, ['customClaim' => 'abc']);
+        $validator = new JwtValidator('trusted-issuer', 'my-app', 2, ['customClaim' => 'abc'], new InMemoryJwtIdValidator(['token-123']));
 
         $validator->assertValid($payload);
 
@@ -150,6 +157,65 @@ final class JwtValidatorTest extends TestCase
         $validator = new JwtValidator(null, 'expected');
 
         $this->expectException(InvalidAudienceException::class);
+        $validator->assertValid($payload);
+    }
+
+    public function testInvalidJwtIdThrowsException(): void
+    {
+        $payload = $this->createPayload(['jti' => 'token-1']);
+        $validator = new JwtValidator(
+            expectedIssuer: null,
+            expectedAudience: null,
+            clockSkew: 0,
+            expectedClaims: [],
+            jwtIdValidator: new InMemoryJwtIdValidator(['token-2'])
+        );
+
+        $this->expectException(InvalidJwtIdException::class);
+        $validator->assertValid($payload);
+    }
+
+    public function testIsValidReturnsFalseForInvalidJwtId(): void
+    {
+        $payload = $this->createPayload(['jti' => 'token-1']);
+        $validator = new JwtValidator(
+            expectedIssuer: null,
+            expectedAudience: null,
+            clockSkew: 0,
+            expectedClaims: [],
+            jwtIdValidator: new InMemoryJwtIdValidator(['token-2'])
+        );
+
+        $this->assertFalse($validator->isValid($payload));
+    }
+
+    public function testJwtIdAllowListRejectsMissingJwtId(): void
+    {
+        $payload = $this->createPayload([]);
+        $validator = new JwtValidator(
+            expectedIssuer: null,
+            expectedAudience: null,
+            clockSkew: 0,
+            expectedClaims: [],
+            jwtIdValidator: new InMemoryJwtIdValidator(['token-1'])
+        );
+
+        $this->expectException(InvalidJwtIdException::class);
+        $validator->assertValid($payload);
+    }
+
+    public function testJwtIdDenyListRejectsKnownJwtId(): void
+    {
+        $payload = $this->createPayload(['jti' => 'token-1']);
+        $validator = new JwtValidator(
+            expectedIssuer: null,
+            expectedAudience: null,
+            clockSkew: 0,
+            expectedClaims: [],
+            jwtIdValidator: new InMemoryJwtIdValidator(null, ['token-1'])
+        );
+
+        $this->expectException(InvalidJwtIdException::class);
         $validator->assertValid($payload);
     }
 

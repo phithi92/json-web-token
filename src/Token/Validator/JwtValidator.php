@@ -14,6 +14,7 @@ use Phithi92\JsonWebToken\Exceptions\Payload\NotBeforeOlderThanIatException;
 use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidJwtIdException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
@@ -46,6 +47,9 @@ final class JwtValidator
     // Allowed clock skew in seconds.
     private int $clockSkew = 0;
 
+    // The expected JWT ID (public claim jti).
+    private ?JwtIdValidatorInterface $jwtIdValidator = null;
+
     /**
      * @var array<string, scalar|null>
      */
@@ -70,12 +74,14 @@ final class JwtValidator
      * @param array<string, scalar|null> $expectedClaims Optional associative array of expected private claims.
      *                                      - If value is null, only claim existence is required.
      *                                      - If value is set, exact match is required.
+     * @param string|null $expectedJwtId    Optional expected "jti" (JWT ID) claim value.
      */
     public function __construct(
         ?string $expectedIssuer = null,
         ?string $expectedAudience = null,
         int $clockSkew = 0,
-        array $expectedClaims = []
+        array $expectedClaims = [],
+        ?JwtIdValidatorInterface $jwtIdValidator = null
     ) {
         if ($clockSkew < 0) {
             throw new InvalidArgumentException('clockSkew must be >= 0');
@@ -84,6 +90,7 @@ final class JwtValidator
         $this->expectedIssuer = $expectedIssuer;
         $this->expectedAudience = $expectedAudience;
         $this->expectedClaims = $expectedClaims;
+        $this->jwtIdValidator = $jwtIdValidator;
     }
 
     /**
@@ -112,6 +119,9 @@ final class JwtValidator
                 return false;
             }
             if ($this->isValidAudience($payload) === false) {
+                return false;
+            }
+            if ($this->isValidJwtId($payload) === false) {
                 return false;
             }
 
@@ -183,6 +193,16 @@ final class JwtValidator
     }
 
     /**
+     * Validates the "jti" (JWT ID) claim against the expected value.
+     *
+     * @return bool True if JWT ID matches or is not enforced.
+     */
+    public function isValidJwtId(JwtPayload $payload): bool
+    {
+        return $this->jwtIdValidator === null || $this->jwtIdValidator->isAllowed($payload->getJwtId());
+    }
+
+    /**
      * Validates the given encrypted JWT bundle.
      *
      * @throws PayloadException On any validation failure
@@ -210,6 +230,7 @@ final class JwtValidator
             $this->assertIssuedAtValid($payload);
             $this->assertValidIssuer($payload);
             $this->assertValidAudience($payload);
+            $this->assertValidJwtId($payload);
         } finally {
             $this->currentTime = null;
         }
@@ -345,6 +366,18 @@ final class JwtValidator
 
         if (! $valid) {
             throw new InvalidAudienceException();
+        }
+    }
+
+    /**
+     * Validates the "jti" (JWT ID) claim against the expected value.
+     *
+     * @throws InvalidJwtIdException If JWT ID doesn't match expected
+     */
+    public function assertValidJwtId(JwtPayload $payload): void
+    {
+        if (! $this->isValidJwtId($payload)) {
+            throw new InvalidJwtIdException();
         }
     }
 

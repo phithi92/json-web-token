@@ -239,6 +239,20 @@ final class JwtPayload implements JsonSerializable
     }
 
     /**
+     * Set the JWT ID (jti) claim.
+     */
+    public function setJwtId(string $jwtId): self
+    {
+        return $this->addClaim('jti', $jwtId);
+    }
+
+    public function getJwtId(): ?string
+    {
+        $jwtId = $this->getClaim('jti');
+        return is_string($jwtId) ? $jwtId : null;
+    }
+
+    /**
      * Set the audience (aud) claim.
      *
      * @param string|array<string> $audience
