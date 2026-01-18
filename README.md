@@ -26,8 +26,8 @@ The typical flow is:
 1. Configure algorithms and keys with `JwtKeyManager`.
 2. Build a payload with `JwtPayload` (or provide an array of claims).
 3. Create a token service via `JwtTokenServiceFactory`.
-4. Create, serialize, and later decrypt/validate tokens via `JwtTokenService`.
-5. Apply additional business checks using `JwtValidator`.
+4. Create, serialize, and later decrypt/validate tokens via `JwtTokenService` (including claim-only validation or token-string reissuing when needed).
+5. Apply additional business checks and optional JWT ID replay protection using `JwtValidator`.
 
 ### 1) Configure algorithms and keys
 `JwtKeyManager` keeps the algorithm registry and an in-memory key/passphrase store. Keys must be provided in PEM format.
@@ -75,7 +75,7 @@ $payload = (new JwtPayload())
 ```
 
 ### 3) Create and serialize a token
-`JwtTokenService` orchestrates token building. Provide the algorithm identifier defined in `src/Config/algorithms.php`.
+`JwtTokenService` orchestrates token building. Provide the algorithm identifier defined in `src/Config/algorithms.php`. Use `createTokenFromArray()` when you already have a claims array instead of a `JwtPayload` instance.
 
 ```php
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenServiceFactory;
@@ -102,8 +102,35 @@ $tokenString = $service->createTokenString(
 );
 ```
 
+If you already have a `JwtBundle`, you can serialize it into a compact token string:
+
+```php
+use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
+
+$tokenString = JwtBundleCodec::serialize($bundle);
+```
+
+You can also create a token directly from an array of claims (useful when you already have decoded claims):
+
+```php
+$bundle = $service->createTokenFromArray(
+    algorithm: 'RS256',
+    manager: $manager,
+    claims: [
+        'iss' => 'https://issuer.example',
+        'aud' => ['https://service.example'],
+        'iat' => time(),
+        'exp' => time() + 900,
+        'role' => 'admin',
+    ],
+    validator: $validator,
+    kid: 'main-key'
+);
+```
+
+
 ### 4) Decrypt and validate
-Decrypts the compact string back into a `JwtBundle` while performing signature/encryption verification and claim checks.
+Decrypts the compact string back into a `JwtBundle` while performing signature/encryption verification and claim checks. For workflows that only need to re-check claims without re-parsing headers, use `validateTokenClaims()`.
 
 ```php
 $bundle = $service->decryptToken(
@@ -117,8 +144,19 @@ $payload = $bundle->getPayload();
 
 To run only structural checks (no claim validation), call `decryptTokenWithoutClaimValidation()`—this should be restricted to non-production tooling.
 
+#### Claim-only validation
+If you already trust the token structure but want to re-check claims (e.g., just before use), you can validate claims only:
+
+```php
+$isValid = $service->validateTokenClaims(
+    token: $tokenString,
+    manager: $manager,
+    validator: $validator
+);
+```
+
 ### 5) Business validation
-`JwtValidator` lets you enforce issuer, audience, and JWT ID expectations and verifies time-based claims.
+`JwtValidator` lets you enforce issuer, audience, and JWT ID expectations and verifies time-based claims. If you back JWT IDs with a registry (Redis/PDO), the service can automatically allow or deny IDs during issue/deny flows.
 
 ```php
 $validator = new JwtValidator(
@@ -153,15 +191,49 @@ $validator = new JwtValidator(
 );
 ```
 
+You can back JWT ID validation with a persistent registry using Redis or PDO:
 
+```php
+use Phithi92\JsonWebToken\Token\Validator\PdoJwtIdValidator;
+use Phithi92\JsonWebToken\Token\Validator\RedisJwtIdValidator;
+
+$pdoValidator = new PdoJwtIdValidator(
+    pdo: new PDO('mysql:host=localhost;dbname=jwt', 'user', 'pass'),
+    useAllowList: false
+);
+
+$redisValidator = new RedisJwtIdValidator(
+    redis: $redis,
+    useAllowList: true
+);
+```
+
+If your validator implements `JwtIdRegistryInterface`, the token service can automatically deny replayed tokens:
+
+```php
+$service->denyBundle($bundle, $validator);
+// or manually deny a specific ID for a TTL in seconds
+$service->denyJwtId('token-123', 900, $validator);
+```
 
 ### Refresh / reissue
-`JwtTokenService::reissueBundle()` clones an existing bundle, strips time-based claims, and applies a new expiration window.
+`JwtTokenService::reissueBundle()` clones an existing bundle, strips time-based claims, and applies a new expiration window. Use `reissueBundleFromToken()` when you only have the compact token string.
 
 ```php
 $newBundle = $service->reissueBundle(
     interval: '+30 minutes',
     bundle: $bundle,
+    manager: $manager,
+    validator: $validator
+);
+```
+
+You can also reissue directly from the compact token string:
+
+```php
+$newBundle = $service->reissueBundleFromToken(
+    token: $tokenString,
+    interval: '+30 minutes',
     manager: $manager,
     validator: $validator
 );
