@@ -12,38 +12,47 @@ final class InMemoryJwtIdValidator implements JwtIdValidatorInterface
     private array $denyList = [];
 
     /**
-     * @var array<string, bool>|null
+     * @var array<string, bool>
      */
-    private ?array $allowList = null;
+    private array $allowList = [];
+    
+    private bool $useAllowList;
 
     /**
      * @param array<string>|null $allowList
      * @param array<string> $denyList
      */
-    public function __construct(?array $allowList = null, array $denyList = [])
-    {
+    public function __construct(
+        ?array $allowList = null, 
+        ?array $denyList = null,
+        bool $useAllowList = false
+    ){
         if ($allowList !== null) {
             $this->allowList = $this->normalizeList($allowList);
         }
+        
+        if($denyList !== null){
+            $this->denyList = $this->normalizeList($denyList);
+        }
 
-        $this->denyList = $this->normalizeList($denyList);
+        $this->useAllowList = $useAllowList;
     }
 
     public function isAllowed(?string $jwtId): bool
     {
-        if ($jwtId === null) {
-            return $this->allowList === null;
-        }
-
         if (isset($this->denyList[$jwtId])) {
             return false;
         }
-
-        if ($this->allowList !== null) {
-            return isset($this->allowList[$jwtId]);
+        
+        if(! $this->useAllowList){
+            return true;
+        }
+        
+        if( $jwtId === null){
+            return false;
         }
 
-        return true;
+        return isset($this->allowList[$jwtId]);
     }
 
     /**
