@@ -6,8 +6,8 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Service;
 
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
-use Phithi92\JsonWebToken\Token\Issuer\JwtTokenReissuer;
 use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
+use Phithi92\JsonWebToken\Token\Issuer\JwtTokenReissuer;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Reader\JwtTokenReader;
@@ -63,7 +63,7 @@ final class JwtTokenService
         ?string $kid = null,
     ): string {
         $bundle = $this->createToken($algorithm, $manager, $payload, $validator, $kid);
-        
+
         return JwtBundleCodec::serialize($bundle);
     }
 
@@ -106,5 +106,39 @@ final class JwtTokenService
         ?JwtValidator $validator = null,
     ): JwtBundle {
         return $this->reissuer->reissueBundle($interval, $bundle, $manager, $validator);
+    }
+
+    public function denyJwtId(string $jwtId, int $ttl, JwtValidator $validator): void
+    {
+        $jwtIdValidator = $validator->getJwtIdValidator();
+        if (! $jwtIdValidator instanceof JwtIdRegistryInterface) {
+            return;
+        }
+
+        if ($ttl <= 0) {
+            return;
+        }
+
+        $jwtIdValidator->deny($jwtId, $ttl);
+    }
+
+    public function denyBundle(JwtBundle $bundle, JwtValidator $validator): void
+    {
+        $jwtId = $bundle->getPayload()->getJwtId();
+        if ($jwtId === null) {
+            return;
+        }
+
+        $exp = $bundle->getPayload()->getExpiration();
+        if ($exp === null) {
+            return;
+        }
+
+        $ttl = $exp - time();
+        if ($ttl <= 0) {
+            return;
+        }
+
+        $this->denyJwtId($jwtId, $ttl, $validator);
     }
 }

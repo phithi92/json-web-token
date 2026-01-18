@@ -6,7 +6,7 @@ namespace Phithi92\JsonWebToken\Token\Validator;
 
 use Redis;
 
-final class RedisJwtIdValidator implements JwtIdValidatorInterface
+final class RedisJwtIdValidator implements JwtIdRegistryInterface
 {
     private const DENY_PREFIX  = 'jwt:deny:';
     private const ALLOW_PREFIX = 'jwt:allow:';

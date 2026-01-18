@@ -55,7 +55,7 @@ abstract class AbstractJwtSegmentJsonCodec
             $depth
         );
     }
-    
+
     protected static function shared(): static
     {
         return self::$sharedInstances[static::class] ??= new static();

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Phithi92\JsonWebToken\Token\Factory;
 
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
@@ -14,38 +16,48 @@ final class JwtTokenServiceFactory
 {
     public static function createDefault(): JwtTokenService
     {
-        $validator = new JwtValidator();
+        return self::create();
+    }
 
+    public static function create(
+        ?JwtTokenCreator $creator = null,
+        ?JwtTokenReader $reader = null,
+        ?JwtClaimsValidationService $claimsValidator = null,
+        ?JwtTokenReissuer $reissuer = null,
+    ): JwtTokenService {
+        // Shared defaults (so the default graph is consistent)
+        $validator        = new JwtValidator();
         $payloadCodec     = new JwtPayloadCodec();
         $issuerFactory    = new JwtTokenIssuerFactory();
         $decryptorFactory = new JwtTokenDecryptorFactory();
 
-        $creator = new JwtTokenCreator(
+        // Build default graph
+        $defaultCreator = new JwtTokenCreator(
             issuerFactory: $issuerFactory,
             payloadCodec: $payloadCodec,
             defaultValidator: $validator
         );
 
-        $reader = new JwtTokenReader(
+        $defaultReader = new JwtTokenReader(
             decryptorFactory: $decryptorFactory
         );
 
-        $claimsValidator = new JwtClaimsValidationService(
-            reader: $reader,
+        $defaultClaimsValidator = new JwtClaimsValidationService(
+            reader: $defaultReader,
             defaultValidator: $validator
         );
 
-        $reissuer = new JwtTokenReissuer(
+        $defaultReissuer = new JwtTokenReissuer(
             payloadCodec: $payloadCodec,
             defaultValidator: $validator,
             issuerFactory: $issuerFactory
         );
 
         return new JwtTokenService(
-            creator: $creator,
-            reader: $reader,
-            claimsValidator: $claimsValidator,
-            reissuer: $reissuer
+            creator: $creator ?? $defaultCreator,
+            reader: $reader ?? $defaultReader,
+            claimsValidator: $claimsValidator ?? $defaultClaimsValidator,
+            reissuer: $reissuer ?? $defaultReissuer,
         );
     }
 }

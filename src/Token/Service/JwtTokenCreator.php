@@ -9,6 +9,7 @@ use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenIssuerFactoryInterface;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Validator\JwtIdRegistryInterface;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 final class JwtTokenCreator
@@ -35,7 +36,9 @@ final class JwtTokenCreator
             kid: $kid
         );
 
-        ($validator ?? $this->defaultValidator)->assertValidBundle($bundle);
+        $validator ??= $this->defaultValidator;
+        $validator->assertValidBundle($bundle);
+        $this->registerJwtId($bundle, $validator);
 
         return $bundle;
     }
@@ -89,8 +92,35 @@ final class JwtTokenCreator
 
         $issued = $issuer->issueFromBundle(bundle: $bundle, algorithm: $algorithm);
 
-        ($validator ?? $this->defaultValidator)->assertValidBundle($issued);
+        $validator ??= $this->defaultValidator;
+        $validator->assertValidBundle($issued);
+        $this->registerJwtId($issued, $validator);
 
         return $issued;
+    }
+
+    private function registerJwtId(JwtBundle $bundle, JwtValidator $validator): void
+    {
+        $jwtIdValidator = $validator->getJwtIdValidator();
+        if (! $jwtIdValidator instanceof JwtIdRegistryInterface) {
+            return;
+        }
+
+        $jwtId = $bundle->getPayload()->getJwtId();
+        if ($jwtId === null) {
+            return;
+        }
+
+        $exp = $bundle->getPayload()->getExpiration();
+        if ($exp === null) {
+            return;
+        }
+
+        $ttl = $exp - time();
+        if ($ttl <= 0) {
+            return;
+        }
+
+        $jwtIdValidator->allow($jwtId, $ttl);
     }
 }

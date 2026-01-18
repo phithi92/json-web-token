@@ -202,6 +202,11 @@ final class JwtValidator
         return $this->jwtIdValidator === null || $this->jwtIdValidator->isAllowed($payload->getJwtId());
     }
 
+    public function getJwtIdValidator(): ?JwtIdValidatorInterface
+    {
+        return $this->jwtIdValidator;
+    }
+
     /**
      * Validates the given encrypted JWT bundle.
      *
