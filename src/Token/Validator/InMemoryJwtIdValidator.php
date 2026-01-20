@@ -6,7 +6,7 @@ namespace Phithi92\JsonWebToken\Token\Validator;
 
 use InvalidArgumentException;
 
-final class InMemoryJwtIdValidator implements JwtIdRegistryInterface
+final class InMemoryJwtIdValidator implements JwtIdValidatorInterface
 {
     /**
      * jwtId => expiresAt (unix timestamp)

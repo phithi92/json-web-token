@@ -7,7 +7,7 @@ namespace Phithi92\JsonWebToken\Token\Validator;
 use DateTimeImmutable;
 use PDO;
 
-final class PdoJwtIdValidator implements JwtIdRegistryInterface
+final class PdoJwtIdValidator implements JwtIdValidatorInterface
 {
     private const TYPE_DENY  = 'deny';
     private const TYPE_ALLOW = 'allow';
