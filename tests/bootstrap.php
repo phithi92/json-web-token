@@ -19,11 +19,19 @@
  *
  * Production environments are expected to use the real ext-redis extension.
  */
+
 namespace {
     if (!class_exists(\Redis::class)) {
-        class Redis {
-            public function exists(string $key): int { return 0; }
-            public function setex(string $key, int $ttl, string $value): bool { return true; }
+        class Redis
+        {
+            public function exists(string $key): int
+            {
+                return 0;
+            }
+            public function setex(string $key, int $ttl, string $value): bool
+            {
+                return true;
+            }
         }
     }
 }
