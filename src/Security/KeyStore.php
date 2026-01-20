@@ -129,20 +129,19 @@ final class KeyStore
      * @throws RuntimeException
      */
     private function buildKeyMetadata(
-        #[SensitiveParameter]
-        string|OpenSSLAsymmetricKey $pem,
+        #[SensitiveParameter] string|OpenSSLAsymmetricKey $pem,
         ?string $role = null,
     ): array {
         $this->assertValidRole($role);
 
         [$resolvedKey, $resolvedRole] = $this->resolveKey($pem, $role);
-        [$type, $bits, $resolvedPem] = $this->resolveKeyDetails($resolvedKey);
+        [$type, $bits, $resolvedPem] = $this->resolveKeyDetails($resolvedKey, $resolvedRole);
 
         return [
             'type' => $type,
             'role' => $resolvedRole,
-            'key' => $resolvedKey,
-            'pem' => $resolvedPem,
+            'key'  => $resolvedKey,
+            'pem'  => $resolvedPem,
             'bits' => $bits,
         ];
     }
@@ -180,8 +179,10 @@ final class KeyStore
      *
      * @throws RuntimeException
      */
-    private function resolveKeyDetails(#[SensitiveParameter] OpenSSLAsymmetricKey $key): array
-    {
+    private function resolveKeyDetails(
+        #[SensitiveParameter] OpenSSLAsymmetricKey $key,
+        string $role
+    ): array {
         $details = openssl_pkey_get_details($key);
         if (
             ! is_array($details)
@@ -192,6 +193,18 @@ final class KeyStore
             throw new RuntimeException('Could not determine key details.');
         }
 
+        // $details['key'] ist immer PUBLIC PEM (auch für private keys!)
+        if ($role === self::PRIVATE_ROLE) {
+            $privatePem = null;
+            // Exportiert den PRIVATE PEM
+            if (! openssl_pkey_export($key, $privatePem)) {
+                throw new RuntimeException('Could not export private key PEM.');
+            }
+
+            return [$this->mapKeyType($details['type']), $details['bits'], $privatePem];
+        }
+
+        // Public role
         return [$this->mapKeyType($details['type']), $details['bits'], $details['key']];
     }
 
