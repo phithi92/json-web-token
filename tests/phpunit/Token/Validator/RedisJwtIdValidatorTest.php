@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Tests\Token\Validator;
 
-use PHPUnit\Framework\TestCase;
 use Phithi92\JsonWebToken\Token\Validator\RedisJwtIdValidator;
+use PHPUnit\Framework\TestCase;
 use Redis;
+use RuntimeException;
 
 final class RedisJwtIdValidatorTest extends TestCase
 {
@@ -67,7 +68,7 @@ final class RedisJwtIdValidatorTest extends TestCase
                 return match ($key) {
                     'jwt:deny:abc'  => 0,
                     'jwt:allow:abc' => 0,
-                    default => throw new \RuntimeException('Unexpected key: ' . $key),
+                    default => throw new RuntimeException('Unexpected key: ' . $key),
                 };
             });
 
@@ -90,7 +91,7 @@ final class RedisJwtIdValidatorTest extends TestCase
                 return match ($key) {
                     'jwt:deny:abc'  => 0,
                     'jwt:allow:abc' => 1,
-                    default => throw new \RuntimeException('Unexpected key: ' . $key),
+                    default => throw new RuntimeException('Unexpected key: ' . $key),
                 };
             });
 
