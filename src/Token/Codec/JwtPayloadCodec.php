@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Codec;
 
+use JsonException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 
@@ -163,7 +164,7 @@ final class JwtPayloadCodec
         try {
             json_encode($v, JSON_THROW_ON_ERROR);
             return true;
-        } catch (\JsonException) {
+        } catch (JsonException) {
             return false;
         }
     }
