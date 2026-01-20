@@ -83,6 +83,13 @@ final class JwtTokenService
     }
 
     public function validateTokenClaims(
+        JwtBundle $bundle,
+        JwtValidator $validator,
+    ): bool {
+        return $validator->isValid($bundle->getPayload());
+    }
+
+    public function validateTokenClaimsFromToken(
         string $token,
         JwtKeyManager $manager,
         ?JwtValidator $validator = null,
@@ -111,7 +118,7 @@ final class JwtTokenService
     public function denyJwtId(string $jwtId, int $ttl, JwtValidator $validator): void
     {
         $jwtIdValidator = $validator->getJwtIdValidator();
-        if (! $jwtIdValidator instanceof JwtIdRegistryInterface) {
+        if ($jwtIdValidator === null) {
             return;
         }
 
