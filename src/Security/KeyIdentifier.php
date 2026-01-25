@@ -45,13 +45,11 @@ final class KeyIdentifier
 
     /**
      * Required JWK members per kty according to RFC 7638.
-     *
-     * @var array<string, list<string>>
      */
     private const REQUIRED_MEMBERS = [
         'RSA' => ['e', 'kty', 'n'],
         'oct' => ['k', 'kty'],
-        'EC'  => ['crv', 'kty', 'x', 'y'],
+        'EC' => ['crv', 'kty', 'x', 'y'],
         'OKP' => ['crv', 'kty', 'x'],
     ];
 
@@ -80,7 +78,7 @@ final class KeyIdentifier
     {
         return self::fromJwk([
             'kty' => 'oct',
-            'k'   => Base64UrlEncoder::encode($secret),
+            'k' => Base64UrlEncoder::encode($secret),
         ]);
     }
 
@@ -159,8 +157,8 @@ final class KeyIdentifier
 
         return [
             'kty' => 'RSA',
-            'n'   => Base64UrlEncoder::encode($n),
-            'e'   => Base64UrlEncoder::encode($e),
+            'n' => Base64UrlEncoder::encode($n),
+            'e' => Base64UrlEncoder::encode($e),
         ];
     }
 

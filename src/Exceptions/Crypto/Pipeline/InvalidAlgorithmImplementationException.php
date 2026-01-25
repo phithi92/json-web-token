@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Exceptions\Crypto\Handler;
+namespace Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline;
 
-class InvalidHandlerClassDefinitionException extends HandlerException
+class InvalidAlgorithmImplementationException extends AlgorithmInvocationException
 {
     public function __construct(string $type)
     {

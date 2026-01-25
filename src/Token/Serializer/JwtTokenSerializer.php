@@ -10,6 +10,7 @@ use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtTokenKind;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
+use ValueError;
 
 use function array_map;
 use function implode;
@@ -20,7 +21,7 @@ final class JwtTokenSerializer
 
     public static function serialize(JwtBundle $bundle): string
     {
-        $type = $bundle->getHeader()->getType();
+        $type = (string)$bundle->getHeader()->getType();
 
         try {
             $kind = JwtTokenKind::from($type);

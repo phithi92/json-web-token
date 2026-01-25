@@ -2,30 +2,29 @@
 
 declare(strict_types=1);
 
-namespace Tests\phpunit\Crypto\Handler;
+namespace Tests\phpunit\Crypto\Pipeline;
 
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerDispatcher;
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerMethodResolver;
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerTarget;
+use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmMethodMap;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoAlgorithmInvoker;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoProcessingStage;
 use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerInterface;
-use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\InvalidHandlerClassDefinitionException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\InvalidHandlerImplementationException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\MissingHandlerConfigurationException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\InvalidAlgorithmImplementationException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\MissingAlgorithmConfigurationException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use PHPUnit\Framework\TestCase;
 
-final class HandlerDispatcherTest extends TestCase
+final class CryptoAlgorithmInvokerTest extends TestCase
 {
     public function testDispatchReturnsNullWhenHandlerNotConfigured(): void
     {
-        $dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
+        $dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
 
         $result = $dispatcher->dispatch(
-            HandlerTarget::Signature,
-            HandlerOperation::Perform,
+            CryptoProcessingStage::Signature,
+            CryptoOperationDirection::Perform,
             new JwtKeyManager(),
             [],
             ['bundle' => new JwtBundle(new JwtHeader())]
@@ -36,45 +35,45 @@ final class HandlerDispatcherTest extends TestCase
 
     public function testDispatchThrowsWhenConfigMissingHandlerDefinition(): void
     {
-        $dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
+        $dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
 
-        $this->expectException(MissingHandlerConfigurationException::class);
+        $this->expectException(MissingAlgorithmConfigurationException::class);
 
         $dispatcher->dispatch(
-            HandlerTarget::Signature,
-            HandlerOperation::Perform,
+            CryptoProcessingStage::Signature,
+            CryptoOperationDirection::Perform,
             new JwtKeyManager(),
-            [HandlerTarget::Signature->interfaceClass() => 'invalid'],
+            [CryptoProcessingStage::Signature->interfaceClass() => 'invalid'],
             ['bundle' => new JwtBundle(new JwtHeader())]
         );
     }
 
     public function testDispatchThrowsWhenHandlerClassInvalid(): void
     {
-        $dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
+        $dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
 
-        $this->expectException(InvalidHandlerClassDefinitionException::class);
+        $this->expectException(InvalidAlgorithmImplementationException::class);
 
         $dispatcher->dispatch(
-            HandlerTarget::Signature,
-            HandlerOperation::Perform,
+            CryptoProcessingStage::Signature,
+            CryptoOperationDirection::Perform,
             new JwtKeyManager(),
-            [HandlerTarget::Signature->interfaceClass() => ['handler' => 123]],
+            [CryptoProcessingStage::Signature->interfaceClass() => ['handler' => 123]],
             ['bundle' => new JwtBundle(new JwtHeader())]
         );
     }
 
     public function testDispatchThrowsWhenHandlerDoesNotImplementInterface(): void
     {
-        $dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
+        $dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
 
-        $this->expectException(InvalidHandlerImplementationException::class);
+        $this->expectException(InvalidAlgorithmImplementationException::class);
 
         $dispatcher->dispatch(
-            HandlerTarget::Signature,
-            HandlerOperation::Perform,
+            CryptoProcessingStage::Signature,
+            CryptoOperationDirection::Perform,
             new JwtKeyManager(),
-            [HandlerTarget::Signature->interfaceClass() => ['handler' => NotAHandler::class]],
+            [CryptoProcessingStage::Signature->interfaceClass() => ['handler' => NotAHandler::class]],
             ['bundle' => new JwtBundle(new JwtHeader())]
         );
     }
@@ -83,14 +82,14 @@ final class HandlerDispatcherTest extends TestCase
     {
         TestSignatureHandler::$calls = [];
 
-        $dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
+        $dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
         $bundle = new JwtBundle((new JwtHeader())->setAlgorithm('HS256'));
 
         $dispatcher->dispatch(
-            HandlerTarget::Signature,
-            HandlerOperation::Perform,
+            CryptoProcessingStage::Signature,
+            CryptoOperationDirection::Perform,
             new JwtKeyManager(),
-            [HandlerTarget::Signature->interfaceClass() => ['handler' => TestSignatureHandler::class]],
+            [CryptoProcessingStage::Signature->interfaceClass() => ['handler' => TestSignatureHandler::class]],
             ['bundle' => $bundle]
         );
 

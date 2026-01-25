@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Exceptions\Crypto\Handler;
+namespace Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline;
 
 use Exception;
 use Phithi92\JsonWebToken\Utilities\EnumUtils;
@@ -12,11 +12,11 @@ use Phithi92\JsonWebToken\Utilities\EnumUtils;
  *
  * Base exception for security-related errors in the phithi92/json-web-token package.
  */
-abstract class HandlerException extends Exception
+abstract class AlgorithmInvocationException extends Exception
 {
     public function __construct(string $type, mixed ...$details)
     {
-        $case = EnumUtils::fromName(HandlerErrorMessagesEnum::class, $type);
+        $case = EnumUtils::fromName(AlgorithmInvocationErrorMessagesEnum::class, $type);
         parent::__construct($case->getMessage(...$details));
     }
 }

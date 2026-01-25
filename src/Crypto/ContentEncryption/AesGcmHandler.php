@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Crypto\Content;
+namespace Phithi92\JsonWebToken\Crypto\ContentEncryption;
 
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;

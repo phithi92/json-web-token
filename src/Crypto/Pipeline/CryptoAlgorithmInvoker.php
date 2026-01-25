@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Crypto\Handler;
+namespace Phithi92\JsonWebToken\Crypto\Pipeline;
 
-use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\InvalidHandlerClassDefinitionException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\InvalidHandlerImplementationException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\MissingHandlerConfigurationException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\UndefinedHandlerMethodException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\AlgorithmMethodNotFoundException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\InvalidAlgorithmImplementationException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\MissingAlgorithmConfigurationException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use RuntimeException;
@@ -18,13 +17,13 @@ use function is_string;
 use function is_subclass_of;
 use function method_exists;
 
-final class HandlerDispatcher
+final class CryptoAlgorithmInvoker
 {
     /** @var array<class-string, object> */
     private array $handlerCache = [];
 
     public function __construct(
-        private readonly HandlerMethodResolver $methodResolver,
+        private readonly AlgorithmMethodMap $methodResolver,
     ) {
     }
 
@@ -35,8 +34,8 @@ final class HandlerDispatcher
      * @param array<string,mixed> $context
      */
     public function dispatch(
-        HandlerTarget $target,
-        HandlerOperation $operation,
+        CryptoProcessingStage $target,
+        CryptoOperationDirection $operation,
         JwtKeyManager $manager,
         array $config,
         array $context = [],
@@ -57,8 +56,8 @@ final class HandlerDispatcher
     }
 
     private function resolveMethod(
-        HandlerTarget $target,
-        HandlerOperation $operation,
+        CryptoProcessingStage $target,
+        CryptoOperationDirection $operation,
     ): string {
         return $this->methodResolver->resolve($target, $operation);
     }
@@ -66,7 +65,7 @@ final class HandlerDispatcher
     private function assertValidHandlerMethod(object $handler, string $method): void
     {
         if (! method_exists($handler, $method)) {
-            throw new UndefinedHandlerMethodException($handler::class, $method);
+            throw new AlgorithmMethodNotFoundException($handler::class, $method);
         }
     }
 
@@ -78,21 +77,21 @@ final class HandlerDispatcher
     private function buildHandler(
         array $config,
         JwtKeyManager $manager,
-        HandlerTarget $target,
+        CryptoProcessingStage $target,
     ): object {
         $interface = $target->interfaceClass();
 
         if (! isset($config[$interface]) || ! is_array($config[$interface])) {
-            throw new MissingHandlerConfigurationException();
+            throw new MissingAlgorithmConfigurationException();
         }
 
         $classString = $config[$interface]['handler'];
         if (! is_string($classString)) {
-            throw new InvalidHandlerClassDefinitionException(gettype($classString));
+            throw new InvalidAlgorithmImplementationException(gettype($classString));
         }
 
         if (! is_subclass_of($classString, $interface)) {
-            throw new InvalidHandlerImplementationException($classString, $interface);
+            throw new InvalidAlgorithmImplementationException($classString);
         }
 
         return $this->handlerCache[$classString] ??= new $classString($manager);
@@ -101,7 +100,7 @@ final class HandlerDispatcher
     /**
      * @param array<string,mixed> $config
      */
-    private function isHandlerConfigured(array $config, HandlerTarget $target): bool
+    private function isHandlerConfigured(array $config, CryptoProcessingStage $target): bool
     {
         return isset($config[$target->interfaceClass()]);
     }
@@ -115,7 +114,7 @@ final class HandlerDispatcher
      * @return array{JwtBundle, array<string,string>}
      */
     private function resolveArguments(
-        HandlerTarget $target,
+        CryptoProcessingStage $target,
         array $context,
         array $config,
     ): array {
@@ -128,11 +127,11 @@ final class HandlerDispatcher
         $handlerConf = [$bundle, $methodConfig];
 
         return match ($target) {
-            HandlerTarget::Signature,
-            HandlerTarget::Cek,
-            HandlerTarget::Iv,
-            HandlerTarget::Key,
-            HandlerTarget::Payload => $handlerConf,
+            CryptoProcessingStage::Signature,
+            CryptoProcessingStage::Cek,
+            CryptoProcessingStage::Iv,
+            CryptoProcessingStage::Key,
+            CryptoProcessingStage::Payload => $handlerConf,
         };
     }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Exceptions\Crypto\Handler;
+namespace Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline;
 
 use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
 
@@ -12,7 +12,7 @@ use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
  * Provides standardized messages for encoding and decoding errors, with
  * optional details for more context.
  */
-enum HandlerErrorMessagesEnum: string
+enum AlgorithmInvocationErrorMessagesEnum: string
 {
     use ErrorMessageTrait;
 

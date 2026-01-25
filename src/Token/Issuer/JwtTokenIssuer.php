@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Issuer;
 
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerOperation;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
 use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigurationException;
 use Phithi92\JsonWebToken\Exceptions\Config\MissingAlgorithmException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
@@ -29,7 +29,7 @@ use function is_string;
  */
 final class JwtTokenIssuer extends AbstractJwtTokenProcessor
 {
-    private const OPERATION = HandlerOperation::Perform;
+    private const OPERATION = CryptoOperationDirection::Perform;
 
     public function __construct(JwtKeyManager $manager)
     {

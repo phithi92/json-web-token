@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Phithi92\JsonWebToken\Crypto\Content\AesGcmHandler;
-use Phithi92\JsonWebToken\Crypto\Content\ContentEncryptionHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\ContentEncryption\AesGcmHandler;
+use Phithi92\JsonWebToken\Crypto\ContentEncryption\ContentEncryptionHandlerInterface;
 use Phithi92\JsonWebToken\Crypto\Iv\IvHandler;
 use Phithi92\JsonWebToken\Crypto\Iv\IvHandlerInterface;
 use Phithi92\JsonWebToken\Crypto\Key\KeyHandlerInterface;

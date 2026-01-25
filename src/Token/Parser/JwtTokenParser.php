@@ -110,11 +110,8 @@ final class JwtTokenParser
     }
 
     /**
-     *
-     * @param JwtBundle $bundle
      * @param array<int,string> $tokenArray
-     * @param JwtTokenKind $kind
-     * @return JwtBundle
+     *
      * @throws MalformedTokenException
      */
     private static function parseByKind(JwtBundle $bundle, array $tokenArray, JwtTokenKind $kind): JwtBundle

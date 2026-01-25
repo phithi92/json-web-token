@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Crypto\Handler;
+namespace Phithi92\JsonWebToken\Crypto\Pipeline;
 
-use Phithi92\JsonWebToken\Crypto\Content\ContentEncryptionHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\ContentEncryption\ContentEncryptionHandlerInterface;
 use Phithi92\JsonWebToken\Crypto\Iv\IvHandlerInterface;
 use Phithi92\JsonWebToken\Crypto\Key\KeyHandlerInterface;
 use Phithi92\JsonWebToken\Crypto\KeyManagement\CekHandlerInterface;
@@ -16,7 +16,7 @@ use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerInterface;
  * Each type maps to a specific handler interface,
  * which is used as a key in the algorithm configuration.
  */
-enum HandlerTarget
+enum CryptoProcessingStage
 {
     case Signature;
     case Cek;

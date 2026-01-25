@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\phpunit\Token\Processor;
 
 use Phithi92\JsonWebToken\Config\Provider\AlgorithmConfigurationProvider;
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Crypto\KeyManagement\CekHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
 use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerInterface;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
@@ -36,7 +36,7 @@ final class AbstractJwtTokenProcessorTest extends TestCase
         };
 
         $manager = new JwtKeyManager($provider);
-        $processor = new class (HandlerOperation::Perform, $manager) extends AbstractJwtTokenProcessor {
+        $processor = new class (CryptoOperationDirection::Perform, $manager) extends AbstractJwtTokenProcessor {
             public function run(string $algorithm, JwtBundle $bundle): void
             {
                 $this->dispatchHandlers($algorithm, $bundle);

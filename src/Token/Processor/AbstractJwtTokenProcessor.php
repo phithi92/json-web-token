@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Processor;
 
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerDescriptor;
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerDispatcher;
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerMethodResolver;
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Crypto\Handler\HandlerTarget;
+use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmInvocation;
+use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmMethodMap;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoAlgorithmInvoker;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoProcessingStage;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Factory\JwtHeaderFactory;
@@ -24,11 +24,11 @@ use function usort;
  */
 abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 {
-    /** @var HandlerOperation Encapsulates the operation mode (e.g., encrypt or decrypt). */
-    public readonly HandlerOperation $operation;
+    /** @var CryptoOperationDirection Encapsulates the operation mode (e.g., encrypt or decrypt). */
+    public readonly CryptoOperationDirection $operation;
 
-    /** @var HandlerDispatcher Responsible for invoking the correct handler methods. */
-    protected readonly HandlerDispatcher $dispatcher;
+    /** @var CryptoAlgorithmInvoker Responsible for invoking the correct handler methods. */
+    protected readonly CryptoAlgorithmInvoker $dispatcher;
 
     /** @var JwtKeyManager Manages algorithm-specific configurations. */
     protected readonly JwtKeyManager $manager;
@@ -38,16 +38,16 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     /**
      * Creates a JWT token processor for the given operation mode.
      *
-     * @param HandlerOperation $operation The operation to perform (e.g. encrypt or decrypt).
+     * @param CryptoOperationDirection $operation The operation to perform (e.g. encrypt or decrypt).
      * @param JwtKeyManager    $manager   Provides algorithm-specific configuration and keys.
      */
     public function __construct(
-        HandlerOperation $operation,
+        CryptoOperationDirection $operation,
         JwtKeyManager $manager,
     ) {
         $this->manager = $manager;
         $this->operation = $operation;
-        $this->dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
+        $this->dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
     }
 
     protected function headerFactory(): JwtHeaderFactory
@@ -109,7 +109,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      *
      * @param string $algorithm the algorithm to use for configuration resolution
      *
-     * @return array{array<string, mixed>, array<int, HandlerDescriptor>}
+     * @return array{array<string, mixed>, array<int, AlgorithmInvocation>}
      */
     private function resolveConfigAndHandlers(string $algorithm): array
     {
@@ -123,22 +123,22 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      * Builds an ordered list of handler descriptors based on the available config keys.
      *
      * Only targets whose interface class is present in the configuration are included.
-     * The resulting list is sorted by {@see HandlerDescriptor::$priority}.
+     * The resulting list is sorted by {@see AlgorithmInvocation::$priority}.
      *
      * @param array<string, mixed> $config
      *
-     * @return array<int, HandlerDescriptor>
+     * @return array<int, AlgorithmInvocation>
      */
     private function resolveApplicableHandlers(array $config): array
     {
         $descriptors = [];
 
-        foreach (HandlerTarget::cases() as $target) {
+        foreach (CryptoProcessingStage::cases() as $target) {
             if (! isset($config[$target->interfaceClass()])) {
                 continue;
             }
 
-            $descriptors[] = new HandlerDescriptor(
+            $descriptors[] = new AlgorithmInvocation(
                 $target,
                 $this->operation,
                 $target->priority()
