@@ -22,7 +22,7 @@ enum JwtTokenKind: string
     {
         return $this === self::JWS || $this === self::JWT;
     }
-    
+
     public static function fromPartCount(int $count): ?self
     {
         return match ($count) {

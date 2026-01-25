@@ -26,13 +26,14 @@ use function sprintf;
  * A key identifier is derived as a JWK thumbprint using SHA-256 over
  * a canonical JSON representation of the required public key parameters.
  *
- * This implementation:
- * - supports RSA keys (fully)
- * - supports symmetric keys ("oct")
- * - derives the PUBLIC JWK automatically from PEM input
+ * Supported kty values:
+ * - RSA
+ * - oct
+ * - EC   (from JWK)
+ * - OKP  (from JWK)
  *
  * References:
- * - RFC 7638 (JSON Web Key (JWK) Thumbprint)
+ * - RFC 7638 (JSON Web Key Thumbprint)
  * - RFC 7517 (JSON Web Key)
  */
 final class KeyIdentifier
@@ -43,10 +44,22 @@ final class KeyIdentifier
     private const ALGO = 'sha256';
 
     /**
+     * Required JWK members per kty according to RFC 7638.
+     *
+     * @var array<string, list<string>>
+     */
+    private const REQUIRED_MEMBERS = [
+        'RSA' => ['e', 'kty', 'n'],
+        'oct' => ['k', 'kty'],
+        'EC'  => ['crv', 'kty', 'x', 'y'],
+        'OKP' => ['crv', 'kty', 'x'],
+    ];
+
+    /**
      * Generates a RFC 7638–compliant key identifier (kid) from a PEM-encoded key.
      *
-     * The PEM may contain either a public or a private key.
-     * In both cases, the PUBLIC key parameters are derived and used.
+     * Currently supported:
+     * - RSA (reliable via OpenSSL details)
      *
      * @param string $pem PEM-encoded public or private key
      */
@@ -61,29 +74,24 @@ final class KeyIdentifier
     /**
      * Generates a RFC 7638–compliant key identifier (kid) from a symmetric secret.
      *
-     * For symmetric algorithms (e.g. HS256), RFC 7638 specifies an "oct" JWK,
-     * where the member "k" contains the base64url-encoded raw key bytes.
-     *
      * @param string $secret Raw secret key material
      */
     public static function fromSecret(#[SensitiveParameter] string $secret): string
     {
         return self::fromJwk([
             'kty' => 'oct',
-            'k' => Base64UrlEncoder::encode($secret),
+            'k'   => Base64UrlEncoder::encode($secret),
         ]);
     }
 
     /**
      * Generates a RFC 7638–compliant key identifier (kid) from a public JWK.
      *
-     * @param array<string,string> $jwk Public JWK parameters
+     * @param array<string, mixed> $jwk Public JWK parameters
      */
     public static function fromJwk(#[SensitiveParameter] array $jwk): string
     {
         $canonicalJson = self::canonicalJwkJson($jwk);
-
-        // RFC 7638 requires SHA-256 over the canonical JSON representation
         $digest = hash(self::ALGO, $canonicalJson, true);
 
         return Base64UrlEncoder::encode($digest);
@@ -91,10 +99,6 @@ final class KeyIdentifier
 
     /**
      * Loads a PEM-encoded OpenSSL key.
-     *
-     * Accepts both private and public keys.
-     *
-     * @throws RuntimeException if the key cannot be loaded
      */
     private static function loadOpenSslKey(#[SensitiveParameter] string $pem): OpenSSLAsymmetricKey
     {
@@ -114,12 +118,10 @@ final class KeyIdentifier
     /**
      * Builds a PUBLIC JWK from an OpenSSL key resource.
      *
-     * Only public parameters are extracted, even if the key is private.
+     * Currently supported (PEM → JWK):
+     * - RSA
      *
-     * Currently supported:
-     * - RSA (reliable via OpenSSL details)
-     *
-     * @return array<string,string> Public JWK
+     * @return array<string,string>
      */
     private static function publicJwkFromOpenSslKey(#[SensitiveParameter] OpenSSLAsymmetricKey $key): array
     {
@@ -132,7 +134,7 @@ final class KeyIdentifier
         return match ($details['type']) {
             OPENSSL_KEYTYPE_RSA => self::rsaPublicJwkFromDetails($details),
             default => throw new RuntimeException(
-                'Unsupported key type for RFC 7638 kid generation.'
+                'Unsupported key type for RFC 7638 kid generation from PEM. Provide a JWK for EC/OKP.'
             ),
         };
     }
@@ -140,12 +142,7 @@ final class KeyIdentifier
     /**
      * Extracts an RSA public JWK from OpenSSL key details.
      *
-     * Required RFC 7638 members:
-     * - kty
-     * - n (modulus)
-     * - e (public exponent)
-     *
-     * @param array<mixed> $details OpenSSL key details
+     * @param array<mixed> $details
      *
      * @return array<string,string>
      */
@@ -162,20 +159,15 @@ final class KeyIdentifier
 
         return [
             'kty' => 'RSA',
-            'n' => Base64UrlEncoder::encode($n),
-            'e' => Base64UrlEncoder::encode($e),
+            'n'   => Base64UrlEncoder::encode($n),
+            'e'   => Base64UrlEncoder::encode($e),
         ];
     }
 
     /**
      * Builds the canonical JSON representation required by RFC 7638.
      *
-     * Steps:
-     * 1. Select only the required members for the given kty
-     * 2. Sort members lexicographically
-     * 3. Encode as compact JSON (no whitespace)
-     *
-     * @param array<string,string> $jwk
+     * @param array<string, mixed> $jwk
      */
     private static function canonicalJwkJson(array $jwk): string
     {
@@ -184,13 +176,12 @@ final class KeyIdentifier
             throw new RuntimeException('JWK is missing required "kty".');
         }
 
-        $required = match ($kty) {
-            'RSA' => ['e', 'kty', 'n'],
-            'oct' => ['k', 'kty'],
-            default => throw new RuntimeException(
+        $required = self::REQUIRED_MEMBERS[$kty] ?? null;
+        if ($required === null) {
+            throw new RuntimeException(
                 sprintf('Unsupported kty "%s" for RFC 7638 thumbprint.', $kty)
-            ),
-        };
+            );
+        }
 
         $thumbprint = [];
         foreach ($required as $name) {
@@ -206,6 +197,7 @@ final class KeyIdentifier
         // RFC 7638 mandates lexicographic ordering of JSON object members
         ksort($thumbprint);
 
-        return JsonEncoder::encode($thumbprint);
+        // Encode with standard JSON (no optional escaping flags) for maximum interop
+        return JsonEncoder::encode($thumbprint, 0);
     }
 }

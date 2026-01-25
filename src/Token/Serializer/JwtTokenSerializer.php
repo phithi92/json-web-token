@@ -8,6 +8,7 @@ use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtBundle;
+use Phithi92\JsonWebToken\Token\JwtTokenKind;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
 use function array_map;
@@ -15,19 +16,21 @@ use function implode;
 
 final class JwtTokenSerializer
 {
-    private const JWS_TYPE = 'JWS';
-    private const JWE_TYPE = 'JWE';
+    private const SEGMENT_SEPERATOR = '.';
 
-    /**
-     * @throws MalformedTokenException
-     */
     public static function serialize(JwtBundle $bundle): string
     {
-        return match ($bundle->getHeader()->getType()) {
-            self::JWE_TYPE => self::serializeEncodedToken($bundle),
-            self::JWS_TYPE => self::serializeSignatureToken($bundle),
-            default => throw new MalformedTokenException('Invalid or unsupported token type'),
-        };
+        $type = $bundle->getHeader()->getType();
+
+        try {
+            $kind = JwtTokenKind::from($type);
+        } catch (ValueError) {
+            throw new MalformedTokenException('Invalid or unsupported token type');
+        }
+
+        return $kind->isSignatureToken()
+            ? self::serializeSignatureToken($bundle)
+            : self::serializeEncodedToken($bundle);
     }
 
     /**
@@ -68,7 +71,7 @@ final class JwtTokenSerializer
     private static function encodeAndSerialize(array $array): string
     {
         return implode(
-            '.',
+            self::SEGMENT_SEPERATOR,
             array_map(
                 static fn (?string $v): string => Base64UrlEncoder::encode($v ?? ''),
                 $array
