@@ -6,6 +6,7 @@ namespace Tests\phpunit\Security\KeyManagement;
 
 use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
+use Phithi92\JsonWebToken\Security\KeyRole;
 use PHPUnit\Framework\TestCase;
 use Tests\Helpers\KeyProvider;
 
@@ -26,9 +27,9 @@ final class JwtKeyManagerTest extends TestCase
         $this->assertInstanceOf(OpenSSLAsymmetricKey::class, $manager->getPrivateKey('kid'));
         $this->assertInstanceOf(OpenSSLAsymmetricKey::class, $manager->getPublicKey('kid'));
 
-        $metadata = $manager->getKeyMetadata('kid', 'private');
-        $this->assertSame('private', $metadata['role']);
-        $this->assertSame($privateKey, $metadata['pem']);
+        $metadata = $manager->getKeyMetadata('kid', KeyRole::Private);
+        $this->assertSame(KeyRole::Private, $metadata->role());
+        $this->assertSame($privateKey, $metadata->pem());
     }
 
     public function testPassphraseStorage(): void

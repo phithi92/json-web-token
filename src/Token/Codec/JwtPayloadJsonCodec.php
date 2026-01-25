@@ -20,12 +20,7 @@ final class JwtPayloadJsonCodec extends AbstractJwtSegmentJsonCodec implements J
 {
     private const JSON_MAX_DEPTH = 6;
 
-    private JwtPayloadCodec $codec;
-
-    public function __construct()
-    {
-        $this->codec = new JwtPayloadCodec();
-    }
+    private ?JwtPayloadCodec $codec = null;
 
     /**
      * Encode a JwtPayload instance to a JSON string.
@@ -63,7 +58,7 @@ final class JwtPayloadJsonCodec extends AbstractJwtSegmentJsonCodec implements J
             throw new MalformedTokenException('Token payload is not valid JSON');
         }
 
-        return $this->codec->decode($data, $payload);
+        return $this->getCodec()->decode($data, $payload);
     }
 
     /**
@@ -132,5 +127,10 @@ final class JwtPayloadJsonCodec extends AbstractJwtSegmentJsonCodec implements J
         int $depth = self::JSON_MAX_DEPTH,
     ): void {
         self::shared()->decodeInto($json, $payload, $depth);
+    }
+
+    private function getCodec(): JwtPayloadCodec
+    {
+        return $this->codec ??= new JwtPayloadCodec();
     }
 }

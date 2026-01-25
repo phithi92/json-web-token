@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Helpers;
 
+use Phithi92\JsonWebToken\Security\KeyRole;
+
 use function array_keys;
 use function array_merge;
 
@@ -13,8 +15,8 @@ class KeyProvider
     {
         return [
             $kid => [
-                'private' => PemProvider::getPrivateKey($path),
-                'public' => PemProvider::getPublicKey($path),
+                KeyRole::Private->value => PemProvider::getPrivateKey($path),
+                KeyRole::Public->value => PemProvider::getPublicKey($path),
             ],
         ];
     }

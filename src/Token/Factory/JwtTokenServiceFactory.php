@@ -26,9 +26,9 @@ final class JwtTokenServiceFactory
         ?JwtTokenReissuer $reissuer = null,
     ): JwtTokenService {
         // Shared defaults (so the default graph is consistent)
-        $validator        = new JwtValidator();
-        $payloadCodec     = new JwtPayloadCodec();
-        $issuerFactory    = new JwtTokenIssuerFactory();
+        $validator = new JwtValidator();
+        $payloadCodec = new JwtPayloadCodec();
+        $issuerFactory = new JwtTokenIssuerFactory();
         $decryptorFactory = new JwtTokenDecryptorFactory();
 
         // Build default graph

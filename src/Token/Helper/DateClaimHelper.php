@@ -31,7 +31,7 @@ final class DateClaimHelper
         'exp' => true,
         'nbf' => true,
         'iat' => true,
-        'auth_time' => true
+        'auth_time' => true,
     ];
 
     /** Reference time used for relative calculations (UTC). */

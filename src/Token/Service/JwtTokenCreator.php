@@ -9,7 +9,6 @@ use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenIssuerFactoryInterface;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Validator\JwtIdRegistryInterface;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 final class JwtTokenCreator
@@ -102,7 +101,7 @@ final class JwtTokenCreator
     private function registerJwtId(JwtBundle $bundle, JwtValidator $validator): void
     {
         $jwtIdValidator = $validator->getJwtIdValidator();
-        if (! $jwtIdValidator instanceof JwtIdRegistryInterface) {
+        if ($jwtIdValidator === null) {
             return;
         }
 
@@ -112,11 +111,12 @@ final class JwtTokenCreator
         }
 
         $exp = $bundle->getPayload()->getExpiration();
+
         if ($exp === null) {
             return;
         }
 
-        $ttl = $exp - time();
+        $ttl = (int) $exp - time();
         if ($ttl <= 0) {
             return;
         }

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Processor;
 
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerDescriptor;
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerDispatcher;
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerMethodResolver;
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerOperation;
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerTarget;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
-use Phithi92\JsonWebToken\Handler\HandlerDescriptor;
-use Phithi92\JsonWebToken\Handler\HandlerDispatcher;
-use Phithi92\JsonWebToken\Handler\HandlerMethodResolver;
-use Phithi92\JsonWebToken\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Handler\HandlerTarget;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Factory\JwtHeaderFactory;
 use Phithi92\JsonWebToken\Token\JwtBundle;

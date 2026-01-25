@@ -12,7 +12,7 @@ use Phithi92\JsonWebToken\Token\JwtBundle;
 use function random_bytes;
 use function strlen;
 
-final class DefaultCekHandler implements CekHandlerInterface
+final class CekHandler implements CekHandlerInterface
 {
     public function initializeCek(JwtBundle $bundle, array $config): void
     {
@@ -27,10 +27,7 @@ final class DefaultCekHandler implements CekHandlerInterface
     }
 
     /**
-     *
-     * @param JwtBundle $bundle
      * @param array<string, int|string> $config
-     * @return void
      *
      * @throws InvalidCekLength
      * @throws MissingTokenPart
@@ -103,9 +100,7 @@ final class DefaultCekHandler implements CekHandlerInterface
     }
 
     /**
-     *
      * @param array<string, int|string> $config
-     * @return string
      */
     private function generateRandomCek(array $config): string
     {

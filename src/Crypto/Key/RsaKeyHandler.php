@@ -9,6 +9,7 @@ use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
+use Phithi92\JsonWebToken\Security\KeyRole;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use phpseclib3\Crypt\PublicKeyLoader;
 use phpseclib3\Crypt\RSA;
@@ -16,7 +17,6 @@ use phpseclib3\Crypt\RSA\PrivateKey as RSAPrivateKey;
 use phpseclib3\Crypt\RSA\PublicKey as RSAPublicKey;
 use RuntimeException;
 
-use function in_array;
 use function is_int;
 use function is_string;
 
@@ -33,49 +33,7 @@ class RsaKeyHandler implements KeyHandlerInterface
     }
 
     /**
-     * @param array<string, string|int> $config
-     *
-     * @throws EncryptionException
-     */
-    protected function wrap(string $cek, string $kid, array $config): string
-    {
-        $keyDetails = $this->manager->getKeyMetadata($kid, 'public');
-
-        $publicKey = $this->buildKey(role: 'public', pem: $keyDetails['pem'], config: $config);
-
-        $wrappedKey = $publicKey->encrypt($cek);
-        if (! is_string($wrappedKey) || $wrappedKey === '') {
-            throw new EncryptionException('RSA encryption failed – empty result.');
-        }
-
-        return $wrappedKey;
-    }
-
-    /**
-     * @param array<string, string|int> $config
-     *
-     * @throws InvalidTokenException
-     * @throws DecryptionException
-     */
-    protected function unwrap(string $wrappedKey, string $kid, array $config): string
-    {
-        $keyDetails = $this->manager->getKeyMetadata($kid, 'private');
-
-        $privateKey = $this->buildKey(role: 'private', pem: $keyDetails['pem'], config: $config);
-
-        $cek = $privateKey->decrypt($wrappedKey);
-
-        if (! is_string($cek) || $cek === '') {
-            throw new DecryptionException('RSA unwrap failed – empty CEK.');
-        }
-
-        return $cek;
-    }
-
-    /**
      * @param array<string,string|int> $config
-     *
-     * @throws InvalidKidFormatException
      */
     public function unwrapKey(JwtBundle $bundle, array $config): void
     {
@@ -104,27 +62,77 @@ class RsaKeyHandler implements KeyHandlerInterface
         $bundle->setEncryption($bundle->getEncryption()->withEncryptedKey($wrappedKey));
     }
 
+    /**
+     * @param array<string, string|int> $config
+     *
+     * @throws EncryptionException
+     */
+    protected function wrap(string $cek, string $kid, array $config): string
+    {
+        $key = $this->manager->getKeyMetadata($kid, KeyRole::Public);
+
+        $publicKey = $this->buildPublicKey(pem: $key->pem(), config: $config);
+
+        $wrappedKey = $publicKey->encrypt($cek);
+        if (! is_string($wrappedKey) || $wrappedKey === '') {
+            throw new EncryptionException('RSA encryption failed – empty result.');
+        }
+
+        return $wrappedKey;
+    }
+
+    /**
+     * @param array<string, string|int> $config
+     *
+     * @throws InvalidTokenException
+     * @throws DecryptionException
+     */
+    protected function unwrap(string $wrappedKey, string $kid, array $config): string
+    {
+        $keyDetails = $this->manager->getKeyMetadata($kid, KeyRole::Private);
+
+        $privateKey = $this->buildPrivateKey(pem: $keyDetails->pem(), config: $config);
+
+        $cek = $privateKey->decrypt($wrappedKey);
+
+        if (! is_string($cek) || $cek === '') {
+            throw new DecryptionException('RSA unwrap failed – empty CEK.');
+        }
+
+        return $cek;
+    }
 
     /**
      * Loads and validates an RSA public or private key from a PEM string.
      *
-     * @param string             $pem          PEM-encoded key content
-     * @param 'public'|'private' $expectedType
+     * @param string  $pem           PEM-encoded key content
+     * @param KeyRole $expectedType  Expected key role (public or private)
      *
-     * @throws RuntimeException if the key type does not match
+     * @throws RuntimeException If the loaded key does not match the expected role
+     *
+     * @phpstan-return (
+     *     $expectedType is KeyRole::Private
+     *         ? RSAPrivateKey
+     *         : RSAPublicKey
+     * )
      */
-    private function loadRsaKey(string $pem, string $expectedType): RSAPublicKey|RSAPrivateKey
-    {
+    private function loadRsaKey(
+        string $pem,
+        KeyRole $expectedType
+    ): RSAPublicKey|RSAPrivateKey {
         $key = PublicKeyLoader::load($pem);
 
-        if ($expectedType === 'public' && $key instanceof RSAPublicKey) {
-            return $key;
-        }
-        if ($expectedType === 'private' && $key instanceof RSAPrivateKey) {
+        if ($expectedType->value === KeyRole::Public->value && $key instanceof RSAPublicKey) {
             return $key;
         }
 
-        throw new RuntimeException('Expected RSA public key, got ' . $key::class);
+        if ($expectedType->value === KeyRole::Private->value && $key instanceof RSAPrivateKey) {
+            return $key;
+        }
+
+        throw new RuntimeException(
+            'Expected RSA ' . $expectedType->value . ' key, got ' . $key::class
+        );
     }
 
     /**
@@ -149,37 +157,55 @@ class RsaKeyHandler implements KeyHandlerInterface
     }
 
     /**
-     *
-     * @param string $role
-     * @param string $pem
      * @param array<string, string|int> $config
-     *
-     * @return RSAPrivateKey|RSAPublicKey
+     */
+    private function buildPrivateKey(string $pem, array $config): RSAPrivateKey
+    {
+        return $this->buildKey(KeyRole::Private, $pem, $config);
+    }
+
+    /**
+     * @param array<string, string|int> $config
+     */
+    private function buildPublicKey(string $pem, array $config): RSAPublicKey
+    {
+        return $this->buildKey(KeyRole::Public, $pem, $config);
+    }
+
+    /**
+     * @param array<string, string|int> $config
      *
      * @throws LogicException
      */
     private function buildKey(
-        string $role,
+        KeyRole $role,
         string $pem,
         array $config
     ): RSAPrivateKey|RSAPublicKey {
+        $key = match ($role) {
+            KeyRole::Private => $this->loadPrivateKey($pem),
+            KeyRole::Public => $this->loadPublicKey($pem),
+        };
+
         [$padding,$hash] = $this->extractPaddingAndHash($config);
 
-        if (! in_array($role, ['private', 'public'], true)) {
-            throw new LogicException('No valid role for key');
-        }
-
-        /** @var RSAPrivateKey|RSAPublicKey $key */
-        $key = $this->loadRsaKey($pem, $role)->withPadding($padding);
+        $key = $key->withPadding($padding);
 
         if ($hash !== null) {
-            /** @var RSAPrivateKey|RSAPublicKey $key */
             $key = $key->withHash($hash);
 
-            /** @var RSAPrivateKey|RSAPublicKey $key */
             $key = $key->withMGFHash($hash);
         }
 
         return $key;
+    }
+
+    private function loadPrivateKey(string $pem): RSAPrivateKey
+    {
+        return $this->loadRsaKey($pem, KeyRole::Private);
+    }
+    private function loadPublicKey(string $pem): RSAPublicKey
+    {
+        return $this->loadRsaKey($pem, KeyRole::Public);
     }
 }

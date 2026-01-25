@@ -52,7 +52,7 @@ final class JwtPayload implements JsonSerializable
     public function __construct()
     {
         $this->claimValidator = new ClaimValidator();
-        $this->claimHelper    = new DateClaimHelper();
+        $this->claimHelper = new DateClaimHelper();
     }
 
     /**
@@ -171,8 +171,6 @@ final class JwtPayload implements JsonSerializable
      * @throws ClaimAlreadyExistsException If the claim already exists
      * @throws InvalidValueTypeException   If the claim value type is invalid
      * @throws EmptyFieldException         If the claim value is empty or invalid
-     *
-     * @return self
      */
     public function addClaim(string $key, mixed $value): self
     {
@@ -203,8 +201,6 @@ final class JwtPayload implements JsonSerializable
      *
      * @throws InvalidValueTypeException If the claim value type is invalid
      * @throws EmptyFieldException       If the claim value is empty or invalid
-     *
-     * @return self
      */
     public function setClaim(string $key, mixed $value): self
     {
@@ -306,7 +302,7 @@ final class JwtPayload implements JsonSerializable
     public function getIssuedAt(): int|float|null
     {
         $issued = $this->getClaim('iat');
-        return (is_int($issued) || is_float($issued)) ? $issued : null;
+        return is_int($issued) || is_float($issued) ? $issued : null;
     }
 
     public function setExpiration(string $interval): self
@@ -317,7 +313,7 @@ final class JwtPayload implements JsonSerializable
     public function getExpiration(): int|float|null
     {
         $expires = $this->getClaim('exp');
-        return (is_int($expires) || is_float($expires)) ? $expires : null;
+        return is_int($expires) || is_float($expires) ? $expires : null;
     }
 
     public function setNotBefore(string $dateTime): self
@@ -328,7 +324,7 @@ final class JwtPayload implements JsonSerializable
     public function getNotBefore(): int|float|null
     {
         $nbf = $this->getClaim('nbf');
-        return (is_int($nbf) || is_float($nbf)) ? $nbf : null;
+        return is_int($nbf) || is_float($nbf) ? $nbf : null;
     }
 
     /**

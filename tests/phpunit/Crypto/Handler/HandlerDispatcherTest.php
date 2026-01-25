@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Tests\phpunit\Handler;
+namespace Tests\phpunit\Crypto\Handler;
 
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerDispatcher;
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerMethodResolver;
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerOperation;
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerTarget;
 use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerInterface;
-use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerClassDefinitionException;
-use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerImplementationException;
-use Phithi92\JsonWebToken\Exceptions\Handler\MissingHandlerConfigurationException;
-use Phithi92\JsonWebToken\Handler\HandlerDispatcher;
-use Phithi92\JsonWebToken\Handler\HandlerMethodResolver;
-use Phithi92\JsonWebToken\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Handler\HandlerTarget;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\InvalidHandlerClassDefinitionException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\InvalidHandlerImplementationException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\MissingHandlerConfigurationException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;

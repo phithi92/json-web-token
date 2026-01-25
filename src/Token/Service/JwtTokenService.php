@@ -1,6 +1,5 @@
 <?php
 
-
 declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Service;
@@ -141,7 +140,7 @@ final class JwtTokenService
             return;
         }
 
-        $ttl = $exp - time();
+        $ttl = (int) $exp - time();
         if ($ttl <= 0) {
             return;
         }

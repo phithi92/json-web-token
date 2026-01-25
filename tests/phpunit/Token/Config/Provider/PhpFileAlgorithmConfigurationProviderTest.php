@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\phpunit\Token\Config;
+namespace Tests\phpunit\Token\Config\Provider;
 
-use Phithi92\JsonWebToken\Config\PhpFileAlgorithmConfigurationProvider;
+use Phithi92\JsonWebToken\Config\Provider\PhpFileAlgorithmConfigurationProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 

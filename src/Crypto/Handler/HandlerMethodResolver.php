@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Handler;
+namespace Phithi92\JsonWebToken\Crypto\Handler;
 
 final class HandlerMethodResolver
 {

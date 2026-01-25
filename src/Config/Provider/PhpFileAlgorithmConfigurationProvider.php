@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Config;
+namespace Phithi92\JsonWebToken\Config\Provider;
 
 use Phithi92\JsonWebToken\Exceptions\Config\AlgorithmConfigFileNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigFormatException;
@@ -18,7 +18,7 @@ use function is_file;
  */
 final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurationProvider
 {
-    private const CONFIG_FILE = __DIR__ . '/algorithms.php';
+    private const CONFIG_FILE = __DIR__ . '/../../../resources/algorithms.php';
 
     /**
      * @var array<string, array<string, array<string, string>>>

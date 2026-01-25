@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token\Processor;
 
-use Phithi92\JsonWebToken\Config\AlgorithmConfigurationProvider;
+use Phithi92\JsonWebToken\Config\Provider\AlgorithmConfigurationProvider;
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Crypto\KeyManagement\CekHandlerInterface;
 use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerInterface;
-use Phithi92\JsonWebToken\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;

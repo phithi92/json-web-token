@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Exceptions\Handler;
+namespace Phithi92\JsonWebToken\Exceptions\Crypto\Handler;
 
 use Exception;
 use Phithi92\JsonWebToken\Utilities\EnumUtils;

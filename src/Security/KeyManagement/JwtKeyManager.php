@@ -5,51 +5,44 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Security\KeyManagement;
 
 use OpenSSLAsymmetricKey;
-use Phithi92\JsonWebToken\Config\AlgorithmConfigurationProvider;
-use Phithi92\JsonWebToken\Config\PhpFileAlgorithmConfigurationProvider;
+use Phithi92\JsonWebToken\Config\Provider\AlgorithmConfigurationProvider;
+use Phithi92\JsonWebToken\Config\Provider\PhpFileAlgorithmConfigurationProvider;
+use Phithi92\JsonWebToken\Security\KeyEntry;
+use Phithi92\JsonWebToken\Security\KeyIdentifier;
+use Phithi92\JsonWebToken\Security\KeyRole;
 use Phithi92\JsonWebToken\Security\KeyStore;
 use Phithi92\JsonWebToken\Security\PassphraseStore;
 use SensitiveParameter;
 
 /**
- * Manages JWT cryptographic operations for symmetric and asymmetric algorithms.
+ * Manages JWT cryptographic keys and related metadata.
  *
- * This class facilitates the initialization and management of JWT algorithms,
- * supporting both symmetric (e.g., HS256) and asymmetric (e.g., RS256) cryptographic
- * operations. It provides methods to set and retrieve the necessary keys and passphrase.
+ * Responsibilities:
+ * - Registering public/private keys
+ * - Automatically deriving RFC 7638–compliant key identifiers (kid)
+ * - Ensuring consistent kid usage across key pairs
+ * - Providing access to keys, metadata and passphrases
  *
- * Asymmetric keys (public and private) are validated upon setting, and an
- * exception will be thrown if the keys are invalid. This validation ensures the
- * integrity and security of cryptographic operations, and prevents the use of
- * unsupported or malformed keys.
+ * This class intentionally does NOT implement cryptographic standards itself.
+ * All standard logic (RFC 7638, JWK thumbprints) is delegated to KeyIdentifier.
  */
 final class JwtKeyManager
 {
     /**
-     * Stores private and public keys in memory.
+     * Stores public and private keys.
      */
     private readonly KeyStore $keyStore;
 
     /**
      * Stores optional passphrases for private keys.
-     *
-     * @var PassphraseStore
      */
     private readonly PassphraseStore $passphraseStore;
 
     /**
-     * Holds the configuration registry for supported algorithms.
-     *
-     * @var AlgorithmConfigurationProvider
+     * Provides algorithm configuration metadata.
      */
     private readonly AlgorithmConfigurationProvider $algorithmRegistry;
 
-    /**
-     * JwtKeyManager constructor.
-     *
-     * Initializes the algorithm configuration, key store and passphrase store.
-     * If no custom configuration or stores are provided, default implementations are used.
-     */
     public function __construct(
         ?AlgorithmConfigurationProvider $algConfig = null,
         ?KeyStore $keyStore = null,
@@ -61,14 +54,9 @@ final class JwtKeyManager
     }
 
     /**
-     * Returns the configuration for the given algorithm identifier.
+     * Returns the configuration for a given JWT algorithm.
      *
-     * The configuration may contain information such as algorithm type,
-     * key requirements, supported key types, and handler classes.
-     *
-     * @param string $algorithm The algorithm identifier (e.g. "HS256", "RS256").
-     *
-     * @return array<string, string|array<string, string|class-string<object>>>
+     * @return array<string,mixed>
      */
     public function getConfiguration(string $algorithm): array
     {
@@ -76,69 +64,40 @@ final class JwtKeyManager
     }
 
     /**
-     * Checks whether a private key exists for the given key ID.
+     * Registers a private key.
      *
-     * @param string $kid The key identifier.
-     *
-     * @return bool True if a private key is registered, false otherwise.
-     */
-    public function hasPrivateKey(string $kid): bool
-    {
-        return $this->keyStore->hasKey($kid, 'private');
-    }
-
-    /**
-     * Registers a private key in PEM format for the given key ID.
-     *
-     * If no key ID is provided, the implementation may generate or infer one.
-     *
-     * @param string      $pemContent The private key in PEM format.
-     * @param string|null $kid        Optional key identifier.
+     * If no key identifier is provided, a RFC 7638–compliant kid
+     * is automatically derived from the key material.
      */
     public function addPrivateKey(
         #[SensitiveParameter]
         string $pemContent,
         ?string $kid = null
     ): void {
-        $this->keyStore->addKey($pemContent, 'private', $kid);
+        $kid ??= KeyIdentifier::fromPem($pemContent);
+        $this->keyStore->addKey($pemContent, KeyRole::Private, $kid);
     }
 
     /**
-     * Registers a public key in PEM format for the given key ID.
+     * Registers a public key.
      *
-     * If no key ID is provided, the implementation may generate or infer one.
-     *
-     * @param string      $pemContent The public key in PEM format.
-     * @param string|null $kid        Optional key identifier.
+     * If no key identifier is provided, a RFC 7638–compliant kid
+     * is automatically derived from the key material.
      */
     public function addPublicKey(
         #[SensitiveParameter]
         string $pemContent,
         ?string $kid = null
     ): void {
-        $this->keyStore->addKey($pemContent, 'public', $kid);
+        $kid ??= KeyIdentifier::fromPem($pemContent);
+        $this->keyStore->addKey($pemContent, KeyRole::Public, $kid);
     }
 
     /**
-     * Checks whether a public key exists for the given key ID.
+     * Registers a public/private key pair under a shared key identifier.
      *
-     * @param string $kid The key identifier.
-     *
-     * @return bool True if a public key is registered, false otherwise.
-     */
-    public function hasPublicKey(string $kid): bool
-    {
-        return $this->keyStore->hasKey($kid, 'public');
-    }
-
-    /**
-     * Registers both a private and a public key as a key pair.
-     *
-     * Both keys will be associated with the same key ID, if provided.
-     *
-     * @param string      $private The private key in PEM format.
-     * @param string      $public  The public key in PEM format.
-     * @param string|null $kid     Optional key identifier.
+     * If no kid is provided, it is derived once from the private key
+     * to guarantee consistency.
      */
     public function addKeyPair(
         #[SensitiveParameter]
@@ -147,28 +106,14 @@ final class JwtKeyManager
         string $public,
         ?string $kid = null
     ): void {
-        $this->addPrivateKey($private, $kid);
-        $this->addPublicKey($public, $kid);
+        $kid ??= KeyIdentifier::fromPem($private);
+
+        $this->keyStore->addKey($private, KeyRole::Private, $kid);
+        $this->keyStore->addKey($public, KeyRole::Public, $kid);
     }
 
     /**
-     * Determines whether both a public and a private key exist for the given key ID.
-     *
-     * @param string $kid The key identifier to check.
-     *
-     * @return bool True if both public and private keys are stored for the given ID, false otherwise.
-     */
-    public function hasKeyPair(string $kid): bool
-    {
-        return $this->hasPublicKey($kid) && $this->hasPrivateKey($kid);
-    }
-
-    /**
-     * Checks whether any key (public or private) exists for the given key ID.
-     *
-     * @param string $kid The key identifier.
-     *
-     * @return bool True if at least one key exists, false otherwise.
+     * Checks whether any key exists for the given key identifier.
      */
     public function hasKey(string $kid): bool
     {
@@ -176,71 +121,40 @@ final class JwtKeyManager
     }
 
     /**
-     * Retrieves the private key associated with the given key ID.
-     *
-     * @param string $kid The key identifier.
-     *
-     * @return OpenSSLAsymmetricKey The private key resource.
+     * Checks whether both public and private keys exist for the given kid.
      */
-    public function getPrivateKey(string $kid): OpenSSLAsymmetricKey
+    public function hasKeyPair(string $kid): bool
     {
-        return $this->keyStore->getKey($kid, 'private');
+        return $this->keyStore->hasKey($kid, KeyRole::Public)
+            && $this->keyStore->hasKey($kid, KeyRole::Private);
     }
 
     /**
-     * Retrieves the public key associated with the given key ID.
-     *
-     * @param string $kid The key identifier.
-     *
-     * @return OpenSSLAsymmetricKey The public key resource.
+     * Returns the private key for the given key identifier.
+     */
+    public function getPrivateKey(string $kid): OpenSSLAsymmetricKey
+    {
+        return $this->keyStore->getKey($kid, KeyRole::Private);
+    }
+
+    /**
+     * Returns the public key for the given key identifier.
      */
     public function getPublicKey(string $kid): OpenSSLAsymmetricKey
     {
-        return $this->keyStore->getKey($kid, 'public');
+        return $this->keyStore->getKey($kid, KeyRole::Public);
     }
 
     /**
      * Returns detailed metadata for a stored key.
-     *
-     * Metadata may include the original PEM string, key size in bits,
-     * key type (e.g. "RSA"), the role (public/private) and the key resource.
-     *
-     * @param string $kid  The key identifier.
-     * @param string $role The key role ("public" or "private").
-     *
-     * @return array{
-     *     pem: string,
-     *     bits: int,
-     *     type: string,
-     *     role: string,
-     *     key: OpenSSLAsymmetricKey
-     * }
      */
-    public function getKeyMetadata(string $kid, string $role): array
+    public function getKeyMetadata(string $kid, KeyRole $role): KeyEntry
     {
         return $this->keyStore->getMetadata($kid, $role);
     }
 
     /**
-     * Checks whether a passphrase is registered for the given key ID.
-     *
-     * @param string $kid The key identifier.
-     *
-     * @return bool True if a passphrase exists, false otherwise.
-     */
-    public function hasPassphrase(string $kid): bool
-    {
-        return $this->passphraseStore->hasPassphrase($kid);
-    }
-
-    /**
-     * Registers a passphrase for use with a private key.
-     *
-     * The passphrase can be associated with a specific key ID or stored
-     * under a default or internally generated identifier.
-     *
-     * @param string      $passphrase The passphrase for the private key.
-     * @param string|null $kid        Optional key identifier.
+     * Registers a passphrase for a private key.
      */
     public function addPassphrase(
         #[SensitiveParameter]
@@ -251,11 +165,15 @@ final class JwtKeyManager
     }
 
     /**
-     * Retrieves the passphrase associated with the given key ID.
-     *
-     * @param string $kid The key identifier.
-     *
-     * @return string The stored passphrase.
+     * Checks whether a passphrase exists for the given key identifier.
+     */
+    public function hasPassphrase(string $kid): bool
+    {
+        return $this->passphraseStore->hasPassphrase($kid);
+    }
+
+    /**
+     * Returns the passphrase associated with the given key identifier.
      */
     public function getPassphrase(string $kid): string
     {

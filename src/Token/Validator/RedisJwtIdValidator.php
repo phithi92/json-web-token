@@ -8,7 +8,7 @@ use Redis;
 
 final class RedisJwtIdValidator implements JwtIdValidatorInterface
 {
-    private const DENY_PREFIX  = 'jwt:deny:';
+    private const DENY_PREFIX = 'jwt:deny:';
     private const ALLOW_PREFIX = 'jwt:allow:';
 
     private Redis $redis;
@@ -24,7 +24,7 @@ final class RedisJwtIdValidator implements JwtIdValidatorInterface
     public function isAllowed(?string $jwtId): bool
     {
         if ($jwtId === null) {
-            return !$this->useAllowList;
+            return ! $this->useAllowList;
         }
 
         if ($this->isDenied($jwtId)) {

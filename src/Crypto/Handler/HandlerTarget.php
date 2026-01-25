@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Handler;
+namespace Phithi92\JsonWebToken\Crypto\Handler;
 
 use Phithi92\JsonWebToken\Crypto\Content\ContentEncryptionHandlerInterface;
 use Phithi92\JsonWebToken\Crypto\Iv\IvHandlerInterface;
@@ -38,10 +38,10 @@ enum HandlerTarget
     public function priority(): int
     {
         return match ($this) {
-            self::Cek       => 1,
-            self::Key       => 2,
-            self::Iv        => 3,
-            self::Payload   => 4,
+            self::Cek => 1,
+            self::Key => 2,
+            self::Iv => 3,
+            self::Payload => 4,
             self::Signature => 5,
         };
     }

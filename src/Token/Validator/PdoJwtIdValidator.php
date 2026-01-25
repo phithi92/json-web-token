@@ -9,7 +9,7 @@ use PDO;
 
 final class PdoJwtIdValidator implements JwtIdValidatorInterface
 {
-    private const TYPE_DENY  = 'deny';
+    private const TYPE_DENY = 'deny';
     private const TYPE_ALLOW = 'allow';
 
     private PDO $pdo;
@@ -25,7 +25,7 @@ final class PdoJwtIdValidator implements JwtIdValidatorInterface
     public function isAllowed(?string $jwtId): bool
     {
         if ($jwtId === null) {
-            return !$this->useAllowList;
+            return ! $this->useAllowList;
         }
 
         if ($this->isDenied($jwtId)) {
@@ -80,7 +80,7 @@ final class PdoJwtIdValidator implements JwtIdValidatorInterface
 
         $stmt->execute([
             'jwt_id' => $jwtId,
-            'type'   => $type,
+            'type' => $type,
         ]);
 
         return $stmt->fetchColumn() !== false;
@@ -99,8 +99,8 @@ final class PdoJwtIdValidator implements JwtIdValidatorInterface
         );
 
         $stmt->execute([
-            'jwt_id'     => $jwtId,
-            'type'       => $type,
+            'jwt_id' => $jwtId,
+            'type' => $type,
             'expires_at' => $expiresAt,
         ]);
     }

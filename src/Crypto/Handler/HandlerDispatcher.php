@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Handler;
+namespace Phithi92\JsonWebToken\Crypto\Handler;
 
-use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerClassDefinitionException;
-use Phithi92\JsonWebToken\Exceptions\Handler\InvalidHandlerImplementationException;
-use Phithi92\JsonWebToken\Exceptions\Handler\MissingHandlerConfigurationException;
-use Phithi92\JsonWebToken\Exceptions\Handler\UndefinedHandlerMethodException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\InvalidHandlerClassDefinitionException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\InvalidHandlerImplementationException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\MissingHandlerConfigurationException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\Handler\UndefinedHandlerMethodException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use RuntimeException;

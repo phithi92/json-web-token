@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
+use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
+use Phithi92\JsonWebToken\Security\KeyRole;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
 
@@ -33,7 +35,7 @@ class RsaSignatureHandler extends AbstractSignatureHandler
         $kid = $this->resolveKid($bundle, $config);
         $algorithm = $this->getConfiguredHashAlgorithm($config);
 
-        $privateKey = $this->assertRsaKeyIsValid($kid, $algorithm, 'private');
+        $privateKey = $this->assertRsaKeyIsValid($kid, $algorithm, KeyRole::Private);
 
         $signinInput = $this->getSigningInput($bundle);
         $algorithmConst = $this->mapHashToOpenSSLConstant($algorithm);
@@ -54,7 +56,7 @@ class RsaSignatureHandler extends AbstractSignatureHandler
         $algorithm = $this->getConfiguredHashAlgorithm($config);
         $signature = (string) $bundle->getSignature();
 
-        $publicKey = $this->assertRsaKeyIsValid($kid, $algorithm, 'public');
+        $publicKey = $this->assertRsaKeyIsValid($kid, $algorithm, KeyRole::Public);
 
         $signinInput = $bundle->getEncryption()->getAad();
         $algorithmConst = $this->mapHashToOpenSSLConstant($algorithm);
@@ -92,18 +94,14 @@ class RsaSignatureHandler extends AbstractSignatureHandler
      *
      * @throws InvalidSignatureException
      */
-    public function assertRsaKeyIsValid(string $kid, string $algorithm, string $role): OpenSSLAsymmetricKey
+    public function assertRsaKeyIsValid(string $kid, string $algorithm, KeyRole $role): OpenSSLAsymmetricKey
     {
         $cached = $this->getCachedRsaKey($kid);
         if ($cached !== null) {
             return $cached;
         }
 
-        if (! in_array($role, ['private', 'public'], true)) {
-            throw new Exception('Given role is invalid.');
-        }
-
-        $key = $role === 'public' ? $this->manager->getPublicKey($kid) : $this->manager->getPrivateKey($kid);
+        $key = $role === KeyRole::Public ? $this->manager->getPublicKey($kid) : $this->manager->getPrivateKey($kid);
 
         $this->assertValidKeySize($key, $kid, $algorithm);
 

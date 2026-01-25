@@ -8,8 +8,8 @@ use Phithi92\JsonWebToken\Crypto\Iv\IvHandler;
 use Phithi92\JsonWebToken\Crypto\Iv\IvHandlerInterface;
 use Phithi92\JsonWebToken\Crypto\Key\KeyHandlerInterface;
 use Phithi92\JsonWebToken\Crypto\Key\RsaKeyHandler;
+use Phithi92\JsonWebToken\Crypto\KeyManagement\CekHandler;
 use Phithi92\JsonWebToken\Crypto\KeyManagement\CekHandlerInterface;
-use Phithi92\JsonWebToken\Crypto\KeyManagement\DefaultCekHandler;
 use Phithi92\JsonWebToken\Crypto\Signature\EcdsaSignatureHandler;
 use Phithi92\JsonWebToken\Crypto\Signature\HmacSignatureHandler;
 use Phithi92\JsonWebToken\Crypto\Signature\RsaSignatureHandler;
@@ -171,7 +171,7 @@ return [
         CekHandlerInterface::class => [
             'length' => 256, // bits
             'strict_length' => true,
-            'handler' => DefaultCekHandler::class,
+            'handler' => CekHandler::class,
         ],
 
         ContentEncryptionHandlerInterface::class => [
@@ -201,7 +201,7 @@ return [
         CekHandlerInterface::class => [
             'length' => 256, // bits
             'strict_length' => true,
-            'handler' => DefaultCekHandler::class,
+            'handler' => CekHandler::class,
         ],
 
         ContentEncryptionHandlerInterface::class => [
@@ -231,7 +231,7 @@ return [
         CekHandlerInterface::class => [
             'length' => 128, // bits
             'strict_length' => true,
-            'handler' => DefaultCekHandler::class,
+            'handler' => CekHandler::class,
         ],
     ],
 
@@ -255,7 +255,7 @@ return [
         CekHandlerInterface::class => [
             'length' => 192,
             'strict_length' => true,
-            'handler' => DefaultCekHandler::class,
+            'handler' => CekHandler::class,
         ],
     ],
 
@@ -280,7 +280,7 @@ return [
         CekHandlerInterface::class => [
             'length' => 256,
             'strict_length' => true,
-            'handler' => DefaultCekHandler::class,
+            'handler' => CekHandler::class,
         ],
     ],
 ];

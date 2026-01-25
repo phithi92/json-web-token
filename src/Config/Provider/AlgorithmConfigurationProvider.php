@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Config;
+namespace Phithi92\JsonWebToken\Config\Provider;
 
 interface AlgorithmConfigurationProvider
 {

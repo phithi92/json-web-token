@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Decryptor;
 
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
-use Phithi92\JsonWebToken\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;

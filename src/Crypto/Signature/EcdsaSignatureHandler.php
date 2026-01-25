@@ -8,6 +8,7 @@ use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
+use Phithi92\JsonWebToken\Security\KeyRole;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
 
@@ -36,7 +37,7 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
         $data = $this->getSigningInput($bundle);
         $algorithm = $this->getConfiguredHashAlgorithm($config);
 
-        $privateKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, 'private');
+        $privateKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Private);
         $signature = $this->signData($data, $privateKey, $algorithm);
 
         $bundle->setSignature(new JwtSignature($signature));
@@ -55,7 +56,7 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
         $data = $bundle->getEncryption()->getAad();
         $algorithm = $this->getConfiguredHashAlgorithm($config);
 
-        $publicKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, 'public');
+        $publicKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Public);
         $this->verifySignature($data, $signature, $publicKey, $algorithm);
     }
 
@@ -91,7 +92,7 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
      *
      * @throws InvalidSignatureException
      */
-    private function loadAndValidateEcdsaKey(string $kid, string $hashAlgorithm, string $role): OpenSSLAsymmetricKey
+    private function loadAndValidateEcdsaKey(string $kid, string $hashAlgorithm, KeyRole $role): OpenSSLAsymmetricKey
     {
         $cachedKey = $this->getCachedKey($kid);
         if ($cachedKey !== null) {
@@ -121,9 +122,9 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
         }
     }
 
-    private function loadOpensslKey(string $kid, string $role): OpenSSLAsymmetricKey
+    private function loadOpensslKey(string $kid, KeyRole $role): OpenSSLAsymmetricKey
     {
-        return $role === 'public'
+        return $role->value === KeyRole::Public->value
             ? $this->manager->getPublicKey($kid)
             : $this->manager->getPrivateKey($kid);
     }

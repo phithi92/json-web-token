@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Issuer;
 
+use Phithi92\JsonWebToken\Crypto\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigurationException;
 use Phithi92\JsonWebToken\Exceptions\Config\MissingAlgorithmException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnsupportedTokenTypeException;
-use Phithi92\JsonWebToken\Handler\HandlerOperation;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
@@ -50,13 +50,11 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
         ?JwtPayload $payload = null,
         ?string $kid = null,
     ): JwtBundle {
-        $bundle = $this->buildBundle(
+        return $this->buildBundle(
             algorithm: $algorithm,
             payload: $payload,
             kid: $kid
         );
-
-        return $bundle;
     }
 
     /**
@@ -146,6 +144,7 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
 
     /**
      * @param array<string, mixed> $config
+     *
      * @return array{string,string|null,string|null}
      *
      * @throws InvalidAlgorithmConfigurationException
@@ -165,7 +164,7 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
 
     private function normalizeTokenType(mixed $tokenType): string
     {
-        if (!is_string($tokenType)) {
+        if (! is_string($tokenType)) {
             throw new InvalidAlgorithmConfigurationException();
         }
 
@@ -178,7 +177,7 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
             return null;
         }
 
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             throw new InvalidAlgorithmConfigurationException();
         }
 
