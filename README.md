@@ -5,9 +5,17 @@
 A security-focused PHP 8.2+ library for creating, signing, encrypting, decrypting, and validating JSON Web Tokens (JWT). The package supports both JSON Web Signature (JWS) and JSON Web Encryption (JWE) flows with a pluggable algorithm registry and explicit key management.
 
 ## Why this library?
-- Implements the core requirements of RFC 7515 (JWS), RFC 7516 (JWE), RFC 7518 (JWA), and RFC 7519 (JWT).
+- Implements the core requirements of RFC 7515 (JWS), RFC 7516 (JWE), RFC 7518 (JWA), and RFC 7519 (JWT), with referenced formats from RFC 7517 (JWK).
 - Clear separation between algorithm configuration, payload handling, token building/parsing, and validation.
 - Defaults to safe behavior (claim validation, strict key handling) with escape hatches clearly marked as **testing-only**.
+
+## Supported RFCs
+- **RFC 7515:** JSON Web Signature (JWS)
+- **RFC 7516:** JSON Web Encryption (JWE)
+- **RFC 7517:** JSON Web Key (JWK) reference formats
+- **RFC 7518:** JSON Web Algorithms (JWA)
+- **RFC 7519:** JSON Web Token (JWT)
+- **RFC 7638:** JSON Web Key (JWK) Thumbprint for `kid` derivation
 
 ## Installation
 ```bash
@@ -38,7 +46,7 @@ use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 
 $manager = new JwtKeyManager();
 
-// For asymmetric algorithms (RS*, ES*, PS*, RSA-OAEP-256_A256GCM)
+// For asymmetric algorithms (RS*, ES*, PS*, RSA-OAEP-256/A256GCM)
 $manager->addKeyPair(
     private: file_get_contents('/path/to/private.pem'),
     public: file_get_contents('/path/to/public.pem'),
