@@ -12,6 +12,7 @@ use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtSignature;
+use Phithi92\JsonWebToken\Token\JwtTokenKind;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
 use function count;
@@ -21,14 +22,6 @@ use function is_string;
 
 final class JwtTokenParser
 {
-    private const JWS_PART_COUNT = 3;
-    private const JWS_TYPE = 'JWS';
-
-    private const JWE_PART_COUNT = 5;
-    private const JWE_TYPE = 'JWE';
-    
-    private const JWT_TYPE = 'JWT';
-
     /**
      * @param string|array<int,string> $token
      *
@@ -92,13 +85,14 @@ final class JwtTokenParser
      */
     private static function parseByType(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
-        $type = $bundle->getHeader()->getType();
-        
-        return match ($type) {
-            self::JWS_TYPE, self::JWT_TYPE => self::parseSignatureToken($bundle, $tokenArray),
-            self::JWE_TYPE => self::parseEncodedToken($bundle, $tokenArray),
-            default => throw new MalformedTokenException('Invalid or unsupported token type'),
-        };
+        $rawType = $bundle->getHeader()->getType();
+
+        $kind = JwtTokenKind::tryFrom((string) $rawType);
+        if ($kind === null) {
+            throw new MalformedTokenException('Invalid or unsupported token type');
+        }
+
+        return self::parseByKind($bundle, $tokenArray, $kind);
     }
 
     /**
@@ -106,11 +100,32 @@ final class JwtTokenParser
      */
     private static function parseByStructure(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
-        return match (count($tokenArray)) {
-            self::JWS_PART_COUNT => self::parseSignatureToken($bundle, $tokenArray),
-            self::JWE_PART_COUNT => self::parseEncodedToken($bundle, $tokenArray),
-            default => throw new MalformedTokenException('Invalid or unsupported token type'),
-        };
+        $kind = JwtTokenKind::fromPartCount(count($tokenArray));
+
+        if ($kind === null) {
+            throw new MalformedTokenException('Invalid or unsupported token type');
+        }
+
+        return self::parseByKind($bundle, $tokenArray, $kind);
+    }
+
+    /**
+     *
+     * @param JwtBundle $bundle
+     * @param array<int,string> $tokenArray
+     * @param JwtTokenKind $kind
+     * @return JwtBundle
+     * @throws MalformedTokenException
+     */
+    private static function parseByKind(JwtBundle $bundle, array $tokenArray, JwtTokenKind $kind): JwtBundle
+    {
+        if (count($tokenArray) !== $kind->partCount()) {
+            throw new MalformedTokenException('Invalid token structure.');
+        }
+
+        return $kind->isSignatureToken()
+            ? self::parseSignatureToken($bundle, $tokenArray)
+            : self::parseEncodedToken($bundle, $tokenArray);
     }
 
     /**
@@ -120,10 +135,6 @@ final class JwtTokenParser
      */
     private static function parseEncodedToken(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
-        if (count($tokenArray) !== self::JWE_PART_COUNT) {
-            throw new MalformedTokenException('Invalid JWE token structure.');
-        }
-
         $encryptionData = new JwtEncryptionData(
             aad: $tokenArray[0],
             iv: self::decodeBase64Url($tokenArray[2]),
@@ -149,10 +160,6 @@ final class JwtTokenParser
      */
     private static function parseSignatureToken(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
-        if (count($tokenArray) !== self::JWS_PART_COUNT) {
-            throw new MalformedTokenException('Invalid JWS token structure.');
-        }
-
         $bundle->setEncryption(new JwtEncryptionData(aad: $tokenArray[0] . '.' . $tokenArray[1]));
 
         $signature = self::decodeBase64Url($tokenArray[2]);
