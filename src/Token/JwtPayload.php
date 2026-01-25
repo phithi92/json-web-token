@@ -139,18 +139,15 @@ final class JwtPayload implements JsonSerializable
                 throw new InvalidDateTimeException($key);
             }
 
-            return $this->setRawClaim(
-                key: $key,
-                value: $value,
-                overwrite: true
-            );
+            return $this->setClaim($key, $value);
         }
 
-        $this->claimHelper->setClaimTimestamp(
-            payload: $this,
-            key: $key,
-            dateTime: $value
-        );
+        if (! $this->isTimeClaim($key)) {
+            throw new InvalidDateTimeException($key);
+        }
+
+        $timestamp = $this->claimHelper->toTimestamp($value);
+        $this->setClaim($key, $timestamp);
 
         return $this;
     }

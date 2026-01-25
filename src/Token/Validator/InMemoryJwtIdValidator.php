@@ -115,7 +115,7 @@ final class InMemoryJwtIdValidator implements JwtIdValidatorInterface
 
     private function isExpired(int $expiresAt): bool
     {
-        return $expiresAt < time();
+        return $expiresAt <= time();
     }
 
     private function expiresAt(int $ttl): int

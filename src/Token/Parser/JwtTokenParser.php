@@ -26,6 +26,8 @@ final class JwtTokenParser
 
     private const JWE_PART_COUNT = 5;
     private const JWE_TYPE = 'JWE';
+    
+    private const JWT_TYPE = 'JWT';
 
     /**
      * @param string|array<int,string> $token
@@ -90,8 +92,10 @@ final class JwtTokenParser
      */
     private static function parseByType(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
-        return match ($bundle->getHeader()->getType()) {
-            self::JWS_TYPE => self::parseSignatureToken($bundle, $tokenArray),
+        $type = $bundle->getHeader()->getType();
+        
+        return match ($type) {
+            self::JWS_TYPE, self::JWT_TYPE => self::parseSignatureToken($bundle, $tokenArray),
             self::JWE_TYPE => self::parseEncodedToken($bundle, $tokenArray),
             default => throw new MalformedTokenException('Invalid or unsupported token type'),
         };

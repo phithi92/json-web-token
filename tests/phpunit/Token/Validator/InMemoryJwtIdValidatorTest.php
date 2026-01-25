@@ -38,4 +38,13 @@ final class InMemoryJwtIdValidatorTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $validator->allow('token-id', -1);
     }
+    
+    public function testZeroTtlExpiresImmediately(): void
+    {
+        $validator = new InMemoryJwtIdValidator(useAllowList: true);
+
+        $validator->allow('token-id', 0);
+
+        $this->assertFalse($validator->isAllowed('token-id'));
+    }
 }

@@ -400,7 +400,7 @@ final class JwtValidator
         $actualValue = $payload->getClaim($key);
 
         if ($expectedValue !== null && $actualValue !== $expectedValue) {
-            throw new InvalidPrivateClaimException($key, is_string($expectedValue) ? $expectedValue : '');
+            throw new InvalidPrivateClaimException($key, (string)$expectedValue);
         }
     }
 }
