@@ -6,6 +6,7 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
+use Phithi92\JsonWebToken\Config\AlgorithmConfig;
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
@@ -14,6 +15,7 @@ use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Security\KeyRole;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
+use Phithi92\JsonWebToken\Token\Serializer\JwsSigningInput;
 
 use function openssl_sign;
 use function openssl_verify;
@@ -25,26 +27,22 @@ class RsaSignatureHandler extends AbstractSignatureHandler
      */
     private array $checkedKeys = [];
 
-    public function __construct(JwtKeyManager $manager)
-    {
-        parent::__construct($manager);
-    }
-
     public function computeSignature(JwtBundle $bundle, array $config): void
     {
+        $cnf = new AlgorithmConfig($config);
+
+        $algorithm = $cnf->hashAlgorithm();
         $kid = $this->kidResolver->resolve($bundle, $config);
-        $algorithm = $this->getConfiguredHashAlgorithm($config);
 
         $privateKey = $this->assertRsaKeyIsValid($kid, $algorithm, KeyRole::Private);
-
-        $signinInput = $this->getSigningInput($bundle);
+        $signingInput = JwsSigningInput::fromBundle($bundle);
         $algorithmConst = $this->mapHashToOpenSSLConstant($algorithm);
 
         $signature = '';
-        if (! openssl_sign($signinInput, $signature, $privateKey, $algorithmConst)) {
+        if (! openssl_sign($signingInput, $signature, $privateKey, $algorithmConst)) {
             $message = OpenSslErrorHelper::getFormattedErrorMessage('Compute Signature Failed: ');
             throw new SignatureComputationFailedException($message);
-        }
+        } 
 
         /** @var string $signature */
         $bundle->setSignature(new JwtSignature($signature));
@@ -52,15 +50,16 @@ class RsaSignatureHandler extends AbstractSignatureHandler
 
     public function validateSignature(JwtBundle $bundle, array $config): void
     {
-        $kid = $this->kidResolver->resolve($bundle, $config);
-        $algorithm = $this->getConfiguredHashAlgorithm($config);
-        $signature = (string) $bundle->getSignature();
+        $cnf = new AlgorithmConfig($config);
 
+        $algorithm = $cnf->hashAlgorithm();
+        $kid = $this->kidResolver->resolve($bundle, $config);        
+        
         $publicKey = $this->assertRsaKeyIsValid($kid, $algorithm, KeyRole::Public);
-
-        $signinInput = $bundle->getEncryption()->getAad();
         $algorithmConst = $this->mapHashToOpenSSLConstant($algorithm);
-
+        $signature = (string) $bundle->getSignature();
+        $signinInput = $bundle->getEncryption()->getAad();
+        
         // Verify the signature using the public key and algorithm
         $verified = openssl_verify($signinInput, $signature, $publicKey, $algorithmConst);
         if ($verified !== 1) {

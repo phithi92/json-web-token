@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
+use Phithi92\JsonWebToken\Config\AlgorithmConfig;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
+use Phithi92\JsonWebToken\Token\Serializer\JwsSigningInput;
 
 use function hash_equals;
 use function hash_hmac;
@@ -22,12 +24,15 @@ class HmacSignatureHandler extends AbstractSignatureHandler
 
     public function computeSignature(JwtBundle $bundle, array $config): void
     {
-        $kid = $this->kidResolver->resolve($bundle, $config);
-        $algorithm = $this->getConfiguredHashAlgorithm($config);
-        $passphrase = $this->manager->getPassphrase($kid);
-        $signingInput = $this->getSigningInput($bundle);
+        $cnf = new AlgorithmConfig($config);
 
+        $kid = $this->kidResolver->resolve($bundle, $config);
+        $algorithm = $cnf->hashAlgorithm();
+        $passphrase = $this->manager->getPassphrase($kid);
+        
         $this->assertHmacKeyIsValid($kid, $algorithm, $passphrase);
+        
+        $signingInput = JwsSigningInput::fromBundle($bundle);
 
         $signature = hash_hmac($algorithm, $signingInput, $passphrase, true);
 
@@ -39,16 +44,18 @@ class HmacSignatureHandler extends AbstractSignatureHandler
      */
     public function validateSignature(JwtBundle $bundle, array $config): void
     {
+        $cnf = new AlgorithmConfig($config);
+        
         $kid = $this->kidResolver->resolve($bundle, $config);
-        $algorithm = $this->getConfiguredHashAlgorithm($config);
-        $signature = (string) $bundle->getSignature();
-        $aad = $bundle->getEncryption()->getAad();
-
+        $algorithm = $cnf->hashAlgorithm();
         $passphrase = $this->manager->getPassphrase($kid);
-
+        
         $this->assertHmacKeyIsValid($kid, $algorithm, $passphrase);
 
+        $aad = $bundle->getEncryption()->getAad();
         $expectedHash = hash_hmac($algorithm, $aad, $passphrase, true);
+        
+        $signature = (string) $bundle->getSignature();
 
         // Compare the expected HMAC with the provided signature using constant-time comparison
         if (! hash_equals($expectedHash, $signature)) {

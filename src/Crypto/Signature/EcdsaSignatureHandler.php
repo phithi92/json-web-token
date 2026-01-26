@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use OpenSSLAsymmetricKey;
+use Phithi92\JsonWebToken\Config\AlgorithmConfig;
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
 use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
 use Phithi92\JsonWebToken\Security\KeyRole;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
+use Phithi92\JsonWebToken\Token\Serializer\JwsSigningInput;
 
 use function is_array;
 use function is_string;
@@ -33,12 +35,14 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
      */
     public function computeSignature(JwtBundle $bundle, array $config): void
     {
-        $kid = $this->kidResolver->resolve($bundle, $config);
-        $data = $this->getSigningInput($bundle);
-        $algorithm = $this->getConfiguredHashAlgorithm($config);
+        $cnf = new AlgorithmConfig($config);
 
+        $kid = $this->kidResolver->resolve($bundle, $config);        
+        $algorithm = $cnf->hashAlgorithm();
         $privateKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Private);
-        $signature = $this->signData($data, $privateKey, $algorithm);
+        $signingInput = JwsSigningInput::fromBundle($bundle);
+
+        $signature = $this->signData($signingInput, $privateKey, $algorithm);
 
         $bundle->setSignature(new JwtSignature($signature));
     }
@@ -50,11 +54,13 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
      */
     public function validateSignature(JwtBundle $bundle, array $config): void
     {
-        $kid = $this->kidResolver->resolve($bundle, $config);
+        $cnf = new AlgorithmConfig($config);
 
+        $kid = $this->kidResolver->resolve($bundle, $config);
         $signature = (string) $bundle->getSignature();
         $data = $bundle->getEncryption()->getAad();
-        $algorithm = $this->getConfiguredHashAlgorithm($config);
+        
+        $algorithm = $cnf->hashAlgorithm();
 
         $publicKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Public);
         $this->verifySignature($data, $signature, $publicKey, $algorithm);
