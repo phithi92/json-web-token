@@ -37,7 +37,7 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
     {
         $cnf = new AlgorithmConfig($config);
 
-        $kid = $this->kidResolver->resolve($bundle, $config);        
+        $kid = $this->kidResolver->resolve($bundle, $config);
         $algorithm = $cnf->hashAlgorithm();
         $privateKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Private);
         $signingInput = JwsSigningInput::fromBundle($bundle);
@@ -59,7 +59,7 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
         $kid = $this->kidResolver->resolve($bundle, $config);
         $signature = (string) $bundle->getSignature();
         $data = $bundle->getEncryption()->getAad();
-        
+
         $algorithm = $cnf->hashAlgorithm();
 
         $publicKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Public);

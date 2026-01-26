@@ -29,9 +29,9 @@ class HmacSignatureHandler extends AbstractSignatureHandler
         $kid = $this->kidResolver->resolve($bundle, $config);
         $algorithm = $cnf->hashAlgorithm();
         $passphrase = $this->manager->getPassphrase($kid);
-        
+
         $this->assertHmacKeyIsValid($kid, $algorithm, $passphrase);
-        
+
         $signingInput = JwsSigningInput::fromBundle($bundle);
 
         $signature = hash_hmac($algorithm, $signingInput, $passphrase, true);
@@ -45,16 +45,16 @@ class HmacSignatureHandler extends AbstractSignatureHandler
     public function validateSignature(JwtBundle $bundle, array $config): void
     {
         $cnf = new AlgorithmConfig($config);
-        
+
         $kid = $this->kidResolver->resolve($bundle, $config);
         $algorithm = $cnf->hashAlgorithm();
         $passphrase = $this->manager->getPassphrase($kid);
-        
+
         $this->assertHmacKeyIsValid($kid, $algorithm, $passphrase);
 
         $aad = $bundle->getEncryption()->getAad();
         $expectedHash = hash_hmac($algorithm, $aad, $passphrase, true);
-        
+
         $signature = (string) $bundle->getSignature();
 
         // Compare the expected HMAC with the provided signature using constant-time comparison

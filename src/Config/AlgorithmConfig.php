@@ -10,7 +10,9 @@ use function is_string;
 
 final class AlgorithmConfig
 {
-    public function __construct(private array $config) {}
+    public function __construct(private array $config)
+    {
+    }
 
     public function hashAlgorithm(): string
     {

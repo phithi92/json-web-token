@@ -16,7 +16,7 @@ abstract class AbstractSignatureHandler implements SignatureHandlerInterface
     protected JwtKeyManager $manager;
 
     protected KidResolverInterface $kidResolver;
-    
+
     /**
      * @var array<string, AlgorithmConfig>
      */
@@ -29,7 +29,7 @@ abstract class AbstractSignatureHandler implements SignatureHandlerInterface
         $this->manager = $manager;
         $this->kidResolver = $kidResolver ?? new DefaultKidResolver();
     }
-    
+
     protected function getAlgorithmConfig(array $config)
     {
         return $this->cachedAlgorithmConfig[$config] ??= new AlgorithmConfig($config);
