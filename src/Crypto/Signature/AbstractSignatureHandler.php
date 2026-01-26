@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
+use Phithi92\JsonWebToken\Security\KeyManagement\DefaultKidResolver;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
+use Phithi92\JsonWebToken\Security\KeyManagement\KidResolverInterface;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtBundle;
@@ -19,9 +19,14 @@ abstract class AbstractSignatureHandler implements SignatureHandlerInterface
 {
     protected JwtKeyManager $manager;
 
-    public function __construct(JwtKeyManager $manager)
-    {
+    protected KidResolverInterface $kidResolver;
+
+    public function __construct(
+        JwtKeyManager $manager,
+        ?KidResolverInterface $kidResolver = null
+    ) {
         $this->manager = $manager;
+        $this->kidResolver = $kidResolver ?? new DefaultKidResolver($this->manager);
     }
 
     public function getSigningInput(JwtBundle $bundle): string
@@ -36,40 +41,12 @@ abstract class AbstractSignatureHandler implements SignatureHandlerInterface
     }
 
     /**
-     * Resolves the key ID (kid) from header or config.
-     *
-     * @param array<string, int|class-string<object>> $config
-     *
-     * @throws InvalidSignatureException
-     */
-    protected function resolveKid(JwtBundle $bundle, array $config): string
-    {
-        $kid = $bundle->getHeader()->getKid();
-
-        if (! $bundle->getHeader()->hasKid()) {
-            if ($this->existConfigKidFallback($config)) {
-                $kid = (string) $config['name'];
-            } else {
-                throw new InvalidFormatException('No "kid" found in bundle or configuration');
-            }
-        }
-
-        return $kid;
-    }
-
-    /**
      * @param array<string,string|int|class-string<object>> $config
      */
     protected function getConfiguredHashAlgorithm(array $config): string
     {
-        return is_string($config['hash_algorithm']) ? $config['hash_algorithm'] : '';
-    }
-
-    /**
-     * @param array<string, int|class-string<object>> $config
-     */
-    private function existConfigKidFallback(array $config): bool
-    {
-        return isset($config['name']) && is_string($config['name']);
+        return (isset($config['hash_algorithm']) && is_string($config['hash_algorithm']))
+            ? $config['hash_algorithm']
+            : '';
     }
 }

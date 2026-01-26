@@ -89,7 +89,7 @@ final class JwtHeaderFactory
         if ($enc !== null && $enc !== '') {
             $parts[] = $enc;
         }
-        
+
         return implode($separator, $parts);
     }
 }

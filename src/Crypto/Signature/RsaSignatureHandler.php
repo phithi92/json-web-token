@@ -32,7 +32,7 @@ class RsaSignatureHandler extends AbstractSignatureHandler
 
     public function computeSignature(JwtBundle $bundle, array $config): void
     {
-        $kid = $this->resolveKid($bundle, $config);
+        $kid = $this->kidResolver->resolve($bundle, $config);
         $algorithm = $this->getConfiguredHashAlgorithm($config);
 
         $privateKey = $this->assertRsaKeyIsValid($kid, $algorithm, KeyRole::Private);
@@ -52,7 +52,7 @@ class RsaSignatureHandler extends AbstractSignatureHandler
 
     public function validateSignature(JwtBundle $bundle, array $config): void
     {
-        $kid = $this->resolveKid($bundle, $config);
+        $kid = $this->kidResolver->resolve($bundle, $config);
         $algorithm = $this->getConfiguredHashAlgorithm($config);
         $signature = (string) $bundle->getSignature();
 

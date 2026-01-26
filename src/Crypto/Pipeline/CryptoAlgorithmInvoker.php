@@ -9,7 +9,6 @@ use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\InvalidAlgorithmImplementat
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\MissingAlgorithmConfigurationException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
-use RuntimeException;
 
 use function gettype;
 use function is_array;
@@ -55,6 +54,9 @@ final class CryptoAlgorithmInvoker
         return $handler->{$method}(...$args);
     }
 
+    /**
+     * @throws AlgorithmMethodNotFoundException
+     */
     private function assertValidHandlerMethod(object $handler, string $method): void
     {
         if (! method_exists($handler, $method)) {
@@ -65,7 +67,8 @@ final class CryptoAlgorithmInvoker
     /**
      * @param array<string,mixed> $config
      *
-     * @throws RuntimeException
+     * @throws MissingAlgorithmConfigurationException
+     * @throws InvalidAlgorithmImplementationException
      */
     private function buildHandler(
         array $config,
@@ -117,14 +120,14 @@ final class CryptoAlgorithmInvoker
         /** @var array<string,string> $methodConfig */
         $methodConfig = $config[$target->interfaceClass()];
 
-        $handlerConf = [$bundle, $methodConfig];
+        $arguments = [$bundle, $methodConfig];
 
         return match ($target) {
             CryptoProcessingStage::Signature,
             CryptoProcessingStage::Cek,
             CryptoProcessingStage::Iv,
             CryptoProcessingStage::Key,
-            CryptoProcessingStage::Payload => $handlerConf,
+            CryptoProcessingStage::Payload => $arguments,
         };
     }
 }
