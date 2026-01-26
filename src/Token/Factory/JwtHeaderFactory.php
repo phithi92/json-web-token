@@ -33,7 +33,7 @@ final class JwtHeaderFactory
             throw new MissingHeaderAlgorithmException('header.alg');
         }
 
-        $resolvedKid = $this->resolveKid($kid, $alg, $enc);
+        $resolvedKid = $kid ?? $this->deriveDefaultKid($alg, $enc);
 
         return $this->buildHeader($typ, $alg, $resolvedKid, $enc);
     }
@@ -56,19 +56,6 @@ final class JwtHeaderFactory
         return $header;
     }
 
-    private function resolveKid(
-        ?string $kid,
-        string $alg,
-        ?string $enc,
-    ): string {
-        $kid ??= $this->deriveDefaultKid($alg, $enc);
-
-        return $kid;
-    }
-
-    /**
-     * Example: "RSA_OAEP_A256GCM"
-     */
     private function deriveDefaultKid(
         string $alg,
         ?string $enc,

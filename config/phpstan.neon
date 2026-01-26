@@ -12,3 +12,7 @@ parameters:
     phpVersion: 80200
 
     reportUnmatchedIgnoredErrors: true
+
+    ignoreErrors:
+        - message: '#Method .*::buildPrivateKey\(\) should return phpseclib3\\Crypt\\RSA\\PrivateKey but returns.*#'
+        - message: '#Method .*::buildPublicKey\(\) should return phpseclib3\\Crypt\\RSA\\PublicKey but returns.*#'

@@ -184,20 +184,24 @@ class RsaKeyHandler implements KeyHandlerInterface
     ): RSAPrivateKey|RSAPublicKey {
         $key = match ($role) {
             KeyRole::Private => $this->loadPrivateKey($pem),
-            KeyRole::Public => $this->loadPublicKey($pem),
+            KeyRole::Public  => $this->loadPublicKey($pem),
         };
 
-        [$padding,$hash] = $this->extractPaddingAndHash($config);
+        [$padding, $hash] = $this->extractPaddingAndHash($config);
 
-        $key = $key->withPadding($padding);
+        /** @var RSAPrivateKey|RSAPublicKey $configured */
+        $configured = $key->withPadding($padding);
 
-        if ($hash !== null) {
-            $key = $key->withHash($hash);
-
-            $key = $key->withMGFHash($hash);
+        if ($hash === null) {
+            return $configured;
         }
 
-        return $key;
+        /** @var RSAPrivateKey|RSAPublicKey $configured */
+        $configured = $configured->withHash($hash);
+        /** @var RSAPrivateKey|RSAPublicKey $configured */
+        $configured = $configured->withMGFHash($hash);
+
+        return $configured;
     }
 
     private function loadPrivateKey(string $pem): RSAPrivateKey

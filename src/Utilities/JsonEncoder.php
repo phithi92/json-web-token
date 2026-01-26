@@ -62,7 +62,6 @@ final class JsonEncoder
      *
      * @throws EncodingException
      * @throws InvalidDepthException
-     * @throws JsonException
      */
     public static function encode(
         array|JsonSerializable $data,
@@ -70,10 +69,9 @@ final class JsonEncoder
         int $depth = self::DEFAULT_DEPTH,
     ): string {
         $resolvedDepth = self::assertValidDepth($depth);
-        $value = $data instanceof JsonSerializable ? $data->jsonSerialize() : $data;
 
         try {
-            return json_encode($value, $flags | self::DEFAULT_OPTIONS, $resolvedDepth);
+            return json_encode($data, $flags | self::DEFAULT_OPTIONS, $resolvedDepth);
         } catch (JsonException $e) {
             throw new EncodingException($e->getMessage()); // previous setzen
         }
