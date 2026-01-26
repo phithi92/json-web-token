@@ -19,6 +19,17 @@ Supports **JWS** and **JWE**, a pluggable algorithm registry, and fine-grained c
 
 ---
 
+## Interoperability
+
+Tokens produced by this library are fully RFC-compliant and interoperable
+with other JWT implementations across different languages and platforms.
+
+No proprietary headers, claims, or encoding shortcuts are introduced.
+As long as the same algorithms, keys, and claims are used, tokens can be
+safely exchanged with other standards-compliant JWT stacks.
+
+---
+
 ## Supported RFCs
 
 - **RFC 7515** — JSON Web Signature (JWS)
