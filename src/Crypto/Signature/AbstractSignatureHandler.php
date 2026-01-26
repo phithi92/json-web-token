@@ -26,7 +26,7 @@ abstract class AbstractSignatureHandler implements SignatureHandlerInterface
         ?KidResolverInterface $kidResolver = null
     ) {
         $this->manager = $manager;
-        $this->kidResolver = $kidResolver ?? new DefaultKidResolver($this->manager);
+        $this->kidResolver = $kidResolver ?? new DefaultKidResolver();
     }
 
     public function getSigningInput(JwtBundle $bundle): string

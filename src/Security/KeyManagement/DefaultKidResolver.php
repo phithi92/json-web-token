@@ -11,13 +11,6 @@ use function is_string;
 
 final class DefaultKidResolver implements KidResolverInterface
 {
-    private JwtKeyManager $keyManager;
-
-    public function __construct(JwtKeyManager $keyManager)
-    {
-        $this->keyManager = $keyManager;
-    }
-
     /**
      * Resolve key ID (kid) using the following priority:
      *

@@ -11,7 +11,6 @@ use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoProcessingStage;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
-use Phithi92\JsonWebToken\Token\Factory\JwtHeaderFactory;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 
 use function usort;
@@ -33,8 +32,6 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     /** @var JwtKeyManager Manages algorithm-specific configurations. */
     protected readonly JwtKeyManager $manager;
 
-    private ?JwtHeaderFactory $headerFactory = null;
-
     /**
      * Creates a JWT token processor for the given operation mode.
      *
@@ -48,11 +45,6 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         $this->manager = $manager;
         $this->operation = $operation;
         $this->dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
-    }
-
-    protected function headerFactory(): JwtHeaderFactory
-    {
-        return $this->headerFactory ??= new JwtHeaderFactory($this->manager);
     }
 
     /**

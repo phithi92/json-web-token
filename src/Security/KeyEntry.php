@@ -24,7 +24,7 @@ final class KeyEntry
         $this->key = $key;
         $this->role = $role;
         $this->type = $type;
-        $this->bits = $bits;
+        $this->bits = $bits ?? 0;
         $this->pem = $pem;
     }
 

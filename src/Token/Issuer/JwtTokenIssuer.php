@@ -12,6 +12,7 @@ use Phithi92\JsonWebToken\Exceptions\Token\UnsupportedTokenTypeException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
+use Phithi92\JsonWebToken\Token\Factory\JwtHeaderFactory;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Token\JwtPayload;
@@ -31,9 +32,12 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
 {
     private const OPERATION = CryptoOperationDirection::Perform;
 
+    private readonly JwtHeaderFactory $headerFactory;
+
     public function __construct(JwtKeyManager $manager)
     {
         parent::__construct(self::OPERATION, $manager);
+        $this->headerFactory = new JwtHeaderFactory();
     }
 
     /**
@@ -97,7 +101,7 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
 
         [$typ, $alg, $enc] = $this->resolveHeaderParamsFromConfig($config);
 
-        $header = $this->headerFactory()->create($typ, $alg, $kid, $enc);
+        $header = $this->headerFactory->create($typ, $alg, $kid, $enc);
 
         $bundle = new JwtBundle($header, $payload);
         $bundle->setEncryption(new JwtEncryptionData(aad: $this->encodeAad($bundle)));
