@@ -10,16 +10,16 @@ final class KeyEntry
 {
     private readonly OpenSSLAsymmetricKey $key;
     private readonly KeyRole $role;
-    private readonly string $type;
+    private readonly KeyType $type;
     private readonly int $bits;
     private readonly string $pem; // wenn überhaupt nötig
 
     public function __construct(
         OpenSSLAsymmetricKey $key,
         KeyRole $role,
-        string $type,
-        int $bits,
+        KeyType $type,
         string $pem, // wenn überhaupt nötig
+        ?int $bits = null,
     ) {
         $this->key = $key;
         $this->role = $role;
@@ -48,7 +48,7 @@ final class KeyEntry
     {
         return $this->role;
     }
-    public function type(): string
+    public function type(): KeyType
     {
         return $this->type;
     }

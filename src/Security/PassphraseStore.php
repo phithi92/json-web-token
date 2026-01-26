@@ -22,12 +22,11 @@ final class PassphraseStore
      *
      * @return string The resolved key ID
      */
-    public function addPassphrase(#[SensitiveParameter] string $passphrase, ?string $kid = null): string
+    public function addPassphrase(#[SensitiveParameter] string $passphrase, string $kid): string
     {
-        $resolvedKid = $kid ?? KeyIdentifier::fromSecret($passphrase);
-        $this->phrases[$resolvedKid] = $passphrase;
+        $this->phrases[$kid] = $passphrase;
 
-        return $resolvedKid;
+        return $kid;
     }
 
     /**

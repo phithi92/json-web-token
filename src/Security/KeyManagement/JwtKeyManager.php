@@ -73,9 +73,8 @@ final class JwtKeyManager
         #[SensitiveParameter]
         string $pemContent,
         ?string $kid = null
-    ): void {
-        $kid ??= KeyIdentifier::fromPem($pemContent);
-        $this->keyStore->addKey($pemContent, KeyRole::Private, $kid);
+    ): KeyEntry {
+        return $this->addKey($pemContent, KeyRole::Private, $kid);
     }
 
     /**
@@ -88,9 +87,17 @@ final class JwtKeyManager
         #[SensitiveParameter]
         string $pemContent,
         ?string $kid = null
-    ): void {
+    ): KeyEntry {
+        return $this->addKey($pemContent, KeyRole::Public, $kid);
+    }
+
+    public function addKey(
+        #[SensitiveParameter] string $pemContent,
+        KeyRole $role,
+        ?string $kid = null
+    ): KeyEntry {
         $kid ??= KeyIdentifier::fromPem($pemContent);
-        $this->keyStore->addKey($pemContent, KeyRole::Public, $kid);
+        return $this->keyStore->addKey($pemContent, $role, $kid);
     }
 
     /**
@@ -98,6 +105,8 @@ final class JwtKeyManager
      *
      * If no kid is provided, it is derived once from the private key
      * to guarantee consistency.
+     *
+     * @return array{KeyEntry,KeyEntry}
      */
     public function addKeyPair(
         #[SensitiveParameter]
@@ -105,11 +114,13 @@ final class JwtKeyManager
         #[SensitiveParameter]
         string $public,
         ?string $kid = null
-    ): void {
+    ): array {
         $kid ??= KeyIdentifier::fromPem($private);
 
         $this->keyStore->addKey($private, KeyRole::Private, $kid);
         $this->keyStore->addKey($public, KeyRole::Public, $kid);
+
+        return $kid;
     }
 
     /**
@@ -161,6 +172,7 @@ final class JwtKeyManager
         string $passphrase,
         ?string $kid = null
     ): void {
+        $kid ??= KeyIdentifier::fromSecret($passphrase);
         $this->passphraseStore->addPassphrase($passphrase, $kid);
     }
 
