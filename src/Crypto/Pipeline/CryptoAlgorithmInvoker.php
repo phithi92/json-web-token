@@ -45,7 +45,7 @@ final class CryptoAlgorithmInvoker
         }
 
         $handler = $this->buildHandler($config, $manager, $target);
-        $method = $this->resolveMethod($target, $operation);
+        $method = $this->methodResolver->resolve($target, $operation);
 
         $this->assertValidHandlerMethod($handler, $method);
 
@@ -53,13 +53,6 @@ final class CryptoAlgorithmInvoker
 
         /** @phpstan-ignore-next-line */
         return $handler->{$method}(...$args);
-    }
-
-    private function resolveMethod(
-        CryptoProcessingStage $target,
-        CryptoOperationDirection $operation,
-    ): string {
-        return $this->methodResolver->resolve($target, $operation);
     }
 
     private function assertValidHandlerMethod(object $handler, string $method): void

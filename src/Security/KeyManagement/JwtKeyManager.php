@@ -106,7 +106,7 @@ final class JwtKeyManager
      * If no kid is provided, it is derived once from the private key
      * to guarantee consistency.
      *
-     * @return array{KeyEntry,KeyEntry}
+     * @return string registerd key identifier
      */
     public function addKeyPair(
         #[SensitiveParameter]
@@ -114,7 +114,7 @@ final class JwtKeyManager
         #[SensitiveParameter]
         string $public,
         ?string $kid = null
-    ): array {
+    ): string {
         $kid ??= KeyIdentifier::fromPem($private);
 
         $this->keyStore->addKey($private, KeyRole::Private, $kid);

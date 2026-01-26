@@ -68,7 +68,6 @@ final class JwtHeaderFactory
         ?string $enc,
     ): string {
         $kid ??= $this->deriveDefaultKid($alg, $enc);
-        $this->assertKnownKid($kid);
 
         return $kid;
     }
@@ -90,20 +89,7 @@ final class JwtHeaderFactory
         if ($enc !== null && $enc !== '') {
             $parts[] = $enc;
         }
-
+        
         return implode($separator, $parts);
-    }
-
-    private function assertKnownKid(string $kid): void
-    {
-        if (! $this->canResolveKid($kid)) {
-            throw new UnresolvableKeyException($kid);
-        }
-    }
-
-    private function canResolveKid(string $kid): bool
-    {
-        return $this->manager->hasKey($kid)
-            || $this->manager->hasPassphrase($kid);
     }
 }
