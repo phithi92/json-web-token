@@ -10,6 +10,10 @@ use function is_string;
 
 final class AlgorithmConfig
 {
+    /**
+     *
+     * @param array<string, mixed> $config
+     */
     public function __construct(private array $config)
     {
     }
