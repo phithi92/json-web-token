@@ -2,106 +2,131 @@
 
 # JSON Web Token (JWT) Library
 
-A security-focused PHP 8.2+ library for creating, signing, encrypting, decrypting, and validating JSON Web Tokens (JWT). The package supports both JSON Web Signature (JWS) and JSON Web Encryption (JWE) flows with a pluggable algorithm registry and explicit key management.
+**Security-first JWT implementation for PHP 8.2+.**  
+Create, sign, encrypt, decrypt, validate, and reissue JSON Web Tokens with explicit key management and strict defaults.
 
-## Why this library?
-- Implements the core requirements of RFC 7515 (JWS), RFC 7516 (JWE), RFC 7518 (JWA), and RFC 7519 (JWT), with referenced formats from RFC 7517 (JWK).
-- Clear separation between algorithm configuration, payload handling, token building/parsing, and validation.
-- Defaults to safe behavior (claim validation, strict key handling) with escape hatches clearly marked as **testing-only**.
+Supports **JWS** and **JWE**, a pluggable algorithm registry, and fine-grained claim validation—without hiding security decisions behind magic defaults.
+
+---
+
+## Highlights
+
+- ✅ RFC-compliant (JWS, JWE, JWA, JWT, JWK)
+- 🔐 Secure-by-default claim validation and key handling
+- 🧩 Clear separation of concerns (keys, payloads, algorithms, validation)
+- 🔁 Built-in reissue / refresh workflows
+- 🧪 Explicit *testing-only* escape hatches
+
+---
 
 ## Supported RFCs
-- **RFC 7515:** JSON Web Signature (JWS)
-- **RFC 7516:** JSON Web Encryption (JWE)
-- **RFC 7517:** JSON Web Key (JWK) reference formats
-- **RFC 7518:** JSON Web Algorithms (JWA)
-- **RFC 7519:** JSON Web Token (JWT)
-- **RFC 7638:** JSON Web Key (JWK) Thumbprint for `kid` derivation
+
+- **RFC 7515** — JSON Web Signature (JWS)
+- **RFC 7516** — JSON Web Encryption (JWE)
+- **RFC 7517** — JSON Web Key (JWK, reference formats)
+- **RFC 7518** — JSON Web Algorithms (JWA)
+- **RFC 7519** — JSON Web Token (JWT)
+- **RFC 7638** — JWK Thumbprints (`kid` derivation)
+
+---
 
 ## Installation
+
 ```bash
 composer require phithi92/json-web-token
 ```
 
-## Requirements
-- PHP 8.2 or newer.
-- The OpenSSL extension enabled (required for signing, encryption, and AES-GCM operations).
-- Composer will install the `phpseclib/phpseclib` dependency automatically.
+### Requirements
 
+- PHP **8.2+**
+- OpenSSL extension (required)
+- `phpseclib/phpseclib` (installed automatically)
 
-## Quick start
-The typical flow is:
+---
 
-1. Configure algorithms and keys with `JwtKeyManager`.
-2. Build a payload with `JwtPayload` (or provide an array of claims).
-3. Create a token service via `JwtTokenServiceFactory`.
-4. Create, serialize, and later decrypt/validate tokens via `JwtTokenService` (including claim-only validation or token-string reissuing when needed).
-5. Apply additional business checks and optional JWT ID replay protection using `JwtValidator`.
+## Architecture Overview
 
-### 1) Configure algorithms and keys
-`JwtKeyManager` keeps the algorithm registry and an in-memory key/passphrase store. Keys must be provided in PEM format.
-If you omit the `kid` when issuing tokens, the header factory derives one from the algorithm/enc (for example `RS256` or `RSA-OAEP-256/A256GCM`), so ensure your registered key IDs match or pass a `kid` explicitly.
+```
+JwtKeyManager        → keys, algorithms, passphrases
+JwtPayload           → claims & type-safe helpers
+JwtTokenService      → create / decrypt / reissue
+JwtValidator         → issuer, audience, claims, replay protection
+JwtBundle            → parsed token aggregate
+```
+
+Each component is usable independently, but the default factory wires everything safely for you.
+
+---
+
+## Quick Start
+
+### 1) Configure Keys & Algorithms
+
+`JwtKeyManager` holds all keys in memory. **Asymmetric keys must be PEM-encoded.**
+Symmetric secrets (HMAC, `dir`) live in the passphrase store.
 
 ```php
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 
 $manager = new JwtKeyManager();
 
-// For asymmetric algorithms (RS*, ES*, PS*, RSA-OAEP-256/A256GCM)
 $manager->addKeyPair(
-    private: file_get_contents('/path/to/private.pem'),
-    public: file_get_contents('/path/to/public.pem'),
+    private: file_get_contents('/path/private.pem'),
+    public: file_get_contents('/path/public.pem'),
     kid: 'main-key'
 );
 
-// For symmetric algorithms (HS*, A*GCM), register a single key
-$manager->addPrivateKey(
-    pemContent: file_get_contents('/path/to/hmac.key'),
-    kid: 'hmac-key'
-);
-
-// Optional: add a passphrase for encrypted private keys
 $manager->addPassphrase(
-    passphrase: getenv('JWT_PRIVATE_KEY_PASSPHRASE'),
+    passphrase: getenv('JWT_KEY_PASSPHRASE'),
     kid: 'main-key'
+);
+
+// For symmetric algorithms (HS*, dir/A*GCM), register a shared secret
+$manager->addPassphrase(
+    passphrase: getenv('JWT_SHARED_SECRET'),
+    kid: 'HS256'
 );
 ```
 
-### 2) Build a payload
-`JwtPayload` exposes helpers for standard claims and type-safe validation. Time-based claims accept `"now"`, relative expressions (e.g. `"+15 minutes"`), or UNIX timestamps.
+> If no `kid` is provided when issuing tokens, one is derived from the header algorithm
+> (e.g. `RS256`, `RSA-OAEP-256/A256GCM`). Make sure the corresponding key is registered
+> under that `kid`, or pass a `kid` explicitly.
+
+---
+
+### 2) Build a Payload
+
+`JwtPayload` provides helpers for standard claims and strict validation.
 
 ```php
 use Phithi92\JsonWebToken\Token\JwtPayload;
 
 $payload = (new JwtPayload())
     ->setIssuer('https://issuer.example')
-    ->setAudience(['https://service.example'])
+    ->setAudience('https://service.example')
     ->setIssuedAt('now')
-    ->setJwtId('token-123')
-    ->setNotBefore('+1 minute')
     ->setExpiration('+15 minutes')
+    ->setJwtId('token-123')
     ->addClaim('role', 'admin');
 ```
 
-### 3) Create and serialize a token
-`JwtTokenService` orchestrates token building. Provide the algorithm identifier defined in `src/Config/algorithms.php`. Use `createTokenFromArray()` when you already have a claims array instead of a `JwtPayload` instance.
+Time-based claims accept:
+- `"now"`
+- Relative strings (`+15 minutes`)
+- UNIX timestamps
+
+---
+
+### 3) Create & Serialize a Token
 
 ```php
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenServiceFactory;
-use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
+$service   = JwtTokenServiceFactory::createDefault();
 $validator = new JwtValidator();
-$service = JwtTokenServiceFactory::createDefault();
 
-$bundle = $service->createToken(
-    algorithm: 'RS256',
-    manager: $manager,
-    payload: $payload,
-    validator: $validator,
-    kid: 'main-key'
-);
-
-$tokenString = $service->createTokenString(
+$token = $service->createTokenString(
     algorithm: 'RS256',
     manager: $manager,
     payload: $payload,
@@ -110,39 +135,25 @@ $tokenString = $service->createTokenString(
 );
 ```
 
-If you already have a `JwtBundle`, you can serialize it into a compact token string:
-
-```php
-use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
-
-$tokenString = JwtBundleCodec::serialize($bundle);
-```
-
-You can also create a token directly from an array of claims (useful when you already have decoded claims):
+You may also issue tokens directly from an array of claims:
 
 ```php
 $bundle = $service->createTokenFromArray(
     algorithm: 'RS256',
     manager: $manager,
-    claims: [
-        'iss' => 'https://issuer.example',
-        'aud' => ['https://service.example'],
-        'iat' => time(),
-        'exp' => time() + 900,
-        'role' => 'admin',
-    ],
+    claims: ['iss' => 'https://issuer.example', 'exp' => time() + 900],
     validator: $validator,
     kid: 'main-key'
 );
 ```
 
+---
 
-### 4) Decrypt and validate
-Decrypts the compact string back into a `JwtBundle` while performing signature/encryption verification and claim checks. For workflows that only need to re-check claims without re-parsing headers, use `validateTokenClaims()`.
+### 4) Decrypt & Validate
 
 ```php
 $bundle = $service->decryptToken(
-    token: $tokenString,
+    token: $token,
     manager: $manager,
     validator: $validator
 );
@@ -150,82 +161,66 @@ $bundle = $service->decryptToken(
 $payload = $bundle->getPayload();
 ```
 
-To run only structural checks (no claim validation), call `decryptTokenWithoutClaimValidation()`—this should be restricted to non-production tooling.
-
-#### Claim-only validation
-If you already trust the token structure but want to re-check claims (e.g., just before use), you can validate claims only:
+#### Claim-Only Validation
 
 ```php
 $isValid = $service->validateTokenClaims(
-    token: $tokenString,
-    manager: $manager,
+    bundle: $bundle,
     validator: $validator
 );
 ```
 
-### 5) Business validation
-`JwtValidator` lets you enforce issuer, audience, and JWT ID expectations and verifies time-based claims. If you back JWT IDs with a registry (Redis/PDO), the service can automatically allow or deny IDs during issue/deny flows.
+> ⚠️ `*WithoutClaimValidation()` methods exist **only** for tests or tooling.
 
-```php
-$validator = new JwtValidator(
-    expectedIssuer: 'https://issuer.example',
-    expectedAudience: 'https://service.example',
-    expectedJwtId: 'token-123'
-);
+---
 
-$validator->assertValidIssuer($payload);
-$validator->assertValidAudience($payload);
-$validator->assertValidJwtId($payload);
-```
+### 5) Business Rules & Replay Protection
 
-#### Validator configuration options
-`JwtValidator` also supports clock skew, private claim expectations, and JWT ID allow/deny lists for replay protection.
+`JwtValidator` can enforce issuer, audience, private claims **and** protect against JWT replay attacks via a pluggable JWT ID registry.
+
+#### InMemoryJwtIdValidator
+
+`InMemoryJwtIdValidator` is a simple, deterministic implementation intended for tests, demos, and short‑lived processes.
 
 ```php
 use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 $jwtIdValidator = new InMemoryJwtIdValidator(
-    allowList: ['known-id-1', 'known-id-2'],
-    denyList: ['revoked-id']
+    allowList: ['token-123'],
+    denyList: ['revoked-token'],
+    useAllowList: true
 );
 
 $validator = new JwtValidator(
     expectedIssuer: 'https://issuer.example',
     expectedAudience: 'https://service.example',
-    clockSkew: 30,
-    expectedClaims: ['tenant' => 'acme', 'scope' => null],
     jwtIdValidator: $jwtIdValidator
 );
 ```
 
-You can back JWT ID validation with a persistent registry using Redis or PDO:
+##### How `useAllowList` works
 
-```php
-use Phithi92\JsonWebToken\Token\Validator\PdoJwtIdValidator;
-use Phithi92\JsonWebToken\Token\Validator\RedisJwtIdValidator;
+- **`useAllowList = true`**  
+  Only JWT IDs present in `allowList` are accepted.  
+  Useful for **single‑use tokens**, login flows, or explicit grants.
 
-$pdoValidator = new PdoJwtIdValidator(
-    pdo: new PDO('mysql:host=localhost;dbname=jwt', 'user', 'pass'),
-    useAllowList: false
-);
+- **`useAllowList = false` (default)**  
+  All JWT IDs are accepted **unless** they appear in `denyList`.  
+  Suitable for classic access tokens with revocation support.
 
-$redisValidator = new RedisJwtIdValidator(
-    redis: $redis,
-    useAllowList: true
-);
-```
-
-If your validator implements `JwtIdRegistryInterface`, the token service can automatically deny replayed tokens:
+When a token is successfully validated, the service can deny its JWT ID to prevent replay:
 
 ```php
 $service->denyBundle($bundle, $validator);
-// or manually deny a specific ID for a TTL in seconds
-$service->denyJwtId('token-123', 900, $validator);
 ```
 
-### Refresh / reissue
-`JwtTokenService::reissueBundle()` clones an existing bundle, strips time-based claims, and applies a new expiration window. Use `reissueBundleFromToken()` when you only have the compact token string.
+> ⚠️ `InMemoryJwtIdValidator` is process‑local and non‑persistent.  
+> Use Redis or PDO validators for production replay protection.
+
+---
+
+## Refresh / Reissue Tokens
 
 ```php
 $newBundle = $service->reissueBundle(
@@ -236,70 +231,48 @@ $newBundle = $service->reissueBundle(
 );
 ```
 
-You can also reissue directly from the compact token string:
+The original bundle remains untouched.
 
-```php
-$newBundle = $service->reissueBundleFromToken(
-    token: $tokenString,
-    interval: '+30 minutes',
-    manager: $manager,
-    validator: $validator
-);
-```
+---
 
-## Core classes
-- **`JwtKeyManager`** — central registry for supported algorithms, key pairs, and passphrases. Throws if keys are missing or invalid.
-- **`JwtPayload`** — mutable payload representation with helpers for standard claims and type enforcement. Raises dedicated exceptions for empty or malformed values.
-- **`JwtTokenService`** — high-level entry point for building, serializing, decrypting, and reissuing tokens. Provides testing-only methods that bypass claim validation (`createTokenWithoutClaimValidation`, `decryptTokenWithoutClaimValidation`).
-- **`JwtTokenServiceFactory`** — constructs a default service with issuer/reader/validator wiring.
-- **`JwtTokenCreator` / `JwtTokenReader`** — focused helpers for issuance and decryption when you want to wire dependencies yourself.
-- **`JwtValidator`** — reusable validator for issuer, audience, JWT ID, allow/deny list checks, and time-based constraints. `assert*` methods throw typed exceptions to help you differentiate failure causes.
-- **`JwtBundle`** — aggregate of header, payload, signatures, and encryption artifacts returned by the factory/parsers.
+## Supported Algorithms
 
-## Supported algorithms
-Algorithm identifiers map to handlers via `src/Config/algorithms.php`:
+Identifiers map to handlers via `resources/algorithms.php`.
 
-- **HMAC (JWS):** `HS256`, `HS384`, `HS512`
-- **RSA PKCS#1 (JWS):** `RS256`, `RS384`, `RS512`
-- **ECDSA (JWS):** `ES256`, `ES384`, `ES512`
-- **RSA-PSS (JWS):** `PS256`, `PS384`, `PS512`
-- **RSA-OAEP + AES-GCM (JWE):** `RSA-OAEP/A256GCM`, `RSA-OAEP-256/A256GCM`
-- **Direct AES-GCM (JWE):** `A128GCM`, `A192GCM`, `A256GCM`
+### JWS (signing)
+- **HMAC:** `HS256` · `HS384` · `HS512`
+- **RSA:** `RS256` · `RS384` · `RS512`
+- **RSA-PSS:** `PS256` · `PS384` · `PS512`
+- **ECDSA:** `ES256` · `ES384` · `ES512`
 
-## Security checklist
-- **Protect keys and passphrases.** Use environment variables or a secrets manager; never commit keys. `JwtKeyManager` keeps keys only in memory.
-- **Always validate claims.** Use `JwtValidator` (default in factory methods) and explicitly check issuer/audience. Avoid the `*WithoutClaimValidation` methods outside tests.
-- **Enforce HTTPS and short lifetimes.** Tokens should be transported only over TLS, with tight `nbf`/`exp` windows and frequent reissuing.
-- **Pin algorithms and key IDs.** Store the expected algorithm and `kid` per client to block downgrade or key-mixup attacks.
-- **Handle errors explicitly.** Catch the domain-specific exceptions (e.g., `TokenException`, `PayloadException`) to log and react safely without leaking sensitive details.
+### JWE (encryption)
+- **RSA-OAEP + AES-GCM:** `RSA-OAEP/A256GCM` · `RSA-OAEP-256/A256GCM`
+- **Direct AES-GCM:** `A128GCM` · `A192GCM` · `A256GCM`
+
+> Prefer **RSA-PSS** for new RSA signatures and **AES-GCM** for authenticated encryption. Pin algorithms per client.
+
+---
+
+## Security Best Practices
+
+- 🔑 Never commit keys or passphrases
+- 🔒 Always validate issuer & audience
+- ⏱ Use short expiration windows
+- 📌 Pin algorithms and `kid`s per client
+- 🧯 Catch domain-specific exceptions only
+
+---
 
 ## Development
-Install dependencies and generate local test keys:
 
 ```bash
 composer install
-composer run keys
-```
-
-Run quality checks:
-
-```bash
-composer run lint
-composer run cs:check
-composer run analyse
+composer run keys   # generate test keys
 composer run test
+composer run analyse
 ```
 
-Benchmark (optional):
-
-```bash
-composer run bench
-```
-
-## Troubleshooting tips
-- **Invalid key or padding errors:** verify that the PEM file matches the chosen algorithm (e.g., RSA keys for `RS*`/`PS*`, EC keys for `ES*`).
-- **Claim validation failures:** ensure `iat`, `nbf`, and `exp` are in sync with server time. Override the reference time by passing a `DateTimeImmutable` into `JwtPayload` for deterministic tests.
-- **Audience/issuer mismatches:** the validator accepts single values or arrays; provide all allowed entries for multi-tenant systems.
+---
 
 ## License
 Released under the MIT License. See [LICENSE](LICENSE).
