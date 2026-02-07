@@ -61,7 +61,20 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         $header = $bundle->getHeader();
         $alg = $header->getAlgorithm() ?? throw new InvalidTokenException('no algorithm');
 
-        return $alg === 'dir' && $header->getEnc() !== null ? $header->getEnc() : $alg;
+        $enc = $header->getEnc();
+        if ($enc === null) {
+            return $alg;
+        }
+
+        if ($alg === 'dir') {
+            return $enc;
+        }
+
+        $combined = sprintf('%s/%s', $alg, $enc);
+
+        return $this->manager->getConfiguration($combined) !== []
+            ? $combined
+            : $alg;
     }
 
     /**
