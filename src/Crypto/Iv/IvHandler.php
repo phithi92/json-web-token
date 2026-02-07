@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Iv;
 
-use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializationVectorConfigException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\InvalidInitializeVectorException;
+use InvalidArgumentException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 
 use function is_int;
@@ -23,12 +23,10 @@ final class IvHandler implements IvHandlerInterface
      */
     public function initializeIv(JwtBundle $bundle, array $config): void
     {
-        $byteLength = $this->normalizeAndValidateBitLength($config);
+        $ivLength = self::resolveIvByteLengthFromConfig($config);
 
         // Secure random IV
-        $iv = random_bytes($byteLength);
-
-        $this->assertValidIvLength($iv, $byteLength);
+        $iv = random_bytes($ivLength);
 
         // Store IV in the bundle
         $bundle->setEncryption($bundle->getEncryption()->withIv($iv));
@@ -37,59 +35,52 @@ final class IvHandler implements IvHandlerInterface
     /**
      * Validates the Initialization Vector (IV) in the bundle.
      *
-     * @throws InvalidInitializeVectorException If the IV is missing or has an unexpected length
+     * @throws InvalidTokenException If the IV is missing or has an unexpected length
      */
     public function validateIv(JwtBundle $bundle, array $config): void
     {
-        $bytesLength = $this->normalizeAndValidateBitLength($config);
+        $expected = self::resolveIvByteLengthFromConfig($config);
 
         $iv = $bundle->getEncryption()->getIv();
 
-        $this->assertValidIvLength($iv, $bytesLength);
-    }
+        // Actual IV length
+        $actual = strlen($iv);
 
-    /**
-     * @param array<string, int|string> $config
-     *
-     * @throws InvalidInitializationVectorConfigException
-     */
-    private function getBitLengthFromConfig(array $config): int
-    {
-        if (! isset($config['length'])) {
-            throw new InvalidInitializationVectorConfigException(0, 0);
-        }
-
-        $length = $config['length'];
-
-        if (! is_int($length)) {
-            throw new InvalidInitializationVectorConfigException(0, 0);
-        }
-
-        return $length;
-    }
-
-    private function assertValidIvLength(string $iv, int $expectedBytes): void
-    {
-        $ivBytes = strlen($iv);
-        if ($ivBytes !== $expectedBytes) {
-            throw new InvalidInitializeVectorException($ivBytes, $expectedBytes);
+        // Validate IV length
+        if ($actual !== $expected) {
+            throw new InvalidTokenException(
+                sprintf(
+                    'Initialization vector length mismatch (got %d bytes, expected %d)',
+                    $actual,
+                    $expected
+                )
+            );
         }
     }
 
     /**
-     * @param array<string, int|string> $config
-     *
+     * @param array<string, mixed> $config
      * @return positive-int
-     *
-     * @throws InvalidInitializationVectorConfigException
      */
-    private function normalizeAndValidateBitLength(array $config): int
+    private static function resolveIvByteLengthFromConfig(array $config): int
     {
-        $expectedBytes = ($this->getBitLengthFromConfig($config) >> 3);
-        if ($expectedBytes < 1) {
-            throw new InvalidInitializationVectorConfigException(0, $expectedBytes);
+        $bits = $config['length'] ?? null;
+
+        if (!is_int($bits)) {
+            throw new InvalidArgumentException(
+                'Config key "length" must be an int (bit length).'
+            );
         }
 
-        return $expectedBytes;
+        // bits -> bytes
+        $bytes = $bits >> 3;
+
+        if ($bytes < 1) {
+            throw new InvalidArgumentException(
+                'IV length must be >= 8 bits (>= 1 byte). Got: ' . $bits . ' bits.'
+            );
+        }
+
+        return $bytes;
     }
 }
