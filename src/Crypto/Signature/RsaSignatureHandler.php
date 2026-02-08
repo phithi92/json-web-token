@@ -8,9 +8,10 @@ use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Config\AlgorithmConfig;
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureComputationException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
-use Phithi92\JsonWebToken\Exceptions\Token\SignatureComputationFailedException;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
+use Phithi92\JsonWebToken\Security\KeyManagement\KidResolverInterface;
 use Phithi92\JsonWebToken\Security\KeyRole;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
@@ -21,6 +22,13 @@ use function openssl_verify;
 
 class RsaSignatureHandler extends AbstractSignatureHandler
 {
+    private OpenSslErrorHelper $errorHelper ;
+
+    public function __construct(JwtKeyManager $manager, ?KidResolverInterface $kidResolver = null)
+    {
+        parent::__construct($manager, $kidResolver);
+        $this->errorHelper = new OpenSslErrorHelper();
+    }
     /**
      * @var array<string, OpenSSLAsymmetricKey>
      */
@@ -39,8 +47,8 @@ class RsaSignatureHandler extends AbstractSignatureHandler
 
         $signature = '';
         if (! openssl_sign($signingInput, $signature, $privateKey, $algorithmConst)) {
-            $message = OpenSslErrorHelper::getFormattedErrorMessage('Compute Signature Failed: ');
-            throw new SignatureComputationFailedException($message);
+            $message = $this->errorHelper->getFormattedErrorMessage('Compute Signature Failed: ');
+            throw new SignatureComputationException($message);
         }
 
         /** @var string $signature */
@@ -61,10 +69,27 @@ class RsaSignatureHandler extends AbstractSignatureHandler
 
         // Verify the signature using the public key and algorithm
         $verified = openssl_verify($signinInput, $signature, $publicKey, $algorithmConst);
-        if ($verified !== 1) {
-            $message = OpenSslErrorHelper::getFormattedErrorMessage('Validate Signature Failed: ');
-            throw new InvalidTokenException($message);
+
+        $errors = $this->errorHelper->collectErrors();
+
+        if ($verified === 1) {
+            return;
         }
+
+        if ($verified === 0) {
+            throw new InvalidTokenException(
+                'Validate Signature Failed: ' . implode(' | ', $errors)
+            );
+        }
+
+        // $verified === -1 or anything unexpected
+        $message = 'Validate Signature Failed: ';
+
+        $message .= $errors === []
+            ? 'OpenSSL verify error'
+            : implode(' | ', $errors);
+
+        throw new SignatureComputationException($message);
     }
 
     public function mapHashToOpenSSLConstant(string $hash): int
@@ -90,7 +115,7 @@ class RsaSignatureHandler extends AbstractSignatureHandler
     /**
      * Validates the RSA key against the algorithm used.
      *
-     * @throws InvalidSignatureException
+     * @throws InvalidTokenException
      */
     public function assertRsaKeyIsValid(string $kid, string $algorithm, KeyRole $role): OpenSSLAsymmetricKey
     {
@@ -130,12 +155,12 @@ class RsaSignatureHandler extends AbstractSignatureHandler
         $actualKeySize = $modulusLength * 8;
         // Bytes to bits
         if ($actualKeySize < $expectedKeySize) {
-            throw new InvalidSignatureException("RSA key must be at least {$expectedKeySize} bits long");
+            throw new InvalidTokenException("RSA key must be at least {$expectedKeySize} bits long");
         }
     }
 
     /**
-     * @throws InvalidSignatureException
+     * @throws InvalidTokenException
      */
     private function getValidatedKeySize(OpenSSLAsymmetricKey $key, string $kid): string
     {
@@ -143,7 +168,7 @@ class RsaSignatureHandler extends AbstractSignatureHandler
         $details = openssl_pkey_get_details($key);
 
         if ($details === false) {
-            throw new InvalidSignatureException("Key [{$kid}] is not a valid RSA key.");
+            throw new InvalidTokenException("Key [{$kid}] is not a valid RSA key.");
         }
 
         return $details['rsa']['n'];
