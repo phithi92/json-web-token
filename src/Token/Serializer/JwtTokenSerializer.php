@@ -12,21 +12,18 @@ use Phithi92\JsonWebToken\Token\JwtTokenKind;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use ValueError;
 
-use function array_map;
-use function implode;
-
 final class JwtTokenSerializer
 {
     private const SEGMENT_SEPERATOR = '.';
 
     public static function serialize(JwtBundle $bundle): string
     {
-        $type = (string)$bundle->getHeader()->getType();
+        $type = (string) $bundle->getHeader()->getType();
 
         try {
             $kind = JwtTokenKind::from($type);
         } catch (ValueError) {
-            throw new MalformedTokenException('Invalid or unsupported token type');
+            throw new MalformedTokenException('unsupported "typ" header value.');
         }
 
         return $kind->isSignatureToken()
@@ -71,12 +68,18 @@ final class JwtTokenSerializer
      */
     private static function encodeAndSerialize(array $array): string
     {
-        return implode(
-            self::SEGMENT_SEPERATOR,
-            array_map(
-                static fn (?string $v): string => Base64UrlEncoder::encode($v ?? ''),
-                $array
-            )
-        );
+        $out = '';
+        $first = true;
+
+        foreach ($array as $v) {
+            if (! $first) {
+                $out .= self::SEGMENT_SEPERATOR;
+            }
+
+            $out .= Base64UrlEncoder::encode($v ?? '');
+            $first = false;
+        }
+
+        return $out;
     }
 }
