@@ -135,16 +135,22 @@ final class JwtTokenParser
         $encryptionData = new JwtEncryptionData(
             aad: $tokenArray[0],
             iv: self::decodeBase64Url($tokenArray[2]),
-            authTag: self::decodeBase64Url($tokenArray[4])
+            authTag: self::decodeBase64Url($tokenArray[4]),
         );
 
-        if ($bundle->getHeader()->getEnc() !== null && $bundle->getHeader()->getAlgorithm() !== 'dir') {
-            $encryptionData = $encryptionData->withEncryptedKey(self::decodeBase64Url($tokenArray[1]));
+        if ($bundle->getHeader()->getAlgorithm() === 'dir' && $tokenArray[1] !== '') {
+            throw new MalformedTokenException('encrypted key must be empty for "dir" algorithm.');
         }
 
-        $bundle->setEncryption($encryptionData);
+        if ($bundle->getHeader()->getAlgorithm() !== 'dir') {
+            $encryptionData = $encryptionData->withEncryptedKey(
+                self::decodeBase64Url($tokenArray[1])
+            );
+        }
 
         $encryptedPayload = self::decodeBase64Url($tokenArray[3]);
+
+        $bundle->setEncryption($encryptionData);
         $bundle->getPayload()->setEncryptedPayload($encryptedPayload);
 
         return $bundle;
