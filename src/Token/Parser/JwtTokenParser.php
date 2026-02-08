@@ -54,7 +54,7 @@ final class JwtTokenParser
         $tokenArray = is_string($token) ? explode('.', $token, 6) : $token;
 
         if (! isset($tokenArray[0])) {
-            throw new MalformedTokenException('Token is malformed or incomplete');
+            throw new MalformedTokenException('missing required parts.');
         }
 
         return $tokenArray;
@@ -76,7 +76,7 @@ final class JwtTokenParser
         try {
             return Base64UrlEncoder::decode($base64);
         } catch (InvalidBase64UrlFormatException) {
-            throw new MalformedTokenException('Cannot decode: invalid Base64Url content.');
+            throw new MalformedTokenException('invalid Base64Url encoding.');
         }
     }
 
@@ -89,7 +89,7 @@ final class JwtTokenParser
 
         $kind = JwtTokenKind::tryFrom((string) $rawType);
         if ($kind === null) {
-            throw new MalformedTokenException('Invalid or unsupported token type');
+            throw new MalformedTokenException('unsupported "typ" header value.');
         }
 
         return self::parseByKind($bundle, $tokenArray, $kind);
@@ -103,7 +103,7 @@ final class JwtTokenParser
         $kind = JwtTokenKind::fromPartCount(count($tokenArray));
 
         if ($kind === null) {
-            throw new MalformedTokenException('Invalid or unsupported token type');
+            throw new MalformedTokenException('unsupported compact serialization.');
         }
 
         return self::parseByKind($bundle, $tokenArray, $kind);
@@ -117,7 +117,7 @@ final class JwtTokenParser
     private static function parseByKind(JwtBundle $bundle, array $tokenArray, JwtTokenKind $kind): JwtBundle
     {
         if (count($tokenArray) !== $kind->partCount()) {
-            throw new MalformedTokenException('Invalid token structure.');
+            throw new MalformedTokenException('invalid number of segments.');
         }
 
         return $kind->isSignatureToken()
