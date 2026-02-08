@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Key;
 
+use Exception;
 use LogicException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
@@ -41,8 +42,11 @@ class RsaKeyHandler implements KeyHandlerInterface
 
         $wrappedKey = $bundle->getEncryption()->getEncryptedKey();
 
+        [$padding, $hash] = $this->extractPaddingAndHash($config);
+
+
         // Decrypt CEK with RSA private key
-        $cek = $this->unwrap($wrappedKey, $kid, $config);
+        $cek = $this->unwrap($wrappedKey, $kid, $padding, $hash);
 
         $bundle->setEncryption($bundle->getEncryption()->withCek($cek));
     }
@@ -71,9 +75,17 @@ class RsaKeyHandler implements KeyHandlerInterface
     {
         $key = $this->manager->getKeyMetadata($kid, KeyRole::Public);
 
-        $publicKey = $this->buildPublicKey(pem: $key->pem(), config: $config);
+        $publicKey = $this->buildPhpseclibPublicKey(
+            pem: $key->pem(),
+            config: $config
+        );
 
-        $wrappedKey = $publicKey->encrypt($cek);
+        try {
+            $wrappedKey = $publicKey->encrypt($cek);
+        } catch (Exception $e) {
+            throw new InvalidTokenException($e->getMessage());
+        }
+
         if (! is_string($wrappedKey) || $wrappedKey === '') {
             throw new EncryptionException('RSA encryption failed – empty result.');
         }
@@ -82,18 +94,30 @@ class RsaKeyHandler implements KeyHandlerInterface
     }
 
     /**
-     * @param array<string, string|int> $config
      *
-     * @throws InvalidTokenException
+     * @param string $wrappedKey
+     * @param string $kid
+     * @param int $padding
+     *
+     * @return string
+     *
      * @throws DecryptionException
      */
-    protected function unwrap(string $wrappedKey, string $kid, array $config): string
+    protected function unwrap(string $wrappedKey, string $kid, int $padding, ?string $hash = null): string
     {
         $keyDetails = $this->manager->getKeyMetadata($kid, KeyRole::Private);
 
-        $privateKey = $this->buildPrivateKey(pem: $keyDetails->pem(), config: $config);
+        $privateKey = $this->buildPhpseclibPrivateKey(
+            pem: $keyDetails->pem(),
+            padding: $padding,
+            hash: $hash
+        );
 
-        $cek = $privateKey->decrypt($wrappedKey);
+        try {
+            $cek = $privateKey->decrypt($wrappedKey);
+        } catch (Exception $e) {
+            throw new InvalidTokenException($e->getMessage());
+        }
 
         if (! is_string($cek) || $cek === '') {
             throw new DecryptionException('RSA unwrap failed – empty CEK.');
@@ -159,49 +183,39 @@ class RsaKeyHandler implements KeyHandlerInterface
     /**
      * @param array<string, string|int> $config
      */
-    private function buildPrivateKey(string $pem, array $config): RSAPrivateKey
+    private function buildPhpseclibPrivateKey(string $pem, int $padding, ?string $hash = null): RSAPrivateKey
     {
-        return $this->buildKey(KeyRole::Private, $pem, $config);
-    }
-
-    /**
-     * @param array<string, string|int> $config
-     */
-    private function buildPublicKey(string $pem, array $config): RSAPublicKey
-    {
-        return $this->buildKey(KeyRole::Public, $pem, $config);
-    }
-
-    /**
-     * @param array<string, string|int> $config
-     *
-     * @throws LogicException
-     */
-    private function buildKey(
-        KeyRole $role,
-        string $pem,
-        array $config
-    ): RSAPrivateKey|RSAPublicKey {
-        $key = match ($role) {
-            KeyRole::Private => $this->loadPrivateKey($pem),
-            KeyRole::Public  => $this->loadPublicKey($pem),
-        };
-
-        [$padding, $hash] = $this->extractPaddingAndHash($config);
-
-        /** @var RSAPrivateKey|RSAPublicKey $configured */
-        $configured = $key->withPadding($padding);
+        $key = $this
+            ->loadPrivateKey($pem)
+            ->withPadding($padding);
 
         if ($hash === null) {
-            return $configured;
+            return $key;
         }
 
-        /** @var RSAPrivateKey|RSAPublicKey $configured */
-        $configured = $configured->withHash($hash);
-        /** @var RSAPrivateKey|RSAPublicKey $configured */
-        $configured = $configured->withMGFHash($hash);
+        return $key
+            ->withHash($hash)
+            ->withMGFHash($hash);
+    }
 
-        return $configured;
+    /**
+     * @param array<string, string|int> $config
+     */
+    private function buildPhpseclibPublicKey(string $pem, array $config): RSAPublicKey
+    {
+        [$padding, $hash] = $this->extractPaddingAndHash($config);
+
+        $key = $this
+            ->loadPublicKey($pem)
+            ->withPadding($padding);
+
+        if ($hash === null) {
+            return $key;
+        }
+
+        return $key
+            ->withHash($hash)
+            ->withMGFHash($hash);
     }
 
     private function loadPrivateKey(string $pem): RSAPrivateKey
