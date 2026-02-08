@@ -31,4 +31,6 @@ enum CryptoErrorMessagesEnum: string
     case MISSING_PASSPHRASE = 'A passphrase is required if no public and private keys are provided.';
     case INVALID_CONFIG = 'IV length must be at least %2$s bits, got %1$s byte).';
     case INVALID_CEK = 'CEK is not valid';
+    case SIGNATURE_COMPUTATION_FAILED = 'Signature computation failed: %1$s';
+    case SIGNATURE_VERIFICATION_FAILED = 'Signature verification failed: %s';
 }

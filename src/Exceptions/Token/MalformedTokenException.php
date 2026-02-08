@@ -8,6 +8,6 @@ class MalformedTokenException extends TokenException
 {
     public function __construct(string $message)
     {
-        parent::__construct('INDIVIDUAL_MESSAGE', $message);
+        parent::__construct('MALFORMED_TOKEN', $message);
     }
 }
