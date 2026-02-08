@@ -16,6 +16,7 @@ use Phithi92\JsonWebToken\Token\Factory\JwtHeaderFactory;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\JwtTokenKind;
 use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
@@ -149,30 +150,21 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
     /**
      * @param array<string, mixed> $config
      *
-     * @return array{string,string|null,string|null}
+     * @return array{JwtTokenKind,string|null,string|null}
      *
      * @throws InvalidAlgorithmConfigurationException
      */
     private function resolveHeaderParamsFromConfig(array $config): array
     {
-        $tokenType = $config['token_type'] ?? null;
+        $tokenType = $config['token_type'] ?? '';
         $alg = $config['alg'] ?? null;
         $enc = $config['enc'] ?? null;
 
         return [
-            $this->normalizeTokenType($tokenType),
+            JwtTokenKind::fromTypeOrFail($tokenType),
             $this->normalizeOptionalString($alg),
             $this->normalizeOptionalString($enc),
         ];
-    }
-
-    private function normalizeTokenType(mixed $tokenType): string
-    {
-        if (! is_string($tokenType)) {
-            throw new InvalidAlgorithmConfigurationException();
-        }
-
-        return $tokenType;
     }
 
     private function normalizeOptionalString(mixed $value): ?string
