@@ -29,7 +29,7 @@ abstract class AbstractSignatureHandler implements SignatureHandlerInterface
      */
     protected function getConfiguredHashAlgorithm(array $config): string
     {
-        return (isset($config['hash_algorithm']) && is_string($config['hash_algorithm']))
+        return isset($config['hash_algorithm']) && is_string($config['hash_algorithm'])
             ? $config['hash_algorithm']
             : '';
     }

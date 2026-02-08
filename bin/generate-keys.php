@@ -74,6 +74,7 @@ foreach ($ecCurves as $curve => $hash) {
     echo "🔐 Generiere EC-Schlüssel für Kurve: {$curve}...\n";
 
     $keyPath = "{$basePath}/ec/{$curve}";
+    
     @mkdir($keyPath, 0777, true);
 
     $privateKeyFile = "{$keyPath}/private.pem";
