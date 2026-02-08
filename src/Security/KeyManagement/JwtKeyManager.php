@@ -92,7 +92,8 @@ final class JwtKeyManager
     }
 
     public function addKey(
-        #[SensitiveParameter] string $pemContent,
+        #[SensitiveParameter]
+        string $pemContent,
         KeyRole $role,
         ?string $kid = null
     ): KeyEntry {

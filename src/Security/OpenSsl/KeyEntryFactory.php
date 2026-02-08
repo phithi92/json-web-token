@@ -46,7 +46,7 @@ final class KeyEntryFactory
     {
         return match ($role) {
             KeyRole::Private => $this->exportPrivatePem($key),
-            KeyRole::Public  => $this->exportPublicPem($key),
+            KeyRole::Public => $this->exportPublicPem($key),
         };
     }
 
@@ -54,7 +54,7 @@ final class KeyEntryFactory
     {
         $pem = null;
 
-        if (!openssl_pkey_export($key, $pem) || !is_string($pem) || trim($pem) === '') {
+        if (! openssl_pkey_export($key, $pem) || ! is_string($pem) || trim($pem) === '') {
             throw new RuntimeException('Unable to export private key PEM from OpenSSL key.');
         }
 
@@ -65,7 +65,7 @@ final class KeyEntryFactory
     {
         $details = openssl_pkey_get_details($key);
 
-        if ($details === false || !isset($details['key']) || !is_string($details['key']) || trim($details['key']) === '') {
+        if ($details === false || ! isset($details['key']) || ! is_string($details['key']) || trim($details['key']) === '') {
             throw new RuntimeException('Unable to export public key PEM from OpenSSL key.');
         }
 
@@ -83,7 +83,7 @@ final class KeyEntryFactory
 
         return match ($role) {
             KeyRole::Private => $this->ensureKey(openssl_pkey_get_private($pemOrKey)),
-            KeyRole::Public  => $this->ensureKey(openssl_pkey_get_public($pemOrKey)),
+            KeyRole::Public => $this->ensureKey(openssl_pkey_get_public($pemOrKey)),
         };
     }
 
@@ -113,7 +113,7 @@ final class KeyEntryFactory
         $type = $details['type'] ?? null;
         $bits = $details['bits'] ?? null;
 
-        if (!is_int($type) || !is_int($bits)) {
+        if (! is_int($type) || ! is_int($bits)) {
             throw new RuntimeException('Could not determine key details.');
         }
 

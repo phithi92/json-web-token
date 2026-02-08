@@ -45,11 +45,11 @@ final class KeyStore
 
     public function getMetadata(string $kid, KeyRole $role): KeyEntry
     {
-        if (!isset($this->keys[$kid])) {
+        if (! isset($this->keys[$kid])) {
             throw new RuntimeException("Key with ID [{$kid}] not found.");
         }
 
-        if (!isset($this->keys[$kid][$role->value])) {
+        if (! isset($this->keys[$kid][$role->value])) {
             throw new RuntimeException("Role [{$role->value}] not found for key ID [{$kid}].");
         }
 

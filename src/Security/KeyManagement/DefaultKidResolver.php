@@ -55,7 +55,7 @@ final class DefaultKidResolver implements KidResolverInterface
         $alg = $header->getAlgorithm()
             ?? (isset($config['alg']) && is_string($config['alg']) ? $config['alg'] : null);
 
-        if (!is_string($alg) || $alg === '') {
+        if (! is_string($alg) || $alg === '') {
             return null;
         }
 
