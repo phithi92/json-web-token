@@ -30,19 +30,28 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
 
     private JwtKeyManager $manager;
 
+    private OpenSslErrorHelper $errorHelper;
+
     public function __construct(JwtKeyManager $manager)
     {
         $this->manager = $manager;
+        $this->errorHelper = new OpenSslErrorHelper();
     }
 
     /**
+     *
+     * @param JwtBundle $bundle
+     * @param array<string,int|string> $config
+     *
+     * @return void
+     *
      * @throws InvalidTokenException
      */
     public function decryptPayload(JwtBundle $bundle, array $config): void
     {
         $unsealedPayload = openssl_decrypt(
             data: $bundle->getPayload()->getEncryptedPayload(),
-            cipher_algo: $this->buildAesGcmAlgorithm($config),
+            cipher_algo: $this->resolveCipherAlgorithm($config),
             passphrase: $this->resolveCek($bundle),
             options: self::OPENSSL_OPTIONS,
             iv: $bundle->getEncryption()->getIv(),
@@ -51,20 +60,29 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
         );
 
         if ($unsealedPayload === false) {
-            $message = OpenSslErrorHelper::getFormattedErrorMessage('Decrypt Payload Failed: ');
+            $message = $this->errorHelper->getFormattedErrorMessage('Decrypt Payload Failed: ');
             throw new InvalidTokenException($message);
         }
 
         JwtPayloadJsonCodec::decodeStaticInto($unsealedPayload, $bundle->getPayload());
     }
 
+    /**
+     *
+     * @param JwtBundle $bundle
+     * @param array<string,int|string> $config
+     *
+     * @return void
+     *
+     * @throws EncryptionException
+     */
     public function encryptPayload(JwtBundle $bundle, array $config): void
     {
         $authTag = '';
 
         $sealedPayload = openssl_encrypt(
             data: JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
-            cipher_algo: $this->buildAesGcmAlgorithm($config),
+            cipher_algo: $this->resolveCipherAlgorithm($config),
             passphrase: $this->resolveCek($bundle),
             options: self::OPENSSL_OPTIONS,
             iv: $bundle->getEncryption()->getIv(),
@@ -74,7 +92,7 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
         );
 
         if ($sealedPayload === false) {
-            $message = OpenSslErrorHelper::getFormattedErrorMessage('Encrypt Payload Failed: ');
+            $message = $this->errorHelper->getFormattedErrorMessage('Encrypt Payload Failed: ');
             throw new EncryptionException($message);
         }
 
@@ -95,7 +113,7 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
     /**
      * @param array<string,int|string> $config
      */
-    private function buildAesGcmAlgorithm(array $config): string
+    private function resolveCipherAlgorithm(array $config): string
     {
         /** @var int $bits */
         $bits = $config['length'];
