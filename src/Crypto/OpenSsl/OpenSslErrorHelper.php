@@ -12,30 +12,62 @@ final class OpenSslErrorHelper
     private const MESSAGE_PREFIX = 'OpenSSL error(s):';
 
     /**
+     * @var array<string>
+     */
+    private array $lastErrors = [];
+
+    /**
+     * Clears the OpenSSL error queue.
+     */
+    public function clearErrors(): void
+    {
+        while (openssl_error_string() !== false) {
+            // discard
+        }
+    }
+
+    /**
      * Collects all OpenSSL errors currently stored in the error queue.
      *
-     * @return array<string> List of OpenSSL error messages
+     * Note: This also clears the queue.
+     *
+     * @return array<string>
      */
-    public static function collectErrors(): array
+    public function collectErrors(): array
     {
         $errors = [];
+        $seen   = [];
 
-        while ($error = openssl_error_string()) {
+        while (($error = openssl_error_string()) !== false) {
+            if (isset($seen[$error])) {
+                continue;
+            }
+
+            $seen[$error] = true;
             $errors[] = $error;
         }
+
+        $this->lastErrors = $errors;
 
         return $errors;
     }
 
-    /**
-     * Returns a formatted string with all OpenSSL errors concatenated.
-     *
-     * @param string $prefix Optional text before the error string
-     */
-    public static function getFormattedErrorMessage(?string $prefix = self::MESSAGE_PREFIX): string
+    public function getFormattedErrorMessage(string $prefix = self::MESSAGE_PREFIX): string
     {
-        $errors = self::collectErrors();
+        $errors = $this->collectErrors();
 
-        return $errors === [] ? $prefix . ' <none>' : $prefix . ' ' . implode(' | ', $errors);
+        return $errors === []
+            ? $prefix . ' <none>'
+            : $prefix . ' ' . implode(' | ', $errors);
+    }
+
+    public function getLastFormattedErrorMessage(string $prefix = self::MESSAGE_PREFIX): string
+    {
+        $errors = $this->lastErrors;
+        $this->lastErrors = [];
+
+        return $errors === []
+            ? $prefix . ' <none>'
+            : $prefix . ' ' . implode(' | ', $errors);
     }
 }
