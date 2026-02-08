@@ -7,6 +7,7 @@ namespace Phithi92\JsonWebToken\Token\Factory;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingHeaderAlgorithmException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Token\JwtHeader;
+use Phithi92\JsonWebToken\Token\JwtTokenKind;
 
 use function implode;
 
@@ -24,7 +25,7 @@ final class JwtHeaderFactory
      * @throws UnresolvableKeyException
      */
     public function create(
-        string $typ,
+        JwtTokenKind $typ,
         ?string $alg,
         ?string $kid = null,
         ?string $enc = null,
@@ -35,17 +36,17 @@ final class JwtHeaderFactory
 
         $resolvedKid = $kid ?? $this->deriveDefaultKid($alg, $enc);
 
-        return $this->buildHeader($typ, $alg, $resolvedKid, $enc);
+        return $this->buildHeader($typ, $resolvedKid, $alg, $enc);
     }
 
     private function buildHeader(
-        string $typ,
-        string $alg,
+        JwtTokenKind $typ,
         string $kid,
+        string $alg,
         ?string $enc,
     ): JwtHeader {
         $header = (new JwtHeader())
-            ->setType($typ)
+            ->setType($typ->value)
             ->setAlgorithm($alg)
             ->setKid($kid);
 
