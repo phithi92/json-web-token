@@ -10,7 +10,6 @@ use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 
 use function random_bytes;
-use function strlen;
 
 final class CekHandler implements CekHandlerInterface
 {
@@ -36,40 +35,6 @@ final class CekHandler implements CekHandlerInterface
     {
         if ($bundle->getHeader()->getAlgorithm() === 'dir') {
             return;
-        }
-
-        $cek = $bundle->getEncryption()->getCek();
-
-        $this->validateCekLength($cek, $config);
-    }
-
-    /**
-     * @param array<string, int|string|bool> $config Configuration array with 'length' key in bits
-     */
-    private function isStrictLengthEnabled(array $config): bool
-    {
-        return isset($config['strict_length']) && (bool) $config['strict_length'] === true;
-    }
-
-    /**
-     * @param array<string, int|string> $config
-     *
-     * @throws InvalidCekLength
-     */
-    private function validateCekLength(string $cek, array $config): void
-    {
-        $expectedBytes = $this->getByteLength($config);
-        $strict = $this->isStrictLengthEnabled($config);
-        $cekLength = strlen($cek);
-
-        if ($strict) {
-            if ($cekLength !== $expectedBytes) {
-                throw new InvalidCekLength($cekLength, $expectedBytes);
-            }
-        } else {
-            if ($cekLength < $expectedBytes) {
-                throw new InvalidCekLength($cekLength, $expectedBytes);
-            }
         }
     }
 
