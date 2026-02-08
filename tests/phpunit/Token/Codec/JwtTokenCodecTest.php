@@ -27,7 +27,7 @@ final class JwtTokenCodecTest extends TestCaseWithSecrets
 
         $parts = [
             Base64UrlEncoder::encode($headerJson),           // Header
-            Base64UrlEncoder::encode('cek_or_encrypted_key'), // CEK oder Encrypted Key
+            '', // CEK oder Encrypted Key
             Base64UrlEncoder::encode('iv123'),               // IV
             Base64UrlEncoder::encode('ciphertext'),          // Ciphertext
             Base64UrlEncoder::encode('authtag'),             // AuthTag
@@ -49,7 +49,7 @@ final class JwtTokenCodecTest extends TestCaseWithSecrets
 
         $parts = [
             Base64UrlEncoder::encode($headerJson),           // Header
-            Base64UrlEncoder::encode('cek_or_encrypted_key'), // CEK oder Encrypted Key
+            '', // CEK oder Encrypted Key
             Base64UrlEncoder::encode('iv123'),               // IV
             Base64UrlEncoder::encode('ciphertext'),          // Ciphertext
             Base64UrlEncoder::encode('authtag'),             // AuthTag

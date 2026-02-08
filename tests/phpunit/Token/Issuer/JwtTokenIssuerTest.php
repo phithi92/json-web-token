@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token\Builder;
 
-use Phithi92\JsonWebToken\Exceptions\Config\InvalidAlgorithmConfigurationException;
+use InvalidArgumentException;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use ReflectionClass;
 use Tests\phpunit\TestCaseWithSecrets;
 
-class JwtTokenBuilderTest extends TestCaseWithSecrets
+class JwtTokenIssuerTest extends TestCaseWithSecrets
 {
     public function testInvalidHeaderConfigThrowsException(): void
     {
@@ -19,10 +19,11 @@ class JwtTokenBuilderTest extends TestCaseWithSecrets
         $method = $reflection->getMethod('resolveHeaderParamsFromConfig');
         $method->setAccessible(true);
 
-        $this->expectException(InvalidAlgorithmConfigurationException::class);
-        $this->expectExceptionMessage(
-            'Invalid algorithm configuration: expected token_type, alg, and enc to be scalar values.'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(sprintf(
+            'Unsupported JWT type: %s',
+            123
+        ));
 
         $method->invoke($builder, [
             'token_type' => 123,
