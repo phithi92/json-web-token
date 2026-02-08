@@ -98,7 +98,9 @@ abstract class BenchmarkBase
             if (3 === count($parts)) {
                 $parts[2] = 'invalidsig';
             } elseif (5 === count($parts)) {
-                $parts[1] = 'invalidiv';
+                if ($parts[1] !== '') {
+                    $parts[1] = 'invalidiv';
+                }
                 $parts[4] = 'invalidauthtag';
             }
 

@@ -4,6 +4,8 @@ namespace Tests\phpbench;
 
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
 use PhpBench\Attributes as Bench;
@@ -49,7 +51,13 @@ class BenchSupportedAgorithms extends BenchmarkBase
             $c = new JwtTokenDecryptor($this->getManager());
             $c->decrypt($token);
         } catch (TokenException $e) {
-            assert($e instanceof TokenException);
+
+            if (
+                ! $e instanceof MalformedTokenException &&
+                ! $e instanceof InvalidTokenException
+            ) {
+                throw $e;
+            }
         }
     }
 }
