@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use Phithi92\JsonWebToken\Config\AlgorithmConfig;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidSignatureException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureComputationException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
 use Phithi92\JsonWebToken\Token\Serializer\JwsSigningInput;
+use ValueError;
 
 use function hash_equals;
 use function hash_hmac;
+use function sprintf;
 use function strlen;
 use function strtolower;
 
@@ -40,7 +43,7 @@ class HmacSignatureHandler extends AbstractSignatureHandler
     }
 
     /**
-     * @throws InvalidSignatureException
+     * @throws InvalidTokenException
      */
     public function validateSignature(JwtBundle $bundle, array $config): void
     {
@@ -49,22 +52,36 @@ class HmacSignatureHandler extends AbstractSignatureHandler
         $kid = $this->kidResolver->resolve($bundle, $config);
         $algorithm = $cnf->hashAlgorithm();
         $passphrase = $this->manager->getPassphrase($kid);
+        $aad = $bundle->getEncryption()->getAad();
 
         $this->assertHmacKeyIsValid($kid, $algorithm, $passphrase);
 
-        $aad = $bundle->getEncryption()->getAad();
-        $expectedHash = hash_hmac($algorithm, $aad, $passphrase, true);
+        try {
+            // PHP 8+: hash_hmac() can throw ValueError (invalid args) OR return false (internal failure)
+
+            $expectedHash = hash_hmac($algorithm, $aad, $passphrase, true);
+        } catch (ValueError $e) {
+            throw new SignatureComputationException(
+                sprintf('Invalid HMAC algorithm: %s', $algorithm)
+            );
+        }
+
+        if ($expectedHash === false) {
+            throw new SignatureComputationException(
+                sprintf('HMAC computation failed (algorithm: %s)', $algorithm)
+            );
+        }
 
         $signature = (string) $bundle->getSignature();
 
         // Compare the expected HMAC with the provided signature using constant-time comparison
         if (! hash_equals($expectedHash, $signature)) {
-            throw new InvalidSignatureException('Signature is not valid');
+            throw new InvalidTokenException('Signature is not valid');
         }
     }
 
     /**
-     * @throws InvalidSignatureException
+     * @throws InvalidTokenException
      */
     private function assertHmacKeyIsValid(string $kid, string $algorithm, string $passphrase): void
     {
@@ -75,18 +92,18 @@ class HmacSignatureHandler extends AbstractSignatureHandler
         }
 
         if ($passphrase === '') {
-            throw new InvalidSignatureException("HMAC key for [{$kid}] is empty.");
+            throw new InvalidTokenException("HMAC key for [{$kid}] is empty.");
         }
 
         $minLength = match (strtolower($algorithm)) {
             'sha256' => 32,
             'sha384' => 48,
             'sha512' => 64,
-            default => throw new InvalidSignatureException("Unsupported hash algorithm: {$algorithm}"),
+            default => throw new InvalidTokenException("Unsupported hash algorithm: {$algorithm}"),
         };
 
         if (strlen($passphrase) < $minLength) {
-            throw new InvalidSignatureException(
+            throw new InvalidTokenException(
                 "HMAC key for [{$kid}] is too short for {$algorithm}. Expected at least {$minLength} bytes."
             );
         }
