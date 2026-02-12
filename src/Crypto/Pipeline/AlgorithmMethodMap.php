@@ -12,8 +12,7 @@ final class AlgorithmMethodMap
             CryptoOperationDirection::Reverse->name => 'validateSignature',
         ],
         CryptoProcessingStage::Cek->name => [
-            CryptoOperationDirection::Perform->name => 'initializeCek',
-            CryptoOperationDirection::Reverse->name => 'validateCek',
+            CryptoOperationDirection::Perform->name => 'initializeCek'
         ],
         CryptoProcessingStage::Iv->name => [
             CryptoOperationDirection::Perform->name => 'initializeIv',
@@ -28,6 +27,13 @@ final class AlgorithmMethodMap
             CryptoOperationDirection::Reverse->name => 'decryptPayload',
         ],
     ];
+
+    public function supports(
+        CryptoProcessingStage $stage,
+        CryptoOperationDirection $direction
+    ): bool {
+        return isset(self::METHOD_MAP[$stage->name][$direction->name]);
+    }
 
     /**
      * Resolves the method name that should be called on a handler

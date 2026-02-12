@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Crypto\Pipeline;
 
+use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmInvocation;
 use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmMethodMap;
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoAlgorithmInvoker;
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoProcessingStage;
 use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerResult;
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\InvalidAlgorithmImplementationException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\MissingAlgorithmConfigurationException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
+use Phithi92\JsonWebToken\Token\JwtSignature;
 use PHPUnit\Framework\TestCase;
 
 final class CryptoAlgorithmInvokerTest extends TestCase
@@ -22,15 +25,19 @@ final class CryptoAlgorithmInvokerTest extends TestCase
     {
         $dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
 
-        $result = $dispatcher->dispatch(
+        $this->expectException(MissingAlgorithmConfigurationException::class);
+
+        $invokation = new AlgorithmInvocation(
             CryptoProcessingStage::Signature,
-            CryptoOperationDirection::Perform,
-            new JwtKeyManager(),
-            [],
-            ['bundle' => new JwtBundle(new JwtHeader())]
+            CryptoOperationDirection::Perform
         );
 
-        $this->assertNull($result);
+        $dispatcher->process(
+            $invokation,
+            new JwtKeyManager(),
+            new JwtBundle(new JwtHeader()),
+            []
+        );
     }
 
     public function testDispatchThrowsWhenConfigMissingHandlerDefinition(): void
@@ -39,12 +46,16 @@ final class CryptoAlgorithmInvokerTest extends TestCase
 
         $this->expectException(MissingAlgorithmConfigurationException::class);
 
-        $dispatcher->dispatch(
+        $invokation = new AlgorithmInvocation(
             CryptoProcessingStage::Signature,
-            CryptoOperationDirection::Perform,
+            CryptoOperationDirection::Perform
+        );
+
+        $dispatcher->process(
+            $invokation,
             new JwtKeyManager(),
+            new JwtBundle(new JwtHeader()),
             [CryptoProcessingStage::Signature->interfaceClass() => 'invalid'],
-            ['bundle' => new JwtBundle(new JwtHeader())]
         );
     }
 
@@ -54,12 +65,16 @@ final class CryptoAlgorithmInvokerTest extends TestCase
 
         $this->expectException(InvalidAlgorithmImplementationException::class);
 
-        $dispatcher->dispatch(
+        $invokation = new AlgorithmInvocation(
             CryptoProcessingStage::Signature,
-            CryptoOperationDirection::Perform,
+            CryptoOperationDirection::Perform
+        );
+
+        $dispatcher->process(
+            $invokation,
             new JwtKeyManager(),
+            new JwtBundle(new JwtHeader()),
             [CryptoProcessingStage::Signature->interfaceClass() => ['handler' => 123]],
-            ['bundle' => new JwtBundle(new JwtHeader())]
         );
     }
 
@@ -69,12 +84,16 @@ final class CryptoAlgorithmInvokerTest extends TestCase
 
         $this->expectException(InvalidAlgorithmImplementationException::class);
 
-        $dispatcher->dispatch(
+        $invokation = new AlgorithmInvocation(
             CryptoProcessingStage::Signature,
-            CryptoOperationDirection::Perform,
+            CryptoOperationDirection::Perform
+        );
+
+        $dispatcher->process(
+            $invokation,
             new JwtKeyManager(),
+            new JwtBundle(new JwtHeader()),
             [CryptoProcessingStage::Signature->interfaceClass() => ['handler' => NotAHandler::class]],
-            ['bundle' => new JwtBundle(new JwtHeader())]
         );
     }
 
@@ -85,12 +104,19 @@ final class CryptoAlgorithmInvokerTest extends TestCase
         $dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
         $bundle = new JwtBundle((new JwtHeader())->setAlgorithm('HS256'));
 
-        $dispatcher->dispatch(
+        $invokation = new AlgorithmInvocation(
             CryptoProcessingStage::Signature,
-            CryptoOperationDirection::Perform,
+            CryptoOperationDirection::Perform
+        );
+
+        $dispatcher->process(
+            $invokation,
             new JwtKeyManager(),
-            [CryptoProcessingStage::Signature->interfaceClass() => ['handler' => TestSignatureHandler::class]],
-            ['bundle' => $bundle]
+            $bundle,
+            [CryptoProcessingStage::Signature->interfaceClass() => [
+                'handler' => TestSignatureHandler::class,
+                'hash_algorithm' => 'sha256'
+            ]],
         );
 
         $this->assertSame(['computeSignature'], TestSignatureHandler::$calls);
@@ -102,14 +128,16 @@ final class TestSignatureHandler implements SignatureHandlerInterface
     /** @var array<int, string> */
     public static array $calls = [];
 
-    public function validateSignature(JwtBundle $bundle, array $config): void
+    public function validateSignature(string $kid, string $algorithm, string $aad, string $signature): void
     {
         self::$calls[] = 'validateSignature';
     }
 
-    public function computeSignature(JwtBundle $bundle, array $config): void
+    public function computeSignature(string $kid, string $algorithm, string $signingInput): SignatureHandlerResult
     {
         self::$calls[] = 'computeSignature';
+
+        return new SignatureHandlerResult(signature: new JwtSignature('computeSignature'));
     }
 }
 

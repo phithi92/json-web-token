@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Crypto\ContentEncryption;
 
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
-use Phithi92\JsonWebToken\Token\JwtBundle;
 
 /**
  * Interface ContentCryptoInterface.
@@ -18,21 +17,42 @@ interface ContentEncryptionHandlerInterface
     public function __construct(JwtKeyManager $manager);
 
     /**
-     * Encrypts the JWT payload using the configured content encryption algorithm.
+     * Encrypts plaintext using AEAD (e.g., AES-GCM).
      *
-     * @param JwtBundle $bundle the bundle containing the plaintext payload
-     * and encryption metadata
-     * @param array<string,string|int|class-string<object>> $config Configuration for the
-     * encryption algorithm and key usage
+     * @param string $data                         Plaintext to encrypt.
+     * @param string $encryptionKey                Secret key (raw binary/base64).
+     * @param int    $cipherKeyLength              Key length in bits (e.g., 256).
+     * @param string $initializationVector         Unique IV (length: openssl_cipher_iv_length()).
+     * @param string $additionalAuthenticatedData  AAD for integrity (unencrypted).
+     *
+     * @return EncryptionHandlerResult             Contains ciphertext, IV, and auth tag.
      */
-    public function encryptPayload(JwtBundle $bundle, array $config): void;
+    public function encryptPayload(
+        string $data,
+        string $encryptionKey,
+        int $cipherKeyLength,
+        string $initializationVector,
+        string $additionalAuthenticatedData
+    ): EncryptionHandlerResult;
 
     /**
-     * Decrypts the JWT payload using the configured content encryption algorithm.
+     * Decrypts AEAD-encrypted payload (e.g., AES-GCM).
      *
-     * @param JwtBundle $bundle the bundle containing the encrypted payload and decryption metadata
-     * @param array<string,string|int|class-string<object>> $config Configuration for the decryption
-     * algorithm and key usage
+     * @param string $encryptedData                Ciphertext to decrypt.
+     * @param string $encryptionKey                Secret key (raw binary/base64).
+     * @param int    $cipherKeyLength              Key length in bits (e.g., 256).
+     * @param string $initializationVector         IV from encryption.
+     * @param string $authTag                      Authentication tag (16 bytes for AES-GCM).
+     * @param string $additionalAuthenticatedData  AAD from encryption.
+     *
+     * @return DecryptionHandlerResult             Contains decrypted plaintext.
      */
-    public function decryptPayload(JwtBundle $bundle, array $config): void;
+    public function decryptPayload(
+        string $encryptedData,
+        string $encryptionKey,
+        int $cipherKeyLength,
+        string $initializationVector,
+        string $authTag,
+        string $additionalAuthenticatedData
+    ): DecryptionHandlerResult;
 }

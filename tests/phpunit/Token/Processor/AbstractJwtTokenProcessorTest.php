@@ -6,11 +6,14 @@ namespace Tests\phpunit\Token\Processor;
 
 use Phithi92\JsonWebToken\Config\Provider\AlgorithmConfigurationProvider;
 use Phithi92\JsonWebToken\Crypto\KeyManagement\CekHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\KeyManagement\CekHandlerResult;
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
 use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerInterface;
+use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerResult;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
+use Phithi92\JsonWebToken\Token\JwtSignature;
 use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
 use PHPUnit\Framework\TestCase;
 
@@ -25,7 +28,10 @@ final class AbstractJwtTokenProcessorTest extends TestCase
             {
                 return [
                     CekHandlerInterface::class => ['handler' => RecordingCekHandler::class],
-                    SignatureHandlerInterface::class => ['handler' => RecordingSignatureHandler::class],
+                    SignatureHandlerInterface::class => [
+                        'handler' => RecordingSignatureHandler::class,
+                        'hash_algorithm' => 'sha256',
+                    ],
                 ];
             }
 
@@ -59,26 +65,25 @@ class RecordingHandler
 
 final class RecordingCekHandler extends RecordingHandler implements CekHandlerInterface
 {
-    public function initializeCek(JwtBundle $bundle, array $config): void
+    public function initializeCek(string $algorithm, int $length): CekHandlerResult
     {
         self::$calls[] = 'cek';
-    }
 
-    public function validateCek(JwtBundle $bundle, array $config): void
-    {
-        self::$calls[] = 'cek-validate';
+        return new CekHandlerResult(contentEncryptionKey: 'cek');
     }
 }
 
 final class RecordingSignatureHandler extends RecordingHandler implements SignatureHandlerInterface
 {
-    public function validateSignature(JwtBundle $bundle, array $config): void
+    public function validateSignature(string $kid, string $algorithm, string $aad, string $signature): void
     {
         self::$calls[] = 'signature-validate';
     }
 
-    public function computeSignature(JwtBundle $bundle, array $config): void
+    public function computeSignature(string $kid, string $algorithm, string $singinInput): SignatureHandlerResult
     {
         self::$calls[] = 'signature';
+
+        return new SignatureHandlerResult(signature: new JwtSignature('signature'));
     }
 }

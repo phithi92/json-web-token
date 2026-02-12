@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
-use Phithi92\JsonWebToken\Config\AlgorithmConfig;
 use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureComputationException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
-use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
-use Phithi92\JsonWebToken\Token\Serializer\JwsSigningInput;
 use ValueError;
 
 use function hash_equals;
@@ -25,34 +22,46 @@ class HmacSignatureHandler extends AbstractSignatureHandler
      */
     private array $checkedHmacKeys;
 
-    public function computeSignature(JwtBundle $bundle, array $config): void
+    /**
+     * @param non-empty-string $kid Key identifier for the private key
+     * @param non-empty-string $algorithm Signature algorithm (e.g., 'ES256', 'ES384', 'ES512')
+     * @param non-empty-string $signingInput The data to be signed (JWS signing input)
+     *
+     * @return SignatureHandlerResult
+     */
+    public function computeSignature(string $kid, string $algorithm, string $signingInput): SignatureHandlerResult
     {
-        $cnf = new AlgorithmConfig($config);
-
-        $kid = $this->kidResolver->resolve($bundle, $config);
-        $algorithm = $cnf->hashAlgorithm();
         $passphrase = $this->manager->getPassphrase($kid);
 
         $this->assertHmacKeyIsValid($kid, $algorithm, $passphrase);
 
-        $signingInput = JwsSigningInput::fromBundle($bundle);
-
         $signature = hash_hmac($algorithm, $signingInput, $passphrase, true);
 
-        $bundle->setSignature(new JwtSignature($signature));
+        return new SignatureHandlerResult(signature: new JwtSignature($signature));
     }
 
     /**
-     * @throws InvalidTokenException
+     * Validates an HMAC signature against the given input data.
+     *
+     * Performs the following validations:
+     * 1. Retrieves the passphrase for the given key identifier
+     * 2. Validates the HMAC key and algorithm combination
+     * 3. Computes the expected HMAC signature
+     * 4. Verifies the computed signature matches the provided signature using constant-time comparison
+     *
+     * @param non-empty-string $kid Key identifier for the HMAC key
+     * @param non-empty-string $algorithm HMAC algorithm (e.g., 'HS256', 'HS384', 'HS512')
+     * @param non-empty-string $aad Additional authenticated data to verify
+     * @param non-empty-string $signature The signature to validate against
+     *
+     * @return void
+     *
+     * @throws SignatureComputationException When signature computation fails
+     * @throws InvalidTokenException When signature validation fails
      */
-    public function validateSignature(JwtBundle $bundle, array $config): void
+    public function validateSignature(string $kid, string $algorithm, string $aad, string $signature): void
     {
-        $cnf = new AlgorithmConfig($config);
-
-        $kid = $this->kidResolver->resolve($bundle, $config);
-        $algorithm = $cnf->hashAlgorithm();
         $passphrase = $this->manager->getPassphrase($kid);
-        $aad = $bundle->getEncryption()->getAad();
 
         $this->assertHmacKeyIsValid($kid, $algorithm, $passphrase);
 
@@ -71,8 +80,6 @@ class HmacSignatureHandler extends AbstractSignatureHandler
                 sprintf('HMAC computation failed (algorithm: %s)', $algorithm)
             );
         }
-
-        $signature = (string) $bundle->getSignature();
 
         // Compare the expected HMAC with the provided signature using constant-time comparison
         if (! hash_equals($expectedHash, $signature)) {

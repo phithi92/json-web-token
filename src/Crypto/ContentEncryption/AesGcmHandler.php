@@ -8,8 +8,6 @@ use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
-use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
-use Phithi92\JsonWebToken\Token\JwtBundle;
 
 use function openssl_decrypt;
 use function openssl_encrypt;
@@ -40,23 +38,33 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
 
     /**
      *
-     * @param JwtBundle $bundle
-     * @param array<string,int|string> $config
+     * @param string $encryptedData
+     * @param string $encryptionKey
+     * @param int $cipherKeyLength
+     * @param string $initializationVector
+     * @param string $authTag
+     * @param string $additionalAuthenticatedData
      *
-     * @return void
+     * @return DecryptionHandlerResult
      *
      * @throws InvalidTokenException
      */
-    public function decryptPayload(JwtBundle $bundle, array $config): void
-    {
+    public function decryptPayload(
+        string $encryptedData,
+        string $encryptionKey,
+        int $cipherKeyLength,
+        string $initializationVector,
+        string $authTag,
+        string $additionalAuthenticatedData
+    ): DecryptionHandlerResult {
         $unsealedPayload = openssl_decrypt(
-            data: $bundle->getPayload()->getEncryptedPayload(),
-            cipher_algo: $this->resolveCipherAlgorithm($config),
-            passphrase: $this->resolveCek($bundle),
+            data: $encryptedData,
+            cipher_algo: $this->getAesGcmCipherAlgorithm($cipherKeyLength),
+            passphrase: $encryptionKey,
             options: self::OPENSSL_OPTIONS,
-            iv: $bundle->getEncryption()->getIv(),
-            tag: $bundle->getEncryption()->getAuthTag(),
-            aad: $bundle->getEncryption()->getAad(),
+            iv: $initializationVector,
+            tag: $authTag,
+            aad: $additionalAuthenticatedData
         );
 
         if ($unsealedPayload === false) {
@@ -64,30 +72,38 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
             throw new InvalidTokenException($message);
         }
 
-        JwtPayloadJsonCodec::decodeStaticInto($unsealedPayload, $bundle->getPayload());
+        return new DecryptionHandlerResult(plaintext: $unsealedPayload);
     }
 
     /**
      *
-     * @param JwtBundle $bundle
-     * @param array<string,int|string> $config
+     * @param string $data
+     * @param string $encryptionKey
+     * @param int $cipherKeyLength
+     * @param string $initializationVector
+     * @param string $additionalAuthenticatedData
      *
-     * @return void
+     * @return EncryptionHandlerResult
      *
      * @throws EncryptionException
      */
-    public function encryptPayload(JwtBundle $bundle, array $config): void
-    {
+    public function encryptPayload(
+        string $data,
+        string $encryptionKey,
+        int $cipherKeyLength,
+        string $initializationVector,
+        string $additionalAuthenticatedData
+    ): EncryptionHandlerResult {
         $authTag = '';
 
         $sealedPayload = openssl_encrypt(
-            data: JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
-            cipher_algo: $this->resolveCipherAlgorithm($config),
-            passphrase: $this->resolveCek($bundle),
+            data: $data,
+            cipher_algo: $this->getAesGcmCipherAlgorithm($cipherKeyLength),
+            passphrase: $encryptionKey,
             options: self::OPENSSL_OPTIONS,
-            iv: $bundle->getEncryption()->getIv(),
+            iv: $initializationVector,
             tag: $authTag,
-            aad: $bundle->getEncryption()->getAad(),
+            aad: $additionalAuthenticatedData,
             tag_length: self::AUTH_TAG_LENGTH
         );
 
@@ -96,28 +112,14 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
             throw new EncryptionException($message);
         }
 
-        $bundle->getPayload()->setEncryptedPayload($sealedPayload);
-        /** @var string $authTag */
-        $bundle->setEncryption($bundle->getEncryption()->withAuthTag($authTag));
+        return new EncryptionHandlerResult(
+            ciphertext: $sealedPayload,
+            authenticationTag: $authTag
+        );
     }
 
-    private function resolveCek(JwtBundle $bundle): string
+    private function getAesGcmCipherAlgorithm(int $bits): string
     {
-        if ($bundle->getHeader()->getAlgorithm() === 'dir') {
-            return $this->manager->getPassphrase($bundle->getHeader()->getKid());
-        }
-
-        return $bundle->getEncryption()->getCek();
-    }
-
-    /**
-     * @param array<string,int|string> $config
-     */
-    private function resolveCipherAlgorithm(array $config): string
-    {
-        /** @var int $bits */
-        $bits = $config['length'];
-
         return sprintf('aes-%s-gcm', $bits);
     }
 }

@@ -6,17 +6,13 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
-use Phithi92\JsonWebToken\Config\AlgorithmConfig;
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
 use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureComputationException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureVerificationException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Security\KeyManagement\KidResolverInterface;
 use Phithi92\JsonWebToken\Security\KeyRole;
-use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
-use Phithi92\JsonWebToken\Token\Serializer\JwsSigningInput;
 use SensitiveParameter;
 
 use function implode;
@@ -46,23 +42,21 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
     }
 
     /**
-     * Create a digital signature over the bundle using ECDSA.
+     * Computes an ECDSA digital signature for the given signing input.
      *
-     * @throws SignatureComputationException
+     * @param non-empty-string $kid Key identifier for the private key
+     * @param non-empty-string $algorithm Signature algorithm (e.g., 'ES256', 'ES384', 'ES512')
+     * @param non-empty-string $signingInput The data to be signed (JWS signing input)
+     *
+     * @return SignatureHandlerResult
      */
-    public function computeSignature(JwtBundle $bundle, array $config): void
+    public function computeSignature(string $kid, string $algorithm, string $signingInput): SignatureHandlerResult
     {
-        $cnf = new AlgorithmConfig($config);
+        $privateKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Private);
 
-        $kid       = $this->kidResolver->resolve($bundle, $config);
-        $algorithm = $cnf->hashAlgorithm();
+        $signature = $this->signData($signingInput, $privateKey, $algorithm);
 
-        $privateKey   = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Private);
-        $signingInput = JwsSigningInput::fromBundle($bundle);
-
-        $bundle->setSignature(new JwtSignature(
-            $this->signData($signingInput, $privateKey, $algorithm)
-        ));
+        return new SignatureHandlerResult(signature: new JwtSignature($signature));
     }
 
     /**
@@ -78,23 +72,24 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
      * as a failed signature verification. Detailed OpenSSL errors are not
      * suitable for semantic error handling.
      *
+     * @param string $kid
+     * @param string $algorithm
+     * @param string $aad
+     * @param string $signature
+     *
+     * @return void
+     *
      * @throws InvalidTokenException
-     * @throws SignatureVerificationException
      */
-    public function validateSignature(JwtBundle $bundle, array $config): void
+    public function validateSignature(string $kid, string $algorithm, string $aad, string $signature): void
     {
-        $cnf = new AlgorithmConfig($config);
-
-        $kid       = $this->kidResolver->resolve($bundle, $config);
-        $algorithm = $cnf->hashAlgorithm();
-
         $publicKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Public);
 
         $verified = openssl_verify(
-            data: $bundle->getEncryption()->getAad(),
-            signature: (string) $bundle->getSignature(),
+            data: $aad,
+            signature: $signature,
             public_key: $publicKey,
-            algorithm: $cnf->hashAlgorithm()
+            algorithm: $algorithm
         );
 
         if ($verified === 1) {
@@ -163,12 +158,12 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
     private function extractCurveName(OpenSSLAsymmetricKey $key, string $kid): string
     {
         $details = openssl_pkey_get_details($key);
-        if (!is_array($details) || !isset($details['ec']) || !is_array($details['ec'])) {
+        if (! is_array($details) || ! isset($details['ec']) || ! is_array($details['ec'])) {
             throw new InvalidArgumentException(sprintf('Key [%s] is not a valid EC key.', $kid));
         }
 
         $curve = $details['ec']['curve_name'] ?? null;
-        if (!is_string($curve) || $curve === '') {
+        if (! is_string($curve) || $curve === '') {
             throw new InvalidArgumentException(sprintf('Key [%s] has no valid curve name.', $kid));
         }
 

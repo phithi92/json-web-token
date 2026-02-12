@@ -6,44 +6,45 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 
 use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
-use Phithi92\JsonWebToken\Config\AlgorithmConfig;
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
 use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureComputationException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Security\KeyManagement\KidResolverInterface;
 use Phithi92\JsonWebToken\Security\KeyRole;
-use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtSignature;
-use Phithi92\JsonWebToken\Token\Serializer\JwsSigningInput;
 
 use function openssl_sign;
 use function openssl_verify;
 
 class RsaSignatureHandler extends AbstractSignatureHandler
 {
-    private OpenSslErrorHelper $errorHelper ;
+    private OpenSslErrorHelper $errorHelper;
+    /**
+     * @var array<string, OpenSSLAsymmetricKey>
+     */
+    private array $checkedKeys = [];
 
     public function __construct(JwtKeyManager $manager, ?KidResolverInterface $kidResolver = null)
     {
         parent::__construct($manager, $kidResolver);
         $this->errorHelper = new OpenSslErrorHelper();
     }
+
     /**
-     * @var array<string, OpenSSLAsymmetricKey>
+     *
+     * @param non-empty-string $kid Key identifier for the private key
+     * @param non-empty-string $algorithm Signature algorithm (e.g., 'ES256', 'ES384', 'ES512')
+     * @param non-empty-string $signingInput The data to be signed (JWS signing input)
+     *
+     * @return SignatureHandlerResult
+     *
+     * @throws SignatureComputationException
      */
-    private array $checkedKeys = [];
-
-    public function computeSignature(JwtBundle $bundle, array $config): void
+    public function computeSignature(string $kid, string $algorithm, string $signingInput): SignatureHandlerResult
     {
-        $cnf = new AlgorithmConfig($config);
-
-        $algorithm = $cnf->hashAlgorithm();
-        $kid = $this->kidResolver->resolve($bundle, $config);
-
         $privateKey = $this->assertRsaKeyIsValid($kid, $algorithm, KeyRole::Private);
-        $signingInput = JwsSigningInput::fromBundle($bundle);
-        $algorithmConst = $this->mapHashToOpenSSLConstant($algorithm);
+        $algorithmConst = $this->getOpenSslAlgorithmConstant($algorithm);
 
         $signature = '';
         if (! openssl_sign($signingInput, $signature, $privateKey, $algorithmConst)) {
@@ -52,23 +53,35 @@ class RsaSignatureHandler extends AbstractSignatureHandler
         }
 
         /** @var string $signature */
-        $bundle->setSignature(new JwtSignature($signature));
+        return new SignatureHandlerResult(signature: new JwtSignature($signature));
     }
 
-    public function validateSignature(JwtBundle $bundle, array $config): void
+    /**
+     * Validates a digital signature using RSA public key cryptography.
+     *
+     * Verification process:
+     * 1. Validates the RSA public key and algorithm combination
+     * 2. Maps the algorithm to OpenSSL constant
+     * 3. Performs signature verification using openssl_verify()
+     * 4. Handles verification results and OpenSSL errors appropriately
+     *
+     * @param non-empty-string $kid Key identifier for the public key
+     * @param non-empty-string $algorithm Signature algorithm (e.g., 'RS256', 'RS384', 'RS512')
+     * @param non-empty-string $aad Additional authenticated data to verify
+     * @param non-empty-string $signature The signature to validate
+     *
+     * @return void
+     *
+     * @throws InvalidTokenException When signature validation fails (verified = 0)
+     * @throws SignatureComputationException When OpenSSL verification fails (verified = -1) or other errors occur
+     * @throws CryptoException When key validation fails
+     */
+    public function validateSignature(string $kid, string $algorithm, string $aad, string $signature): void
     {
-        $cnf = new AlgorithmConfig($config);
-
-        $algorithm = $cnf->hashAlgorithm();
-        $kid = $this->kidResolver->resolve($bundle, $config);
-
         $publicKey = $this->assertRsaKeyIsValid($kid, $algorithm, KeyRole::Public);
-        $algorithmConst = $this->mapHashToOpenSSLConstant($algorithm);
-        $signature = (string) $bundle->getSignature();
-        $signinInput = $bundle->getEncryption()->getAad();
+        $algorithmConst = $this->getOpenSslAlgorithmConstant($algorithm);
 
-        // Verify the signature using the public key and algorithm
-        $verified = openssl_verify($signinInput, $signature, $publicKey, $algorithmConst);
+        $verified = openssl_verify($aad, $signature, $publicKey, $algorithmConst);
 
         $errors = $this->errorHelper->collectErrors();
 
@@ -92,7 +105,7 @@ class RsaSignatureHandler extends AbstractSignatureHandler
         throw new SignatureComputationException($message);
     }
 
-    public function mapHashToOpenSSLConstant(string $hash): int
+    public function getOpenSslAlgorithmConstant(string $hash): int
     {
         return match (strtolower($hash)) {
             'sha256' => OPENSSL_ALGO_SHA256,
@@ -119,7 +132,7 @@ class RsaSignatureHandler extends AbstractSignatureHandler
      */
     public function assertRsaKeyIsValid(string $kid, string $algorithm, KeyRole $role): OpenSSLAsymmetricKey
     {
-        $cached = $this->getCachedRsaKey($kid);
+        $cached = $this->getCachedRsaKey($kid, $role, $algorithm);
         if ($cached !== null) {
             return $cached;
         }
@@ -128,7 +141,7 @@ class RsaSignatureHandler extends AbstractSignatureHandler
 
         $this->assertValidKeySize($key, $kid, $algorithm);
 
-        $this->cacheRsaKeyValidation($kid, $key);
+        $this->cacheRsaKeyValidation($kid, $role, $key, $algorithm);
 
         return $key;
     }
@@ -136,14 +149,14 @@ class RsaSignatureHandler extends AbstractSignatureHandler
     /**
      * @return OpenSSLAsymmetricKey|null return OpenSSLAsymmetricKey when exist, else null
      */
-    private function getCachedRsaKey(string $kid): ?OpenSSLAsymmetricKey
+    private function getCachedRsaKey(string $kid, KeyRole $role, $algorithm): ?OpenSSLAsymmetricKey
     {
-        return $this->checkedKeys[$kid] ?? null;
+        return $this->checkedKeys[$kid . ':' . $role->value . ':' . strtolower($algorithm)] ?? null;
     }
 
-    private function cacheRsaKeyValidation(string $kid, OpenSSLAsymmetricKey $key): void
+    private function cacheRsaKeyValidation(string $kid, KeyRole $role, OpenSSLAsymmetricKey $key, string $algorithm): void
     {
-        $this->checkedKeys[$kid] = $key;
+        $this->checkedKeys[$kid . ':' . $role->value . ':' . strtolower($algorithm)] = $key;
     }
 
     private function assertValidKeySize(OpenSSLAsymmetricKey $key, string $kid, string $algorithm): void

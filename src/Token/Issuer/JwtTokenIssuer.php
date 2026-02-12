@@ -10,15 +10,13 @@ use Phithi92\JsonWebToken\Exceptions\Config\MissingAlgorithmException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Exceptions\Token\UnsupportedTokenTypeException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
-use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
-use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\Factory\JwtHeaderFactory;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\JwtTokenKind;
 use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
-use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
+use Phithi92\JsonWebToken\Token\Serializer\JwtAadInput;
 
 use function is_string;
 
@@ -105,46 +103,14 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
         $header = $this->headerFactory->create($typ, $alg, $kid, $enc);
 
         $bundle = new JwtBundle($header, $payload);
-        $bundle->setEncryption(new JwtEncryptionData(aad: $this->encodeAad($bundle)));
+
+        $bundle->setEncryption(new JwtEncryptionData(
+            aad: JwtAadInput::fromBundle($bundle)->getEncoded()
+        ));
 
         $this->dispatchHandlers($algorithm, $bundle);
 
         return $bundle;
-    }
-
-    /**
-     * Encodes Additional Authenticated Data (AAD) depending on token type.
-     *
-     * @throws UnsupportedTokenTypeException
-     */
-    private function encodeAad(JwtBundle $bundle): string
-    {
-        $type = $bundle->getHeader()->getType();
-        if ($type === null) {
-            throw new UnsupportedTokenTypeException('null');
-        }
-
-        return match ($type) {
-            'JWE' => $this->encodeJweAad($bundle),
-            'JWS' => $this->encodeJwsAad($bundle),
-            default => throw new UnsupportedTokenTypeException($type),
-        };
-    }
-
-    private function encodeJweAad(JwtBundle $bundle): string
-    {
-        $jsonHeader = JwtHeaderJsonCodec::encodeStatic($bundle->getHeader());
-
-        return Base64UrlEncoder::encode($jsonHeader);
-    }
-
-    private function encodeJwsAad(JwtBundle $bundle): string
-    {
-        $jsonHeader = JwtHeaderJsonCodec::encodeStatic($bundle->getHeader());
-        $jsonPayload = JwtPayloadJsonCodec::encodeStatic($bundle->getPayload());
-
-        return Base64UrlEncoder::encode($jsonHeader) . '.'
-            . Base64UrlEncoder::encode($jsonPayload);
     }
 
     /**

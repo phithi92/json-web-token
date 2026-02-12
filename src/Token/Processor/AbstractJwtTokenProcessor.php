@@ -9,6 +9,7 @@ use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmMethodMap;
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoAlgorithmInvoker;
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoProcessingStage;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoStageResultDispatcher;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
@@ -32,6 +33,8 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     /** @var JwtKeyManager Manages algorithm-specific configurations. */
     protected readonly JwtKeyManager $manager;
 
+    protected readonly CryptoStageResultDispatcher $resultDispatcher;
+
     /**
      * Creates a JWT token processor for the given operation mode.
      *
@@ -45,6 +48,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         $this->manager = $manager;
         $this->operation = $operation;
         $this->dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
+        $this->resultDispatcher = new CryptoStageResultDispatcher();
     }
 
     /**
@@ -59,7 +63,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     protected function resolveAlgorithm(JwtBundle $bundle): string
     {
         $header = $bundle->getHeader();
-        $alg = $header->getAlgorithm() ?? throw new InvalidTokenException('no algorithm');
+        $alg = $header->getAlgorithm() ?? throw new InvalidTokenException('No algorithm configured');
 
         $enc = $header->getEnc();
         if ($enc === null) {
@@ -72,9 +76,13 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 
         $combined = sprintf('%s/%s', $alg, $enc);
 
-        return $this->manager->getConfiguration($combined) !== []
-            ? $combined
-            : $alg;
+        if ($this->manager->getConfiguration($combined) === []) {
+            throw new InvalidTokenException(
+                sprintf('Unsupported algorithm combination: %s', $combined)
+            );
+        }
+
+        return $combined;
     }
 
     /**
@@ -84,26 +92,36 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      * then dispatches them in priority order.
      *
      * @param string   $algorithm the resolved algorithm identifier
-     * @param JwtBundle $bundle   the JWT bundle to process
+     * @param JwtBundle $jwtBundle   the JWT bundle to process
      */
     protected function dispatchHandlers(
         string $algorithm,
-        JwtBundle $bundle,
-    ): void {
+        JwtBundle $jwtBundle,
+    ): JwtBundle {
         [$config, $descriptors] = $this->resolveConfigAndHandlers($algorithm);
+        $processedBundle = $jwtBundle;
 
         foreach ($descriptors as $descriptor) {
-            $this->dispatcher->dispatch(
-                target: $descriptor->target,
-                operation: $descriptor->operation,
-                manager: $this->manager,
-                config: $config,
-                context: [
-                    'bundle' => $bundle,
-                    'config' => $config,
-                ]
-            );
+
+            if ($this->dispatcher->isSupported($descriptor)) {
+                $result = $this->dispatcher->process(
+                    invocation: $descriptor,
+                    manager: $this->manager,
+                    jwtBundle: $processedBundle,
+                    config: $config,
+                );
+            }
+
+            if ($this->resultDispatcher->isSupported($descriptor) && $result !== null) {
+                $processedBundle = $this->resultDispatcher->process(
+                    invocation: $descriptor,
+                    bundle: $processedBundle,
+                    result: $result,
+                );
+            }
         }
+
+        return $processedBundle;
     }
 
     /**

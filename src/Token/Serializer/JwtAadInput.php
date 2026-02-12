@@ -12,28 +12,42 @@ use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
 final class JwtAadInput
 {
-    /**
-     * Encodes Additional Authenticated Data (AAD) depending on token type.
-     */
-    public function encode(JwtBundle $bundle): string
+    private readonly string $encoded;
+
+    public function __construct(JwtBundle $bundle)
+    {
+        $this->encoded = $this->computeAad($bundle);
+    }
+
+    public function getEncoded(): string
+    {
+        return $this->encoded;
+    }
+
+    // Optional: Factory-Methode für bessere Lesbarkeit
+    public static function fromBundle(JwtBundle $bundle): self
+    {
+        return new self($bundle);
+    }
+
+    private function computeAad(JwtBundle $bundle): string
     {
         $kind = JwtTokenKind::fromTypeOrFail($bundle->getHeader()->getType());
 
         return match ($kind) {
-            JwtTokenKind::JWE => $this->encodeJweAad($bundle),
+            JwtTokenKind::JWE => $this->computeJweAad($bundle),
             JwtTokenKind::JWS,
-            JwtTokenKind::JWT => $this->encodeJwsAad($bundle)
+            JwtTokenKind::JWT => $this->computeJwsAad($bundle)
         };
     }
 
-    private function encodeJweAad(JwtBundle $bundle): string
+    private function computeJweAad(JwtBundle $bundle): string
     {
         $jsonHeader = JwtHeaderJsonCodec::encodeStatic($bundle->getHeader());
-
         return Base64UrlEncoder::encode($jsonHeader);
     }
 
-    private function encodeJwsAad(JwtBundle $bundle): string
+    private function computeJwsAad(JwtBundle $bundle): string
     {
         $jsonHeader = JwtHeaderJsonCodec::encodeStatic($bundle->getHeader());
         $jsonPayload = JwtPayloadJsonCodec::encodeStatic($bundle->getPayload());

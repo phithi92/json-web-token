@@ -15,6 +15,8 @@ enum CryptoErrorMessagesEnum: string
 {
     use ErrorMessageTrait;
 
+    case UNEXPECTED_STAGE_RESULT = 'Unexpected crypto stage result. Expected %1$s, got %2$s.';
+
     case UNSUPPORTED = 'Algorithm is unsupoorted: %s';
     case EMPTY_FIELD = 'Missing required value for field: "%s".';
     case INVALID_SECRET_LENGTH = 'Invalid secret length. Got %s byte but expect %s.';

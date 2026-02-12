@@ -36,7 +36,7 @@ final class OpenSslErrorHelper
     public function collectErrors(): array
     {
         $errors = [];
-        $seen   = [];
+        $seen = [];
 
         while (($error = openssl_error_string()) !== false) {
             if (isset($seen[$error])) {

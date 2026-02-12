@@ -6,8 +6,8 @@ namespace Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline;
 
 class MissingAlgorithmConfigurationException extends AlgorithmInvocationException
 {
-    public function __construct()
+    public function __construct(string $method)
     {
-        parent::__construct('MISSING_HANDLER_CONFIG');
+        parent::__construct('MISSING_HANDLER_CONFIG', $method);
     }
 }
