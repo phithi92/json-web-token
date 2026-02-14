@@ -13,6 +13,7 @@ use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use Tests\phpunit\TestCaseWithSecrets;
 
+use function count;
 use function explode;
 use function implode;
 use function json_encode;
@@ -72,16 +73,19 @@ final class JwtTokenCodecTest extends TestCaseWithSecrets
         JwtBundleCodec::parse($invalidToken);
     }
 
-    public function testSerializeJweToken(): void
+    /**
+     * @dataProvider supportedAlgorithmProvider
+     */
+    public function testSerializeToken(string $algorithm): void
     {
-
-        $bundleFactory = new \Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer($this->manager);
-        $bundle = $bundleFactory->issue('A256GCM', new JwtPayload());
+        $issuer = new \Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer($this->manager);
+        $bundle = $issuer->issue($algorithm, new JwtPayload());
 
         $token = JwtBundleCodec::serialize($bundle);
+        $parts = explode('.', $token);
 
         $this->assertIsString($token);
-        $this->assertCount(5, explode('.', $token));
+        $this->assertContains(count($parts), [3, 5]);
     }
 
     public function testInvalidBase64InTokenPartThrowsException(): void

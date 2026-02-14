@@ -14,7 +14,10 @@ use Tests\phpunit\TestCaseWithSecrets;
 
 final class JwtTokenReissuerTest extends TestCaseWithSecrets
 {
-    public function testReissueBundleFiltersTimeClaims(): void
+    /**
+     * @dataProvider supportedAlgorithmProvider
+     */
+    public function testReissueBundleFiltersTimeClaims(string $algorithm): void
     {
         $payload = (new JwtPayload())
             ->setIssuedAt('now')
@@ -24,7 +27,7 @@ final class JwtTokenReissuerTest extends TestCaseWithSecrets
             ->addClaim('sub', 'user');
 
         $issuer = new JwtTokenIssuer($this->manager);
-        $bundle = $issuer->issue('A256GCM', $payload);
+        $bundle = $issuer->issue($algorithm, $payload);
 
         $reissuer = new JwtTokenReissuer(
             new JwtPayloadCodec(),

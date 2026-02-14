@@ -15,13 +15,16 @@ use Tests\phpunit\TestCaseWithSecrets;
 
 final class JwtClaimsValidationServiceTest extends TestCaseWithSecrets
 {
-    public function testValidateTokenClaimsUsesReaderAndValidator(): void
+    /**
+     * @dataProvider supportedAlgorithmProvider
+     */
+    public function testValidateTokenClaimsUsesReaderAndValidator(string $algorithm): void
     {
         $issuer = new JwtTokenIssuer($this->manager);
         $payload = (new JwtPayload())
             ->setIssuer('issuer')
             ->addClaim('sub', 'user');
-        $bundle = $issuer->issue('HS256', $payload);
+        $bundle = $issuer->issue($algorithm, $payload);
         $token = JwtBundleCodec::serialize($bundle);
 
         $reader = new JwtTokenReader(new JwtTokenDecryptorFactory());

@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token\Decryptor;
 
-use Phithi92\JsonWebToken\Config\Provider\PhpFileAlgorithmConfigurationProvider;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
-use Tests\Helpers\KeyProvider;
 use Tests\phpunit\TestCaseWithSecrets;
 
 use function explode;
@@ -21,41 +20,6 @@ use function str_repeat;
 
 final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
 {
-    /**
-     * @return array<string, array{string}>
-     */
-    public static function jwsAlgorithmProvider(): array
-    {
-        return self::supportedAlgorithmsByType('JWS');
-    }
-
-    /**
-     * @return array<string, array{string}>
-     */
-    public static function jweAlgorithmProvider(): array
-    {
-        return self::supportedAlgorithmsByType('JWE');
-    }
-
-    /**
-     * @return array<string, array{string}>
-     */
-    private static function supportedAlgorithmsByType(string $tokenType): array
-    {
-        $provider = new PhpFileAlgorithmConfigurationProvider();
-        $algorithms = KeyProvider::getSupportedAlgorithms();
-
-        $out = [];
-        foreach ($algorithms as $algorithm) {
-            $config = $provider->get($algorithm);
-            if (($config['token_type'] ?? null) === $tokenType) {
-                $out[$algorithm] = [$algorithm];
-            }
-        }
-
-        return $out;
-    }
-
     /**
      * @dataProvider jwsAlgorithmProvider
      */
@@ -71,8 +35,12 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
 
         $decryptor = new JwtTokenDecryptor($this->manager);
 
-        $this->expectException(InvalidTokenException::class);
-        $decryptor->decrypt(implode('.', $parts));
+        try {
+            $decryptor->decrypt(implode('.', $parts));
+            $this->fail('Expected InvalidTokenException to be thrown');
+        } catch (InvalidTokenException $exception) {
+            $this->assertStringNotContainsString('hacker', $exception->getMessage());
+        }
     }
 
     /**
@@ -90,8 +58,12 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
 
         $decryptor = new JwtTokenDecryptor($this->manager);
 
-        $this->expectException(InvalidTokenException::class);
-        $decryptor->decrypt(implode('.', $parts));
+        try {
+            $decryptor->decrypt(implode('.', $parts));
+            $this->fail('Expected InvalidTokenException to be thrown');
+        } catch (InvalidTokenException $exception) {
+            $this->assertStringNotContainsString('tampered-signature', $exception->getMessage());
+        }
     }
 
     /**
@@ -128,14 +100,18 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
         $token = JwtBundleCodec::serialize($bundle);
 
         $parts = explode('.', $token);
-        $parts[3] = Base64UrlEncoder::encode('tampered-ciphertext');
+        $tamperedCiphertext = 'tampered-ciphertext';
+        $parts[3] = Base64UrlEncoder::encode($tamperedCiphertext);
 
         $decryptor = new JwtTokenDecryptor($this->manager);
 
-        $this->expectException(InvalidTokenException::class);
-        $this->expectExceptionMessageMatches('/^Invalid token: Decrypt Payload Failed/');
-
-        $decryptor->decrypt(implode('.', $parts));
+        try {
+            $decryptor->decrypt(implode('.', $parts));
+            $this->fail('Expected InvalidTokenException to be thrown');
+        } catch (InvalidTokenException $exception) {
+            $this->assertMatchesRegularExpression('/^Invalid token: Decrypt Payload Failed/', $exception->getMessage());
+            $this->assertStringNotContainsString($tamperedCiphertext, $exception->getMessage());
+        }
     }
 
     /**
@@ -158,4 +134,50 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
 
         $decryptor->decrypt(implode('.', $parts));
     }
+
+    /**
+     * @dataProvider jweAlgorithmProvider
+     */
+    public function testJweDecryptErrorsDoNotLeakTokenOrClaimData(string $algorithm): void
+    {
+        $secretClaim = 'very-secret-user-data';
+
+        $issuer = new JwtTokenIssuer($this->manager);
+        $payload = (new JwtPayload())->addClaim('sub', $secretClaim);
+        $bundle = $issuer->issue($algorithm, $payload);
+        $token = JwtBundleCodec::serialize($bundle);
+
+        $parts = explode('.', $token);
+        $parts[3] = Base64UrlEncoder::encode('tampered-ciphertext');
+
+        $decryptor = new JwtTokenDecryptor($this->manager);
+
+        try {
+            $decryptor->decrypt(implode('.', $parts));
+            $this->fail('Expected InvalidTokenException was not thrown.');
+        } catch (InvalidTokenException $exception) {
+            $message = $exception->getMessage();
+
+            $this->assertStringNotContainsString($secretClaim, $message);
+            $this->assertStringNotContainsString($token, $message);
+            $this->assertStringContainsString('Invalid token:', $message);
+        }
+    }
+
+    public function testMalformedTokenDoesNotEchoRawInputInExceptionMessage(): void
+    {
+        $rawSecret = 'raw-secret-fragment';
+        $token = implode('.', [$rawSecret . '====', 'payload', 'signature']);
+
+        $this->expectException(MalformedTokenException::class);
+        $this->expectExceptionMessage('Malformed token: invalid Base64Url encoding.');
+
+        try {
+            JwtBundleCodec::parse($token);
+        } catch (MalformedTokenException $exception) {
+            $this->assertStringNotContainsString($rawSecret, $exception->getMessage());
+            throw $exception;
+        }
+    }
+
 }
