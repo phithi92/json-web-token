@@ -16,7 +16,7 @@ use function assert;
 #[Bench\Iterations(5)]
 #[Bench\Warmup(1)]
 #[Bench\ParamProviders('provideAlgs')]
-class BenchSupportedAgorithms extends BenchmarkBase
+class BenchSupportedAlgorithms extends BenchmarkBase
 {
     public function benchCreate(array $params): void
     {
