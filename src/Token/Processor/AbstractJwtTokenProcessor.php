@@ -102,23 +102,26 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
         $processedBundle = $jwtBundle;
 
         foreach ($descriptors as $descriptor) {
-
-            if ($this->dispatcher->isSupported($descriptor)) {
-                $result = $this->dispatcher->process(
-                    invocation: $descriptor,
-                    manager: $this->manager,
-                    jwtBundle: $processedBundle,
-                    config: $config,
-                );
+            if (! $this->dispatcher->isSupported($descriptor)) {
+                continue;
             }
 
-            if ($this->resultDispatcher->isSupported($descriptor) && $result !== null) {
-                $processedBundle = $this->resultDispatcher->process(
-                    invocation: $descriptor,
-                    bundle: $processedBundle,
-                    result: $result,
-                );
+            $result = $this->dispatcher->process(
+                invocation: $descriptor,
+                manager: $this->manager,
+                jwtBundle: $processedBundle,
+                config: $config,
+            );
+
+            if (! $this->resultDispatcher->isSupported($descriptor) || $result === null) {
+                continue;
             }
+
+            $processedBundle = $this->resultDispatcher->process(
+                invocation: $descriptor,
+                bundle: $processedBundle,
+                result: $result,
+            );
         }
 
         return $processedBundle;
