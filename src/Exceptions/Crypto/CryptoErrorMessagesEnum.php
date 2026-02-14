@@ -7,16 +7,16 @@ namespace Phithi92\JsonWebToken\Exceptions\Crypto;
 use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
 
 /**
- * Enum for algorithm-related error messages.
+ * Defines standardized error message templates for cryptographic operations.
  *
- * Uses `getMessage()` to format messages with dynamic details.
+ * Messages may contain sprintf-compatible placeholders (e.g. %1$s, %2$s)
+ * for runtime value injection.
  */
 enum CryptoErrorMessagesEnum: string
 {
     use ErrorMessageTrait;
 
     case UNEXPECTED_STAGE_RESULT = 'Unexpected crypto stage result. Expected %1$s, got %2$s.';
-
     case UNSUPPORTED = 'Algorithm is unsupoorted: %s';
     case EMPTY_FIELD = 'Missing required value for field: "%s".';
     case INVALID_SECRET_LENGTH = 'Invalid secret length. Got %s byte but expect %s.';

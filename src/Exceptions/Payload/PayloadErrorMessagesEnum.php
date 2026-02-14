@@ -7,10 +7,10 @@ namespace Phithi92\JsonWebToken\Exceptions\Payload;
 use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
 
 /**
- * Enum for JSON-related error messages.
+ * Defines standardized error message templates for JWT payload validation.
  *
- * Provides standardized messages for encoding and decoding errors, with
- * optional details for more context.
+ * Messages may contain sprintf-compatible placeholders (e.g. %s, %1$s, %2$s)
+ * for runtime value injection.
  */
 enum PayloadErrorMessagesEnum: string
 {
