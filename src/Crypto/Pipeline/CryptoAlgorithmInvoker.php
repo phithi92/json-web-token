@@ -7,6 +7,7 @@ namespace Phithi92\JsonWebToken\Crypto\Pipeline;
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\AlgorithmMethodNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\InvalidAlgorithmImplementationException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\MissingAlgorithmConfigurationException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\DefaultKidResolver;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
@@ -18,6 +19,8 @@ use function is_array;
 use function is_string;
 use function is_subclass_of;
 use function method_exists;
+use function sprintf;
+use function strlen;
 
 final class CryptoAlgorithmInvoker
 {
@@ -55,22 +58,15 @@ final class CryptoAlgorithmInvoker
         $method = $this->methodResolver->resolve($invocation->target, $invocation->operation);
 
         $handler = $this->buildHandler($config, $manager, $invocation->target);
-        $this->assertValidHandlerMethod($handler, $method);
+
+        if (! method_exists($handler, $method)) {
+            throw new AlgorithmMethodNotFoundException($handler, $method);
+        }
 
         $args = $this->resolveArguments($manager, $invocation, $jwtBundle, $config);
 
         /** @phpstan-ignore-next-line */
         return $handler->{$method}(...$args);
-    }
-
-    /**
-     * @throws AlgorithmMethodNotFoundException
-     */
-    private function assertValidHandlerMethod(object $handler, string $method): void
-    {
-        if (! method_exists($handler, $method)) {
-            throw new AlgorithmMethodNotFoundException($handler, $method);
-        }
     }
 
     /**
@@ -186,27 +182,47 @@ final class CryptoAlgorithmInvoker
         array $methodConfig,
         JwtKeyManager $manager
     ): array|string {
+        $cipherKeyLength = (int) $methodConfig['length'];
+
         $passphrase = $jwtBundle->getHeader()->getAlgorithm() === 'dir'
             ? $manager->getPassphrase($jwtBundle->getHeader()->getKid())
             : $jwtBundle->getEncryption()->getCek();
+
+        if ($jwtBundle->getHeader()->getAlgorithm() === 'dir') {
+            $this->assertDirectEncryptionKeyLength($passphrase, $cipherKeyLength);
+        }
 
         return match ($operation) {
             CryptoOperationDirection::Perform => [
                 JwtPayloadJsonCodec::encodeStatic($jwtBundle->getPayload()),
                 $passphrase,
-                (int) $methodConfig['length'],
+                $cipherKeyLength,
                 $jwtBundle->getEncryption()->getIv(),
                 $jwtBundle->getEncryption()->getAad(),
             ],
             CryptoOperationDirection::Reverse => [
                 $jwtBundle->getPayload()->getEncryptedPayload(),
                 $passphrase,
-                (int) $methodConfig['length'],
+                $cipherKeyLength,
                 $jwtBundle->getEncryption()->getIv(),
                 $jwtBundle->getEncryption()->getAuthTag(),
                 $jwtBundle->getEncryption()->getAad(),
             ]
         };
+    }
+
+    private function assertDirectEncryptionKeyLength(string $key, int $cipherKeyLength): void
+    {
+        $expectedLength = intdiv($cipherKeyLength, 8);
+        $actualLength = strlen($key);
+
+        if ($actualLength !== $expectedLength) {
+            throw new InvalidTokenException(sprintf(
+                'Invalid direct encryption key length (got %d bytes, expected %d bytes)',
+                $actualLength,
+                $expectedLength
+            ));
+        }
     }
 
     private function resolveKeyArguments(
