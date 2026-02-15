@@ -108,9 +108,9 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
             aad: JwtAadInput::fromBundle($bundle)->getEncoded()
         ));
 
-        $this->dispatchHandlers($algorithm, $bundle);
+        $processedBundle = $this->dispatchHandlers($algorithm, $bundle);
 
-        return $bundle;
+        return $processedBundle;
     }
 
     /**
