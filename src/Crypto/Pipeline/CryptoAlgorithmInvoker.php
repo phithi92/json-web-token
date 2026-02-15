@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Pipeline;
 
+use InvalidArgumentException;
 use Phithi92\JsonWebToken\Crypto\ContentEncryption\ContentEncryptionHandlerInterface;
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\AlgorithmMethodNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\InvalidAlgorithmImplementationException;
@@ -75,7 +76,7 @@ final class CryptoAlgorithmInvoker
         $handler = $this->buildHandler($config, $manager, $invocation->target);
 
         if (! method_exists($handler, $method)) {
-            throw new AlgorithmMethodNotFoundException($invocation->target,$invocation->operation);
+            throw new AlgorithmMethodNotFoundException($invocation->target, $invocation->operation);
         }
 
         $args = $this->resolveArguments($manager, $invocation, $jwtBundle, $config);
@@ -136,7 +137,7 @@ final class CryptoAlgorithmInvoker
      * @param AlgorithmInvocation $invokation
      * @param JwtBundle $jwtBundle
      * @param array<string, array<string,mixed>> $config
-     * 
+     *
      * @return array<int, string|int|null>
      */
     private function resolveArguments(
@@ -157,11 +158,11 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     * 
+     *
      * @param CryptoOperationDirection $operation
      * @param JwtBundle $jwtBundle
      * @param array<string, mixed> $methodConfig
-     * 
+     *
      * @return array<int,string|int>
      */
     private function resolveIvArguments(
@@ -169,8 +170,8 @@ final class CryptoAlgorithmInvoker
         JwtBundle $jwtBundle,
         array $methodConfig
     ): array {
-            $length = $this->resolveLength($methodConfig['length']);
-        
+        $length = $this->resolveLength($methodConfig['length']);
+
         return match ($operation) {
             CryptoOperationDirection::Perform => [$length],
             CryptoOperationDirection::Reverse => [
@@ -181,18 +182,18 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     * 
+     *
      * @param JwtBundle $jwtBundle
      * @param array<string, mixed> $methodConfig
-     * 
+     *
      * @return array<int,string|int|null>
      */
     private function resolveCekArguments(
         JwtBundle $jwtBundle,
         array $methodConfig
-    ): array {       
+    ): array {
         $length = $this->resolveLength($methodConfig['length']);
-        
+
         return [
             $jwtBundle->getHeader()->getAlgorithm(),
             $length,
@@ -200,11 +201,11 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     * 
+     *
      * @param CryptoOperationDirection $operation
      * @param JwtBundle $jwtBundle
      * @param array<string, mixed> $methodConfig
-     * 
+     *
      * @return array<int,string|int|null>
      */
     private function resolveSignatureArguments(
@@ -213,7 +214,7 @@ final class CryptoAlgorithmInvoker
         array $methodConfig
     ): array {
         $algorithm = $this->resolveOptionalConfig($methodConfig, 'hash_algorithm');
-        
+
         return match ($operation) {
             CryptoOperationDirection::Perform => [
                 (new DefaultKidResolver())->resolve($jwtBundle, $methodConfig),
@@ -230,12 +231,12 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     * 
+     *
      * @param CryptoOperationDirection $operation
      * @param JwtBundle $jwtBundle
      * @param array<string, mixed> $methodConfig
      * @param JwtKeyManager $manager
-     * 
+     *
      * @return array<int,string|int>
      */
     private function resolvePayloadArguments(
@@ -274,11 +275,11 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     * 
+     *
      * @param CryptoOperationDirection $operation
      * @param JwtBundle $jwtBundle
      * @param array<string, mixed> $config
-     * 
+     *
      * @return array<int,string|int|null>
      */
     private function resolveKeyArguments(
@@ -288,7 +289,7 @@ final class CryptoAlgorithmInvoker
     ): array {
         $padding = $this->resolveOptionalConfig($config, 'padding');
         $hash = $this->resolveOptionalConfig($config, 'hash');
-        
+
         return [
             $jwtBundle->getHeader()->getKid(),
             match ($operation) {
@@ -299,7 +300,7 @@ final class CryptoAlgorithmInvoker
             $hash,
         ];
     }
-    
+
     private function assertDirectEncryptionKeyLength(string $key, int $cipherKeyLength): void
     {
         $expectedLength = intdiv($cipherKeyLength, 8);
@@ -313,7 +314,7 @@ final class CryptoAlgorithmInvoker
             ));
         }
     }
-    
+
     private function resolveLength(mixed $length): int
     {
         if (is_int($length)) {
@@ -321,7 +322,7 @@ final class CryptoAlgorithmInvoker
         }
 
         if (!is_string($length)) {
-            throw new \InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 'Length must be int or string, %s given',
                 get_debug_type($length)
             ));
@@ -330,7 +331,7 @@ final class CryptoAlgorithmInvoker
         $intLength = filter_var($length, FILTER_VALIDATE_INT);
 
         if ($intLength === false) {
-            throw new \InvalidArgumentException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 'Length string must be numeric, "%s" given',
                 $length
             ));
@@ -338,7 +339,7 @@ final class CryptoAlgorithmInvoker
 
         return $intLength;
     }
-    
+
     /**
      * Safely extracts optional configuration with type enforcement.
      *
@@ -346,21 +347,21 @@ final class CryptoAlgorithmInvoker
      */
     private function resolveOptionalConfig(array $config, string $key): string|int|null
     {
-       if (!array_key_exists($key, $config)) {
-           return null;
-       }
+        if (!array_key_exists($key, $config)) {
+            return null;
+        }
 
-       $value = $config[$key];
+        $value = $config[$key];
 
-       return match (true) {
-           $value === null => null,
-           is_string($value) => $value,
-           is_int($value) => $value,
-           default => throw new \InvalidArgumentException(sprintf(
-               'Config "%s" must be string|int|null, got %s',
-               $key,
-               get_debug_type($value)
-           )),
-       };
+        return match (true) {
+            $value === null => null,
+            is_string($value) => $value,
+            is_int($value) => $value,
+            default => throw new InvalidArgumentException(sprintf(
+                'Config "%s" must be string|int|null, got %s',
+                $key,
+                get_debug_type($value)
+            )),
+        };
     }
 }
