@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\ContentEncryption;
 
-use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
-
 /**
  * Interface ContentCryptoInterface.
  *
@@ -14,10 +12,8 @@ use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
  */
 interface ContentEncryptionHandlerInterface
 {
-    public function __construct(JwtKeyManager $manager);
-
     /**
-     * Encrypts plaintext using AEAD (e.g., AES-GCM).
+     * Encrypts plaintext.
      *
      * @param string $data                         Plaintext to encrypt.
      * @param string $encryptionKey                Secret key (raw binary/base64).
@@ -36,7 +32,7 @@ interface ContentEncryptionHandlerInterface
     ): EncryptionHandlerResult;
 
     /**
-     * Decrypts AEAD-encrypted payload (e.g., AES-GCM).
+     * Decrypts encrypted data.
      *
      * @param string $encryptedData                Ciphertext to decrypt.
      * @param string $encryptionKey                Secret key (raw binary/base64).

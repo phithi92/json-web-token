@@ -7,8 +7,8 @@ namespace Phithi92\JsonWebToken\Crypto\ContentEncryption;
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
 use Phithi92\JsonWebToken\Exceptions\Crypto\EncryptionException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
-use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 
+use function is_string;
 use function openssl_decrypt;
 use function openssl_encrypt;
 use function sprintf;
@@ -26,13 +26,10 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
 
     private const AUTH_TAG_LENGTH = 16;
 
-    private JwtKeyManager $manager;
-
     private OpenSslErrorHelper $errorHelper;
 
-    public function __construct(JwtKeyManager $manager)
+    public function __construct()
     {
-        $this->manager = $manager;
         $this->errorHelper = new OpenSslErrorHelper();
     }
 
@@ -57,9 +54,11 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
         string $authTag,
         string $additionalAuthenticatedData
     ): DecryptionHandlerResult {
+        $algorithm = $this->getAesGcmCipherAlgorithm($cipherKeyLength);
+
         $unsealedPayload = openssl_decrypt(
             data: $encryptedData,
-            cipher_algo: $this->getAesGcmCipherAlgorithm($cipherKeyLength),
+            cipher_algo: $algorithm,
             passphrase: $encryptionKey,
             options: self::OPENSSL_OPTIONS,
             iv: $initializationVector,
@@ -72,7 +71,7 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
             throw new InvalidTokenException($message);
         }
 
-        return new DecryptionHandlerResult(plaintext: $unsealedPayload);
+        return new DecryptionHandlerResult($unsealedPayload);
     }
 
     /**
@@ -95,10 +94,11 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
         string $additionalAuthenticatedData
     ): EncryptionHandlerResult {
         $authTag = '';
+        $algorithm = $this->getAesGcmCipherAlgorithm($cipherKeyLength);
 
         $sealedPayload = openssl_encrypt(
             data: $data,
-            cipher_algo: $this->getAesGcmCipherAlgorithm($cipherKeyLength),
+            cipher_algo: $algorithm,
             passphrase: $encryptionKey,
             options: self::OPENSSL_OPTIONS,
             iv: $initializationVector,
@@ -110,6 +110,10 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
         if ($sealedPayload === false) {
             $message = $this->errorHelper->getFormattedErrorMessage('Encrypt Payload Failed: ');
             throw new EncryptionException($message);
+        }
+
+        if (! is_string($authTag)) {
+            throw new EncryptionException('Encrypt Payload Failed: auth tag was not set.');
         }
 
         return new EncryptionHandlerResult(
