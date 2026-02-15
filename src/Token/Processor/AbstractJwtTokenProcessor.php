@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Processor;
 
+use Override;
 use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmInvocation;
 use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmMethodMap;
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoAlgorithmInvoker;
@@ -60,7 +61,8 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      *
      * @throws InvalidTokenException if no algorithm is specified in the JWT header
      */
-    protected function resolveAlgorithm(JwtBundle $bundle): string
+    #[Override]
+    public function resolveAlgorithm(JwtBundle $bundle): string
     {
         $header = $bundle->getHeader();
         $alg = $header->getAlgorithm() ?? throw new InvalidTokenException('No algorithm configured');
@@ -94,7 +96,8 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      * @param string   $algorithm the resolved algorithm identifier
      * @param JwtBundle $jwtBundle   the JWT bundle to process
      */
-    protected function dispatchHandlers(
+    #[Override]
+    public function dispatchHandlers(
         string $algorithm,
         JwtBundle $jwtBundle,
     ): JwtBundle {
