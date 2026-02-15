@@ -17,7 +17,7 @@ final class CryptoStageResultDispatcher
     private array $stageHandlers;
 
     /**
-     * 
+     *
      * @param array<string, CryptoStageResultHandlerInterface> $stageHandlers
      */
     public function __construct(array $stageHandlers = [])

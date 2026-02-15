@@ -20,16 +20,16 @@ interface SignatureHandlerInterface
      * @throws InvalidTokenException When signature validation fails
      */
     public function validateSignature(string $kid, string $algorithm, string $aad, string $signature): void;
-    
+
     /**
      * Compute an signature for given algorithm.
-     * 
+     *
      * @param non-empty-string $kid Key identifier for the private key
      * @param non-empty-string $algorithm Signature algorithm (e.g., 'ES256', 'ES384', 'ES512')
      * @param non-empty-string $signingInput The data to be signed (JWS signing input)
      *
      * @return SignatureHandlerResult
-     * 
+     *
      * @throws SignatureComputationException When signature computation fails
      * @throws InvalidTokenException When signature validation fails
      */
