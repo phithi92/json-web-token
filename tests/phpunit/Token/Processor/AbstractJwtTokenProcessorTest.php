@@ -27,7 +27,10 @@ final class AbstractJwtTokenProcessorTest extends TestCase
             public function get(string $algorithm): array
             {
                 return [
-                    CekHandlerInterface::class => ['handler' => RecordingCekHandler::class],
+                    CekHandlerInterface::class => [
+                        'handler' => RecordingCekHandler::class,
+                        'length' => 256
+                    ],
                     SignatureHandlerInterface::class => [
                         'handler' => RecordingSignatureHandler::class,
                         'hash_algorithm' => 'sha256',
