@@ -17,6 +17,8 @@ use function strlen;
  */
 final class IvHandler implements IvHandlerInterface
 {
+    private const BITS_PER_BYTE = 8;
+
     /**
      * Generate a cryptographically secure IV and store it in the bundle.
      *
@@ -70,7 +72,7 @@ final class IvHandler implements IvHandlerInterface
     private static function assertValidByteLength(int $bits): int
     {
         // bits -> bytes
-        $bytes = intdiv($bits, 8);
+        $bytes = intdiv($bits, self::BITS_PER_BYTE);
 
         if ($bytes < 1) {
             throw new InvalidArgumentException(
