@@ -17,17 +17,18 @@ use function strtolower;
 
 class HmacSignatureHandler extends AbstractSignatureHandler
 {
-    /**
-     * @var array<string, bool>
-     */
+    /** @var array<string, bool> */
     private array $checkedHmacKeys;
 
+    /** @var array<string,int> */
+    private static array $HASH_LENGTHS = [
+        'sha256' => 32,
+        'sha384' => 48,
+        'sha512' => 64
+    ];
+
     /**
-     * @param non-empty-string $kid Key identifier for the private key
-     * @param non-empty-string $algorithm Signature algorithm (e.g., 'ES256', 'ES384', 'ES512')
-     * @param non-empty-string $signingInput The data to be signed (JWS signing input)
-     *
-     * @return SignatureHandlerResult
+     * @{inherhit}
      */
     public function computeSignature(string $kid, string $algorithm, string $signingInput): SignatureHandlerResult
     {
@@ -67,7 +68,6 @@ class HmacSignatureHandler extends AbstractSignatureHandler
 
         try {
             // PHP 8+: hash_hmac() can throw ValueError (invalid args) OR return false (internal failure)
-
             $expectedHash = hash_hmac($algorithm, $aad, $passphrase, true);
         } catch (ValueError $e) {
             throw new SignatureComputationException(
@@ -90,7 +90,7 @@ class HmacSignatureHandler extends AbstractSignatureHandler
     /**
      * @throws InvalidTokenException
      */
-    private function assertHmacKeyIsValid(string $kid, string $algorithm, string $passphrase): void
+    private function assertHmacKeyIsValid(string $kid, string $algorithm, string $key): void
     {
         $cacheKey = $kid . ':' . strtolower($algorithm);
         if (isset($this->checkedHmacKeys[$cacheKey])) {
@@ -98,20 +98,20 @@ class HmacSignatureHandler extends AbstractSignatureHandler
             // Already checked
         }
 
-        if ($passphrase === '') {
+        if ($key === '') {
             throw new InvalidTokenException("HMAC key for [{$kid}] is empty.");
         }
 
-        $minLength = match (strtolower($algorithm)) {
-            'sha256' => 32,
-            'sha384' => 48,
-            'sha512' => 64,
-            default => throw new InvalidTokenException("Unsupported hash algorithm: {$algorithm}"),
-        };
+        if (! isset(self::$HASH_LENGTHS[strtolower($algorithm)])) {
+            throw new InvalidTokenException("Unsupported hash algorithm: {$algorithm}");
+        }
 
-        if (strlen($passphrase) < $minLength) {
+        $minLength = self::$HASH_LENGTHS[strtolower($algorithm)];
+        $keyLength = strlen($key);
+
+        if ($keyLength < $minLength) {
             throw new InvalidTokenException(
-                "HMAC key for [{$kid}] is too short for {$algorithm}. Expected at least {$minLength} bytes."
+                "HMAC key for kid [{$kid}] is too short for {$algorithm}. Expected at least {$minLength} bytes and got {$keyLength}."
             );
         }
 
