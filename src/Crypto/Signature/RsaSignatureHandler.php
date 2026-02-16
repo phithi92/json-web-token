@@ -7,6 +7,7 @@ namespace Phithi92\JsonWebToken\Crypto\Signature;
 use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
 use Phithi92\JsonWebToken\Crypto\OpenSsl\OpenSslErrorHelper;
+use Phithi92\JsonWebToken\Exceptions\Crypto\CryptoException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureComputationException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
@@ -20,10 +21,16 @@ use function openssl_verify;
 class RsaSignatureHandler extends AbstractSignatureHandler
 {
     private OpenSslErrorHelper $errorHelper;
-    /**
-     * @var array<string, OpenSSLAsymmetricKey>
-     */
+
+    /** @var array<string, OpenSSLAsymmetricKey> */
     private array $checkedKeys = [];
+
+    /** @var array<string,int> */
+    private static array $ALGORITHM_LENGTHS = [
+        'sha256' => 2048,
+        'sha384' => 3072,
+        'sha512' => 4096,
+    ];
 
     public function __construct(JwtKeyManager $manager, ?KidResolverInterface $kidResolver = null)
     {
@@ -43,11 +50,14 @@ class RsaSignatureHandler extends AbstractSignatureHandler
      */
     public function computeSignature(string $kid, string $algorithm, string $signingInput): SignatureHandlerResult
     {
-        $privateKey = $this->assertRsaKeyIsValid($kid, $algorithm, KeyRole::Private);
-        $algorithmConst = $this->getOpenSslAlgorithmConstant($algorithm);
+        if (! $this->isAlgorithmSupported($algorithm)) {
+            throw new InvalidArgumentException("Unsupported hash algorithm: {$algorithm}");
+        }
+
+        $privateKey = $this->getValidatedRsaKey($kid, $algorithm, KeyRole::Private);
 
         $signature = '';
-        if (! openssl_sign($signingInput, $signature, $privateKey, $algorithmConst)) {
+        if (! openssl_sign($signingInput, $signature, $privateKey, $algorithm)) {
             $message = $this->errorHelper->getFormattedErrorMessage('Compute Signature Failed: ');
             throw new SignatureComputationException($message);
         }
@@ -78,10 +88,13 @@ class RsaSignatureHandler extends AbstractSignatureHandler
      */
     public function validateSignature(string $kid, string $algorithm, string $aad, string $signature): void
     {
-        $publicKey = $this->assertRsaKeyIsValid($kid, $algorithm, KeyRole::Public);
-        $algorithmConst = $this->getOpenSslAlgorithmConstant($algorithm);
+        if (! $this->isAlgorithmSupported($algorithm)) {
+            throw new InvalidArgumentException("Unsupported hash algorithm: {$algorithm}");
+        }
 
-        $verified = openssl_verify($aad, $signature, $publicKey, $algorithmConst);
+        $publicKey = $this->getValidatedRsaKey($kid, $algorithm, KeyRole::Public);
+
+        $verified = openssl_verify($aad, $signature, $publicKey, $algorithm);
 
         $errors = $this->errorHelper->collectErrors();
 
@@ -105,32 +118,12 @@ class RsaSignatureHandler extends AbstractSignatureHandler
         throw new SignatureComputationException($message);
     }
 
-    public function getOpenSslAlgorithmConstant(string $hash): int
-    {
-        return match (strtolower($hash)) {
-            'sha256' => OPENSSL_ALGO_SHA256,
-            'sha384' => OPENSSL_ALGO_SHA384,
-            'sha512' => OPENSSL_ALGO_SHA512,
-            default => throw new InvalidArgumentException("Unsupported hash algorithm: {$hash}"),
-        };
-    }
-
-    public function getRequiredRsaKeySize(string $hashAlgorithm): int
-    {
-        return match (strtolower($hashAlgorithm)) {
-            'sha256' => 2048,
-            'sha384' => 3072,
-            'sha512' => 4096,
-            default => throw new InvalidArgumentException("Unsupported hash algorithm: {$hashAlgorithm}"),
-        };
-    }
-
     /**
      * Validates the RSA key against the algorithm used.
      *
      * @throws InvalidTokenException
      */
-    public function assertRsaKeyIsValid(string $kid, string $algorithm, KeyRole $role): OpenSSLAsymmetricKey
+    private function getValidatedRsaKey(string $kid, string $algorithm, KeyRole $role): OpenSSLAsymmetricKey
     {
         $cached = $this->getCachedRsaKey($kid, $role, $algorithm);
         if ($cached !== null) {
@@ -146,10 +139,15 @@ class RsaSignatureHandler extends AbstractSignatureHandler
         return $key;
     }
 
+    private function isAlgorithmSupported(string $algorithm): bool
+    {
+        return isset(self::$ALGORITHM_LENGTHS[$algorithm]);
+    }
+
     /**
      * @return OpenSSLAsymmetricKey|null return OpenSSLAsymmetricKey when exist, else null
      */
-    private function getCachedRsaKey(string $kid, KeyRole $role, $algorithm): ?OpenSSLAsymmetricKey
+    private function getCachedRsaKey(string $kid, KeyRole $role, string $algorithm): ?OpenSSLAsymmetricKey
     {
         return $this->checkedKeys[$kid . ':' . $role->value . ':' . strtolower($algorithm)] ?? null;
     }
@@ -161,26 +159,29 @@ class RsaSignatureHandler extends AbstractSignatureHandler
 
     private function assertValidKeySize(OpenSSLAsymmetricKey $key, string $kid, string $algorithm): void
     {
-        $keysize = $this->getValidatedKeySize($key, $kid);
+        $keysize = $this->resolveKeySize($key, $kid);
+        $actualKeySize = strlen($keysize) * 8;
+        $expectedKeySize = self::$ALGORITHM_LENGTHS[$algorithm];
 
-        $modulusLength = strlen($keysize);
-        $expectedKeySize = $this->getRequiredRsaKeySize($algorithm);
-        $actualKeySize = $modulusLength * 8;
-        // Bytes to bits
         if ($actualKeySize < $expectedKeySize) {
             throw new InvalidTokenException("RSA key must be at least {$expectedKeySize} bits long");
         }
     }
 
     /**
-     * @throws InvalidTokenException
+     * Resolves the RSA key modulus (n) from the given key.
+     *
+     * @param OpenSSLAsymmetricKey $key The RSA key to resolve
+     * @param string $kid The key identifier (for error messages)
+     * @return string The modulus (n) as binary string
+     * @throws InvalidTokenException If the key is not a valid RSA key
      */
-    private function getValidatedKeySize(OpenSSLAsymmetricKey $key, string $kid): string
+    private function resolveKeySize(OpenSSLAsymmetricKey $key, string $kid): string
     {
-        /** @var array{rsa: array{n: string}}|false $details */
+        /** @var array{rsa?: array{n?: string}}|false $details */
         $details = openssl_pkey_get_details($key);
 
-        if ($details === false) {
+        if ($details === false || !isset($details['rsa']['n'])) {
             throw new InvalidTokenException("Key [{$kid}] is not a valid RSA key.");
         }
 
