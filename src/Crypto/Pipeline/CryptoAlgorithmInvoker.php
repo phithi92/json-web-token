@@ -64,7 +64,7 @@ final class CryptoAlgorithmInvoker
         JwtKeyManager $manager,
         JwtBundle $jwtBundle,
         array $config,
-    ): mixed {
+    ): ?CryptoStageResultInterface {
         if (! $this->isHandlerConfigured($config, $invocation->target)) {
             throw new MissingAlgorithmConfigurationException($invocation->target->name);
         }
