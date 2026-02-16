@@ -14,5 +14,32 @@ parameters:
     reportUnmatchedIgnoredErrors: true
 
     ignoreErrors:
-        - message: '#Method .*::buildPrivateKey\(\) should return phpseclib3\\Crypt\\RSA\\PrivateKey but returns.*#'
-        - message: '#Method .*::buildPublicKey\(\) should return phpseclib3\\Crypt\\RSA\\PublicKey but returns.*#'
+        - identifier: return.type
+          message: '#Method .*::buildPhpseclibPrivateKey\(\) should return phpseclib3\\Crypt\\RSA\\PrivateKey but returns mixed.*#'
+          path: ../src/Crypto/Key/RsaKeyHandler.php
+          count: 2
+
+        - identifier: return.type
+          message: '#Method .*::buildPhpseclibPublicKey\(\) should return phpseclib3\\Crypt\\RSA\\PublicKey but returns mixed.*#'
+          path: ../src/Crypto/Key/RsaKeyHandler.php
+          count: 2
+
+        - identifier: method.nonObject
+          message: '#Cannot call method withHash\(\) on mixed.*#'
+          path: ../src/Crypto/Key/RsaKeyHandler.php
+          count: 2
+
+        - identifier: method.nonObject
+          message: '#Cannot call method withMGFHash\(\) on mixed.*#'
+          path: ../src/Crypto/Key/RsaKeyHandler.php
+          count: 2
+
+        - identifier: identical.alwaysFalse
+          message: '#Strict comparison using === between string and null will always evaluate to false.*#'
+          path: ../src/Crypto/Key/RsaKeyHandler.php
+          count: 1
+
+        - identifier: identical.alwaysFalse
+          message: '#Strict comparison using === between non-empty-string and false will always evaluate to false#'
+          path: ../src/Crypto/Signature/HmacSignatureHandler.php
+          count: 1
