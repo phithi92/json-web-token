@@ -97,13 +97,14 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
         }
 
         $errors = $this->errorHelper->collectErrors();
+        $errorsString = implode(' | ', $errors);
 
         throw new InvalidTokenException(
             sprintf(
                 'OpenSSL (kid=%s, alg=%s): %s',
                 $kid,
                 $algorithm,
-                $errors ? implode(' | ', $errors) : 'unknown OpenSSL error'
+                $errorsString === '' ? 'unknown OpenSSL error' : $errorsString
             )
         );
     }
@@ -117,7 +118,7 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
         /** @var string|null $signature */
         $signature = null;
 
-        if (openssl_sign($data, $signature, $privateKey, $algorithm) === true && $signature !== null) {
+        if (openssl_sign($data, $signature, $privateKey, $algorithm) === true && is_string($signature)) {
             return $signature;
         }
 
