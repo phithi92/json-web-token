@@ -74,11 +74,47 @@ final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurat
         }
 
         $config = include $configFile;
+
+        self::assertValidConfiguration($config, $configFile);
+
+        /** @var array<string, array<string, array<string, mixed>>> $config */
+        return self::$cache[$configFile] = $config;
+    }
+
+    /**
+     * @param mixed $config
+     *
+     * @throws InvalidAlgorithmConfigFormatException
+     */
+    private static function assertValidConfiguration(mixed $config, string $configFile): void
+    {
         if (! is_array($config)) {
-            throw new InvalidAlgorithmConfigFormatException($configFile);
+            throw new InvalidAlgorithmConfigFormatException(
+                sprintf('Configuration file "%s" must return an array.', $configFile)
+            );
         }
 
-        /** @var array<string, array<string, string>> $config */
-        return self::$cache[$configFile] = $config;
+        foreach ($config as $algorithm => $operations) {
+            if (! is_string($algorithm) || ! is_array($operations)) {
+                throw new InvalidAlgorithmConfigFormatException(
+                    sprintf('Invalid configuration structure in "%s".', $configFile)
+                );
+            }
+
+            foreach ($operations as $option => $value) {
+                if (! is_string($option)) {
+                    throw new InvalidAlgorithmConfigFormatException(
+                        sprintf(
+                            'Invalid option key for algorithm "%s" operation "%s" in "%s".',
+                            $algorithm,
+                            $option,
+                            $configFile
+                        )
+                    );
+                }
+
+                // value is mixed -> no validation
+            }
+        }
     }
 }
