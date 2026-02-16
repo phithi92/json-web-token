@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Crypto\Signature;
 
+use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureComputationException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+
 interface SignatureHandlerInterface
 {
     /**
