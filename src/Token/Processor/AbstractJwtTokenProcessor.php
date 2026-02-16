@@ -138,7 +138,7 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      *
      * @param string $algorithm the algorithm to use for configuration resolution
      *
-     * @return array{array<string, mixed>, array<int, AlgorithmInvocation>}
+     * @return array{array<string, array<string, mixed>>, array<int, AlgorithmInvocation>}
      */
     private function resolveConfigAndHandlers(string $algorithm): array
     {

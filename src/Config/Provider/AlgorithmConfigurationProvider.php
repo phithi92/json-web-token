@@ -11,7 +11,7 @@ interface AlgorithmConfigurationProvider
      *
      * @param string $algorithm the name of the algorithm
      *
-     * @return array<string, array<string, string>|string> The configuration array if found,
+     * @return array<string, array<string, mixed>> The configuration array if found,
      * or an empty array if the algorithm is not supported
      */
     public function get(string $algorithm): array;

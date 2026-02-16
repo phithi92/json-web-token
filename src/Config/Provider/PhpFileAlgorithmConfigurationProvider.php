@@ -21,11 +21,11 @@ final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurat
     private const CONFIG_FILE = __DIR__ . '/../../../resources/algorithms.php';
 
     /**
-     * @var array<string, array<string, array<string, string>>>
+     * @var array<string,array<string, array<string, array<string, mixed>>>>
      */
     private static array $cache = [];
 
-    /** @var array<string, array<string, string>> Configuration for algorithms. */
+    /** @var array<string, array<string, array<string, mixed>>> Configuration for algorithms. */
     private readonly array $config;
 
     /**
@@ -43,7 +43,7 @@ final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurat
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, array<string, mixed>>
      */
     public function get(string $algorithm): array
     {
@@ -56,7 +56,7 @@ final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurat
     }
 
     /**
-     * @return array<string, array<string, string>>
+     * @return array<string, array<string, array<string, mixed>>>
      *
      * @throws AlgorithmConfigFileNotFoundException
      * @throws InvalidAlgorithmConfigFormatException

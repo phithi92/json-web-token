@@ -54,9 +54,7 @@ final class CryptoAlgorithmInvoker
      * @param AlgorithmInvocation $invocation
      * @param JwtKeyManager $manager
      * @param JwtBundle $jwtBundle
-     * @param array<string,array<string,mixed>> $config
-     *
-     * @return mixed
+     * @param array<string, array<string,mixed>> $config
      *
      * @throws MissingAlgorithmConfigurationException
      * @throws AlgorithmMethodNotFoundException
@@ -123,7 +121,7 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     * @param array<string,mixed> $config
+     * @param array<string,array<string,mixed>> $config
      */
     private function isHandlerConfigured(array $config, CryptoProcessingStage $target): bool
     {

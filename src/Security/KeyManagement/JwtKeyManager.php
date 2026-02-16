@@ -56,7 +56,7 @@ final class JwtKeyManager
     /**
      * Returns the configuration for a given JWT algorithm.
      *
-     * @return array<string,mixed>
+     * @return array<string, array<string,mixed>>
      */
     public function getConfiguration(string $algorithm): array
     {
