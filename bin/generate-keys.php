@@ -15,7 +15,7 @@ if (!is_dir($basePath) && !mkdir($basePath, 0700, true) && !is_dir($basePath)) {
 $distinguishedNames = [
     'countryName' => 'DE',
     'stateOrProvinceName' => 'NRW',
-    'localityName' => 'Köln',
+    'localityName' => 'Cologne',
     'organizationName' => 'MyOrg',
     'organizationalUnitName' => 'Dev',
     'commonName' => 'localhost',
@@ -26,10 +26,14 @@ $distinguishedNames = [
 $rsaKeyLengths = [2048, 3072, 4096];
 
 foreach ($rsaKeyLengths as $bits) {
-    echo "🔐 Generiere RSA-Schlüssel mit {$bits} Bit...\n";
+    echo "🔐 Generating RSA key pair with {$bits} bits...\n";
 
     $keyPath = "{$basePath}/rsa/{$bits}";
-    @mkdir($keyPath, 0777, true);
+
+    if (!is_dir($keyPath) && !mkdir($keyPath, 0700, true) && !is_dir($keyPath)) {
+        echo "❌ Error: Failed to create directory '{$keyPath}'.\n";
+        continue;
+    }
 
     $privateKeyFile = "{$keyPath}/private.pem";
     $publicKeyFile = "{$keyPath}/public.pem";
@@ -41,30 +45,40 @@ foreach ($rsaKeyLengths as $bits) {
     ];
 
     $privateKey = openssl_pkey_new($config);
-    if (! $privateKey) {
-        echo "❌ Fehler beim Erzeugen des privaten RSA-Schlüssels ({$bits} Bit): " . openssl_error_string() . "\n";
+    if (!$privateKey) {
+        echo "❌ Error generating private RSA key ({$bits} bits): " . openssl_error_string() . "\n";
         continue;
     }
 
     $csr = openssl_csr_new($distinguishedNames, $privateKey, $config);
-    if (! $csr) {
-        echo '❌ Fehler bei openssl_csr_new(): ' . openssl_error_string() . "\n";
+    if (!$csr) {
+        echo '❌ Error in openssl_csr_new(): ' . openssl_error_string() . "\n";
         continue;
     }
 
     $cert = openssl_csr_sign($csr, null, $privateKey, 365);
-    if (! $cert) {
-        echo '❌ Fehler bei openssl_csr_sign(): ' . openssl_error_string() . "\n";
+    if (!$cert) {
+        echo '❌ Error in openssl_csr_sign(): ' . openssl_error_string() . "\n";
         continue;
     }
 
-    openssl_pkey_export_to_file($privateKey, $privateKeyFile);
-    openssl_x509_export_to_file($cert, $certFile);
+    if (!openssl_pkey_export_to_file($privateKey, $privateKeyFile)) {
+        echo "❌ Error exporting private key to file: {$privateKeyFile}\n";
+        continue;
+    }
+
+    if (!openssl_x509_export_to_file($cert, $certFile)) {
+        echo "❌ Error exporting certificate to file: {$certFile}\n";
+        continue;
+    }
 
     $details = openssl_pkey_get_details($privateKey);
-    file_put_contents($publicKeyFile, $details['key']);
+    if (!file_put_contents($publicKeyFile, $details['key'], LOCK_EX)) {
+        echo "❌ Error writing public key to file: {$publicKeyFile}\n";
+        continue;
+    }
 
-    echo "✅ RSA {$bits}-Bit Schlüssel und Zertifikat gespeichert unter {$keyPath}\n\n";
+    echo "✅ RSA {$bits}-bit key pair and certificate stored in {$keyPath}\n\n";
 }
 
 // === EC Key Generation ===
@@ -75,11 +89,14 @@ $ecCurves = [
 ];
 
 foreach ($ecCurves as $curve => $hash) {
-    echo "🔐 Generiere EC-Schlüssel für Kurve: {$curve}...\n";
+    echo "🔐 Generating EC key pair for curve: {$curve}...\n";
 
     $keyPath = "{$basePath}/ec/{$curve}";
-    
-    @mkdir($keyPath, 0777, true);
+
+    if (!is_dir($keyPath) && !mkdir($keyPath, 0700, true) && !is_dir($keyPath)) {
+        echo "❌ Error: Failed to create directory '{$keyPath}'.\n";
+        continue;
+    }
 
     $privateKeyFile = "{$keyPath}/private.pem";
     $publicKeyFile = "{$keyPath}/public.pem";
@@ -91,30 +108,40 @@ foreach ($ecCurves as $curve => $hash) {
     ];
 
     $privateKey = openssl_pkey_new($config);
-    if (! $privateKey) {
-        echo "❌ Fehler beim Erzeugen des privaten EC-Schlüssels ({$curve}): " . openssl_error_string() . "\n";
+    if (!$privateKey) {
+        echo "❌ Error generating private EC key ({$curve}): " . openssl_error_string() . "\n";
         continue;
     }
 
     $csr = openssl_csr_new($distinguishedNames, $privateKey, $config);
-    if (! $csr) {
-        echo "❌ Fehler bei openssl_csr_new() (EC {$curve}): " . openssl_error_string() . "\n";
+    if (!$csr) {
+        echo "❌ Error in openssl_csr_new() (EC {$curve}): " . openssl_error_string() . "\n";
         continue;
     }
 
     $cert = openssl_csr_sign($csr, null, $privateKey, 365);
-    if (! $cert) {
-        echo "❌ Fehler bei openssl_csr_sign() (EC {$curve}): " . openssl_error_string() . "\n";
+    if (!$cert) {
+        echo "❌ Error in openssl_csr_sign() (EC {$curve}): " . openssl_error_string() . "\n";
         continue;
     }
 
-    openssl_pkey_export_to_file($privateKey, $privateKeyFile);
-    openssl_x509_export_to_file($cert, $certFile);
+    if (!openssl_pkey_export_to_file($privateKey, $privateKeyFile)) {
+        echo "❌ Error exporting private EC key to file: {$privateKeyFile}\n";
+        continue;
+    }
+
+    if (!openssl_x509_export_to_file($cert, $certFile)) {
+        echo "❌ Error exporting EC certificate to file: {$certFile}\n";
+        continue;
+    }
 
     $details = openssl_pkey_get_details($privateKey);
-    file_put_contents($publicKeyFile, $details['key']);
+    if (!file_put_contents($publicKeyFile, $details['key'], LOCK_EX)) {
+        echo "❌ Error writing public EC key to file: {$publicKeyFile}\n";
+        continue;
+    }
 
-    echo "✅ EC-Schlüssel für {$curve} gespeichert unter {$keyPath}\n\n";
+    echo "✅ EC key pair for {$curve} stored in {$keyPath}\n\n";
 }
 
 // === AES-GCM Key Generation ===
@@ -125,17 +152,24 @@ $aesGcmConfigs = [
 ];
 
 foreach ($aesGcmConfigs as $algo => $bytes) {
-    echo "🔐 Generiere AES-GCM-Schlüssel für {$algo} ({$bytes} Byte)...\n";
+    echo "🔐 Generating AES-GCM key for {$algo} ({$bytes} bytes)...\n";
 
     $keyPath = "{$basePath}/aes/{$algo}";
-    @mkdir($keyPath, 0777, true);
+
+    if (!is_dir($keyPath) && !mkdir($keyPath, 0700, true) && !is_dir($keyPath)) {
+        echo "❌ Error: Failed to create directory '{$keyPath}'.\n";
+        continue;
+    }
 
     $keyFile = "{$keyPath}/secret.key";
     $key = random_bytes($bytes);
 
-    file_put_contents($keyFile, $key);
+    if (!file_put_contents($keyFile, $key, LOCK_EX)) {
+        echo "❌ Error writing AES-GCM key to file: {$keyFile}\n";
+        continue;
+    }
 
-    echo "✅ AES-GCM-Schlüssel gespeichert unter {$keyFile}\n\n";
+    echo "✅ AES-GCM key stored in {$keyFile}\n\n";
 }
 
 // === HMAC Key Generation ===
@@ -146,17 +180,24 @@ $hmacConfigs = [
 ];
 
 foreach ($hmacConfigs as $algo => $bytes) {
-    echo "🔐 Generiere HMAC-Schlüssel für {$algo} ({$bytes} Byte)...\n";
+    echo "🔐 Generating HMAC key for {$algo} ({$bytes} bytes)...\n";
 
     $keyPath = "{$basePath}/hmac/{$algo}";
-    @mkdir($keyPath, 0777, true);
+
+    if (!is_dir($keyPath) && !mkdir($keyPath, 0700, true) && !is_dir($keyPath)) {
+        echo "❌ Error: Failed to create directory '{$keyPath}'.\n";
+        continue;
+    }
 
     $keyFile = "{$keyPath}/secret.key";
     $key = random_bytes($bytes);
 
-    file_put_contents($keyFile, $key);
+    if (!file_put_contents($keyFile, $key, LOCK_EX)) {
+        echo "❌ Error writing HMAC key to file: {$keyFile}\n";
+        continue;
+    }
 
-    echo "✅ HMAC-Schlüssel gespeichert unter {$keyFile}\n\n";
+    echo "✅ HMAC key stored in {$keyFile}\n\n";
 }
 
-echo "🎉 Alle Schlüssel für RSA, EC, AES-GCM und HMAC wurden erfolgreich generiert.\n";
+echo "🎉 All keys for RSA, EC, AES-GCM and HMAC have been successfully generated.\n";
