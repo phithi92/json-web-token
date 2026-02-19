@@ -9,18 +9,18 @@
             "email": "development@phillip-thiele.de"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "require": {
         "php": ">=8.2",
         "phpseclib/phpseclib": "~3.0"
     },
     "require-dev": {
-        "firebase/php-jwt": "^6.11",
+        "firebase/php-jwt": "^7.0",
         "phpunit/phpunit": "^10.0",
         "phpbench/phpbench": "^1.0",
         "nikic/php-parser": "^5.3",
-        "phpstan/phpstan": "2.1",
-        "nunomaduro/phpinsights": "dev-master",
+        "phpstan/phpstan": "^2.1",
+        "nunomaduro/phpinsights": "^2.0",
         "shipmonk/dead-code-detector": "^0.9.2",
         "phpstan/phpstan-strict-rules": "^2.0.0",
         "php-parallel-lint/php-parallel-lint": "^1.4"
