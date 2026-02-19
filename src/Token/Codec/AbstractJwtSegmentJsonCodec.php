@@ -17,11 +17,9 @@ abstract class AbstractJwtSegmentJsonCodec
      * - JSON_UNESCAPED_UNICODE: Prevents escaping of multibyte Unicode characters.
      */
     protected const DEFAULT_JSON_OPTIONS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+
     /** @var array<class-string, self> */
     private static array $sharedInstances = [];
-    final public function __construct()
-    {
-    }
 
     /**
      * @param array<string,mixed> $segment
