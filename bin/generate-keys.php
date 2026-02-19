@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
-$basePath = getenv('KEYS_PATH') ?: realpath(__DIR__ . '/../tests/keys/');
-if (! $basePath || ! is_dir($basePath) && ! mkdir($basePath, 0777, true)) {
-    die("❌ Fehler: Konnte Basisverzeichnis '{$basePath}' nicht erstellen.\n");
+$envPath = getenv('KEYS_PATH');
+$defaultPath = __DIR__ . '/../tests/keys';
+$basePath = ($envPath !== false && $envPath !== '') ? $envPath : $defaultPath;
+$basePath = rtrim($basePath, "/\\"); // Windows + Unix path normalization
+
+if (!is_dir($basePath) && !mkdir($basePath, 0700, true) && !is_dir($basePath)) {
+    fwrite(STDERR, "❌ Error: Failed to create base directory '{$basePath}'.\n");
+    exit(1);
 }
-@mkdir($basePath, 0777, true);
 
 $distinguishedNames = [
     'countryName' => 'DE',
