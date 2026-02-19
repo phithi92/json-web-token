@@ -32,8 +32,8 @@ final class ContentEncryptionResultHandler implements CryptoStageResultHandlerIn
     /**
      * Handles the perform operation (encryption).
      *
-     * @param CryptoStageResultInterface $result The operation result
      * @param JwtBundle $bundle The JWT bundle
+     * @param CryptoStageResultInterface $result The operation result
      *
      * @return JwtBundle The modified JWT bundle
      */
@@ -52,8 +52,8 @@ final class ContentEncryptionResultHandler implements CryptoStageResultHandlerIn
     /**
      * Handles the decode operation.
      *
-     * @param CryptoStageResultInterface $result The operation result
      * @param JwtBundle $bundle The JWT bundle
+     * @param CryptoStageResultInterface $result The operation result
      *
      * @return JwtBundle The modified JWT bundle
      */
