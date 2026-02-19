@@ -121,10 +121,22 @@ $payload = (new JwtPayload())
     ->addClaim('role', 'admin');
 ```
 
-Time-based claims accept:
+Time-based helper setters such as `setIssuedAt()` and `setExpiration()` accept date/time strings, for example:
+
 - `"now"`
 - Relative strings (`+15 minutes`)
-- UNIX timestamps
+- Absolute datetime strings (`2026-01-01T00:00:00+00:00`)
+
+> ℹ️ JWT `iat`, `nbf`, and `exp` are NumericDate values (seconds since Unix epoch in UTC).
+> Always generate and compare timestamps in UTC to avoid timezone drift.
+
+If you want to set UNIX timestamps directly, use `setClaimTimestamp()`:
+
+```php
+$payload
+    ->setClaimTimestamp('iat', time())
+    ->setClaimTimestamp('exp', time() + 900);
+```
 
 ---
 
