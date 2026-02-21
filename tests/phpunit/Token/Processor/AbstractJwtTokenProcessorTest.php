@@ -10,6 +10,7 @@ use Phithi92\JsonWebToken\Crypto\KeyManagement\CekHandlerResult;
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
 use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerInterface;
 use Phithi92\JsonWebToken\Crypto\Signature\SignatureHandlerResult;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
@@ -57,6 +58,36 @@ final class AbstractJwtTokenProcessorTest extends TestCase
         $processor->run('HS256', $bundle);
 
         $this->assertSame(['cek', 'signature'], RecordingHandler::$calls);
+    }
+
+    public function testDispatchHandlersThrowsForUnsupportedAlgorithm(): void
+    {
+        $provider = new class () implements AlgorithmConfigurationProvider {
+            public function get(string $algorithm): array
+            {
+                return [];
+            }
+
+            public function isSupported(string $algorithm): bool
+            {
+                return false;
+            }
+        };
+
+        $manager = new JwtKeyManager($provider);
+        $processor = new class (CryptoOperationDirection::Perform, $manager) extends AbstractJwtTokenProcessor {
+            public function run(string $algorithm, JwtBundle $bundle): void
+            {
+                $this->dispatchHandlers($algorithm, $bundle);
+            }
+        };
+
+        $bundle = new JwtBundle((new JwtHeader())->setAlgorithm('UNKNOWN'));
+
+        $this->expectException(InvalidTokenException::class);
+        $this->expectExceptionMessage('Unsupported algorithm: UNKNOWN');
+
+        $processor->run('UNKNOWN', $bundle);
     }
 }
 
