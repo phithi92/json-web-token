@@ -143,6 +143,12 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
     private function resolveConfigAndHandlers(string $algorithm): array
     {
         $config = $this->manager->getConfiguration($algorithm);
+        if ($config === []) {
+            throw new InvalidTokenException(
+                sprintf('Unsupported algorithm: %s', $algorithm)
+            );
+        }
+
         $descriptors = $this->resolveApplicableHandlers($config);
 
         return [$config, $descriptors];
