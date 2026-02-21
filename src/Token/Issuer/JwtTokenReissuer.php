@@ -55,7 +55,8 @@ final class JwtTokenReissuer
 
         $reissuedBundle = new JwtBundle(
             header: $bundle->getHeader(),
-            payload: $filterdPayload
+            payload: $filterdPayload,
+            encryption: ($bundle->hasEncryption()) ? $bundle->getEncryption() : null,
         );
 
         // Decide policy: reissue always validates the new bundle by default.

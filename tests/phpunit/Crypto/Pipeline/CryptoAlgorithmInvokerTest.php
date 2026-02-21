@@ -49,7 +49,7 @@ final class CryptoAlgorithmInvokerTest extends TestCase
     {
         $dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
 
-        $this->expectException(MissingAlgorithmConfigurationException::class);
+        $this->expectException(InvalidAlgorithmImplementationException::class);
 
         $invocation = new AlgorithmInvocation(
             CryptoProcessingStage::Signature,

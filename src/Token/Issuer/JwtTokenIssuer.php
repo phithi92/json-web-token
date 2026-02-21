@@ -73,8 +73,7 @@ final class JwtTokenIssuer extends AbstractJwtTokenProcessor
         JwtBundle $bundle,
         ?string $algorithm = null,
     ): JwtBundle {
-        $algorithm ??= $bundle->getHeader()->getAlgorithm()
-            ?? throw new MissingAlgorithmException('header.alg');
+        $algorithm ??= $this->resolveAlgorithm($bundle);
 
         $this->dispatchHandlers($algorithm, $bundle);
 

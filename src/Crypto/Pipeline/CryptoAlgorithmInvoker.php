@@ -108,7 +108,7 @@ final class CryptoAlgorithmInvoker
      *
      * @param JwtKeyManager $manager The key manager used to construct handler instances
      * @param AlgorithmInvocation $invocation The invocation containing the target stage
-     * @param array<string, array<string, mixed>> $config Configuration mapping interface names to handler classes
+     * @param array<string, mixed>> $config Configuration mapping interface names to handler classes
      *
      * @return object An instance of the handler implementing the interface for the target stage
      *
@@ -125,7 +125,7 @@ final class CryptoAlgorithmInvoker
             throw new MissingAlgorithmConfigurationException($invocation->target->name);
         }
 
-        $className = $config[$interfaceName]['handler'];
+        $className = $config[$interfaceName]['handler'] ?? null;
         if (! is_string($className)) {
             throw new InvalidAlgorithmImplementationException(gettype($className));
         }
