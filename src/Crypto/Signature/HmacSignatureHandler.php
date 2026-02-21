@@ -13,30 +13,25 @@ use function hash_equals;
 use function hash_hmac;
 use function sprintf;
 use function strlen;
-use function strtolower;
 
 class HmacSignatureHandler extends AbstractSignatureHandler
 {
     /** @var array<string, bool> */
     private array $checkedHmacKeys;
 
-    /** @var array<string,int> */
-    private static array $HASH_LENGTHS = [
-        'sha256' => 32,
-        'sha384' => 48,
-        'sha512' => 64
-    ];
-
-    /**
-     * @{inherhit}
-     */
     public function computeSignature(string $kid, string $algorithm, string $signingInput): SignatureHandlerResult
     {
         $passphrase = $this->manager->getPassphrase($kid);
 
-        $this->assertHmacKeyIsValid($kid, $algorithm, $passphrase);
+        try {
+            $hashAlgorithm = SignatureHashAlgorithm::from($algorithm);
+        } catch (ValueError) {
+            throw new InvalidTokenException("Unsupported hash algorithm: {$algorithm}");
+        }
 
-        $signature = hash_hmac($algorithm, $signingInput, $passphrase, true);
+        $this->assertHmacKeyIsValid($kid, $hashAlgorithm, $passphrase);
+
+        $signature = hash_hmac($hashAlgorithm->name, $signingInput, $passphrase, true);
 
         return new SignatureHandlerResult(signature: new JwtSignature($signature));
     }
@@ -55,8 +50,6 @@ class HmacSignatureHandler extends AbstractSignatureHandler
      * @param non-empty-string $aad Additional authenticated data to verify
      * @param non-empty-string $signature The signature to validate against
      *
-     * @return void
-     *
      * @throws SignatureComputationException When signature computation fails
      * @throws InvalidTokenException When signature validation fails
      */
@@ -64,7 +57,13 @@ class HmacSignatureHandler extends AbstractSignatureHandler
     {
         $passphrase = $this->manager->getPassphrase($kid);
 
-        $this->assertHmacKeyIsValid($kid, $algorithm, $passphrase);
+        try {
+            $hashAlgorithm = SignatureHashAlgorithm::from($algorithm);
+        } catch (ValueError) {
+            throw new InvalidTokenException("Unsupported hash algorithm: {$algorithm}");
+        }
+
+        $this->assertHmacKeyIsValid($kid, $hashAlgorithm, $passphrase);
 
         try {
             // PHP 8+: hash_hmac() can throw ValueError (invalid args) OR return false (internal failure)
@@ -90,9 +89,9 @@ class HmacSignatureHandler extends AbstractSignatureHandler
     /**
      * @throws InvalidTokenException
      */
-    private function assertHmacKeyIsValid(string $kid, string $algorithm, string $key): void
+    private function assertHmacKeyIsValid(string $kid, SignatureHashAlgorithm $algorithm, string $key): void
     {
-        $cacheKey = $kid . ':' . strtolower($algorithm);
+        $cacheKey = $kid . ':' . $algorithm->name;
         if (isset($this->checkedHmacKeys[$cacheKey])) {
             return;
             // Already checked
@@ -102,16 +101,12 @@ class HmacSignatureHandler extends AbstractSignatureHandler
             throw new InvalidTokenException("HMAC key for [{$kid}] is empty.");
         }
 
-        if (! isset(self::$HASH_LENGTHS[strtolower($algorithm)])) {
-            throw new InvalidTokenException("Unsupported hash algorithm: {$algorithm}");
-        }
-
-        $minLength = self::$HASH_LENGTHS[strtolower($algorithm)];
+        $minLength = $algorithm->hmacMinKeyLength();
         $keyLength = strlen($key);
 
         if ($keyLength < $minLength) {
             throw new InvalidTokenException(
-                "HMAC key for kid [{$kid}] is too short for {$algorithm}. Expected at least {$minLength} bytes and got {$keyLength}."
+                "HMAC key for kid [{$kid}] is too short for {$algorithm->name}. Expected at least {$minLength} bytes and got {$keyLength}."
             );
         }
 

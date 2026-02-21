@@ -14,6 +14,7 @@ use Phithi92\JsonWebToken\Security\KeyManagement\KidResolverInterface;
 use Phithi92\JsonWebToken\Security\KeyRole;
 use Phithi92\JsonWebToken\Token\JwtSignature;
 use SensitiveParameter;
+use ValueError;
 
 use function implode;
 use function is_array;
@@ -22,7 +23,6 @@ use function openssl_pkey_get_details;
 use function openssl_sign;
 use function openssl_verify;
 use function sprintf;
-use function strtolower;
 
 class EcdsaSignatureHandler extends AbstractSignatureHandler
 {
@@ -47,12 +47,16 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
      * @param non-empty-string $kid Key identifier for the private key
      * @param non-empty-string $algorithm Signature algorithm (e.g., 'ES256', 'ES384', 'ES512')
      * @param non-empty-string $signingInput The data to be signed (JWS signing input)
-     *
-     * @return SignatureHandlerResult
      */
     public function computeSignature(string $kid, string $algorithm, string $signingInput): SignatureHandlerResult
     {
-        $privateKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Private);
+        try {
+            $hashAlgorithm = SignatureHashAlgorithm::from($algorithm);
+        } catch (ValueError) {
+            throw new InvalidTokenException("Unsupported hash algorithm: {$algorithm}");
+        }
+
+        $privateKey = $this->loadAndValidateEcdsaKey($kid, $hashAlgorithm, KeyRole::Private);
 
         $signature = $this->signData($signingInput, $privateKey, $algorithm);
 
@@ -72,24 +76,23 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
      * as a failed signature verification. Detailed OpenSSL errors are not
      * suitable for semantic error handling.
      *
-     * @param string $kid
-     * @param string $algorithm
-     * @param string $aad
-     * @param string $signature
-     *
-     * @return void
-     *
      * @throws InvalidTokenException
      */
     public function validateSignature(string $kid, string $algorithm, string $aad, string $signature): void
     {
-        $publicKey = $this->loadAndValidateEcdsaKey($kid, $algorithm, KeyRole::Public);
+        try {
+            $hashAlgorithm = SignatureHashAlgorithm::from($algorithm);
+        } catch (ValueError) {
+            throw new InvalidTokenException("Unsupported hash algorithm: {$algorithm}");
+        }
+
+        $publicKey = $this->loadAndValidateEcdsaKey($kid, $hashAlgorithm, KeyRole::Public);
 
         $verified = openssl_verify(
             data: $aad,
             signature: $signature,
             public_key: $publicKey,
-            algorithm: $algorithm
+            algorithm: $hashAlgorithm->name
         );
 
         if ($verified === 1) {
@@ -103,7 +106,7 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
             sprintf(
                 'OpenSSL (kid=%s, alg=%s): %s',
                 $kid,
-                $algorithm,
+                $hashAlgorithm->name,
                 $errorsString === '' ? 'unknown OpenSSL error' : $errorsString
             )
         );
@@ -129,7 +132,7 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
     /**
      * Load an EC key and validate its curve against the expected curve for the hash algorithm.
      */
-    private function loadAndValidateEcdsaKey(string $kid, string $hashAlgorithm, KeyRole $role): OpenSSLAsymmetricKey
+    private function loadAndValidateEcdsaKey(string $kid, SignatureHashAlgorithm $hashAlgorithm, KeyRole $role): OpenSSLAsymmetricKey
     {
         $cacheKey = $this->cacheKey($kid, $role, $hashAlgorithm);
         if (isset($this->validatedKeys[$cacheKey])) {
@@ -138,15 +141,25 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
 
         $key = $this->loadOpensslKey($kid, $role);
 
-        $curve = $this->extractCurveName($key, $kid);
-        $this->assertCurveMatchesAlgorithm($curve, $hashAlgorithm, $kid);
+        $curveName = $this->extractCurveName($key, $kid);
+
+        if ($curveName !== $hashAlgorithm->ecCurveName()) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Invalid EC curve for [%s]: expected [%s], got [%s].',
+                    $kid,
+                    $curveName,
+                    $hashAlgorithm->ecCurveName()
+                )
+            );
+        }
 
         return $this->validatedKeys[$cacheKey] = $key;
     }
 
-    private function cacheKey(string $kid, KeyRole $role, string $hashAlgorithm): string
+    private function cacheKey(string $kid, KeyRole $role, SignatureHashAlgorithm $hashAlgorithm): string
     {
-        return $kid . '|' . $role->value . '|' . strtolower($hashAlgorithm);
+        return $kid . '|' . $role->value . '|' . $hashAlgorithm->value;
     }
 
     private function loadOpensslKey(string $kid, KeyRole $role): OpenSSLAsymmetricKey
@@ -169,33 +182,5 @@ class EcdsaSignatureHandler extends AbstractSignatureHandler
         }
 
         return $curve;
-    }
-
-    private function assertCurveMatchesAlgorithm(string $actualCurve, string $hashAlgorithm, string $kid): void
-    {
-        $expectedCurve = $this->mapHashAlgorithmToCurve($hashAlgorithm);
-
-        if ($actualCurve !== $expectedCurve) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'Invalid EC curve for [%s]: expected [%s], got [%s].',
-                    $kid,
-                    $expectedCurve,
-                    $actualCurve
-                )
-            );
-        }
-    }
-
-    private function mapHashAlgorithmToCurve(string $hashAlgorithm): string
-    {
-        return match (strtolower($hashAlgorithm)) {
-            'sha256' => 'prime256v1', // ES256
-            'sha384' => 'secp384r1',  // ES384
-            'sha512' => 'secp521r1',  // ES512 (JWA uses P-521 with SHA-512)
-            default => throw new InvalidArgumentException(
-                sprintf('Unsupported hash algorithm for EC key: %s.', $hashAlgorithm)
-            ),
-        };
     }
 }
