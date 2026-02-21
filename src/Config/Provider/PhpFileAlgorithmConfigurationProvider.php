@@ -82,8 +82,6 @@ final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurat
     }
 
     /**
-     * @param mixed $config
-     *
      * @throws InvalidAlgorithmConfigFormatException
      */
     private static function assertValidConfiguration(mixed $config, string $configFile): void

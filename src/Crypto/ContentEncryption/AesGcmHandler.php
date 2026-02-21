@@ -34,16 +34,6 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
     }
 
     /**
-     *
-     * @param string $encryptedData
-     * @param string $encryptionKey
-     * @param int $cipherKeyLength
-     * @param string $initializationVector
-     * @param string $authTag
-     * @param string $additionalAuthenticatedData
-     *
-     * @return DecryptionHandlerResult
-     *
      * @throws InvalidTokenException
      */
     public function decryptPayload(
@@ -75,15 +65,6 @@ final class AesGcmHandler implements ContentEncryptionHandlerInterface
     }
 
     /**
-     *
-     * @param string $data
-     * @param string $encryptionKey
-     * @param int $cipherKeyLength
-     * @param string $initializationVector
-     * @param string $additionalAuthenticatedData
-     *
-     * @return EncryptionHandlerResult
-     *
      * @throws EncryptionException
      */
     public function encryptPayload(

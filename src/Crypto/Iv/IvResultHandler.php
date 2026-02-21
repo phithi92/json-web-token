@@ -16,7 +16,7 @@ class IvResultHandler implements CryptoStageResultHandlerInterface
 {
     public function isSupported(CryptoOperationDirection $direction): bool
     {
-        return match($direction) {
+        return match ($direction) {
             CryptoOperationDirection::Perform => true,
             CryptoOperationDirection::Reverse => false
         };

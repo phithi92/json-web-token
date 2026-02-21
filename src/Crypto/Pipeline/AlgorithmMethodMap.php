@@ -12,7 +12,7 @@ final class AlgorithmMethodMap
             CryptoOperationDirection::Reverse->name => 'validateSignature',
         ],
         CryptoProcessingStage::Cek->name => [
-            CryptoOperationDirection::Perform->name => 'initializeCek'
+            CryptoOperationDirection::Perform->name => 'initializeCek',
         ],
         CryptoProcessingStage::Iv->name => [
             CryptoOperationDirection::Perform->name => 'initializeIv',

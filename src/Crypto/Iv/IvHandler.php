@@ -21,10 +21,6 @@ final class IvHandler implements IvHandlerInterface
 
     /**
      * Generate a cryptographically secure IV and store it in the bundle.
-     *
-     * @param int $ivLengthBits
-     *
-     * @return IvHandlerResult
      */
     public function initializeIv(int $ivLengthBits): IvHandlerResult
     {
@@ -39,16 +35,10 @@ final class IvHandler implements IvHandlerInterface
     /**
      * Validates the Initialization Vector (IV) in the bundle.
      *
-     * @param string $iv
-     * @param int $expectedLengthInBits
-     *
-     * @return void
-     *
      * @throws InvalidTokenException If the IV is missing or has an unexpected length
      */
     public function validateIv(string $iv, int $expectedLengthInBits): void
     {
-
         $expectedLengthInBytes = self::assertValidByteLength($expectedLengthInBits);
 
         // Actual IV length

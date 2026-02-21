@@ -29,15 +29,6 @@ class RsaKeyHandler implements KeyHandlerInterface
         $this->manager = $manager;
     }
 
-    /**
-     *
-     * @param string $kid
-     * @param string $wrappedKey
-     * @param int $padding
-     * @param string $hash
-     *
-     * @return KeyUnwrapperHandlerResult
-     */
     public function unwrapKey(string $kid, string $wrappedKey, int $padding, string $hash): KeyUnwrapperHandlerResult
     {
         $key = $this->manager->getKeyMetadata($kid, KeyRole::Private);
@@ -48,15 +39,6 @@ class RsaKeyHandler implements KeyHandlerInterface
         return new KeyUnwrapperHandlerResult(contentEncryptionKey: $cek);
     }
 
-    /**
-     *
-     * @param string $kid
-     * @param string $cek
-     * @param int $padding
-     * @param string $hash
-     *
-     * @return KeyWrapperHandlerResult
-     */
     public function wrapKey(string $kid, string $cek, int $padding, string $hash): KeyWrapperHandlerResult
     {
         $key = $this->manager->getKeyMetadata($kid, KeyRole::Public);
@@ -68,14 +50,6 @@ class RsaKeyHandler implements KeyHandlerInterface
     }
 
     /**
-     *
-     * @param string $cek
-     * @param string $pem
-     * @param int $padding
-     * @param string $hash
-     *
-     * @return string
-     *
      * @throws InvalidTokenException
      * @throws EncryptionException
      */
@@ -101,14 +75,6 @@ class RsaKeyHandler implements KeyHandlerInterface
     }
 
     /**
-     *
-     * @param string $wrappedKey
-     * @param string $pem
-     * @param int $padding
-     * @param string|null $hash
-     *
-     * @return string
-     *
      * @throws InvalidTokenException
      * @throws DecryptionException
      */

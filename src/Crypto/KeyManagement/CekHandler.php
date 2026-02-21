@@ -17,10 +17,6 @@ final class CekHandler implements CekHandlerInterface
     private const MIN_BIT_LENGTH = 128; // 16 bytes minimum for security
     private const BITS_PER_BYTE = 8;
 
-    /**
-     * {@inheritDoc}
-     *
-     */
     public function initializeCek(string $algorithm, int $bitLength): ?CekHandlerResult
     {
         if ($algorithm === self::ALGORITHM_DIRECT_CEK) {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Phithi92\JsonWebToken\Crypto\KeyManagement;
 
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoStageResultInterface;
