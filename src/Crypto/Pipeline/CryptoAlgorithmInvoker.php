@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Crypto\Pipeline;
 
 use InvalidArgumentException;
-use Phithi92\JsonWebToken\Crypto\ContentEncryption\ContentEncryptionHandlerInterface;
+use LogicException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\AlgorithmMethodNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\InvalidAlgorithmImplementationException;
 use Phithi92\JsonWebToken\Exceptions\Crypto\Pipeline\MissingAlgorithmConfigurationException;
@@ -18,12 +18,25 @@ use Phithi92\JsonWebToken\Token\Serializer\JwsSigningInput;
 
 use function gettype;
 use function is_array;
+use function is_object;
 use function is_string;
-use function is_subclass_of;
 use function method_exists;
 use function sprintf;
 use function strlen;
 
+/**
+ * Invokes stage-specific crypto algorithm handlers.
+ *
+ * The invoker maps an AlgorithmInvocation (target stage + operation direction) to a concrete
+ * handler method via AlgorithmMethodMap, builds the corresponding handler instance from the
+ * provided configuration, and executes the resolved method with validated arguments.
+ *
+ * Key points:
+ * - Fast capability check via isSupported() before attempting execution.
+ * - Handler instances may be cached by class-string to reduce instantiation overhead.
+ * - Configuration is validated early; missing stage configuration results in an exception.
+ * - The resolved handler method must exist; otherwise an exception is thrown.
+ */
 final class CryptoAlgorithmInvoker
 {
     /** @var array<class-string, object> */
@@ -35,25 +48,18 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
+     * Determines whether a handler method is configured for the given processing stage and operation direction.
      *
-     * @param AlgorithmInvocation $invokation
-     *
-     * @return bool
+     * @return bool True if a matching handler method is configured; otherwise false.
      */
     public function isSupported(AlgorithmInvocation $invokation): bool
     {
-        return $this->methodResolver->supports(
-            $invokation->target,
-            $invokation->operation
-        );
+        return $this->methodResolver->supports($invokation);
     }
 
     /**
      * Dispatches a handler method call based on type and operation.
      *
-     * @param AlgorithmInvocation $invocation
-     * @param JwtKeyManager $manager
-     * @param JwtBundle $jwtBundle
      * @param array<string, array<string,mixed>> $config
      *
      * @throws MissingAlgorithmConfigurationException
@@ -65,75 +71,81 @@ final class CryptoAlgorithmInvoker
         JwtBundle $jwtBundle,
         array $config,
     ): ?CryptoStageResultInterface {
-        if (! $this->isHandlerConfigured($config, $invocation->target)) {
+        // check if handler config exist
+        if (! isset($config[$invocation->target->interfaceClass()])) {
             throw new MissingAlgorithmConfigurationException($invocation->target->name);
         }
 
-        $method = $this->methodResolver->resolve($invocation->target, $invocation->operation);
+        $method = $this->methodResolver->resolve($invocation);
 
-        $handler = $this->buildHandler($config, $manager, $invocation->target);
-
+        $handler = $this->buildHandler($manager, $invocation, $config);
         if (! method_exists($handler, $method)) {
-            throw new AlgorithmMethodNotFoundException($invocation->target, $invocation->operation);
+            throw new AlgorithmMethodNotFoundException($invocation);
         }
 
         $args = $this->resolveArguments($manager, $invocation, $jwtBundle, $config);
 
-        /** @phpstan-ignore-next-line */
-        return $handler->{$method}(...$args);
+        $result = $handler->{$method}(...$args);
+        if (! $result instanceof CryptoStageResultInterface && $result !== null) {
+            throw new LogicException(sprintf(
+                'Invalid handler return type: expected null or an instance of %s, got %s from %s::%s (stage: %s, operation: %s).',
+                CryptoStageResultInterface::class,
+                is_object($result) ? $result::class : gettype($result),
+                $handler::class,
+                $method,
+                $invocation->target->name,
+                $invocation->operation->name,
+            ));
+        }
+
+        return $result;
     }
 
     /**
-     * @param array<string,mixed> $config
-     * @param JwtKeyManager $manager
-     * @param CryptoProcessingStage $target
+     * Builds and returns a cryptographic handler for the given stage.
      *
-     * @return object
+     * This method resolves the handler class from the provided configuration,
+     * validates it, caches it, and ensures it implements the expected interface.
      *
-     * @throws MissingAlgorithmConfigurationException
-     * @throws InvalidAlgorithmImplementationException
+     * @param JwtKeyManager $manager The key manager used to construct handler instances
+     * @param AlgorithmInvocation $invocation The invocation containing the target stage
+     * @param array<string, array<string, mixed>> $config Configuration mapping interface names to handler classes
+     *
+     * @return object An instance of the handler implementing the interface for the target stage
+     *
+     * @throws MissingAlgorithmConfigurationException If no configuration exists for the target interface
+     * @throws InvalidAlgorithmImplementationException If the resolved handler class is invalid or does not implement the expected interface
      */
     private function buildHandler(
-        array $config,
         JwtKeyManager $manager,
-        CryptoProcessingStage $target,
+        AlgorithmInvocation $invocation,
+        array $config
     ): object {
-        $interface = $target->interfaceClass();
-
-        if (! isset($config[$interface]) || ! is_array($config[$interface])) {
-            throw new MissingAlgorithmConfigurationException($target->name);
+        $interfaceName = $invocation->target->interfaceClass();
+        if (! isset($config[$interfaceName]) || ! is_array($config[$interfaceName])) {
+            throw new MissingAlgorithmConfigurationException($invocation->target->name);
         }
 
-        $classString = $config[$interface]['handler'];
-        if (! is_string($classString)) {
-            throw new InvalidAlgorithmImplementationException(gettype($classString));
+        $className = $config[$interfaceName]['handler'];
+        if (! is_string($className)) {
+            throw new InvalidAlgorithmImplementationException(gettype($className));
         }
 
-        if (! is_subclass_of($classString, $interface)) {
-            throw new InvalidAlgorithmImplementationException($classString);
+        if (isset($this->handlerCache[$className])) {
+            return $this->handlerCache[$className];
         }
 
-        if (is_subclass_of($classString, ContentEncryptionHandlerInterface::class)) {
-            $this->handlerCache[$classString] ??= new $classString();
+        $class = new $className($manager);
+        if (! $class instanceof $interfaceName) {
+            throw new InvalidAlgorithmImplementationException($className);
         }
 
-        return $this->handlerCache[$classString] ??= new $classString($manager);
-    }
-
-    /**
-     * @param array<string,array<string,mixed>> $config
-     */
-    private function isHandlerConfigured(array $config, CryptoProcessingStage $target): bool
-    {
-        return isset($config[$target->interfaceClass()]);
+        return $class;
     }
 
     /**
      * Resolves method arguments for the given handler type.
      *
-     * @param JwtKeyManager $manager
-     * @param AlgorithmInvocation $invokation
-     * @param JwtBundle $jwtBundle
      * @param array<string, array<string,mixed>> $config
      *
      * @return array<int, string|int|null>
@@ -156,9 +168,6 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     *
-     * @param CryptoOperationDirection $operation
-     * @param JwtBundle $jwtBundle
      * @param array<string, mixed> $methodConfig
      *
      * @return array<int,string|int>
@@ -180,8 +189,6 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     *
-     * @param JwtBundle $jwtBundle
      * @param array<string, mixed> $methodConfig
      *
      * @return array<int,string|int|null>
@@ -199,9 +206,6 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     *
-     * @param CryptoOperationDirection $operation
-     * @param JwtBundle $jwtBundle
      * @param array<string, mixed> $methodConfig
      *
      * @return array<int,string|int|null>
@@ -229,11 +233,7 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     *
-     * @param CryptoOperationDirection $operation
-     * @param JwtBundle $jwtBundle
      * @param array<string, mixed> $methodConfig
-     * @param JwtKeyManager $manager
      *
      * @return array<int,string|int>
      */
@@ -273,9 +273,6 @@ final class CryptoAlgorithmInvoker
     }
 
     /**
-     *
-     * @param CryptoOperationDirection $operation
-     * @param JwtBundle $jwtBundle
      * @param array<string, mixed> $config
      *
      * @return array<int,string|int|null>
@@ -319,7 +316,7 @@ final class CryptoAlgorithmInvoker
             return $length;
         }
 
-        if (!is_string($length)) {
+        if (! is_string($length)) {
             throw new InvalidArgumentException(sprintf(
                 'Length must be int or string, %s given',
                 get_debug_type($length)
@@ -345,7 +342,7 @@ final class CryptoAlgorithmInvoker
      */
     private function resolveOptionalConfig(array $config, string $key): string|int|null
     {
-        if (!array_key_exists($key, $config)) {
+        if (! array_key_exists($key, $config)) {
             return null;
         }
 
