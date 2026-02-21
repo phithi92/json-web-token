@@ -42,16 +42,14 @@ final class AlgorithmMethodMap
     }
 
     /**
-     * Resolves the handler method name for the given processing stage and operation direction.
+     * Resolves the handler method name for the given algorithm invocation.
      *
-     * This method returns the method identifier as defined in the internal method map.
-     * It assumes the combination is supported; call supports() beforehand to avoid
-     * an undefined index error.
+     * @param AlgorithmInvocation $invokation The invocation context containing target and operation.
      *
-     * @return string The handler method name to invoke (e.g. "encryptPayload", "decryptPayload").
+     * @return string|null The handler method name to invoke (e.g. "encryptPayload"), or null if not defined.
      */
-    public function resolve(AlgorithmInvocation $invokation): string
+    public function resolve(AlgorithmInvocation $invokation): ?string
     {
-        return self::METHOD_MAP[$invokation->target->name][$invokation->operation->name];
+        return self::METHOD_MAP[$invokation->target->name][$invokation->operation->name] ?? null;
     }
 }

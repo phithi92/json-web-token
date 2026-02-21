@@ -17,7 +17,6 @@ use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\Serializer\JwsSigningInput;
 
 use function gettype;
-use function is_array;
 use function is_object;
 use function is_string;
 use function method_exists;
@@ -76,11 +75,11 @@ final class CryptoAlgorithmInvoker
             throw new MissingAlgorithmConfigurationException($invocation->target->name);
         }
 
-        $method = $this->methodResolver->resolve($invocation);
-
         $handler = $this->buildHandler($manager, $invocation, $config);
+
+        $method = $this->methodResolver->resolve($invocation) ?? '';
         if (! method_exists($handler, $method)) {
-            throw new AlgorithmMethodNotFoundException($invocation);
+            throw new AlgorithmMethodNotFoundException($invocation, $method);
         }
 
         $args = $this->resolveArguments($manager, $invocation, $jwtBundle, $config);
@@ -122,7 +121,7 @@ final class CryptoAlgorithmInvoker
         array $config
     ): object {
         $interfaceName = $invocation->target->interfaceClass();
-        if (! isset($config[$interfaceName]) || ! is_array($config[$interfaceName])) {
+        if (! isset($config[$interfaceName])) {
             throw new MissingAlgorithmConfigurationException($invocation->target->name);
         }
 
