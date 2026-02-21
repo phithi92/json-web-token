@@ -28,19 +28,30 @@ final class AlgorithmMethodMap
         ],
     ];
 
-    public function supports(
-        CryptoProcessingStage $stage,
-        CryptoOperationDirection $direction
-    ): bool {
-        return isset(self::METHOD_MAP[$stage->name][$direction->name]);
+    /**
+     * Determines whether a handler method is configured for the given processing stage and operation direction.
+     *
+     * The lookup is performed against the internal method map. A combination is considered supported
+     * if a method name exists for the provided stage and direction.
+     *
+     * @return bool True if a matching handler method is configured; otherwise false.
+     */
+    public function supports(AlgorithmInvocation $invokation): bool
+    {
+        return isset(self::METHOD_MAP[$invokation->target->name][$invokation->operation->name]);
     }
 
     /**
-     * Resolves the method name that should be called on a handler
-     * based on its type and the operation direction.
+     * Resolves the handler method name for the given processing stage and operation direction.
+     *
+     * This method returns the method identifier as defined in the internal method map.
+     * It assumes the combination is supported; call supports() beforehand to avoid
+     * an undefined index error.
+     *
+     * @return string The handler method name to invoke (e.g. "encryptPayload", "decryptPayload").
      */
-    public function resolve(CryptoProcessingStage $target, CryptoOperationDirection $operation): string
+    public function resolve(AlgorithmInvocation $invokation): string
     {
-        return self::METHOD_MAP[$target->name][$operation->name];
+        return self::METHOD_MAP[$invokation->target->name][$invokation->operation->name];
     }
 }
