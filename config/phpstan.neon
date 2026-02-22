@@ -39,7 +39,17 @@ parameters:
           path: ../src/Crypto/Key/RsaKeyHandler.php
           count: 1
 
-        - identifier: identical.alwaysFalse
-          message: '#Strict comparison using === between non-empty-string and false will always evaluate to false#'
-          path: ../src/Crypto/Signature/HmacSignatureHandler.php
+        - message: '#^Variable method call on object\.$#'
+          identifier: method.dynamicName
           count: 1
+          path: ../src/Crypto/Pipeline/CryptoAlgorithmInvoker.php
+
+        - message: '#^Strict comparison using \=\=\= between non\-falsy\-string and false will always evaluate to false\.$#'
+          identifier: identical.alwaysFalse
+          count: 1
+          path: ../src/Crypto/Signature/HmacSignatureHandler.php
+
+        - message: '#^Unsafe usage of new static\(\)\.$#'
+          identifier: new.static
+          count: 1
+          path: ../src/Token/Codec/AbstractJwtSegmentJsonCodec.php
