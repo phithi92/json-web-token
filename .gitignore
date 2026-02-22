@@ -33,4 +33,4 @@ Thumbs.db
 /tests/keys
 
 #lock files
-composer.lock
+#composer.lock
