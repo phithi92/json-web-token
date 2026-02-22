@@ -19,6 +19,20 @@ Supports **JWS** and **JWE**, a pluggable algorithm registry, and fine-grained c
 
 ---
 
+## Installation
+
+```bash
+composer require phithi92/json-web-token:^2.0
+```
+
+### Requirements
+
+- PHP **8.2+**
+- OpenSSL extension (required)
+- `phpseclib/phpseclib` (installed automatically)
+
+---
+
 ## Interoperability
 
 Tokens produced by this library are fully RFC-compliant and interoperable
@@ -38,20 +52,6 @@ safely exchanged with other standards-compliant JWT stacks.
 - **RFC 7518** — JSON Web Algorithms (JWA)
 - **RFC 7519** — JSON Web Token (JWT)
 - **RFC 7638** — JWK Thumbprints (`kid` derivation)
-
----
-
-## Installation
-
-```bash
-composer require phithi92/json-web-token:^2.0
-```
-
-### Requirements
-
-- PHP **8.2+**
-- OpenSSL extension (required)
-- `phpseclib/phpseclib` (installed automatically)
 
 ---
 
@@ -96,7 +96,7 @@ This means:
 
 ## Quick Start
 
-### 1) Configure Keys & Algorithms
+### 1) Configure Keys / Algorithms
 
 `JwtKeyManager` holds all keys in memory. **Asymmetric keys must be PEM-encoded.**
 Symmetric secrets (HMAC, `dir`) live in the passphrase store.
@@ -223,62 +223,6 @@ $isValid = $service->validateTokenClaims(
 
 > ⚠️ `*WithoutClaimValidation()` methods exist **only** for tests or tooling.
 
----
-
-## Error Handling Patterns
-
-When issuing, parsing, decrypting, or validating tokens, prefer catching **specific exception types first** and only then falling back to a generic handler.
-
-```php
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
-use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
-use Phithi92\JsonWebToken\Exceptions\Token\UnsupportedTokenTypeException;
-use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
-use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
-use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuerException;
-use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureVerificationException;
-use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
-use Phithi92\JsonWebToken\Exceptions\Security\PassphraseNotFoundException;
-
-try {
-    $bundle = $service->decryptToken(
-        token: $token,
-        manager: $manager,
-        validator: $validator
-    );
-
-    // Optional extra claim validation step
-    $service->validateTokenClaims($bundle, $validator);
-
-} catch (ExpiredPayloadException|NotYetValidException $e) {
-    // 401: token is time-invalid (expired or not active yet)
-} catch (InvalidIssuerException|InvalidAudienceException $e) {
-    // 403: token is valid but not intended for this API/context
-} catch (SignatureVerificationException|DecryptionException $e) {
-    // 401: signature/JWE auth check failed
-} catch (MalformedTokenException|InvalidTokenException|UnsupportedTokenTypeException $e) {
-    // 400: structurally invalid or unsupported token
-} catch (PassphraseNotFoundException $e) {
-    // 500: server-side key configuration problem
-}
-```
-
-### Recommended Mapping (API-friendly)
-
-- **400 Bad Request**: malformed token, missing parts, unsupported format/type
-- **401 Unauthorized**: invalid signature, failed decryption/auth tag, expired or not-yet-valid token
-- **403 Forbidden**: issuer/audience/private-claim mismatch
-- **500 Internal Server Error**: missing key material, passphrase, or other server misconfiguration
-
-### Security Best Practices for Error Responses
-
-- Return a **generic client message** (e.g. `"Invalid or expired token"`) to avoid leaking verification details.
-- Log the exact exception message internally with request correlation IDs.
-- Do not include secrets, raw token content, or key identifiers in public error payloads unless required.
-
----
-
 ### 5) Business Rules & Replay Protection
 
 `JwtValidator` can enforce issuer, audience, private claims **and** protect against JWT replay attacks via a pluggable JWT ID registry.
@@ -352,9 +296,7 @@ $service->denyBundle($bundle, $validator);
 - `RedisJwtIdValidator`: distributed runtime deny/allow lists with TTL support.
 - `PdoJwtIdValidator`: relational persistence (requires `jwt_id_list` table with expiry column).
 
----
-
-## Refresh / Reissue Tokens
+### 6) Refresh / Reissue Tokens
 
 ```php
 $newBundle = $service->reissueBundle(
@@ -366,6 +308,60 @@ $newBundle = $service->reissueBundle(
 ```
 
 The original bundle remains untouched.
+
+---
+
+## Error Handling Patterns
+
+When issuing, parsing, decrypting, or validating tokens, prefer catching **specific exception types first** and only then falling back to a generic handler.
+
+```php
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\UnsupportedTokenTypeException;
+use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
+use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
+use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuerException;
+use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureVerificationException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
+use Phithi92\JsonWebToken\Exceptions\Security\PassphraseNotFoundException;
+
+try {
+    $bundle = $service->decryptToken(
+        token: $token,
+        manager: $manager,
+        validator: $validator
+    );
+
+    // Optional extra claim validation step
+    $service->validateTokenClaims($bundle, $validator);
+
+} catch (ExpiredPayloadException|NotYetValidException $e) {
+    // 401: token is time-invalid (expired or not active yet)
+} catch (InvalidIssuerException|InvalidAudienceException $e) {
+    // 403: token is valid but not intended for this API/context
+} catch (SignatureVerificationException|DecryptionException $e) {
+    // 401: signature/JWE auth check failed
+} catch (MalformedTokenException|InvalidTokenException|UnsupportedTokenTypeException $e) {
+    // 400: structurally invalid or unsupported token
+} catch (PassphraseNotFoundException $e) {
+    // 500: server-side key configuration problem
+}
+```
+
+### Recommended Mapping (API-friendly)
+
+- **400 Bad Request**: malformed token, missing parts, unsupported format/type
+- **401 Unauthorized**: invalid signature, failed decryption/auth tag, expired or not-yet-valid token
+- **403 Forbidden**: issuer/audience/private-claim mismatch
+- **500 Internal Server Error**: missing key material, passphrase, or other server misconfiguration
+
+### Security Best Practices for Error Responses
+
+- Return a **generic client message** (e.g. `"Invalid or expired token"`) to avoid leaking verification details.
+- Log the exact exception message internally with request correlation IDs.
+- Do not include secrets, raw token content, or key identifiers in public error payloads unless required.
 
 ---
 
@@ -411,7 +407,7 @@ composer run analyse
 ## License
 Released under the MIT License. See [LICENSE](LICENSE).
 
-## If this library helps you, consider supporting the project
+## Support the project
 
 | [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/R6R414XGWN) | ![image](https://storage.ko-fi.com/cdn/useruploads/R6R414XGWN/qrcode.png?v=40dee069-2316-462f-8c3f-29825e00fa10?v=2) |
 | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
