@@ -4,19 +4,13 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token;
 
-use JsonSerializable;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidFormatException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidKidLengthException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
 
-use function array_filter;
-use function array_key_exists;
-use function ctype_alnum;
 use function gettype;
 use function is_string;
 use function sprintf;
-use function str_replace;
 use function strlen;
 
 /**
@@ -27,7 +21,7 @@ use function strlen;
  * It provides methods to set and retrieve these properties, ensuring consistency with
  * JWT standards.
  */
-final class JwtHeader implements JsonSerializable
+final class JwtHeader
 {
     // Min/Max length for KID validation
     private const MIN_KID_LENGTH = 3;
@@ -51,7 +45,6 @@ final class JwtHeader implements JsonSerializable
      * Sets the Key ID ('kid') for the JWT header.
      *
      * Validates that the provided Key ID:
-     * - Consists only of alphanumeric characters, dashes (`-`), or underscores (`_`).
      * - Falls within the allowed length range (3 to 64 characters).
      *
      * If the format or length of the Key ID is invalid, an exception is thrown.
@@ -60,13 +53,14 @@ final class JwtHeader implements JsonSerializable
      *
      * @return self returns the instance for method chaining
      *
-     * @throws InvalidKidFormatException if the Key ID contains invalid characters
      * @throws InvalidKidLengthException if the Key ID is shorter than 3 or longer than 64 characters
      */
     public function setKid(string $kid): self
     {
-        // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
-        $this->assertValidKid($kid);
+        // validate `kid` length
+        if (! $this->isValidKidLength($kid)) {
+            throw new InvalidKidLengthException(self::MIN_KID_LENGTH, self::MAX_KID_LENGTH);
+        }
 
         $this->kid = $kid;
 
@@ -87,7 +81,7 @@ final class JwtHeader implements JsonSerializable
 
     public function hasKid(): bool
     {
-        return is_string($this->kid);
+        return $this->kid !== null;
     }
 
     /**
@@ -172,23 +166,22 @@ final class JwtHeader implements JsonSerializable
      */
     public function toArray(): array
     {
-        return array_filter(
-            [
-                'alg' => $this->algorithm,
-                'typ' => $this->typ,
-                'enc' => $this->enc,
-                'kid' => $this->kid,
-            ],
-            static fn ($value) => $value !== null && $value !== ''
-        );
-    }
+        $out = [];
 
-    /**
-     * @return array{typ?:string, alg?:string, kid?:string, enc?:string}
-     */
-    public function jsonSerialize(): array
-    {
-        return $this->toArray();
+        if ($this->algorithm !== null && $this->algorithm !== '') {
+            $out['alg'] = $this->algorithm;
+        }
+        if ($this->typ !== null && $this->typ !== '') {
+            $out['typ'] = $this->typ;
+        }
+        if ($this->enc !== null && $this->enc !== '') {
+            $out['enc'] = $this->enc;
+        }
+        if ($this->kid !== null && $this->kid !== '') {
+            $out['kid'] = $this->kid;
+        }
+
+        return $out;
     }
 
     /**
@@ -196,43 +189,23 @@ final class JwtHeader implements JsonSerializable
      */
     public static function fromArray(array $data): self
     {
-        $instance = new self();
-        $headerFields = self::filterStringMap($data);
+        $i = new self();
+        $f = self::filterStringMap($data);
 
-        if (array_key_exists('alg', $headerFields)) {
-            $instance->setAlgorithm($headerFields['alg']);
+        if (isset($f['alg'])) {
+            $i->setAlgorithm($f['alg']);
+        }
+        if (isset($f['typ'])) {
+            $i->setType($f['typ']);
+        }
+        if (isset($f['enc'])) {
+            $i->setEnc($f['enc']);
+        }
+        if (isset($f['kid'])) {
+            $i->setKid($f['kid']);
         }
 
-        if (array_key_exists('typ', $headerFields)) {
-            $instance->setType($headerFields['typ']);
-        }
-
-        if (array_key_exists('enc', $headerFields)) {
-            $instance->setEnc($headerFields['enc']);
-        }
-
-        if (array_key_exists('kid', $headerFields)) {
-            $instance->setKid($headerFields['kid']);
-        }
-
-        return $instance;
-    }
-
-    /**
-     * @throws InvalidKidFormatException
-     * @throws InvalidKidLengthException
-     */
-    private function assertValidKid(string $kid): void
-    {
-        // validate `kid` length
-        if (! $this->isValidKidLength($kid)) {
-            throw new InvalidKidLengthException(self::MIN_KID_LENGTH, self::MAX_KID_LENGTH);
-        }
-
-        // Ensure `kid` contains only alphanumeric characters, hyphens, and underscores
-        if (! $this->isKidFormatValid($kid)) {
-            throw new InvalidKidFormatException();
-        }
+        return $i;
     }
 
     private function isValidKidLength(string $kid): bool
@@ -240,11 +213,6 @@ final class JwtHeader implements JsonSerializable
         $kidLength = strlen($kid);
 
         return $kidLength >= self::MIN_KID_LENGTH && $kidLength <= self::MAX_KID_LENGTH;
-    }
-
-    private function isKidFormatValid(string $kid): bool
-    {
-        return ($s = str_replace(['.', '_', '-'], '', $kid)) !== '' && ctype_alnum($s);
     }
 
     /**
@@ -262,7 +230,7 @@ final class JwtHeader implements JsonSerializable
         $filtered = [];
 
         foreach (self::ALLOWED_KEYS as $key) {
-            if (! array_key_exists($key, $data)) {
+            if (! isset($data[$key])) {
                 continue;
             }
 

@@ -34,4 +34,4 @@ Thumbs.db
 !/tests/keys/.gitignore
 
 #lock files
-composer.lock
+#composer.lock

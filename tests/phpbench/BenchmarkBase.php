@@ -2,10 +2,13 @@
 
 namespace Tests\phpbench;
 
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
+use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
+use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
+use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Tests\Helpers\KeyProvider;
 
@@ -26,7 +29,7 @@ abstract class BenchmarkBase
 
     private JwtValidator $validator;
 
-    protected JwtAlgorithmManager $manager;
+    protected JwtKeyManager $manager;
 
     public function provideAlgs(): array
     {
@@ -47,16 +50,15 @@ abstract class BenchmarkBase
     protected function getExpiredToken(string $alg): string
     {
         if (!isset($this->cache['expired'][$alg])) {
-            $manager = $this->getManager();
-            $payload = (new JwtPayload())->fromArray(
-                [
-                    'iat' => time() - 7200,
-                    'exp' => time() - 3600,
-                ]
-            );
+            $payload = (new JwtPayloadCodec())->decode([
+                'iat' => time() - 7200,
+                'exp' => time() - 3600,
+            ]);
 
-            $bundle = JwtTokenFactory::createTokenWithoutClaimValidation($alg, $manager, $payload);
-            $token = JwtTokenParser::serialize($bundle);
+            $c = new JwtTokenIssuer($this->getManager());
+            $bundle = $c->issue($alg, $payload);
+
+            $token = JwtBundleCodec::serialize($bundle);
             $this->cache['expired'][$alg] = $token;
         }
 
@@ -67,7 +69,8 @@ abstract class BenchmarkBase
     {
         if (!isset($this->cache['valid'][$alg]) || false === is_string($this->cache['valid'][$alg])) {
             $manager = $this->getManager();
-            $payload = self::createPayload();
+
+            $payload = new JwtPayload();
 
             $additionalPayload = [
                 'iat' => time(),
@@ -77,9 +80,10 @@ abstract class BenchmarkBase
                 $payload->addClaim($key, $value);
             }
 
-            $bundle = JwtTokenFactory::createToken($alg, $manager, $payload);
+            $c = new JwtTokenIssuer($this->getManager());
+            $bundle = $c->issue($alg, $payload);
 
-            $token = JwtTokenParser::serialize($bundle);
+            $token = JwtBundleCodec::serialize($bundle);
 
             $this->cache['valid'][$alg] = $token;
         }
@@ -96,7 +100,9 @@ abstract class BenchmarkBase
             if (3 === count($parts)) {
                 $parts[2] = 'invalidsig';
             } elseif (5 === count($parts)) {
-                $parts[1] = 'invalidiv';
+                if ($parts[1] !== '') {
+                    $parts[1] = 'invalidiv';
+                }
                 $parts[4] = 'invalidauthtag';
             }
 
@@ -107,13 +113,37 @@ abstract class BenchmarkBase
         return $this->cache['invalid'][$alg];
     }
 
-    protected function getManager(): JwtAlgorithmManager
+    protected function getReplayProtectedToken(string $alg, JwtValidator $validator): string
+    {
+        $idInput = new JwtIdInput();
+
+        $payload = new JwtPayload();
+        $payload->addClaim('iat', time());
+        $payload->addClaim('exp', time() + 3600);
+        $payload->setJwtId($idInput);
+
+        $ttl = $payload->getExpiration();
+
+        $validator->getJwtIdValidator()->allow($idInput, $ttl);
+
+        $c = new JwtTokenIssuer($this->getManager());
+        $bundle = $c->issue($alg, $payload);
+
+        return JwtBundleCodec::serialize($bundle);
+    }
+
+    protected function createReplayValidator(): JwtValidator
+    {
+        return new JwtValidator(jwtIdValidator: new InMemoryJwtIdValidator(useAllowList: true));
+    }
+
+    protected function getManager(): JwtKeyManager
     {
         if (isset($this->manager)) {
             return $this->manager;
         }
 
-        $manager = new JwtAlgorithmManager();
+        $manager = new JwtKeyManager();
         $configArray = $this->getAllProvidedKeys();
 
         foreach ($configArray as $algorithm => $data) {

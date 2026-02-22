@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Decryptor;
 
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
-use Phithi92\JsonWebToken\Handler\HandlerOperation;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
 use Phithi92\JsonWebToken\Token\Processor\AbstractJwtTokenProcessor;
@@ -21,7 +21,7 @@ use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
  * - Applying decryption and decoding logic via registered handlers.
  * - Optionally validating claims using a configurable `JwtValidator`.
  *
- * Designed for use with a `JwtAlgorithmManager` to resolve algorithm-specific behavior
+ * Designed for use with a `JwtKeyManager` to resolve algorithm-specific behavior
  * and with pluggable handlers for custom decryption logic or post-processing.
  */
 final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
@@ -30,15 +30,15 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      * Specifies that the handler chain should be executed in reverse order,
      * which is required to *decrypt* a previously encrypted JWT token.
      */
-    private const OPERATION = HandlerOperation::Reverse;
+    private const OPERATION = CryptoOperationDirection::Reverse;
 
     /**
      * JwtTokenDecryptor constructor.
      *
-     * @param JwtAlgorithmManager $manager provides cryptographic handler configurations
+     * @param JwtKeyManager $manager provides cryptographic handler configurations
      */
     public function __construct(
-        JwtAlgorithmManager $manager,
+        JwtKeyManager $manager,
     ) {
         // Initialize token decryptor with "reverse" handler operation
         parent::__construct(self::OPERATION, $manager);

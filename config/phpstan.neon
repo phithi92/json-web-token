@@ -12,3 +12,44 @@ parameters:
     phpVersion: 80200
 
     reportUnmatchedIgnoredErrors: true
+
+    ignoreErrors:
+        - identifier: return.type
+          message: '#Method .*::buildPhpseclibPrivateKey\(\) should return phpseclib3\\Crypt\\RSA\\PrivateKey but returns mixed.*#'
+          path: ../src/Crypto/Key/RsaKeyHandler.php
+          count: 2
+
+        - identifier: return.type
+          message: '#Method .*::buildPhpseclibPublicKey\(\) should return phpseclib3\\Crypt\\RSA\\PublicKey but returns mixed.*#'
+          path: ../src/Crypto/Key/RsaKeyHandler.php
+          count: 2
+
+        - identifier: method.nonObject
+          message: '#Cannot call method withHash\(\) on mixed.*#'
+          path: ../src/Crypto/Key/RsaKeyHandler.php
+          count: 2
+
+        - identifier: method.nonObject
+          message: '#Cannot call method withMGFHash\(\) on mixed.*#'
+          path: ../src/Crypto/Key/RsaKeyHandler.php
+          count: 2
+
+        - identifier: identical.alwaysFalse
+          message: '#Strict comparison using === between string and null will always evaluate to false.*#'
+          path: ../src/Crypto/Key/RsaKeyHandler.php
+          count: 1
+
+        - message: '#^Variable method call on object\.$#'
+          identifier: method.dynamicName
+          count: 1
+          path: ../src/Crypto/Pipeline/CryptoAlgorithmInvoker.php
+
+        - message: '#^Strict comparison using \=\=\= between non\-falsy\-string and false will always evaluate to false\.$#'
+          identifier: identical.alwaysFalse
+          count: 1
+          path: ../src/Crypto/Signature/HmacSignatureHandler.php
+
+        - message: '#^Unsafe usage of new static\(\)\.$#'
+          identifier: new.static
+          count: 1
+          path: ../src/Token/Codec/AbstractJwtSegmentJsonCodec.php

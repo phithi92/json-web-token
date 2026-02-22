@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Phithi92\JsonWebToken\Exceptions\Token;
+namespace Phithi92\JsonWebToken\Exceptions\Payload;
 
-final class EncryptedPayloadNotSetException extends TokenException
+final class EncryptedPayloadNotSetException extends PayloadException
 {
     public function __construct()
     {

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Codec;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
-use Phithi92\JsonWebToken\Interfaces\JwtHeaderCodecInterface;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Throwable;
 
@@ -16,7 +15,7 @@ use Throwable;
  * Supports configurable JSON depth with optional static convenience
  * methods for quick one-off operations.
  */
-final class JwtHeaderJsonCodec extends JwtSegmentJsonCodec implements JwtHeaderCodecInterface
+final class JwtHeaderJsonCodec extends AbstractJwtSegmentJsonCodec implements JwtHeaderCodecInterface
 {
     private const MAX_JSON_DEPTH = 3;
 
@@ -71,7 +70,7 @@ final class JwtHeaderJsonCodec extends JwtSegmentJsonCodec implements JwtHeaderC
      */
     public static function encodeStatic(JwtHeader $header, int $depth = self::MAX_JSON_DEPTH): string
     {
-        return (new self())->encode($header, $depth);
+        return self::shared()->encode($header, $depth);
     }
 
     /**
@@ -87,6 +86,6 @@ final class JwtHeaderJsonCodec extends JwtSegmentJsonCodec implements JwtHeaderC
      */
     public static function decodeStatic(string $json, int $depth = self::MAX_JSON_DEPTH): JwtHeader
     {
-        return (new self())->decode($json, $depth);
+        return self::shared()->decode($json, $depth);
     }
 }

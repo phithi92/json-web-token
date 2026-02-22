@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Codec;
 
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
-use Phithi92\JsonWebToken\Interfaces\JwtPayloadCodecInterface;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Throwable;
 
@@ -17,9 +16,11 @@ use Throwable;
  * optional static convenience methods using a cached instance pool
  * for performance in high-throughput scenarios.
  */
-final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloadCodecInterface
+final class JwtPayloadJsonCodec extends AbstractJwtSegmentJsonCodec implements JwtPayloadCodecInterface
 {
     private const JSON_MAX_DEPTH = 6;
+
+    private ?JwtPayloadCodec $codec = null;
 
     /**
      * Encode a JwtPayload instance to a JSON string.
@@ -57,10 +58,7 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
             throw new MalformedTokenException('Token payload is not valid JSON');
         }
 
-        $payload ??= new JwtPayload();
-        $payload->fromArray($data);
-
-        return $payload;
+        return $this->getCodec()->decode($data, $payload);
     }
 
     /**
@@ -94,7 +92,7 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
         JwtPayload $payload,
         int $depth = self::JSON_MAX_DEPTH,
     ): string {
-        return (new self())->encode($payload, $depth);
+        return self::shared()->encode($payload, $depth);
     }
 
     /**
@@ -111,7 +109,7 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
         string $json,
         int $depth = self::JSON_MAX_DEPTH,
     ): JwtPayload {
-        return (new self())->decode($json, $depth);
+        return self::shared()->decode($json, $depth);
     }
 
     /**
@@ -128,6 +126,11 @@ final class JwtPayloadJsonCodec extends JwtSegmentJsonCodec implements JwtPayloa
         JwtPayload $payload,
         int $depth = self::JSON_MAX_DEPTH,
     ): void {
-        (new self())->decodeInto($json, $payload, $depth);
+        self::shared()->decodeInto($json, $payload, $depth);
+    }
+
+    private function getCodec(): JwtPayloadCodec
+    {
+        return $this->codec ??= new JwtPayloadCodec();
     }
 }

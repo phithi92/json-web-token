@@ -7,10 +7,10 @@ namespace Phithi92\JsonWebToken\Exceptions\Payload;
 use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
 
 /**
- * Enum for JSON-related error messages.
+ * Defines standardized error message templates for JWT payload validation.
  *
- * Provides standardized messages for encoding and decoding errors, with
- * optional details for more context.
+ * Messages may contain sprintf-compatible placeholders (e.g. %s, %1$s, %2$s)
+ * for runtime value injection.
  */
 enum PayloadErrorMessagesEnum: string
 {
@@ -30,4 +30,7 @@ enum PayloadErrorMessagesEnum: string
     case INVALID_VALUE_TYPE = 'Invalid value type for key "%1$s". Given: %2$s.';
     case INVALID_KEY_TYPE = 'Invalid key type. Key: "%1$s", Type: %2$s.';
     case EMPTY_VALUE = 'Invalid value. empty value for %s';
+    case CLAIM_ALREADY_EXISTS = 'JWT claim "%s" already exists.';
+    case ENCRYPTED_PAYLOAD_NOT_SET = 'Encrypted payload has not been set.';
+    case ENCRYPTED_PAYLOAD_ALREADY_SET = 'Encrypted payload already set';
 }

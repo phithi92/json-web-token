@@ -7,7 +7,6 @@ namespace Phithi92\JsonWebToken\Token\Validator;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidKeyTypeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
-use Phithi92\JsonWebToken\Exceptions\Token\InvalidFormatException;
 
 use function gettype;
 use function is_array;
@@ -15,17 +14,9 @@ use function is_bool;
 use function is_float;
 use function is_int;
 use function is_string;
-use function sprintf;
 
-/**
- * Description of PayloadClaimValidator.
- *
- * @author phillipthiele
- */
 final class ClaimValidator
 {
-    private const DECODE_JSON_DEPTH = 4;
-
     /**
      * Validates that a given JWT claim value is not empty or of invalid type.
      *
@@ -50,48 +41,6 @@ final class ClaimValidator
         if (! $this->isJsonValue($value)) {
             throw new InvalidValueTypeException((string) $resolvedKey, gettype($value));
         }
-    }
-
-    public function getJsonDepthLimit(): int
-    {
-        return self::DECODE_JSON_DEPTH;
-    }
-
-    /**
-     * @param array<string,scalar|array<key-string,scalar>> $array
-     *
-     * @throws InvalidFormatException
-     */
-    public function assertValidPayloadDepth(array $array): void
-    {
-        if ($this->computeJsonDepth($array) > self::DECODE_JSON_DEPTH) {
-            throw new InvalidFormatException(
-                sprintf(
-                    'Payload exceeds maximum allowed depth of %d',
-                    self::DECODE_JSON_DEPTH
-                )
-            );
-        }
-    }
-
-    /**
-     * Recursively calculates the maximum depth of a nested array.
-     */
-    private function computeJsonDepth(mixed $value): int
-    {
-        if (! is_array($value)) {
-            return 0; // scalars do not increase depth
-        }
-
-        $max = 0;
-        foreach ($value as $v) {
-            $d = $this->computeJsonDepth($v);
-            if ($d > $max) {
-                $max = $d;
-            }
-        }
-
-        return $max + 1; // +1 for this array level
     }
 
     private function assertJsonKey(mixed $key): string|int

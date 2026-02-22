@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Processor;
 
-use Phithi92\JsonWebToken\Algorithm\JwtAlgorithmManager;
+use Override;
+use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmInvocation;
+use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmMethodMap;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoAlgorithmInvoker;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoProcessingStage;
+use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoStageResultDispatcher;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
-use Phithi92\JsonWebToken\Handler\HandlerDescriptor;
-use Phithi92\JsonWebToken\Handler\HandlerDispatcher;
-use Phithi92\JsonWebToken\Handler\HandlerMethodResolver;
-use Phithi92\JsonWebToken\Handler\HandlerOperation;
-use Phithi92\JsonWebToken\Handler\HandlerTarget;
-use Phithi92\JsonWebToken\Interfaces\JwtTokenOperation;
+use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 
 use function usort;
@@ -24,43 +25,31 @@ use function usort;
  */
 abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 {
-    /**
-     * Maps JWT component keys to handler types and priorities.
-     *
-     * The integer values define execution order (lower = earlier).
-     */
-    private const HANDLER_CONFIG_MAP = [
-        [HandlerTarget::Cek, 1],
-        [HandlerTarget::Key, 2],
-        [HandlerTarget::Iv, 3],
-        [HandlerTarget::Payload, 4],
-        [HandlerTarget::Signature, 5],
-    ];
+    /** @var CryptoOperationDirection Encapsulates the operation mode (e.g., encrypt or decrypt). */
+    public readonly CryptoOperationDirection $operation;
 
-    /** @var HandlerOperation Encapsulates the operation mode (e.g., encrypt or decrypt). */
-    public readonly HandlerOperation $operation;
+    /** @var CryptoAlgorithmInvoker Responsible for invoking the correct handler methods. */
+    protected readonly CryptoAlgorithmInvoker $dispatcher;
 
-    /** @var JwtAlgorithmManager Manages algorithm-specific configurations. */
-    protected readonly JwtAlgorithmManager $manager;
+    /** @var JwtKeyManager Manages algorithm-specific configurations. */
+    protected readonly JwtKeyManager $manager;
 
-    /** @var HandlerDispatcher Responsible for invoking the correct handler methods. */
-    protected readonly HandlerDispatcher $dispatcher;
+    protected readonly CryptoStageResultDispatcher $resultDispatcher;
 
     /**
-     * Caches resolved configurations and handler descriptors per algorithm to
-     * avoid rebuilding immutable structures on repeated invocations.
+     * Creates a JWT token processor for the given operation mode.
      *
-     * @var array<string,array<int,HandlerDescriptor>>
+     * @param CryptoOperationDirection $operation The operation to perform (e.g. encrypt or decrypt).
+     * @param JwtKeyManager    $manager   Provides algorithm-specific configuration and keys.
      */
-    private array $resolvedHandlerCache = [];
-
     public function __construct(
-        HandlerOperation $operation,
-        JwtAlgorithmManager $manager,
+        CryptoOperationDirection $operation,
+        JwtKeyManager $manager,
     ) {
         $this->manager = $manager;
         $this->operation = $operation;
-        $this->dispatcher = new HandlerDispatcher(new HandlerMethodResolver());
+        $this->dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
+        $this->resultDispatcher = new CryptoStageResultDispatcher();
     }
 
     /**
@@ -72,91 +61,125 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
      *
      * @throws InvalidTokenException if no algorithm is specified in the JWT header
      */
-    protected function resolveAlgorithm(JwtBundle $bundle): string
+    #[Override]
+    public function resolveAlgorithm(JwtBundle $bundle): string
     {
         $header = $bundle->getHeader();
-        $alg = $header->getAlgorithm() ?? throw new InvalidTokenException('no algorithm');
+        $alg = $header->getAlgorithm() ?? throw new InvalidTokenException('No algorithm configured');
 
-        return $alg === 'dir' && $header->getEnc() !== null ? $header->getEnc() : $alg;
+        $enc = $header->getEnc();
+        if ($enc === null) {
+            return $alg;
+        }
+
+        if ($alg === 'dir') {
+            return $enc;
+        }
+
+        $combined = sprintf('%s/%s', $alg, $enc);
+
+        if ($this->manager->getConfiguration($combined) === []) {
+            throw new InvalidTokenException(
+                sprintf('Unsupported algorithm combination: %s', $combined)
+            );
+        }
+
+        return $combined;
     }
 
     /**
      * Dispatches all applicable handlers for the given JWT bundle and algorithm.
      *
-     * Resolves configuration and handlers based on the provided algorithm, and
-     * executes them in order of their defined priority.
+     * Resolves the algorithm-specific configuration and its applicable handlers,
+     * then dispatches them in priority order.
      *
-     * @param string             $algorithm the resolved algorithm identifier
-     * @param JwtBundle $bundle    the encrypted JWT to process
+     * @param string   $algorithm the resolved algorithm identifier
+     * @param JwtBundle $jwtBundle   the JWT bundle to process
      */
-    protected function dispatchHandlers(
+    #[Override]
+    public function dispatchHandlers(
         string $algorithm,
-        JwtBundle $bundle,
-    ): void {
+        JwtBundle $jwtBundle,
+    ): JwtBundle {
         [$config, $descriptors] = $this->resolveConfigAndHandlers($algorithm);
+        $processedBundle = $jwtBundle;
 
         foreach ($descriptors as $descriptor) {
-            $this->dispatcher->dispatch(
-                target: $descriptor->target,
-                operation: $descriptor->operation,
+            if (! $this->dispatcher->isSupported($descriptor)) {
+                continue;
+            }
+
+            $result = $this->dispatcher->process(
+                invocation: $descriptor,
                 manager: $this->manager,
+                jwtBundle: $processedBundle,
                 config: $config,
-                context: [
-                    'bundle' => $bundle,
-                    'config' => $config,
-                ]
+            );
+
+            if (! $this->resultDispatcher->isSupported($descriptor) || $result === null) {
+                continue;
+            }
+
+            $processedBundle = $this->resultDispatcher->process(
+                invocation: $descriptor,
+                bundle: $processedBundle,
+                result: $result,
             );
         }
+
+        return $processedBundle;
     }
 
     /**
-     * Resolves both the handler configuration and corresponding handler descriptors.
+     * Resolves both the algorithm configuration and the corresponding handler descriptors.
+     *
+     * The configuration is always retrieved from the manager, and handler descriptors are
+     * rebuilt on every call to avoid stale handler lists when config changes dynamically.
      *
      * @param string $algorithm the algorithm to use for configuration resolution
      *
-     * @return array{array<string, mixed>, array<int,HandlerDescriptor>}
+     * @return array{array<string, array<string, mixed>>, array<int, AlgorithmInvocation>}
      */
     private function resolveConfigAndHandlers(string $algorithm): array
     {
         $config = $this->manager->getConfiguration($algorithm);
-        if (! isset($this->resolvedHandlerCache[$algorithm])) {
-            $this->resolvedHandlerCache[$algorithm] = $this->resolveApplicableHandlers($config);
+        if ($config === []) {
+            throw new InvalidTokenException(
+                sprintf('Unsupported algorithm: %s', $algorithm)
+            );
         }
 
-        // Return a fresh configuration array on every call to avoid leaking
-        // mutations between requests, while still reusing descriptor metadata.
-        return [$config, $this->resolvedHandlerCache[$algorithm]];
+        $descriptors = $this->resolveApplicableHandlers($config);
+
+        return [$config, $descriptors];
     }
 
     /**
-     * Builds a list of handler descriptors based on available config keys.
+     * Builds an ordered list of handler descriptors based on the available config keys.
+     *
+     * Only targets whose interface class is present in the configuration are included.
+     * The resulting list is sorted by {@see AlgorithmInvocation::$priority}.
      *
      * @param array<string, mixed> $config
      *
-     * @return array<int,HandlerDescriptor>
+     * @return array<int, AlgorithmInvocation>
      */
     private function resolveApplicableHandlers(array $config): array
     {
         $descriptors = [];
 
-        foreach (self::HANDLER_CONFIG_MAP as [$type, $priority]) {
-            if (isset($config[$type->interfaceClass()])) {
-                $descriptors[] = new HandlerDescriptor($type, $this->operation, $priority);
+        foreach (CryptoProcessingStage::cases() as $target) {
+            if (! isset($config[$target->interfaceClass()])) {
+                continue;
             }
+
+            $descriptors[] = new AlgorithmInvocation(
+                $target,
+                $this->operation,
+                $target->priority()
+            );
         }
 
-        return $this->orderByPriority($descriptors);
-    }
-
-    /**
-     * Orders handler descriptors by ascending priority.
-     *
-     * @param array<int,HandlerDescriptor> $descriptors
-     *
-     * @return array<int,HandlerDescriptor> sorted descriptor list
-     */
-    private function orderByPriority(array $descriptors): array
-    {
         usort($descriptors, static fn ($a, $b) => $a->priority <=> $b->priority);
 
         return $descriptors;

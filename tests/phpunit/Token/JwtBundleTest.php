@@ -37,6 +37,7 @@ class JwtBundleTest extends TestCase
     {
         $header = new JwtHeader();
         $bundle = new JwtBundle($header);
+        $bundle->setEncryption(new JwtEncryptionData());
 
         $this->assertInstanceOf(JwtEncryptionData::class, $bundle->getEncryption());
     }
@@ -49,7 +50,7 @@ class JwtBundleTest extends TestCase
         $signature = 'test-signature';
         $bundle->setSignature(new JwtSignature($signature));
 
-        $this->assertSame($signature, $bundle->getSignature());
+        $this->assertSame($signature, (string) $bundle->getSignature());
     }
 
     public function testGetSignatureThrowsExceptionIfNotSet(): void

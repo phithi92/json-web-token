@@ -7,32 +7,31 @@ namespace Phithi92\JsonWebToken\Exceptions\Token;
 use Phithi92\JsonWebToken\Exceptions\ErrorMessageTrait;
 
 /**
- * Enum for JSON-related error messages.
+ * Defines standardized error message templates for token-related operations.
  *
- * Provides standardized messages for encoding and decoding errors, with
- * optional details for more context.
+ * Messages may contain sprintf-compatible placeholders (e.g. %s, %1$s)
+ * for runtime value injection.
  */
 enum TokenErrorMessagesEnum: string
 {
     use ErrorMessageTrait;
 
-    case INVALID_SIGNATURE = 'Signature verification failed: %1$s';
+    case UNSUPPORTED_TOKEN_TYPE = 'Unsupported token type: "%s".';
+    case MISSING_HEADER_ALGORITHM = 'JWT header is missing the required "alg" (algorithm) field.';
+    case INVALID_SIGNATURE = 'Signature verification failed: %s.';
     case INVALID_FORMAT = 'Invalid JWT format: %s.';
     case INVALID_TOKEN = 'Invalid token: %s.';
-    case INVALID_AUTH_TAG = 'Authentication tag mismatch: the ciphertext may have been altered or is corrupted.';
-    case INVALID_KID_FORMAT = 'Invalid "kid" format: only alphanumeric characters, hyphens ("-"), and underscores 
-        ("_") are allowed.';
-    case INVALID_KID_LENGTH = 'Invalid "kid" length: must be between %s and %s characters.';
-    case INVALID_CEK_LENGTH = 'Invalid CEK length: expected %2$s bits, but got %1$s bits.';
-    case INVALID_JTI = 'Invalid "jti" claim: the token identifier is not recognized or is explicitly rejected.';
-    case COMPUTATION_FAILED = 'Signature computation failed: %1$s';
-    case INVALID_CONFIG_TOKEN_TYPE = 'Invalid configuration: missing or invalid "token_type" value.';
-    case INVALID_PRIVATE_CLAIM = 'Invalid value for private claim "%1$s". Expect "%2%s".';
-    case MISSING_PRIVATE_CLAIM = 'Missing required private claim "%1$s".';
-    case UNRESOLVABLE_KEY = 'No key or passphrase found for requested secret. KID: "%1$s".';
-    case ENCRYPTED_PAYLOAD_NOT_SET = 'Encrypted payload has not been set.';
-    case MISSING_TOKEN_PART = 'No %1$s configured. ';
-    case ENCRYPTED_PAYLOAD_ALREADY_SET = 'Encrypted payload already set';
-    case SIGNATURE_ALREADY_SET = 'JWT signature is already set.';
+    case INVALID_AUTH_TAG = 'Authentication tag mismatch. The ciphertext may be corrupted or has been altered.';
+    case INVALID_KID_LENGTH = 'Invalid "kid" length: expected between %s and %s characters.';
+    case INVALID_CEK_LENGTH = 'Invalid CEK length: expected %s bits, got %s bits.';
+    case INVALID_JTI = 'Invalid "jti" claim: the token identifier is explicitly rejected.';
+    case MISSING_JTI = 'Missing required "jti" claim.';
+    case INVALID_CONFIG_TOKEN_TYPE = 'Invalid configuration: missing or invalid "token_type".';
+    case INVALID_PRIVATE_CLAIM = 'Invalid value for private claim "%s": expected "%s".';
+    case MISSING_PRIVATE_CLAIM = 'Missing required private claim "%s".';
+    case UNRESOLVABLE_KEY = 'No key or passphrase found for the requested secret (KID: "%s").';
+    case MISSING_TOKEN_PART = 'Missing required token part: %s.';
+    case SIGNATURE_ALREADY_SET = 'JWT signature has already been set.';
     case INDIVIDUAL_MESSAGE = '%s';
+    case MALFORMED_TOKEN = 'Malformed token: %s.';
 }

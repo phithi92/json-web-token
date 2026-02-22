@@ -17,17 +17,16 @@ final class PassphraseStore
     /**
      * Adds a passphrase and returns the resolved key ID.
      *
-     * @param string      $passphrase The secret passphrase
-     * @param string|null $kid        Optional key ID. If null, it will be derived from the passphrase
+     * @param string    $passphrase The secret passphrase
+     * @param string    $kid        Optional key ID. If null, it will be derived from the passphrase
      *
      * @return string The resolved key ID
      */
-    public function addPassphrase(#[SensitiveParameter] string $passphrase, ?string $kid = null): string
+    public function addPassphrase(#[SensitiveParameter] string $passphrase, string $kid): string
     {
-        $resolvedKid = $kid ?? KeyIdentifier::fromSecret($passphrase);
-        $this->phrases[$resolvedKid] = $passphrase;
+        $this->phrases[$kid] = $passphrase;
 
-        return $resolvedKid;
+        return $kid;
     }
 
     /**

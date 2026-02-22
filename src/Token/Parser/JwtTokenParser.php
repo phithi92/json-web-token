@@ -9,30 +9,21 @@ use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Token\Codec\JwtHeaderJsonCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadJsonCodec;
 use Phithi92\JsonWebToken\Token\JwtBundle;
+use Phithi92\JsonWebToken\Token\JwtEncryptionData;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtSignature;
+use Phithi92\JsonWebToken\Token\JwtTokenKind;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 
-use function array_map;
-use function array_shift;
 use function count;
 use function explode;
-use function implode;
 use function is_null;
 use function is_string;
 
 final class JwtTokenParser
 {
-    private const JWS_PART_COUNT = 3;
-    private const JWS_TYPE = 'JWS';
-
-    private const JWE_PART_COUNT = 5;
-    private const JWE_TYPE = 'JWE';
-
     /**
      * @param string|array<int,string> $token
-     *
-     * @return JwtBundle configured bundle
      *
      * @throws MalformedTokenException
      */
@@ -41,7 +32,6 @@ final class JwtTokenParser
         $tokenArray = self::normalizeTokenInput($token);
 
         $header = self::buildHeaderFromTokenArray($tokenArray);
-
         $bundle = new JwtBundle($header);
 
         if (! is_null($header->getType())) {
@@ -52,31 +42,19 @@ final class JwtTokenParser
     }
 
     /**
-     * @return string Serialized token
-     *
-     * @throws MalformedTokenException
-     */
-    public static function serialize(JwtBundle $bundle): string
-    {
-        return match ($bundle->getHeader()->getType()) {
-            self::JWE_TYPE => self::serializeEncodedToken($bundle),
-            self::JWS_TYPE => self::serializeSignatureToken($bundle),
-            default => throw new MalformedTokenException('Invalid or unsupported token type'),
-        };
-    }
-
-    /**
      * @param string|array<int,string> $token
      *
-     * @return array<int,string> normalized token array
+     * @return array<int,string>
      *
      * @throws MalformedTokenException
      */
     private static function normalizeTokenInput(string|array $token): array
     {
-        $tokenArray = is_string($token) ? explode('.', $token) : $token;
+        // limit=6: detect "too many dots" by grouping extras into last element
+        $tokenArray = is_string($token) ? explode('.', $token, 6) : $token;
+
         if (! isset($tokenArray[0])) {
-            throw new MalformedTokenException('Token is malformed or incomplete');
+            throw new MalformedTokenException('missing required parts.');
         }
 
         return $tokenArray;
@@ -88,7 +66,6 @@ final class JwtTokenParser
     private static function buildHeaderFromTokenArray(array $tokenArray): JwtHeader
     {
         $headerB64 = $tokenArray[0];
-
         $headerJson = self::decodeBase64Url($headerB64);
 
         return JwtHeaderJsonCodec::decodeStatic($headerJson);
@@ -99,7 +76,7 @@ final class JwtTokenParser
         try {
             return Base64UrlEncoder::decode($base64);
         } catch (InvalidBase64UrlFormatException) {
-            throw new MalformedTokenException('Cannot decode: invalid Base64Url content.');
+            throw new MalformedTokenException('invalid Base64Url encoding.');
         }
     }
 
@@ -108,11 +85,14 @@ final class JwtTokenParser
      */
     private static function parseByType(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
-        return match ($bundle->getHeader()->getType()) {
-            self::JWS_TYPE => self::parseSignatureToken($bundle, $tokenArray),
-            self::JWE_TYPE => self::parseEncodedToken($bundle, $tokenArray),
-            default => throw new MalformedTokenException('Invalid or unsupported token type'),
-        };
+        $rawType = $bundle->getHeader()->getType();
+
+        $kind = JwtTokenKind::tryFrom((string) $rawType);
+        if ($kind === null) {
+            throw new MalformedTokenException('unsupported "typ" header value.');
+        }
+
+        return self::parseByKind($bundle, $tokenArray, $kind);
     }
 
     /**
@@ -120,11 +100,29 @@ final class JwtTokenParser
      */
     private static function parseByStructure(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
-        return match (count($tokenArray)) {
-            self::JWS_PART_COUNT => self::parseSignatureToken($bundle, $tokenArray),
-            self::JWE_PART_COUNT => self::parseEncodedToken($bundle, $tokenArray),
-            default => throw new MalformedTokenException('Invalid or unsupported token type'),
-        };
+        $kind = JwtTokenKind::fromPartCount(count($tokenArray));
+
+        if ($kind === null) {
+            throw new MalformedTokenException('unsupported compact serialization.');
+        }
+
+        return self::parseByKind($bundle, $tokenArray, $kind);
+    }
+
+    /**
+     * @param array<int,string> $tokenArray
+     *
+     * @throws MalformedTokenException
+     */
+    private static function parseByKind(JwtBundle $bundle, array $tokenArray, JwtTokenKind $kind): JwtBundle
+    {
+        if (count($tokenArray) !== $kind->partCount()) {
+            throw new MalformedTokenException('invalid number of segments.');
+        }
+
+        return $kind->isSignatureToken()
+            ? self::parseSignatureToken($bundle, $tokenArray)
+            : self::parseEncodedToken($bundle, $tokenArray);
     }
 
     /**
@@ -134,42 +132,26 @@ final class JwtTokenParser
      */
     private static function parseEncodedToken(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
-        if (count($tokenArray) !== self::JWE_PART_COUNT) {
-            throw new MalformedTokenException('Invalid JWE token structure.');
+        $encryptionData = new JwtEncryptionData(
+            aad: $tokenArray[0],
+            iv: self::decodeBase64Url($tokenArray[2]),
+            authTag: self::decodeBase64Url($tokenArray[4]),
+        );
+
+        if ($bundle->getHeader()->getAlgorithm() === 'dir' && $tokenArray[1] !== '') {
+            throw new MalformedTokenException('encrypted key must be empty for "dir" algorithm.');
         }
 
-        // AAD must be the Base64Url-encoded protected header, per RFC 7516 §5.1
-        $header = array_shift($tokenArray);
-        $bundle->getEncryption()->setAad($header);
-
-        $decoded = [];
-        foreach ($tokenArray as $part) {
-            $decoded[] = self::decodeBase64Url($part);
+        if ($bundle->getHeader()->getAlgorithm() !== 'dir') {
+            $encryptionData = $encryptionData->withEncryptedKey(
+                self::decodeBase64Url($tokenArray[1])
+            );
         }
 
-        return self::configureFromDecodedData($bundle, $decoded);
-    }
+        $encryptedPayload = self::decodeBase64Url($tokenArray[3]);
 
-    /**
-     * @param array<int, string> $decoded
-     */
-    private static function configureFromDecodedData(JwtBundle $bundle, array $decoded): JwtBundle
-    {
-        $encryption = $bundle->getEncryption();
-        $header = $bundle->getHeader();
-
-        [$key, $iv, $ciphertext, $authTag] = $decoded;
-
-        // Set key or CEK depending on algorithm
-        if ($header->getAlgorithm() === 'dir') {
-            $encryption->setCek($key);
-        } else {
-            $encryption->setEncryptedKey($key);
-        }
-
-        // Assign remaining fields
-        $bundle->getPayload()->setEncryptedPayload($ciphertext);
-        $encryption->setIv($iv)->setAuthTag($authTag);
+        $bundle->setEncryption($encryptionData);
+        $bundle->getPayload()->setEncryptedPayload($encryptedPayload);
 
         return $bundle;
     }
@@ -181,80 +163,14 @@ final class JwtTokenParser
      */
     private static function parseSignatureToken(JwtBundle $bundle, array $tokenArray): JwtBundle
     {
-        if (count($tokenArray) !== self::JWS_PART_COUNT) {
-            throw new MalformedTokenException('Invalid JWS token structure.');
-        }
+        $bundle->setEncryption(new JwtEncryptionData(aad: $tokenArray[0] . '.' . $tokenArray[1]));
 
-        $headerB64 = array_shift($tokenArray);
-
-        [$payloadB64] = $tokenArray;
-
-        $aad = "{$headerB64}.{$payloadB64}";
-
-        $decoded = [];
-        foreach ($tokenArray as $part) {
-            $decoded[] = self::decodeBase64Url($part);
-        }
-
-        [$payloadJson, $signature] = $decoded;
-
-        $bundle->getEncryption()->setAad($aad);
+        $signature = self::decodeBase64Url($tokenArray[2]);
         $bundle->setSignature(new JwtSignature($signature));
 
+        $payloadJson = self::decodeBase64Url($tokenArray[1]);
         JwtPayloadJsonCodec::decodeStaticInto($payloadJson, $bundle->getPayload());
 
         return $bundle;
-    }
-
-    /**
-     * @return string serialized and encoded token
-     */
-    private static function serializeEncodedToken(JwtBundle $bundle): string
-    {
-        $header = $bundle->getHeader();
-        $encryption = $bundle->getEncryption();
-
-        $encryptedKey = match ($header->getAlgorithm()) {
-            'dir' => $encryption->getCek(),
-            default => $encryption->getEncryptedKey(),
-        };
-
-        $tokenArray = [
-            JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
-            $encryptedKey,
-            $bundle->getEncryption()->getIv(),
-            $bundle->getPayload()->getEncryptedPayload(),
-            $bundle->getEncryption()->getAuthTag(),
-        ];
-
-        return self::encodeAndSerialize($tokenArray);
-    }
-
-    private static function serializeSignatureToken(JwtBundle $bundle): string
-    {
-        /*
-         * @param array<string> $tokenArray
-         */
-        $tokenArray = [
-            JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
-            JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
-            $bundle->getSignature(),
-        ];
-
-        return self::encodeAndSerialize($tokenArray);
-    }
-
-    /**
-     * @param array<int,string|null> $array
-     */
-    private static function encodeAndSerialize(array $array): string
-    {
-        return implode(
-            '.',
-            array_map(
-                static fn (?string $v): string => Base64UrlEncoder::encode($v ?? ''),
-                $array
-            )
-        );
     }
 }

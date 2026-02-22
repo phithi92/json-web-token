@@ -6,7 +6,6 @@ namespace Phithi92\JsonWebToken\Token\Helper;
 
 use DateMalformedStringException;
 use DateTimeImmutable;
-use DateTimeZone;
 use Exception;
 use Phithi92\JsonWebToken\Exceptions\Payload\EmptyFieldException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
@@ -28,7 +27,12 @@ final class DateClaimHelper
      * and OpenID Connect (OIDC). All of them must be treated as timestamps
      * and must never be retained from previous tokens when reissuing.
      */
-    public const TIME_CLAIMS = ['exp', 'nbf', 'iat', 'auth_time'];
+    public const TIME_CLAIMS = [
+        'exp' => true,
+        'nbf' => true,
+        'iat' => true,
+        'auth_time' => true,
+    ];
 
     /** Reference time used for relative calculations (UTC). */
     private readonly DateTimeImmutable $dateTimeImmutable;
@@ -38,7 +42,7 @@ final class DateClaimHelper
      */
     public function __construct(?DateTimeImmutable $dateTime = null)
     {
-        $this->dateTimeImmutable = $dateTime ?? $this->createReferenceTime();
+        $this->dateTimeImmutable = $dateTime ?? (new UtcClock())->now();
     }
 
     /**
@@ -86,6 +90,13 @@ final class DateClaimHelper
         }
 
         return $result;
+    }
+
+    public function getNowInReferenceTimezone(): DateTimeImmutable
+    {
+        $timezone = $this->dateTimeImmutable->getTimezone();
+
+        return new DateTimeImmutable('now', $timezone);
     }
 
     /**
@@ -136,11 +147,5 @@ final class DateClaimHelper
         }
 
         return $value;
-    }
-
-    /** Create the default UTC reference time. */
-    private function createReferenceTime(): DateTimeImmutable
-    {
-        return new DateTimeImmutable('now', new DateTimeZone('UTC'));
     }
 }

@@ -10,7 +10,6 @@ use function file_get_contents;
 use function getenv;
 use function glob;
 use function realpath;
-use function trim;
 
 final class PemProvider
 {
@@ -44,7 +43,7 @@ final class PemProvider
             throw new RuntimeException("Passphrase file not found: $path");
         }
 
-        return trim(file_get_contents($path));
+        return file_get_contents($path);
     }
 
     public static function getAll(): array

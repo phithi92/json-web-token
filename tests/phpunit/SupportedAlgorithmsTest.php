@@ -2,7 +2,9 @@
 
 namespace Tests\phpunit;
 
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenFactory;
+use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
+use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
+use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Tests\Helpers\KeyProvider;
 use Tests\Helpers\TokenStorage;
@@ -29,7 +31,9 @@ class SupportedAlgorithmsTest extends TestCaseWithSecrets
     {
         $payload = self::getPayload();
 
-        $token = JwtTokenFactory::createTokenString($algorithm, $this->manager, $payload);
+        $service = new JwtTokenIssuer($this->manager);
+        $bundle = $service->issue($algorithm, $payload);
+        $token = JwtBundleCodec::serialize($bundle);
 
         TokenStorage::write($algorithm, $token);
 
@@ -43,7 +47,8 @@ class SupportedAlgorithmsTest extends TestCaseWithSecrets
     {
         $token = TokenStorage::read($algorithm);
 
-        $bundle = JwtTokenFactory::decryptToken($token, $this->manager);
+        $service = new JwtTokenDecryptor($this->manager);
+        $bundle = $service->decrypt($token);
 
         $this->assertInstanceOf(JwtBundle::class, $bundle);
     }

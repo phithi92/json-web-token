@@ -10,139 +10,147 @@ use Phithi92\JsonWebToken\Exceptions\Token\MissingTokenPart;
  * Holds cryptographic data used in JSON Web Encryption (JWE),
  * including the CEK, IV, AAD, auth tag, and encrypted key if applicable.
  *
- * Serves as a value object within the JWE encryption/decryption process.
+ * Immutable value object within the JWE encryption/decryption process.
  */
 final class JwtEncryptionData
 {
-    // Content Encryption Key (symmetric key used for data encryption)
-    private ?string $cek = null;
+    private ?string $cek;
+    private ?string $iv;
+    private ?string $authTag;
+    private ?string $encryptedKey;
+    private ?string $aad;
 
-    // Initialization Vector for encryption (ensures randomness)
-    private ?string $iv = null;
-
-    // Authentication tag used to verify data integrity and authenticity
-    private ?string $authTag = null;
-
-    // Encrypted version of the CEK (e.g., encrypted with recipient's public key)
-    private ?string $encryptedKey = null;
-
-    // Additional Authenticated Data (extra data authenticated but not encrypted)
-    private ?string $aad = null;
+    public function __construct(
+        ?string $cek = null,
+        ?string $iv = null,
+        ?string $authTag = null,
+        ?string $encryptedKey = null,
+        ?string $aad = null,
+    ) {
+        $this->cek = $cek;
+        $this->iv = $iv;
+        $this->authTag = $authTag;
+        $this->encryptedKey = $encryptedKey;
+        $this->aad = $aad;
+    }
 
     /**
-     * Sets the Base64URL-encoded AAD (Additional Authenticated Data),
-     * typically the protected header from the JWE compact serialization.
-     *
-     * @return self for method chaining
+     * Returns a copy with Base64URL-encoded AAD set.
      */
-    public function setAad(string $encodedHeader): self
+    public function withAad(string $aad): self
     {
-        $this->aad = $encodedHeader;
+        $clone = clone $this;
+        $clone->aad = $aad;
 
-        return $this;
+        return $clone;
     }
 
     /**
      * Returns the Base64URL-encoded AAD (Additional Authenticated Data).
-     *
-     * @return string get aad
      */
     public function getAad(): string
     {
-        return $this->aad ?? throw new MissingTokenPart('AAD');
+        return $this->aad ?? throw new MissingTokenPart('aad');
     }
 
     /**
-     * Sets initialization vector.
-     *
-     * @return self For method chaining
+     * Returns a copy with initialization vector set.
      */
-    public function setIv(string $iv): self
+    public function withIv(string $iv): self
     {
-        $this->iv = $iv;
+        $clone = clone $this;
+        $clone->iv = $iv;
 
-        return $this;
-    }
-
-    /**
-     * Sets the encrypted Content Encryption Key (CEK).
-     *
-     * @param string $cek the content encryption key
-     *
-     * @return self For method chaining
-     */
-    public function setCek(string $cek): self
-    {
-        $this->cek = $cek;
-
-        return $this;
-    }
-
-    /**
-     * Retrieves the encrypted Content Encryption Key.
-     *
-     * @return string the encryption key
-     */
-    public function getCek(): string
-    {
-        return $this->cek ?? throw new MissingTokenPart('CEK');
-    }
-
-    /**
-     * Sets the encrypted key for the token.
-     *
-     * @param string $encryptedKey the encrypted key
-     *
-     * @return self For method chaining
-     */
-    public function setEncryptedKey(string $encryptedKey): self
-    {
-        $this->encryptedKey = $encryptedKey;
-
-        return $this;
-    }
-
-    /**
-     * Retrieves the encrypted key.
-     *
-     * @return string the encrypted key
-     */
-    public function getEncryptedKey(): string
-    {
-        return $this->encryptedKey ?? throw new MissingTokenPart('EncryptedKey');
-    }
-
-    /**
-     * Sets the authentication tag for encryption.
-     *
-     * @param string $tag the authentication tag
-     *
-     * @return self For method chaining
-     */
-    public function setAuthTag(string $tag): self
-    {
-        $this->authTag = $tag;
-
-        return $this;
-    }
-
-    /**
-     * Retrieves the authentication tag.
-     *
-     * @return string the authentication tag
-     */
-    public function getAuthTag(): string
-    {
-        return $this->authTag ?? throw new MissingTokenPart('AuthTag');
+        return $clone;
     }
 
     /**
      * Retrieves the Initialization Vector (IV).
-     *
-     * @return string the initialization vector
      */
     public function getIv(): string
     {
-        return $this->iv ?? throw new MissingTokenPart('IV');
+        return $this->iv ?? throw new MissingTokenPart('iv');
+    }
+
+    /**
+     * Returns a copy with the Content Encryption Key (CEK) set.
+     */
+    public function withCek(string $cek): self
+    {
+        $clone = clone $this;
+        $clone->cek = $cek;
+
+        return $clone;
+    }
+
+    /**
+     * Retrieves the Content Encryption Key.
+     */
+    public function getCek(): string
+    {
+        return $this->cek ?? throw new MissingTokenPart('cek');
+    }
+
+    /**
+     * Returns a copy with the encrypted key set.
+     */
+    public function withEncryptedKey(string $encryptedKey): self
+    {
+        $clone = clone $this;
+        $clone->encryptedKey = $encryptedKey;
+
+        return $clone;
+    }
+
+    /**
+     * Retrieves the encrypted key.
+     */
+    public function getEncryptedKey(): string
+    {
+        return $this->encryptedKey ?? throw new MissingTokenPart('encrypted_key');
+    }
+
+    /**
+     * Returns a copy with the authentication tag set.
+     */
+    public function withAuthTag(string $tag): self
+    {
+        $clone = clone $this;
+        $clone->authTag = $tag;
+
+        return $clone;
+    }
+
+    /**
+     * Retrieves the authentication tag.
+     */
+    public function getAuthTag(): string
+    {
+        return $this->authTag ?? throw new MissingTokenPart('tag');
+    }
+
+    public function hasAad(): bool
+    {
+        return $this->aad !== null;
+    }
+
+    public function hasIv(): bool
+    {
+        return $this->iv !== null;
+    }
+
+    public function hasCek(): bool
+    {
+        return $this->cek !== null;
+    }
+
+    public function hasEncryptedKey(): bool
+    {
+        return $this->encryptedKey !== null;
+    }
+
+    public function hasAuthTag(): bool
+    {
+        return $this->authTag !== null;
     }
 }

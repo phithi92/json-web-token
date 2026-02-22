@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Helpers;
 
+use Phithi92\JsonWebToken\Security\KeyRole;
+
 use function array_keys;
 use function array_merge;
 
@@ -13,8 +15,8 @@ class KeyProvider
     {
         return [
             $kid => [
-                'private' => PemProvider::getPrivateKey($path),
-                'public' => PemProvider::getPublicKey($path),
+                KeyRole::Private->value => PemProvider::getPrivateKey($path),
+                KeyRole::Public->value => PemProvider::getPublicKey($path),
             ],
         ];
     }
@@ -41,8 +43,8 @@ class KeyProvider
             self::createAsymetricKeysItem('PS384', 'rsa/3072'),
             self::createAsymetricKeysItem('PS512', 'rsa/4096'),
             // rsa
-            self::createAsymetricKeysItem('RSA-OAEP_A256GCM', 'rsa/3072'),
-            self::createAsymetricKeysItem('RSA-OAEP-256_A256GCM', 'rsa/4096'),
+            self::createAsymetricKeysItem('RSA-OAEP/A256GCM', 'rsa/3072'),
+            self::createAsymetricKeysItem('RSA-OAEP-256/A256GCM', 'rsa/4096'),
             // ec
             self::createAsymetricKeysItem('ES256', 'ec/prime256v1'),
             self::createAsymetricKeysItem('ES384', 'ec/secp384r1'),
