@@ -157,10 +157,6 @@ final class CryptoAlgorithmInvoker
     ): array {
         $methodConfig = $config[$invokation->target->interfaceClass()];
 
-        if (! is_array($methodConfig)) {
-            throw new MissingAlgorithmConfigurationException($invokation->target->name);
-        }
-
         return match ($invokation->target) {
             CryptoProcessingStage::Iv => $this->resolveIvArguments($invokation->operation, $jwtBundle, $methodConfig),
             CryptoProcessingStage::Cek => $this->resolveCekArguments($jwtBundle, $methodConfig),
