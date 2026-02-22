@@ -24,7 +24,7 @@ final class JwtEncryptionDataTest extends TestCase
     public function testGetAadWithoutSetThrowsException(): void
     {
         $this->expectException(MissingTokenPart::class);
-        $this->expectExceptionMessage('No aad configured.');
+        $this->expectExceptionMessage('Missing required token part: aad.');
 
         (new JwtEncryptionData())->getAad();
     }
@@ -42,7 +42,7 @@ final class JwtEncryptionDataTest extends TestCase
     public function testGetIvWithoutSetThrowsException(): void
     {
         $this->expectException(MissingTokenPart::class);
-        $this->expectExceptionMessage('No iv configured.');
+        $this->expectExceptionMessage('Missing required token part: iv.');
 
         (new JwtEncryptionData())->getIv();
     }
@@ -60,7 +60,7 @@ final class JwtEncryptionDataTest extends TestCase
     public function testGetCekWithoutSetThrowsException(): void
     {
         $this->expectException(MissingTokenPart::class);
-        $this->expectExceptionMessage('No cek configured.');
+        $this->expectExceptionMessage('Missing required token part: cek.');
 
         (new JwtEncryptionData())->getCek();
     }
@@ -78,7 +78,7 @@ final class JwtEncryptionDataTest extends TestCase
     public function testGetEncryptedKeyWithoutSetThrowsException(): void
     {
         $this->expectException(MissingTokenPart::class);
-        $this->expectExceptionMessage('No encrypted_key configured.');
+        $this->expectExceptionMessage('Missing required token part: encrypted_key.');
 
         (new JwtEncryptionData())->getEncryptedKey();
     }
@@ -96,7 +96,7 @@ final class JwtEncryptionDataTest extends TestCase
     public function testGetAuthTagWithoutSetThrowsException(): void
     {
         $this->expectException(MissingTokenPart::class);
-        $this->expectExceptionMessage('No tag configured.');
+        $this->expectExceptionMessage('Missing required token part: tag.');
 
         (new JwtEncryptionData())->getAuthTag();
     }
