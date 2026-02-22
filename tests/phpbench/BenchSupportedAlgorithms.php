@@ -4,10 +4,14 @@ namespace Tests\phpbench;
 
 use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidJwtIdException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
+use Phithi92\JsonWebToken\Token\JwtBundle;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use PhpBench\Attributes as Bench;
 
 use function assert;
@@ -59,5 +63,35 @@ class BenchSupportedAlgorithms extends BenchmarkBase
                 throw $e;
             }
         }
+    }
+
+    public function benchReplayProtected(array $params): void
+    {
+        $validator = $this->createReplayValidator();
+        $c = new JwtTokenDecryptor($this->getManager());
+        $token = $this->getReplayProtectedToken($params['alg'], $validator);
+
+        $bundle = $c->decrypt($token, $validator);
+        $this->denyBundle($bundle, $validator);
+
+        try {
+            $c->decrypt($token, $validator);
+        } catch (InvalidJwtIdException $e) {
+            assert($e instanceof InvalidJwtIdException);
+        }
+    }
+
+    private function denyBundle(JwtBundle $bundle, JwtValidator $validator): void
+    {
+        $exp = $bundle->getPayload()->getExpiration();
+
+        $ttl = (int) $exp;
+        if ($ttl <= 0) {
+            return;
+        }
+
+        $jwtId = new JwtIdInput($bundle->getPayload()->getJwtId());
+
+        $validator->getJwtIdValidator()?->deny($jwtId, $ttl);
     }
 }

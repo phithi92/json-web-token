@@ -7,6 +7,8 @@ use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
+use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Tests\Helpers\KeyProvider;
 
@@ -109,6 +111,30 @@ abstract class BenchmarkBase
         }
 
         return $this->cache['invalid'][$alg];
+    }
+
+    protected function getReplayProtectedToken(string $alg, JwtValidator $validator): string
+    {
+        $idInput = new JwtIdInput();
+
+        $payload = new JwtPayload();
+        $payload->addClaim('iat', time());
+        $payload->addClaim('exp', time() + 3600);
+        $payload->setJwtId($idInput);
+
+        $ttl = $payload->getExpiration();
+
+        $validator->getJwtIdValidator()->allow($idInput, $ttl);
+
+        $c = new JwtTokenIssuer($this->getManager());
+        $bundle = $c->issue($alg, $payload);
+
+        return JwtBundleCodec::serialize($bundle);
+    }
+
+    protected function createReplayValidator(): JwtValidator
+    {
+        return new JwtValidator(jwtIdValidator: new InMemoryJwtIdValidator(useAllowList: true));
     }
 
     protected function getManager(): JwtKeyManager
