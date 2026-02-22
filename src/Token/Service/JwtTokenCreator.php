@@ -26,8 +26,6 @@ final class JwtTokenCreator
      * Generates and validates a JWT with automatic JTI handling when validation is enabled.
      *
      * @param non-empty-string $algorithm
-     * @param JwtKeyManager $manager
-     * @param JwtPayload|null $payload
      * @param JwtValidator|null $validator Default validator used if null
      * @param string|null $kid Key identifier
      *
@@ -67,7 +65,6 @@ final class JwtTokenCreator
      * Generates and validates a JWT from an array of claims.
      *
      * @param non-empty-string $algorithm
-     * @param JwtKeyManager $manager
      * @param array<non-empty-string, mixed> $claims JWT claims as key-value pairs
      * @param JwtValidator|null $validator Default validator used if null
      * @param string|null $kid Key identifier

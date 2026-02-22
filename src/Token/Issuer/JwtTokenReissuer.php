@@ -56,7 +56,7 @@ final class JwtTokenReissuer
         $reissuedBundle = new JwtBundle(
             header: $bundle->getHeader(),
             payload: $filterdPayload,
-            encryption: ($bundle->hasEncryption()) ? $bundle->getEncryption() : null,
+            encryption: $bundle->hasEncryption() ? $bundle->getEncryption() : null,
         );
 
         // Decide policy: reissue always validates the new bundle by default.
@@ -87,7 +87,7 @@ final class JwtTokenReissuer
         $claims = $payload->toArray();
 
         $searchFor = DateClaimHelper::TIME_CLAIMS + [
-            'jti' => true
+            'jti' => true,
         ];
 
         foreach ($searchFor as $key => $value) {

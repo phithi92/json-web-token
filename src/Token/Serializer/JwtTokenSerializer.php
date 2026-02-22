@@ -17,8 +17,6 @@ final class JwtTokenSerializer
     private const SEGMENT_SEPERATOR = '.';
 
     /**
-     * @param JwtBundle $bundle
-     *
      * @return non-empty-string the token
      */
     public static function serialize(JwtBundle $bundle): string

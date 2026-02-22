@@ -71,7 +71,7 @@ final class InMemoryJwtIdValidator implements JwtIdValidatorInterface
         }
 
         // 3) Allow-list mode: must exist AND not be expired
-        if (!isset($this->allowList[$id])) {
+        if (! isset($this->allowList[$id])) {
             return false;
         }
 

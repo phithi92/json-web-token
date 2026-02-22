@@ -72,7 +72,6 @@ final class JwtTokenService
     }
 
     /**
-     *
      * ⚠️ DANGER: This method bypasses ALL claim validations including:
      * - Expiration checks (exp)
      * - Issuer validation (iss)
@@ -126,8 +125,6 @@ final class JwtTokenService
         return JwtBundleCodec::serialize($bundle);
     }
 
-
-
     /**
      * Decrypts and validates an encrypted JWT (JWE) into a JWT bundle.
      *
@@ -170,6 +167,7 @@ final class JwtTokenService
      *
      * @param non-empty-string $token Encrypted JWT in JWE Compact Serialization format (RFC 7516)
      * @param JwtKeyManager $manager Key management instance providing decryption keys
+     *
      * @return JwtBundle Decrypted but UNVALIDATED JWT bundle
      */
     public function decryptTokenWithoutClaimValidation(
