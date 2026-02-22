@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Service;
 
-use DateInterval;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenReissuer;
@@ -221,7 +220,7 @@ final class JwtTokenService
      * 5. Returns a new validated JWT bundle
      *
      * @param non-empty-string $token JWT in compact serialization format (JWS or JWE)
-     * @param DateInterval|string $interval DateInterval or interval specification string
+     * @param string $interval Interval specification string
      *                                     (e.g., 'PT1H' for 1 hour, 'P1D' for 1 day)
      * @param JwtKeyManager $manager Key management instance for decryption and reissuing
      * @param JwtValidator|null $validator Optional validator instance (skips validation if null)

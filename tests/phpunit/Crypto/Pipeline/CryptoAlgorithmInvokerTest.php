@@ -45,24 +45,24 @@ final class CryptoAlgorithmInvokerTest extends TestCase
         );
     }
 
-//    public function testDispatchThrowsWhenConfigMissingHandlerDefinition(): void
-//    {
-//        $dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
-//
-//        $this->expectException(MissingAlgorithmConfigurationException::class);
-//
-//        $invocation = new AlgorithmInvocation(
-//            CryptoProcessingStage::Signature,
-//            CryptoOperationDirection::Perform
-//        );
-//
-//        $dispatcher->process(
-//            $invocation,
-//            new JwtKeyManager(),
-//            new JwtBundle(new JwtHeader()),
-//            [CryptoProcessingStage::Signature->interfaceClass() => 'invalid'],
-//        );
-//    }
+    //    public function testDispatchThrowsWhenConfigMissingHandlerDefinition(): void
+    //    {
+    //        $dispatcher = new CryptoAlgorithmInvoker(new AlgorithmMethodMap());
+    //
+    //        $this->expectException(MissingAlgorithmConfigurationException::class);
+    //
+    //        $invocation = new AlgorithmInvocation(
+    //            CryptoProcessingStage::Signature,
+    //            CryptoOperationDirection::Perform
+    //        );
+    //
+    //        $dispatcher->process(
+    //            $invocation,
+    //            new JwtKeyManager(),
+    //            new JwtBundle(new JwtHeader()),
+    //            [CryptoProcessingStage::Signature->interfaceClass() => 'invalid'],
+    //        );
+    //    }
 
     //    public function testDispatchThrowsWhenHandlerClassInvalid(): void
     //    {

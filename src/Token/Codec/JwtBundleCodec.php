@@ -23,6 +23,8 @@ final class JwtBundleCodec
 
     /**
      * @throws MalformedTokenException
+     *
+     * @return non-empty-string
      */
     public static function serialize(JwtBundle $bundle): string
     {

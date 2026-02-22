@@ -16,6 +16,11 @@ final class JwtTokenSerializer
 {
     private const SEGMENT_SEPERATOR = '.';
 
+    /**
+     * @param JwtBundle $bundle
+     *
+     * @return non-empty-string the token
+     */
     public static function serialize(JwtBundle $bundle): string
     {
         $type = (string) $bundle->getHeader()->getType();
@@ -32,7 +37,7 @@ final class JwtTokenSerializer
     }
 
     /**
-     * @return string serialized and encoded token
+     * @return non-empty-string serialized and encoded token
      */
     private static function serializeEncodedToken(JwtBundle $bundle): string
     {
@@ -52,6 +57,9 @@ final class JwtTokenSerializer
         return self::encodeAndSerialize($tokenArray);
     }
 
+    /**
+     * @return non-empty-string
+     */
     private static function serializeSignatureToken(JwtBundle $bundle): string
     {
         $tokenArray = [
@@ -65,6 +73,8 @@ final class JwtTokenSerializer
 
     /**
      * @param array<int,string|null> $array
+     *
+     * @return non-empty-string
      */
     private static function encodeAndSerialize(array $array): string
     {
@@ -78,6 +88,10 @@ final class JwtTokenSerializer
 
             $out .= Base64UrlEncoder::encode($v ?? '');
             $first = false;
+        }
+
+        if ($out === '') {
+            throw new MalformedTokenException('no token data to serialize');
         }
 
         return $out;
