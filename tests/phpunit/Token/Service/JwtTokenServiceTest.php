@@ -12,6 +12,7 @@ use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Reader\JwtTokenReader;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 use Phithi92\JsonWebToken\Token\Service\JwtClaimsValidationService;
 use Phithi92\JsonWebToken\Token\Service\JwtTokenCreator;
 use Phithi92\JsonWebToken\Token\Service\JwtTokenService;
@@ -27,7 +28,7 @@ final class JwtTokenServiceTest extends TestCase
         $registry->expects($this->once())
             ->method('deny')
             ->with(
-                'token-id',
+                new JwtIdInput('token-id'),
                 $this->callback(static fn (int $ttl): bool => $ttl > 0)
             );
 
@@ -64,7 +65,7 @@ final class JwtTokenServiceTest extends TestCase
 
         $now = time();
         $payload = (new JwtPayload())
-            ->setJwtId('token-id')
+            ->setJwtId(new JwtIdInput('token-id'))
             ->setClaimTimestamp('exp', $now + 600);
 
         $bundle = new JwtBundle(

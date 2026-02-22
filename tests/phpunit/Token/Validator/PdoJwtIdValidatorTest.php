@@ -6,6 +6,7 @@ namespace Tests\phpunit\Token\Validator;
 
 use PDO;
 use PDOStatement;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 use Phithi92\JsonWebToken\Token\Validator\PdoJwtIdValidator;
 use PHPUnit\Framework\TestCase;
 
@@ -16,7 +17,7 @@ final class PdoJwtIdValidatorTest extends TestCase
         $statement = $this->createMock(PDOStatement::class);
         $statement->expects($this->once())
             ->method('execute')
-            ->with(['jwt_id' => 'token-id', 'type' => 'deny']);
+            ->with(['jwt_id' => new JwtIdInput('token-id'), 'type' => 'deny']);
         $statement->expects($this->once())
             ->method('fetchColumn')
             ->willReturn(false);
@@ -28,7 +29,7 @@ final class PdoJwtIdValidatorTest extends TestCase
 
         $validator = new PdoJwtIdValidator($pdo);
 
-        $this->assertTrue($validator->isAllowed('token-id'));
+        $this->assertTrue($validator->isAllowed(new JwtIdInput('token-id')));
     }
 
     public function testIsAllowedReturnsFalseWhenDenied(): void
@@ -36,7 +37,7 @@ final class PdoJwtIdValidatorTest extends TestCase
         $statement = $this->createMock(PDOStatement::class);
         $statement->expects($this->once())
             ->method('execute')
-            ->with(['jwt_id' => 'token-id', 'type' => 'deny']);
+            ->with(['jwt_id' => new JwtIdInput('token-id'), 'type' => 'deny']);
         $statement->expects($this->once())
             ->method('fetchColumn')
             ->willReturn(1);
@@ -48,7 +49,7 @@ final class PdoJwtIdValidatorTest extends TestCase
 
         $validator = new PdoJwtIdValidator($pdo);
 
-        $this->assertFalse($validator->isAllowed('token-id'));
+        $this->assertFalse($validator->isAllowed(new JwtIdInput('token-id')));
     }
 
     public function testAllowStoresJwtId(): void
@@ -70,6 +71,6 @@ final class PdoJwtIdValidatorTest extends TestCase
 
         $validator = new PdoJwtIdValidator($pdo, true);
 
-        $validator->allow('token-id', 60);
+        $validator->allow(new JwtIdInput('token-id'), 60);
     }
 }

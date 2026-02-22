@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Validator;
 
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
+
 interface JwtIdValidatorInterface
 {
-    public function isAllowed(?string $jwtId): bool;
+    public function isAllowed(JwtIdInput $jwtId): bool;
 
-    public function allow(string $jwtId, int $ttl): void;
+    public function useAllowList(): bool;
 
-    public function deny(string $jwtId, int $ttl): void;
+    public function allow(JwtIdInput $jwtId, int $ttl): void;
+
+    public function deny(JwtIdInput $jwtId, int $ttl): void;
 }

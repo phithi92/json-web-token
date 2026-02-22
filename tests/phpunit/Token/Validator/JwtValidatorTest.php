@@ -12,8 +12,10 @@ use Phithi92\JsonWebToken\Exceptions\Payload\NotBeforeOlderThanIatException;
 use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidJwtIdException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidPrivateClaimException;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingJwtIdException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use PHPUnit\Framework\TestCase;
@@ -53,7 +55,7 @@ final class JwtValidatorTest extends TestCase
         }
 
         if (isset($data['jti'])) {
-            $payload->setJwtId($data['jti']);
+            $payload->setJwtId(new JwtIdInput($data['jti']));
         }
 
         return $payload;
@@ -210,13 +212,15 @@ final class JwtValidatorTest extends TestCase
             jwtIdValidator: new InMemoryJwtIdValidator(['token-1'], null, true)
         );
 
-        $this->expectException(InvalidJwtIdException::class);
+        $this->expectException(MissingJwtIdException::class);
         $validator->assertValid($payload);
     }
 
     public function testJwtIdDenyListAllowsMissingJwtIdWhenAllowListDisabled(): void
     {
-        $payload = $this->createPayload([]);
+        $payload = $this->createPayload([
+            'jti' => 'token-2'
+        ]);
         $validator = new JwtValidator(
             expectedIssuer: null,
             expectedAudience: null,
@@ -233,6 +237,7 @@ final class JwtValidatorTest extends TestCase
     public function testJwtIdDenyListRejectsKnownJwtId(): void
     {
         $payload = $this->createPayload(['jti' => 'token-1']);
+
         $validator = new JwtValidator(
             expectedIssuer: null,
             expectedAudience: null,

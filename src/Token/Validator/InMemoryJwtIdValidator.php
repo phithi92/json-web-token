@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Validator;
 
 use InvalidArgumentException;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 
 final class InMemoryJwtIdValidator implements JwtIdValidatorInterface
 {
@@ -46,17 +47,19 @@ final class InMemoryJwtIdValidator implements JwtIdValidatorInterface
         $this->useAllowList = $useAllowList;
     }
 
-    public function isAllowed(?string $jwtId): bool
+    public function useAllowList(): bool
     {
-        // If allow-list mode is off, null jwtId is allowed unless explicitly denied (can't be denied if null).
-        if ($jwtId === null) {
-            return ! $this->useAllowList;
-        }
+        return $this->useAllowList;
+    }
+
+    public function isAllowed(JwtIdInput $jwtId): bool
+    {
+        $id = (string) $jwtId;
 
         // 1) Deny list has priority
-        if (isset($this->denyList[$jwtId])) {
-            if ($this->isExpired($this->denyList[$jwtId])) {
-                unset($this->denyList[$jwtId]);
+        if (isset($this->denyList[$id])) {
+            if ($this->isExpired($this->denyList[$id])) {
+                unset($this->denyList[$id]);
             } else {
                 return false;
             }
@@ -68,32 +71,36 @@ final class InMemoryJwtIdValidator implements JwtIdValidatorInterface
         }
 
         // 3) Allow-list mode: must exist AND not be expired
-        if (! isset($this->allowList[$jwtId])) {
+        if (!isset($this->allowList[$id])) {
             return false;
         }
 
-        if ($this->isExpired($this->allowList[$jwtId])) {
-            unset($this->allowList[$jwtId]);
+        if ($this->isExpired($this->allowList[$id])) {
+            unset($this->allowList[$id]);
             return false;
         }
 
         return true;
     }
 
-    public function allow(string $jwtId, int $ttl): void
+    public function allow(JwtIdInput $jwtId, int $ttl): void
     {
         $this->assertTtl($ttl);
 
-        $this->allowList[$jwtId] = $this->expiresAt($ttl);
-        unset($this->denyList[$jwtId]);
+        $id = (string) $jwtId;
+
+        $this->allowList[$id] = $this->expiresAt($ttl);
+        unset($this->denyList[$id]);
     }
 
-    public function deny(string $jwtId, int $ttl): void
+    public function deny(JwtIdInput $jwtId, int $ttl): void
     {
         $this->assertTtl($ttl);
 
-        $this->denyList[$jwtId] = $this->expiresAt($ttl);
-        unset($this->allowList[$jwtId]);
+        $id = (string) $jwtId;
+
+        $this->denyList[$id] = $this->expiresAt($ttl);
+        unset($this->allowList[$id]);
     }
 
     /**

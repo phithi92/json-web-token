@@ -86,7 +86,11 @@ final class JwtTokenReissuer
     {
         $claims = $payload->toArray();
 
-        foreach (DateClaimHelper::TIME_CLAIMS as $key => $value) {
+        $searchFor = DateClaimHelper::TIME_CLAIMS + [
+            'jti' => true
+        ];
+
+        foreach ($searchFor as $key => $value) {
             unset($claims[$key]);
         }
 

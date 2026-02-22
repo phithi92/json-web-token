@@ -6,6 +6,7 @@ namespace Phithi92\JsonWebToken\Token\Validator;
 
 use DateTimeImmutable;
 use PDO;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 
 final class PdoJwtIdValidator implements JwtIdValidatorInterface
 {
@@ -22,12 +23,13 @@ final class PdoJwtIdValidator implements JwtIdValidatorInterface
         $this->useAllowList = $useAllowList;
     }
 
-    public function isAllowed(?string $jwtId): bool
+    public function useAllowList(): bool
     {
-        if ($jwtId === null) {
-            return ! $this->useAllowList;
-        }
+        return $this->useAllowList;
+    }
 
+    public function isAllowed(JwtIdInput $jwtId): bool
+    {
         if ($this->isDenied($jwtId)) {
             return false;
         }
@@ -39,32 +41,32 @@ final class PdoJwtIdValidator implements JwtIdValidatorInterface
         return true;
     }
 
-    public function deny(string $jwtId, int $ttl): void
+    public function deny(JwtIdInput $jwtId, int $ttl): void
     {
         $this->store(
-            $jwtId,
+            (string) $jwtId,
             self::TYPE_DENY,
             $ttl
         );
     }
 
-    public function allow(string $jwtId, int $ttl): void
+    public function allow(JwtIdInput $jwtId, int $ttl): void
     {
         $this->store(
-            $jwtId,
+            (string) $jwtId,
             self::TYPE_ALLOW,
             $ttl
         );
     }
 
-    private function isDenied(string $jwtId): bool
+    private function isDenied(JwtIdInput $jwtId): bool
     {
-        return $this->exists($jwtId, self::TYPE_DENY);
+        return $this->exists((string) $jwtId, self::TYPE_DENY);
     }
 
-    private function isAllowedExplicitly(string $jwtId): bool
+    private function isAllowedExplicitly(JwtIdInput $jwtId): bool
     {
-        return $this->exists($jwtId, self::TYPE_ALLOW);
+        return $this->exists((string) $jwtId, self::TYPE_ALLOW);
     }
 
     private function exists(string $jwtId, string $type): bool

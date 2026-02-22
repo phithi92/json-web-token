@@ -16,10 +16,12 @@ use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
 use Phithi92\JsonWebToken\Exceptions\Payload\ValueNotFoundException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidJwtIdException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidPrivateClaimException;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingJwtIdException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 
 use function in_array;
 use function is_array;
@@ -199,7 +201,15 @@ final class JwtValidator
      */
     public function isValidJwtId(JwtPayload $payload): bool
     {
-        return $this->jwtIdValidator === null || $this->jwtIdValidator->isAllowed($payload->getJwtId());
+        if ($this->jwtIdValidator === null) {
+            return true;
+        }
+
+        if ($payload->getJwtId() === null) {
+            throw new MissingJwtIdException();
+        }
+
+        return $this->jwtIdValidator->isAllowed(new JwtIdInput($payload->getJwtId()));
     }
 
     public function getJwtIdValidator(): ?JwtIdValidatorInterface

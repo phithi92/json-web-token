@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Tests\Token\Validator;
 
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 use Phithi92\JsonWebToken\Token\Validator\RedisJwtIdValidator;
 use PHPUnit\Framework\TestCase;
 use Redis;
@@ -11,24 +12,6 @@ use RuntimeException;
 
 final class RedisJwtIdValidatorTest extends TestCase
 {
-    public function test_isAllowed_returns_true_when_jwtId_is_null_and_allowList_disabled(): void
-    {
-        $redis = $this->createMock(Redis::class);
-
-        $sut = new RedisJwtIdValidator($redis, false);
-
-        self::assertTrue($sut->isAllowed(null));
-    }
-
-    public function test_isAllowed_returns_false_when_jwtId_is_null_and_allowList_enabled(): void
-    {
-        $redis = $this->createMock(Redis::class);
-
-        $sut = new RedisJwtIdValidator($redis, true);
-
-        self::assertFalse($sut->isAllowed(null));
-    }
-
     public function test_isAllowed_returns_false_when_denied(): void
     {
         $redis = $this->createMock(Redis::class);
@@ -39,7 +22,7 @@ final class RedisJwtIdValidatorTest extends TestCase
 
         $sut = new RedisJwtIdValidator($redis, false);
 
-        self::assertFalse($sut->isAllowed('abc'));
+        self::assertFalse($sut->isAllowed(new JwtIdInput('abc')));
     }
 
     public function test_isAllowed_returns_true_when_not_denied_and_allowList_disabled(): void
@@ -52,7 +35,7 @@ final class RedisJwtIdValidatorTest extends TestCase
 
         $sut = new RedisJwtIdValidator($redis, false);
 
-        self::assertTrue($sut->isAllowed('abc'));
+        self::assertTrue($sut->isAllowed(new JwtIdInput('abc')));
     }
 
     public function test_isAllowed_returns_false_when_allowList_enabled_and_not_explicitly_allowed(): void
@@ -74,7 +57,7 @@ final class RedisJwtIdValidatorTest extends TestCase
 
         $sut = new RedisJwtIdValidator($redis, true);
 
-        self::assertFalse($sut->isAllowed('abc'));
+        self::assertFalse($sut->isAllowed(new JwtIdInput('abc')));
         self::assertSame(['jwt:deny:abc', 'jwt:allow:abc'], $calls);
     }
 
@@ -97,7 +80,7 @@ final class RedisJwtIdValidatorTest extends TestCase
 
         $sut = new RedisJwtIdValidator($redis, true);
 
-        self::assertTrue($sut->isAllowed('abc'));
+        self::assertTrue($sut->isAllowed(new JwtIdInput('abc')));
         self::assertSame(['jwt:deny:abc', 'jwt:allow:abc'], $calls);
     }
 
@@ -110,7 +93,7 @@ final class RedisJwtIdValidatorTest extends TestCase
 
         $sut = new RedisJwtIdValidator($redis, false);
 
-        $sut->deny('abc', 123);
+        $sut->deny(new JwtIdInput('abc'), 123);
     }
 
     public function test_allow_sets_expected_key_with_ttl(): void
@@ -122,6 +105,6 @@ final class RedisJwtIdValidatorTest extends TestCase
 
         $sut = new RedisJwtIdValidator($redis, true);
 
-        $sut->allow('abc', 456);
+        $sut->allow(new JwtIdInput('abc'), 456);
     }
 }

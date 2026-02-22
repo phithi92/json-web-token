@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\phpunit\Token\Validator;
 
 use InvalidArgumentException;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
 use PHPUnit\Framework\TestCase;
 
@@ -14,21 +15,25 @@ final class InMemoryJwtIdValidatorTest extends TestCase
     {
         $validator = new InMemoryJwtIdValidator(useAllowList: true);
 
-        $this->assertFalse($validator->isAllowed('token-id'));
+        $jwtId = new JwtIdInput('token-id');
 
-        $validator->allow('token-id', 60);
+        $this->assertFalse($validator->isAllowed($jwtId));
 
-        $this->assertTrue($validator->isAllowed('token-id'));
+        $validator->allow($jwtId, 60);
+
+        $this->assertTrue($validator->isAllowed($jwtId));
     }
 
     public function testDenyOverridesAllow(): void
     {
         $validator = new InMemoryJwtIdValidator(useAllowList: true);
 
-        $validator->allow('token-id', 60);
-        $validator->deny('token-id', 60);
+        $jwtId = new JwtIdInput('token-id');
 
-        $this->assertFalse($validator->isAllowed('token-id'));
+        $validator->allow($jwtId, 60);
+        $validator->deny($jwtId, 60);
+
+        $this->assertFalse($validator->isAllowed($jwtId));
     }
 
     public function testNegativeTtlThrows(): void
@@ -36,15 +41,16 @@ final class InMemoryJwtIdValidatorTest extends TestCase
         $validator = new InMemoryJwtIdValidator();
 
         $this->expectException(InvalidArgumentException::class);
-        $validator->allow('token-id', -1);
+        $validator->allow(new JwtIdInput('token-id'), -1);
     }
 
     public function testZeroTtlExpiresImmediately(): void
     {
+        $id = new JwtIdInput('token-id');
         $validator = new InMemoryJwtIdValidator(useAllowList: true);
 
-        $validator->allow('token-id', 0);
+        $validator->allow($id, 0);
 
-        $this->assertFalse($validator->isAllowed('token-id'));
+        $this->assertFalse($validator->isAllowed($id));
     }
 }

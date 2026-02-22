@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Validator;
 
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 use Redis;
 
 final class RedisJwtIdValidator implements JwtIdValidatorInterface
@@ -21,12 +22,13 @@ final class RedisJwtIdValidator implements JwtIdValidatorInterface
         $this->useAllowList = $useAllowList;
     }
 
-    public function isAllowed(?string $jwtId): bool
+    public function useAllowList(): bool
     {
-        if ($jwtId === null) {
-            return ! $this->useAllowList;
-        }
+        return $this->useAllowList;
+    }
 
+    public function isAllowed(JwtIdInput $jwtId): bool
+    {
         if ($this->isDenied($jwtId)) {
             return false;
         }
@@ -38,16 +40,16 @@ final class RedisJwtIdValidator implements JwtIdValidatorInterface
         return true;
     }
 
-    public function deny(string $jwtId, int $ttl): void
+    public function deny(JwtIdInput $jwtId, int $ttl): void
     {
         $this->redis->setex(
-            self::DENY_PREFIX . $jwtId,
+            self::DENY_PREFIX . (string) $jwtId,
             $ttl,
             '1'
         );
     }
 
-    public function allow(string $jwtId, int $ttl): void
+    public function allow(JwtIdInput $jwtId, int $ttl): void
     {
         $this->redis->setex(
             self::ALLOW_PREFIX . $jwtId,
@@ -56,12 +58,12 @@ final class RedisJwtIdValidator implements JwtIdValidatorInterface
         );
     }
 
-    private function isDenied(string $jwtId): bool
+    private function isDenied(JwtIdInput $jwtId): bool
     {
         return $this->redis->exists(self::DENY_PREFIX . $jwtId) === 1;
     }
 
-    private function isAllowedExplicitly(string $jwtId): bool
+    private function isAllowedExplicitly(JwtIdInput $jwtId): bool
     {
         return $this->redis->exists(self::ALLOW_PREFIX . $jwtId) === 1;
     }

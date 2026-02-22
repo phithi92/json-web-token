@@ -75,16 +75,16 @@ final class CryptoAlgorithmInvoker
             throw new MissingAlgorithmConfigurationException($invocation->target->name);
         }
 
+        $args = $this->resolveArguments($manager, $invocation, $jwtBundle, $config);
         $handler = $this->buildHandler($manager, $invocation, $config);
-
         $method = $this->methodResolver->resolve($invocation) ?? '';
+
         if (! method_exists($handler, $method)) {
             throw new AlgorithmMethodNotFoundException($invocation, $method);
         }
 
-        $args = $this->resolveArguments($manager, $invocation, $jwtBundle, $config);
-
         $result = $handler->{$method}(...$args);
+
         if (! $result instanceof CryptoStageResultInterface && $result !== null) {
             throw new LogicException(sprintf(
                 'Invalid handler return type: expected null or an instance of %s, got %s from %s::%s (stage: %s, operation: %s).',
@@ -108,7 +108,7 @@ final class CryptoAlgorithmInvoker
      *
      * @param JwtKeyManager $manager The key manager used to construct handler instances
      * @param AlgorithmInvocation $invocation The invocation containing the target stage
-     * @param array<string, mixed>> $config Configuration mapping interface names to handler classes
+     * @param array<string,array<mixed>>$config Configuration mapping interface names to handler classes
      *
      * @return object An instance of the handler implementing the interface for the target stage
      *
@@ -156,6 +156,10 @@ final class CryptoAlgorithmInvoker
         array $config,
     ): array {
         $methodConfig = $config[$invokation->target->interfaceClass()];
+
+        if (! is_array($methodConfig)) {
+            throw new MissingAlgorithmConfigurationException($invokation->target->name);
+        }
 
         return match ($invokation->target) {
             CryptoProcessingStage::Iv => $this->resolveIvArguments($invokation->operation, $jwtBundle, $methodConfig),

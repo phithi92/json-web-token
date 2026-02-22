@@ -12,6 +12,7 @@ use Phithi92\JsonWebToken\Exceptions\Payload\EncryptedPayloadNotSetException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidDateTimeException;
 use Phithi92\JsonWebToken\Exceptions\Payload\InvalidValueTypeException;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
+use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 use Phithi92\JsonWebToken\Token\Validator\ClaimValidator;
 
 use function array_is_list;
@@ -234,9 +235,9 @@ final class JwtPayload implements JsonSerializable
     /**
      * Set the JWT ID (jti) claim.
      */
-    public function setJwtId(string $jwtId): self
+    public function setJwtId(JwtIdInput $jwtId): self
     {
-        return $this->addClaim('jti', $jwtId);
+        return $this->addClaim('jti', (string) $jwtId);
     }
 
     public function getJwtId(): ?string
