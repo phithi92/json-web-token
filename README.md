@@ -44,7 +44,7 @@ safely exchanged with other standards-compliant JWT stacks.
 ## Installation
 
 ```bash
-composer require phithi92/json-web-token
+composer require phithi92/json-web-token:^2.0
 ```
 
 ### Requirements
@@ -66,6 +66,31 @@ JwtBundle            → parsed token aggregate
 ```
 
 Each component is usable independently, but the default factory wires everything safely for you.
+
+---
+
+## `JwtTokenService` Default Wiring (`createDefault()`)
+
+`JwtTokenServiceFactory::createDefault()` is intentionally opinionated and builds a **consistent default dependency graph** so all operations share the same baseline behavior.
+
+Internally, it creates:
+
+- one shared `JwtValidator` instance (default: no expected issuer/audience, no clock skew, no private-claim expectations, no JTI registry)
+- one `JwtPayloadCodec`
+- one `JwtTokenIssuerFactory`
+- one `JwtTokenDecryptorFactory`
+- one `JwtTokenCreator` (with the shared default validator)
+- one `JwtTokenReader`
+- one `JwtClaimsValidationService` (with the shared default validator)
+- one `JwtTokenReissuer` (with the shared default validator)
+
+This means:
+
+- Passing `null` as validator uses the shared default validator of this service instance.
+- `createDefault()` returns a **fresh service graph per call** (instances are not reused globally).
+- Claim validation is only as strict as your configured `JwtValidator`; for production you should usually pass an explicit validator with issuer/audience/JTI expectations.
+
+> `createTokenWithoutClaimValidation()` and `decryptTokenWithoutClaimValidation()` are intentionally unsafe escape hatches for tests/tooling.
 
 ---
 
@@ -99,8 +124,8 @@ $manager->addPassphrase(
 );
 ```
 
-> If no `kid` is provided when issuing tokens, one is derived from the header algorithm
-> (e.g. `RS256`, `RSA-OAEP-256/A256GCM`). Make sure the corresponding key is registered
+> If no `kid` is provided when issuing tokens, one is derived from the JOSE header
+> (e.g. `RS256`, `RSA-OAEP-256.A256GCM`). Make sure the corresponding key is registered
 > under that `kid`, or pass a `kid` explicitly.
 
 ---
@@ -172,7 +197,7 @@ $bundle = $service->createTokenFromArray(
 
 ---
 
-### 4) Decrypt & Validate
+### 4) Read (verify/decrypt) & Validate
 
 ```php
 $bundle = $service->decryptToken(
@@ -183,6 +208,9 @@ $bundle = $service->decryptToken(
 
 $payload = $bundle->getPayload();
 ```
+
+For JWS tokens this verifies the signature and reads the payload.
+For JWE tokens this decrypts and then validates claims.
 
 #### Claim-Only Validation
 
@@ -197,9 +225,86 @@ $isValid = $service->validateTokenClaims(
 
 ---
 
+## Error Handling Patterns
+
+When issuing, parsing, decrypting, or validating tokens, prefer catching **specific exception types first** and only then falling back to a generic handler.
+
+```php
+use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
+use Phithi92\JsonWebToken\Exceptions\Token\UnsupportedTokenTypeException;
+use Phithi92\JsonWebToken\Exceptions\Payload\ExpiredPayloadException;
+use Phithi92\JsonWebToken\Exceptions\Payload\NotYetValidException;
+use Phithi92\JsonWebToken\Exceptions\Payload\InvalidIssuerException;
+use Phithi92\JsonWebToken\Exceptions\Payload\InvalidAudienceException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\SignatureVerificationException;
+use Phithi92\JsonWebToken\Exceptions\Crypto\DecryptionException;
+use Phithi92\JsonWebToken\Exceptions\Security\PassphraseNotFoundException;
+
+try {
+    $bundle = $service->decryptToken(
+        token: $token,
+        manager: $manager,
+        validator: $validator
+    );
+
+    // Optional extra claim validation step
+    $service->validateTokenClaims($bundle, $validator);
+
+} catch (ExpiredPayloadException|NotYetValidException $e) {
+    // 401: token is time-invalid (expired or not active yet)
+} catch (InvalidIssuerException|InvalidAudienceException $e) {
+    // 403: token is valid but not intended for this API/context
+} catch (SignatureVerificationException|DecryptionException $e) {
+    // 401: signature/JWE auth check failed
+} catch (MalformedTokenException|InvalidTokenException|UnsupportedTokenTypeException $e) {
+    // 400: structurally invalid or unsupported token
+} catch (PassphraseNotFoundException $e) {
+    // 500: server-side key configuration problem
+}
+```
+
+### Recommended Mapping (API-friendly)
+
+- **400 Bad Request**: malformed token, missing parts, unsupported format/type
+- **401 Unauthorized**: invalid signature, failed decryption/auth tag, expired or not-yet-valid token
+- **403 Forbidden**: issuer/audience/private-claim mismatch
+- **500 Internal Server Error**: missing key material, passphrase, or other server misconfiguration
+
+### Security Best Practices for Error Responses
+
+- Return a **generic client message** (e.g. `"Invalid or expired token"`) to avoid leaking verification details.
+- Log the exact exception message internally with request correlation IDs.
+- Do not include secrets, raw token content, or key identifiers in public error payloads unless required.
+
+---
+
 ### 5) Business Rules & Replay Protection
 
 `JwtValidator` can enforce issuer, audience, private claims **and** protect against JWT replay attacks via a pluggable JWT ID registry.
+
+### `jti` (JWT ID) Deep Dive
+
+`jti` is the token identifier claim used to uniquely track a token and support replay prevention.
+
+#### Validation behavior
+
+- Without a `JwtIdValidatorInterface`, `jti` is optional and not checked.
+- If a `JwtIdValidatorInterface` is configured, tokens **must** contain `jti`.
+- The validator then checks whether the `jti` is allowed by the configured backend (in-memory, Redis, PDO).
+
+#### Auto-generation behavior during issuing
+
+When issuing via `JwtTokenService::createToken()` / `createTokenFromArray()` and the chosen validator has a JTI validator configured:
+
+- if `jti` is missing, a new random `jti` is generated automatically
+- this generated `jti` is pre-registered as allowed
+- if `exp` is missing in that situation, issuing fails (because JTI tracking needs expiry context)
+
+Practical recommendation:
+
+- Set `jti` and `exp` explicitly for all tokens that should be replay-protected.
+- Use `denyBundle()` after successful one-time use to invalidate the token ID for the remaining token lifetime.
 
 #### InMemoryJwtIdValidator
 
@@ -240,6 +345,12 @@ $service->denyBundle($bundle, $validator);
 
 > ⚠️ `InMemoryJwtIdValidator` is process‑local and non‑persistent.  
 > Use Redis or PDO validators for production replay protection.
+
+#### Storage backends for JTI replay protection
+
+- `InMemoryJwtIdValidator`: ideal for tests and local demos; state is process-local.
+- `RedisJwtIdValidator`: distributed runtime deny/allow lists with TTL support.
+- `PdoJwtIdValidator`: relational persistence (requires `jwt_id_list` table with expiry column).
 
 ---
 
