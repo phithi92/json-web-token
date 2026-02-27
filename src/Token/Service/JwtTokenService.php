@@ -18,6 +18,8 @@ use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 final class JwtTokenService
 {
+    private ?JwtPayloadCodec $payloadCodec = null;
+
     public function __construct(
         private readonly JwtTokenCreator $creator,
         private readonly JwtTokenReader $reader,
@@ -127,6 +129,35 @@ final class JwtTokenService
 
         return $this->serializeBundle($bundle);
     }
+
+    /**
+     * Creates and serializes a JWT into its compact string representation.
+     *
+     * This convenience method combines token creation and serialization into a single call,
+     * returning the JWT in its standard JWS Compact Serialization format (RFC 7515 Section 3.1).
+     *
+     * @param non-empty-string $algorithm JWT signing algorithm (e.g., 'HS256', 'RS256')
+     * @param JwtKeyManager $manager Key management instance providing signing keys
+     * @param array<string,mixed>|null $claims Optional claims payload to include in the token
+     * @param JwtValidator|null $validator Optional validator instance (uses default if null)
+     * @param string|null $kid Optional key identifier for key rotation scenarios
+     *
+     * @return non-empty-string JWT in JWS Compact Serialization format
+     */
+    public function createTokenStringFromArray(
+        string $algorithm,
+        JwtKeyManager $manager,
+        ?array $claims = null,
+        ?JwtValidator $validator = null,
+        ?string $kid = null,
+    ): string {
+        $this->payloadCodec ??= new JwtPayloadCodec();
+
+        $payload = $this->payloadCodec->decode($claims);
+
+        $bundle = $this->createToken($algorithm, $manager, $payload, $validator, $kid);
+
+        return $this->serializeBundle($bundle);
     }
 
     /**
