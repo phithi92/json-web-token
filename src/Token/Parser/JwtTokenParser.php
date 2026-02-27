@@ -30,15 +30,16 @@ final class JwtTokenParser
     public static function parse(string|array $token): JwtBundle
     {
         $tokenArray = self::normalizeTokenInput($token);
+        $tokenPartCount = count($tokenArray);
 
         $header = self::buildHeaderFromTokenArray($tokenArray);
         $bundle = new JwtBundle($header);
 
         if (! is_null($header->getType())) {
-            return self::parseByType($bundle, $tokenArray);
+            return self::parseByType($bundle, $tokenArray, $tokenPartCount);
         }
 
-        return self::parseByStructure($bundle, $tokenArray);
+        return self::parseByStructure($bundle, $tokenArray, $tokenPartCount);
     }
 
     /**
@@ -83,7 +84,7 @@ final class JwtTokenParser
     /**
      * @param array<int,string> $tokenArray
      */
-    private static function parseByType(JwtBundle $bundle, array $tokenArray): JwtBundle
+    private static function parseByType(JwtBundle $bundle, array $tokenArray, int $tokenPartCount): JwtBundle
     {
         $rawType = $bundle->getHeader()->getType();
 
@@ -92,21 +93,20 @@ final class JwtTokenParser
             throw new MalformedTokenException('unsupported "typ" header value.');
         }
 
-        return self::parseByKind($bundle, $tokenArray, $kind);
+        return self::parseByKind($bundle, $tokenArray, $kind, $tokenPartCount);
     }
 
     /**
      * @param array<int,string> $tokenArray
      */
-    private static function parseByStructure(JwtBundle $bundle, array $tokenArray): JwtBundle
+    private static function parseByStructure(JwtBundle $bundle, array $tokenArray, int $tokenPartCount): JwtBundle
     {
-        $kind = JwtTokenKind::fromPartCount(count($tokenArray));
-
+        $kind = JwtTokenKind::fromPartCount($tokenPartCount);
         if ($kind === null) {
             throw new MalformedTokenException('unsupported compact serialization.');
         }
 
-        return self::parseByKind($bundle, $tokenArray, $kind);
+        return self::parseByKind($bundle, $tokenArray, $kind, $tokenPartCount);
     }
 
     /**
@@ -114,9 +114,13 @@ final class JwtTokenParser
      *
      * @throws MalformedTokenException
      */
-    private static function parseByKind(JwtBundle $bundle, array $tokenArray, JwtTokenKind $kind): JwtBundle
-    {
-        if (count($tokenArray) !== $kind->partCount()) {
+    private static function parseByKind(
+        JwtBundle $bundle,
+        array $tokenArray,
+        JwtTokenKind $kind,
+        int $tokenPartCount
+    ): JwtBundle {
+        if ($tokenPartCount !== $kind->partCount()) {
             throw new MalformedTokenException('invalid number of segments.');
         }
 
