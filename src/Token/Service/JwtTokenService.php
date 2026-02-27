@@ -125,7 +125,8 @@ final class JwtTokenService
     ): string {
         $bundle = $this->createToken($algorithm, $manager, $payload, $validator, $kid);
 
-        return JwtBundleCodec::serialize($bundle);
+        return $this->serializeBundle($bundle);
+    }
     }
 
     /**
@@ -276,6 +277,11 @@ final class JwtTokenService
         }
 
 
-        $this->denyJwtId($jwtId, $ttl, $validator);
+    /**
+     * @return non-empty-string
+     */
+    private function serializeBundle(JwtBundle $bundle): string
+    {
+        return JwtBundleCodec::serialize($bundle);
     }
 }
