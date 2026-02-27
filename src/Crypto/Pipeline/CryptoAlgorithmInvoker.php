@@ -38,12 +38,15 @@ use function strlen;
  */
 final class CryptoAlgorithmInvoker
 {
-    /** @var array<class-string, object> */
+    /** @var array<string, object> */
     private array $handlerCache = [];
+
+    private DefaultKidResolver $kidResolver;
 
     public function __construct(
         private readonly AlgorithmMethodMap $methodResolver,
     ) {
+        $this->kidResolver = new DefaultKidResolver();
     }
 
     /**
@@ -138,7 +141,7 @@ final class CryptoAlgorithmInvoker
         if (! $class instanceof $interfaceName) {
             throw new InvalidAlgorithmImplementationException($className);
         }
-        
+
         return $this->handlerCache[$className] = $class;
     }
 
@@ -218,12 +221,12 @@ final class CryptoAlgorithmInvoker
 
         return match ($operation) {
             CryptoOperationDirection::Perform => [
-                (new DefaultKidResolver())->resolve($jwtBundle, $methodConfig),
+                $this->kidResolver->resolve($jwtBundle, $methodConfig),
                 $algorithm,
                 JwsSigningInput::fromBundle($jwtBundle),
             ],
             CryptoOperationDirection::Reverse => [
-                (new DefaultKidResolver())->resolve($jwtBundle, $methodConfig),
+                $this->kidResolver->resolve($jwtBundle, $methodConfig),
                 $algorithm,
                 $jwtBundle->getEncryption()->getAad(),
                 (string) $jwtBundle->getSignature(),
