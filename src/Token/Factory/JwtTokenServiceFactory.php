@@ -12,13 +12,44 @@ use Phithi92\JsonWebToken\Token\Service\JwtTokenCreator;
 use Phithi92\JsonWebToken\Token\Service\JwtTokenService;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
+/**
+ * Factory for creating fully configured JwtTokenService instances.
+ *
+ * This factory builds a consistent default dependency graph for all JWT
+ * operations such as token creation, reading, validation, and reissuing.
+ * Shared core components (validators, codecs, and factories) are reused
+ * to ensure consistent behavior across all sub-services.
+ *
+ * Individual components can be overridden to customize behavior (for example
+ * in tests or alternative implementations) while the remaining defaults
+ * stay intact.
+ */
 final class JwtTokenServiceFactory
 {
+    /**
+     * Creates a JwtTokenService using only default implementations.
+     *
+     * @return JwtTokenService
+     */
     public static function createDefault(): JwtTokenService
     {
         return self::create();
     }
 
+    /**
+     * Creates a JwtTokenService with optional custom components.
+     *
+     * Any dependency passed as null will be replaced by the factory's default
+     * implementation. Defaults are wired together using shared instances to
+     * guarantee a consistent validation and processing pipeline.
+     *
+     * @param JwtTokenCreator|null            $creator         Custom token creator
+     * @param JwtTokenReader|null             $reader          Custom token reader
+     * @param JwtClaimsValidationService|null $claimsValidator Custom claims validator
+     * @param JwtTokenReissuer|null           $reissuer        Custom token reissuer
+     *
+     * @return JwtTokenService
+     */
     public static function create(
         ?JwtTokenCreator $creator = null,
         ?JwtTokenReader $reader = null,
