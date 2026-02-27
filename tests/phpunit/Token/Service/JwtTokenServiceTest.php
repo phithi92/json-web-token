@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token\Service;
 
+use LogicException;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingJwtIdException;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenDecryptorFactory;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenIssuerFactory;
@@ -76,7 +78,7 @@ final class JwtTokenServiceTest extends TestCase
         $service->denyBundle($bundle, $validator);
     }
 
-    public function testDenyBundleSkipsWithoutJwtId(): void
+    public function testDenyBundleThrowExceptionWithoutJwtId(): void
     {
         $registry = $this->createMock(JwtIdValidatorInterface::class);
         $registry->expects($this->never())->method('deny');
@@ -96,6 +98,34 @@ final class JwtTokenServiceTest extends TestCase
         $payload = (new JwtPayload())->setClaimTimestamp('exp', time() + 600);
         $bundle = new JwtBundle((new JwtHeader())->setAlgorithm('HS256'), $payload);
 
+        $this->expectException(MissingJwtIdException::class);
         $service->denyBundle($bundle, $validator);
+
+        $this->expectException(LogicException::class);
+        $service->denyJwtId(123, time() + 2, new JwtValidator());
+    }
+
+    public function testThrowExceptionWithoutJwtIdValidator(): void
+    {
+        $validator = new JwtValidator();
+
+        $service = new JwtTokenService(
+            new JwtTokenCreator(new JwtTokenIssuerFactory(), new JwtPayloadCodec(), new JwtValidator()),
+            new JwtTokenReader(new JwtTokenDecryptorFactory()),
+            new JwtClaimsValidationService(
+                new JwtTokenReader(new JwtTokenDecryptorFactory()),
+                $validator
+            ),
+            new JwtTokenReissuer(new JwtPayloadCodec(), $validator, new JwtTokenIssuerFactory())
+        );
+
+        $payload = (new JwtPayload())
+            ->setJwtId(new JwtIdInput('token-id'))
+            ->setClaimTimestamp('exp', time() + 600);
+
+        $bundle = new JwtBundle((new JwtHeader())->setAlgorithm('HS256'), $payload);
+
+        $this->expectException(LogicException::class);
+        $service->denyJwtId('token-id', time() + 2, new JwtValidator());
     }
 }

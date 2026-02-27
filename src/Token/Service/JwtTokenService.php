@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Service;
 
+use LogicException;
+use Phithi92\JsonWebToken\Exceptions\Token\MissingJwtIdException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenReissuer;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
@@ -247,7 +250,10 @@ final class JwtTokenService
     {
         $jwtIdValidator = $validator->getJwtIdValidator();
         if ($jwtIdValidator === null) {
-            return;
+            throw new LogicException(
+                'Cannot deny JWT ID: no JWT ID validator is configured. ' .
+                'Please ensure JwtValidator is properly initialized with a JwtIdValidator.'
+            );
         }
 
         if ($ttl <= 0) {
@@ -261,18 +267,14 @@ final class JwtTokenService
     {
         $jwtId = $bundle->getPayload()->getJwtId();
         if ($jwtId === null) {
-            return;
+            throw new MissingJwtIdException();
         }
 
         $exp = $bundle->getPayload()->getExpiration();
         if ($exp === null) {
-            return;
+            throw new JtiManagementException();
         }
 
-        $ttl = (int) $exp - time();
-        if ($ttl <= 0) {
-            return;
-        }
 
         $this->denyJwtId($jwtId, $ttl, $validator);
     }
