@@ -234,6 +234,26 @@ final class JwtTokenService
         return $validator->isValid($bundle->getPayload());
     }
 
+    /**
+     * Validates JWT claims directly from a raw JWT token.
+     *
+     * This method extracts the payload from the given JWT using the provided
+     * key manager and validates all claims against the given validator.
+     * If no validator is provided, a default or internally configured
+     * validator will be used.
+     *
+     * The validation includes:
+     * - Standard JWT claims (iss, sub, aud, exp, nbf, iat, jti)
+     * - Custom claims defined in the validator
+     * - Claim value types and formats
+     * - Time-based constraints
+     *
+     * @param string $token The raw JWT string to validate
+     * @param JwtKeyManager $manager Key manager used to verify and decode the token
+     * @param JwtValidator|null $validator Optional validator with custom rules
+     *
+     * @return bool True if all claims pass validation, false otherwise
+     */
     public function validateTokenClaimsFromToken(
         string $token,
         JwtKeyManager $manager,
@@ -269,6 +289,21 @@ final class JwtTokenService
         return $this->reissuer->reissueBundleFromToken($token, $interval, $manager, $validator);
     }
 
+    /**
+     * Reissues a JWT bundle by creating a new bundle with adjusted time-based claims.
+     *
+     * This method uses the provided interval to recalculate claims such as
+     * expiration, not-before, and issued-at while preserving other relevant
+     * claims from the original bundle. The token is re-signed using the given
+     * key manager and optionally validated during the reissue process.
+     *
+     * @param string $interval Date interval specification used to shift time-based claims
+     * @param JwtBundle $bundle The original JWT bundle to reissue
+     * @param JwtKeyManager $manager Key manager used to sign the reissued token
+     * @param JwtValidator|null $validator Optional validator applied during reissue
+     *
+     * @return JwtBundle The newly reissued JWT bundle
+     */
     public function reissueBundle(
         string $interval,
         JwtBundle $bundle,
@@ -278,6 +313,19 @@ final class JwtTokenService
         return $this->reissuer->reissueBundle($interval, $bundle, $manager, $validator);
     }
 
+    /**
+     * Denies a JWT ID (jti) for a given time-to-live.
+     *
+     * This method marks the provided JWT ID as denied using the validator's
+     * JWT ID validator, if available. If the TTL is zero or negative, or if
+     * no JWT ID validator is configured, the call is ignored.
+     *
+     * @param string $jwtId The JWT ID (jti) to deny
+     * @param int $ttl Time-to-live in seconds for which the JWT ID is denied
+     * @param JwtValidator $validator Validator providing the JWT ID validator
+     *
+     * @return void
+     */
     public function denyJwtId(string $jwtId, int $ttl, JwtValidator $validator): void
     {
         $jwtIdValidator = $validator->getJwtIdValidator();
@@ -295,6 +343,19 @@ final class JwtTokenService
         $jwtIdValidator->deny(new JwtIdInput($jwtId), $ttl);
     }
 
+    /**
+     * Denies the JWT ID (jti) of a bundle for the remainder of its lifetime.
+     *
+     * This method extracts the JWT ID and expiration time from the bundle
+     * payload and denies the JWT ID until the token would naturally expire.
+     * If the bundle does not contain a JWT ID or expiration claim, or if the
+     * token is already expired, the call is ignored.
+     *
+     * @param JwtBundle $bundle The JWT bundle whose JWT ID should be denied
+     * @param JwtValidator $validator Validator providing the JWT ID validator
+     *
+     * @return void
+     */
     public function denyBundle(JwtBundle $bundle, JwtValidator $validator): void
     {
         $jwtId = $bundle->getPayload()->getJwtId();
@@ -307,6 +368,8 @@ final class JwtTokenService
             throw new JtiManagementException();
         }
 
+        $this->denyJwtId($jwtId, $exp, $validator);
+    }
 
     /**
      * @return non-empty-string
