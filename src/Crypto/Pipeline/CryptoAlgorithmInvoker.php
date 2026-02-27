@@ -138,8 +138,8 @@ final class CryptoAlgorithmInvoker
         if (! $class instanceof $interfaceName) {
             throw new InvalidAlgorithmImplementationException($className);
         }
-
-        return $class;
+        
+        return $this->handlerCache[$className] = $class;
     }
 
     /**
