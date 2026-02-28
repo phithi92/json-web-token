@@ -16,7 +16,8 @@ abstract class AbstractJwtSegmentJsonCodec
      * - JSON_UNESCAPED_SLASHES: Prevents escaping of slashes.
      * - JSON_UNESCAPED_UNICODE: Prevents escaping of multibyte Unicode characters.
      */
-    protected const DEFAULT_JSON_OPTIONS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+    protected const DEFAULT_JSON_ENCODE_OPTIONS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+    protected const DEFAULT_JSON_DECODE_OPTIONS = 0;
 
     /** @var array<class-string, self> */
     private static array $sharedInstances = [];
@@ -29,7 +30,7 @@ abstract class AbstractJwtSegmentJsonCodec
     protected function encodeJson(
         array $segment,
         int $depth,
-        int $options = self::DEFAULT_JSON_OPTIONS,
+        int $options = self::DEFAULT_JSON_ENCODE_OPTIONS,
     ): string {
         return JsonEncoder::encode(
             $segment,
@@ -46,7 +47,7 @@ abstract class AbstractJwtSegmentJsonCodec
     protected function decodeJson(
         string $json,
         int $depth,
-        int $options = self::DEFAULT_JSON_OPTIONS,
+        int $options = self::DEFAULT_JSON_DECODE_OPTIONS,
     ): array {
         return JsonEncoder::decode(
             $json,
