@@ -14,7 +14,7 @@ use ValueError;
 
 final class JwtTokenSerializer
 {
-    private const SEGMENT_SEPERATOR = '.';
+    private const SEGMENT_SEPARATOR = '.';
 
     /**
      * @return non-empty-string the token
@@ -39,20 +39,19 @@ final class JwtTokenSerializer
      */
     private static function serializeEncodedToken(JwtBundle $bundle): string
     {
-        $encryptedKey = match ($bundle->getHeader()->getAlgorithm()) {
-            'dir' => '',
-            default => $bundle->getEncryption()->getEncryptedKey(),
-        };
+        $encryptedKey = $bundle->getHeader()->getAlgorithm() === 'dir'
+            ? ''
+            : $bundle->getEncryption()->getEncryptedKey();
 
-        $tokenArray = [
-            JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
-            $encryptedKey,
-            $bundle->getEncryption()->getIv(),
-            $bundle->getPayload()->getEncryptedPayload(),
-            $bundle->getEncryption()->getAuthTag(),
-        ];
-
-        return self::encodeAndSerialize($tokenArray);
+        return Base64UrlEncoder::encode(JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()))
+            . self::SEGMENT_SEPARATOR
+            . Base64UrlEncoder::encode($encryptedKey)
+            . self::SEGMENT_SEPARATOR
+            . Base64UrlEncoder::encode($bundle->getEncryption()->getIv())
+            . self::SEGMENT_SEPARATOR
+            . Base64UrlEncoder::encode($bundle->getPayload()->getEncryptedPayload())
+            . self::SEGMENT_SEPARATOR
+            . Base64UrlEncoder::encode($bundle->getEncryption()->getAuthTag());
     }
 
     /**
@@ -60,38 +59,10 @@ final class JwtTokenSerializer
      */
     private static function serializeSignatureToken(JwtBundle $bundle): string
     {
-        $tokenArray = [
-            JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()),
-            JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()),
-            (string) $bundle->getSignature(),
-        ];
-
-        return self::encodeAndSerialize($tokenArray);
-    }
-
-    /**
-     * @param array<int,string|null> $array
-     *
-     * @return non-empty-string
-     */
-    private static function encodeAndSerialize(array $array): string
-    {
-        $out = '';
-        $first = true;
-
-        foreach ($array as $v) {
-            if (! $first) {
-                $out .= self::SEGMENT_SEPERATOR;
-            }
-
-            $out .= Base64UrlEncoder::encode($v ?? '');
-            $first = false;
-        }
-
-        if ($out === '') {
-            throw new MalformedTokenException('no token data to serialize');
-        }
-
-        return $out;
+        return Base64UrlEncoder::encode(JwtHeaderJsonCodec::encodeStatic($bundle->getHeader()))
+            . self::SEGMENT_SEPARATOR
+            . Base64UrlEncoder::encode(JwtPayloadJsonCodec::encodeStatic($bundle->getPayload()))
+            . self::SEGMENT_SEPARATOR
+            . Base64UrlEncoder::encode((string) $bundle->getSignature());
     }
 }
