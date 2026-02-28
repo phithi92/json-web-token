@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Service;
 
 use LogicException;
+use Phithi92\JsonWebToken\Exceptions\Token\JtiDenialRequiresExpirationException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingJwtIdException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
@@ -365,10 +366,10 @@ final class JwtTokenService
 
         $exp = $bundle->getPayload()->getExpiration();
         if ($exp === null) {
-            throw new JtiManagementException();
+            throw new JtiDenialRequiresExpirationException();
         }
 
-        $this->denyJwtId($jwtId, $exp, $validator);
+        $this->denyJwtId($jwtId, (int) $exp, $validator);
     }
 
     /**
