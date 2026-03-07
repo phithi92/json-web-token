@@ -54,9 +54,9 @@ final class CryptoAlgorithmInvoker
      *
      * @return bool True if a matching handler method is configured; otherwise false.
      */
-    public function isSupported(AlgorithmInvocation $invokation): bool
+    public function isSupported(AlgorithmInvocation $invocation): bool
     {
-        return $this->methodResolver->supports($invokation);
+        return $this->methodResolver->supports($invocation);
     }
 
     /**
@@ -154,18 +154,18 @@ final class CryptoAlgorithmInvoker
      */
     private function resolveArguments(
         JwtKeyManager $manager,
-        AlgorithmInvocation $invokation,
+        AlgorithmInvocation $invocation,
         JwtBundle $jwtBundle,
         array $config,
     ): array {
-        $methodConfig = $config[$invokation->target->interfaceClass()];
+        $methodConfig = $config[$invocation->target->interfaceClass()];
 
-        return match ($invokation->target) {
-            CryptoProcessingStage::Iv => $this->resolveIvArguments($invokation->operation, $jwtBundle, $methodConfig),
+        return match ($invocation->target) {
+            CryptoProcessingStage::Iv => $this->resolveIvArguments($invocation->operation, $jwtBundle, $methodConfig),
             CryptoProcessingStage::Cek => $this->resolveCekArguments($jwtBundle, $methodConfig),
-            CryptoProcessingStage::Key => $this->resolveKeyArguments($invokation->operation, $jwtBundle, $methodConfig),
-            CryptoProcessingStage::Signature => $this->resolveSignatureArguments($invokation->operation, $jwtBundle, $methodConfig),
-            CryptoProcessingStage::Payload => $this->resolvePayloadArguments($invokation->operation, $jwtBundle, $methodConfig, $manager),
+            CryptoProcessingStage::Key => $this->resolveKeyArguments($invocation->operation, $jwtBundle, $methodConfig),
+            CryptoProcessingStage::Signature => $this->resolveSignatureArguments($invocation->operation, $jwtBundle, $methodConfig),
+            CryptoProcessingStage::Payload => $this->resolvePayloadArguments($invocation->operation, $jwtBundle, $methodConfig, $manager),
         };
     }
 

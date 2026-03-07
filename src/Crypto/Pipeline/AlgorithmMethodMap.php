@@ -36,20 +36,20 @@ final class AlgorithmMethodMap
      *
      * @return bool True if a matching handler method is configured; otherwise false.
      */
-    public function supports(AlgorithmInvocation $invokation): bool
+    public function supports(AlgorithmInvocation $invocation): bool
     {
-        return isset(self::METHOD_MAP[$invokation->target->name][$invokation->operation->name]);
+        return isset(self::METHOD_MAP[$invocation->target->name][$invocation->operation->name]);
     }
 
     /**
      * Resolves the handler method name for the given algorithm invocation.
      *
-     * @param AlgorithmInvocation $invokation The invocation context containing target and operation.
+     * @param AlgorithmInvocation $invocation The invocation context containing target and operation.
      *
      * @return string|null The handler method name to invoke (e.g. "encryptPayload"), or null if not defined.
      */
-    public function resolve(AlgorithmInvocation $invokation): ?string
+    public function resolve(AlgorithmInvocation $invocation): ?string
     {
-        return self::METHOD_MAP[$invokation->target->name][$invokation->operation->name] ?? null;
+        return self::METHOD_MAP[$invocation->target->name][$invocation->operation->name] ?? null;
     }
 }

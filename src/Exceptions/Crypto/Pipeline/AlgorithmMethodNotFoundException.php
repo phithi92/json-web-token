@@ -8,8 +8,8 @@ use Phithi92\JsonWebToken\Crypto\Pipeline\AlgorithmInvocation;
 
 class AlgorithmMethodNotFoundException extends AlgorithmInvocationException
 {
-    public function __construct(AlgorithmInvocation $invokation, string $method)
+    public function __construct(AlgorithmInvocation $invocation, string $method)
     {
-        parent::__construct('UNDEFINED_HANDLER', $invokation->target->name, $method);
+        parent::__construct('UNDEFINED_HANDLER', $invocation->target->name, $method);
     }
 }
