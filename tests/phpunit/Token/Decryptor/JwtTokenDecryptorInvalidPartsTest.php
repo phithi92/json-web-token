@@ -170,7 +170,7 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
         $token = implode('.', [$rawSecret . '====', 'payload', 'signature']);
 
         $this->expectException(MalformedTokenException::class);
-        $this->expectExceptionMessage('Malformed token: invalid Base64Url encoding.');
+        $this->expectExceptionMessage('Malformed token: invalid Base64Url encoding in token segment.');
 
         try {
             JwtBundleCodec::parse($token);

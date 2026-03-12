@@ -36,5 +36,5 @@ enum TokenErrorMessagesEnum: string
     case MISSING_TOKEN_PART = 'Missing required token part: %s.';
     case SIGNATURE_ALREADY_SET = 'JWT signature has already been set.';
     case INDIVIDUAL_MESSAGE = '%s';
-    case MALFORMED_TOKEN = 'Malformed token: %s.';
+    case MALFORMED_TOKEN = 'Malformed token: %s';
 }

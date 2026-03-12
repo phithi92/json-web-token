@@ -53,12 +53,46 @@ final class JwtTokenParserTest extends TestCase
     public function testInvalidJwsStructureThrowsException(): void
     {
         $this->expectException(MalformedTokenException::class);
+        $this->expectExceptionMessage('invalid number of segments for JWS: expected 3, got 4.');
 
         $header = ['alg' => 'HS256', 'typ' => 'JWS'];
         $parts = [
             Base64UrlEncoder::encode(JsonEncoder::encode($header)),
             Base64UrlEncoder::encode('payload'),
             Base64UrlEncoder::encode('sig'),
+            Base64UrlEncoder::encode('extra'),
+        ];
+
+        JwtTokenParser::parse(implode('.', $parts));
+    }
+
+    public function testUnsupportedTypContainsExpectedValuesInErrorMessage(): void
+    {
+        $this->expectException(MalformedTokenException::class);
+        $this->expectExceptionMessage('unsupported "typ" header value "FOO": expected one of "JWS", "JWE" or "JWT".');
+
+        $header = ['alg' => 'HS256', 'typ' => 'FOO'];
+        $parts = [
+            Base64UrlEncoder::encode(JsonEncoder::encode($header)),
+            Base64UrlEncoder::encode('payload'),
+            Base64UrlEncoder::encode('signature'),
+        ];
+
+        JwtTokenParser::parse(implode('.', $parts));
+    }
+
+    public function testUnsupportedCompactSerializationIncludesSegmentCountInErrorMessage(): void
+    {
+        $this->expectException(MalformedTokenException::class);
+        $this->expectExceptionMessage(
+            'unsupported compact serialization with 4 segments: expected 3 (JWS) or 5 (JWE).'
+        );
+
+        $header = ['alg' => 'HS256'];
+        $parts = [
+            Base64UrlEncoder::encode(JsonEncoder::encode($header)),
+            Base64UrlEncoder::encode('payload'),
+            Base64UrlEncoder::encode('signature'),
             Base64UrlEncoder::encode('extra'),
         ];
 

@@ -55,7 +55,7 @@ final class JwtTokenParser
         $tokenArray = is_string($token) ? explode('.', $token, 6) : $token;
 
         if (! isset($tokenArray[0])) {
-            throw new MalformedTokenException('missing required parts.');
+            throw new MalformedTokenException('token is empty: expected at least a Base64Url-encoded header segment.');
         }
 
         return $tokenArray;
@@ -77,7 +77,7 @@ final class JwtTokenParser
         try {
             return Base64UrlEncoder::decode($base64);
         } catch (InvalidBase64UrlFormatException) {
-            throw new MalformedTokenException('invalid Base64Url encoding.');
+            throw new MalformedTokenException('invalid Base64Url encoding in token segment.');
         }
     }
 
@@ -88,9 +88,13 @@ final class JwtTokenParser
     {
         $rawType = $bundle->getHeader()->getType();
 
-        $kind = JwtTokenKind::tryFrom((string) $rawType);
+        $normalizedType = (string) $rawType;
+
+        $kind = JwtTokenKind::tryFrom($normalizedType);
         if ($kind === null) {
-            throw new MalformedTokenException('unsupported "typ" header value.');
+            throw new MalformedTokenException(
+                'unsupported "typ" header value "' . $normalizedType . '": expected one of "JWS", "JWE" or "JWT".'
+            );
         }
 
         return self::parseByKind($bundle, $tokenArray, $kind, $tokenPartCount);
@@ -103,7 +107,10 @@ final class JwtTokenParser
     {
         $kind = JwtTokenKind::fromPartCount($tokenPartCount);
         if ($kind === null) {
-            throw new MalformedTokenException('unsupported compact serialization.');
+            throw new MalformedTokenException(
+                'unsupported compact serialization with ' . (string) $tokenPartCount
+                . ' segments: expected 3 (JWS) or 5 (JWE).'
+            );
         }
 
         return self::parseByKind($bundle, $tokenArray, $kind, $tokenPartCount);
@@ -121,7 +128,10 @@ final class JwtTokenParser
         int $tokenPartCount
     ): JwtBundle {
         if ($tokenPartCount !== $kind->partCount()) {
-            throw new MalformedTokenException('invalid number of segments.');
+            throw new MalformedTokenException(
+                'invalid number of segments for ' . $kind->value . ': expected ' . (string) $kind->partCount()
+                . ', got ' . (string) $tokenPartCount . '.'
+            );
         }
 
         return $kind->isSignatureToken()
