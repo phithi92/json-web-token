@@ -28,8 +28,6 @@ final class JwtTokenServiceFactory
 {
     /**
      * Creates a JwtTokenService using only default implementations.
-     *
-     * @return JwtTokenService
      */
     public static function createDefault(): JwtTokenService
     {
@@ -47,8 +45,6 @@ final class JwtTokenServiceFactory
      * @param JwtTokenReader|null             $reader          Custom token reader
      * @param JwtClaimsValidationService|null $claimsValidator Custom claims validator
      * @param JwtTokenReissuer|null           $reissuer        Custom token reissuer
-     *
-     * @return JwtTokenService
      */
     public static function create(
         ?JwtTokenCreator $creator = null,

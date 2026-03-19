@@ -324,8 +324,6 @@ final class JwtTokenService
      * @param string $jwtId The JWT ID (jti) to deny
      * @param int $ttl Time-to-live in seconds for which the JWT ID is denied
      * @param JwtValidator $validator Validator providing the JWT ID validator
-     *
-     * @return void
      */
     public function denyJwtId(string $jwtId, int $ttl, JwtValidator $validator): void
     {
@@ -354,8 +352,6 @@ final class JwtTokenService
      *
      * @param JwtBundle $bundle The JWT bundle whose JWT ID should be denied
      * @param JwtValidator $validator Validator providing the JWT ID validator
-     *
-     * @return void
      */
     public function denyBundle(JwtBundle $bundle, JwtValidator $validator): void
     {

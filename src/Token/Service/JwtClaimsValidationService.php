@@ -15,7 +15,7 @@ final class JwtClaimsValidationService
         private readonly JwtValidator $defaultValidator,
     ) {
     }
-    
+
     /**
      * Validates the claims of a JWT token using the configured validator.
      *
@@ -35,7 +35,7 @@ final class JwtClaimsValidationService
      * @param JwtValidator|null $validator Optional validator with custom rules; defaults to the service's default validator
      *
      * @return bool True if all claims are valid, false otherwise
-     */   
+     */
     public function validateTokenClaims(
         string $token,
         JwtKeyManager $manager,
