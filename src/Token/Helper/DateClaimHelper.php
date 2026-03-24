@@ -98,6 +98,30 @@ final class DateClaimHelper
 
         return new DateTimeImmutable('now', $timezone);
     }
+    
+    public function isValidTimeClaim(string $key, mixed $value): bool
+    {
+        if (!isset(DateClaimHelper::TIME_CLAIMS[$key])) {
+            return false;
+        }
+
+        if (is_int($value) || ctype_digit((string)$value)) {
+            $timestamp = (int)$value;
+            return $timestamp > 0 && $timestamp <= PHP_INT_MAX;
+        }
+
+        if (is_string($value)) {
+            try {
+                $dt = $this->dateTimeImmutable->modify($value);
+                $timestamp = $dt->getTimestamp();
+                return $timestamp > 0 && $timestamp <= PHP_INT_MAX;
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+        
+        return false;
+    }
 
     /**
      * Normalize a date expression or timestamp to a DateTimeImmutable anchored to the reference time.

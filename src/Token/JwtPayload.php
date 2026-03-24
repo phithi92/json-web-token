@@ -73,6 +73,16 @@ final class JwtPayload implements JsonSerializable
     {
         return $this->claims;
     }
+    
+    /**
+     * Checks whether the payload contains any claims.
+     *
+     * @return bool True if no claims exist, false otherwise
+     */
+    public function isEmpty(): bool
+    {
+        return $this->claims === [];
+    }
 
     /**
      * Return the JWT payload claims as an associative array with default claims applied.
@@ -136,14 +146,14 @@ final class JwtPayload implements JsonSerializable
         }
 
         if (is_int($value) || is_float($value)) {
-            if (! $this->isTimeClaim($key)) {
+            if (! $this->claimHelper->isValidTimeClaim($key, $value)) {
                 throw new InvalidDateTimeException($key);
             }
 
             return $this->setClaim($key, $value);
         }
 
-        if (! $this->isTimeClaim($key)) {
+        if (! $this->claimHelper->isValidTimeClaim($key, $value)) {
             throw new InvalidDateTimeException($key);
         }
 
@@ -308,10 +318,10 @@ final class JwtPayload implements JsonSerializable
         return $this->setClaimTimestamp('exp', $interval);
     }
 
-    public function getExpiration(): int|float|null
+    public function getExpiration(): int|null
     {
         $expires = $this->getClaim('exp');
-        return is_int($expires) || is_float($expires) ? $expires : null;
+        return is_int($expires) ? $expires : null;
     }
 
     public function setNotBefore(string $dateTime): self
@@ -364,11 +374,6 @@ final class JwtPayload implements JsonSerializable
     public function getEncryptedPayload(): string
     {
         return $this->encryptedPayload ?? throw new EncryptedPayloadNotSetException();
-    }
-
-    private function isTimeClaim(string $key): bool
-    {
-        return isset(DateClaimHelper::TIME_CLAIMS[$key]);
     }
 
     /**
