@@ -7,78 +7,52 @@ namespace Phithi92\JsonWebToken\Token\Issuer;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenIssuerFactory;
 use Phithi92\JsonWebToken\Token\Helper\DateClaimHelper;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
-/**
- * Description of JwtTokenReissuer
- *
- * @author phillipthiele
- */
 final class JwtTokenReissuer
 {
-    public function __construct(
-        private readonly JwtPayloadCodec $payloadCodec,
-        private readonly JwtValidator $defaultValidator,
-        private readonly JwtTokenIssuerFactory $issuerFactory,
-    ) {
-    }
-
     public function reissueBundleFromToken(
         string $token,
         string $interval,
         JwtKeyManager $manager,
-        ?JwtValidator $validator = null,
     ): JwtBundle {
+        $bundle = JwtBundleCodec::parse($token);
+
         return $this->reissueBundle(
             interval: $interval,
-            bundle: JwtBundleCodec::parse($token),
-            manager: $manager,
-            validator: $validator
+            bundle: $bundle,
+            manager: $manager
         );
     }
 
     public function reissueBundle(
         string $interval,
         JwtBundle $bundle,
-        JwtKeyManager $manager,
-        ?JwtValidator $validator = null,
+        JwtKeyManager $manager
     ): JwtBundle {
-        $validator ??= $this->defaultValidator;
-
-        $filterdPayload = $this->filterPayload($bundle);
-
-        $filterdPayload->setExpiration($interval);
+        $payload = $this->buildPayloadFromBundle($bundle);
+        $payload->setExpiration($interval);
 
         $reissuedBundle = new JwtBundle(
             header: $bundle->getHeader(),
-            payload: $filterdPayload,
+            payload: $payload,
             encryption: $bundle->hasEncryption() ? $bundle->getEncryption() : null,
         );
 
-        // Decide policy: reissue always validates the new bundle by default.
-        $validator->assertValidBundle($reissuedBundle);
+        $issuer = new JwtTokenIssuer($manager);
 
-        return $this->createFromBundle($reissuedBundle, $manager);
+        return $issuer->issueFromBundle($reissuedBundle);
     }
 
-    private function createFromBundle(JwtBundle $bundle, JwtKeyManager $manager): JwtBundle
-    {
-        $issuerFactory = $this->issuerFactory->createIssuer($manager);
-
-        return $issuerFactory->issueFromBundle($bundle);
-    }
-
-    private function filterPayload(JwtBundle $bundle): JwtPayload
+    private function buildPayloadFromBundle(JwtBundle $bundle): JwtPayload
     {
         $referencePayload = $bundle->getPayload();
 
-        $filteredClaims = $this->filterClaims(payload: $referencePayload);
+        $filteredClaims = $this->filterClaims($referencePayload);
 
-        return $this->payloadCodec->decode(claims: $filteredClaims);
+        return JwtPayloadCodec::decode($filteredClaims);
     }
 
     /** @return array<string, mixed> */

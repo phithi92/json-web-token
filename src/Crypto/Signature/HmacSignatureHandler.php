@@ -66,8 +66,8 @@ class HmacSignatureHandler extends AbstractSignatureHandler
         $this->assertHmacKeyIsValid($kid, $hashAlgorithm, $passphrase);
 
         try {
-            // PHP 8+: hash_hmac() can throw ValueError (invalid args) OR return false (internal failure)
-            $expectedHash = hash_hmac($algorithm, $aad, $passphrase, true);
+            // Verwende $hashAlgorithm->name statt $algorithm
+            $expectedHash = hash_hmac($hashAlgorithm->name, $aad, $passphrase, true);
         } catch (ValueError $e) {
             throw new SignatureComputationException(
                 sprintf('Invalid HMAC algorithm: %s', $algorithm)

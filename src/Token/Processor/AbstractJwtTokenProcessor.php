@@ -36,6 +36,9 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
 
     protected readonly CryptoStageResultDispatcher $resultDispatcher;
 
+    /** @var array<string, array<int, AlgorithmInvocation>> Cache for resolved handlers per algorithm */
+    private array $handlerCache = [];
+
     /**
      * Creates a JWT token processor for the given operation mode.
      *
@@ -149,9 +152,11 @@ abstract class AbstractJwtTokenProcessor implements JwtTokenOperation
             );
         }
 
-        $descriptors = $this->resolveApplicableHandlers($config);
+        if (! isset($this->handlerCache[$algorithm])) {
+            $this->handlerCache[$algorithm] = $this->resolveApplicableHandlers($config);
+        }
 
-        return [$config, $descriptors];
+        return [$config, $this->handlerCache[$algorithm]];
     }
 
     /**

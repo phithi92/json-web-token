@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Phithi92\JsonWebToken\Token\Decryptor;
 
 use Phithi92\JsonWebToken\Crypto\Pipeline\CryptoOperationDirection;
-use Phithi92\JsonWebToken\Exceptions\Payload\PayloadException;
-use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\Parser\JwtTokenParser;
@@ -32,6 +30,8 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      */
     private const OPERATION = CryptoOperationDirection::Reverse;
 
+    private readonly JwtValidator $validator;
+
     /**
      * JwtTokenDecryptor constructor.
      *
@@ -39,9 +39,12 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      */
     public function __construct(
         JwtKeyManager $manager,
+        JwtValidator $validator
     ) {
         // Initialize token decryptor with "reverse" handler operation
         parent::__construct(self::OPERATION, $manager);
+
+        $this->validator = $validator;
     }
 
     /**
@@ -51,11 +54,11 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
      *
      * @return JwtBundle the fully decrypted and validated JWT payload bundle
      */
-    public function decrypt(string $token, ?JwtValidator $validator = null): JwtBundle
+    public function decrypt(string $token): JwtBundle
     {
         $bundle = $this->decryptWithoutClaimValidation($token);
 
-        $this->assertValidBundle($bundle, $validator);
+        $this->validator->assertValidBundle($bundle);
 
         return $bundle;
     }
@@ -77,22 +80,5 @@ final class JwtTokenDecryptor extends AbstractJwtTokenProcessor
         $this->dispatchHandlers($algorithm, $bundle);
 
         return $bundle;
-    }
-
-    /**
-     * Asserts that the given JWT bundle is valid.
-     *
-     * Uses the provided validator if given, otherwise falls back to a default JwtValidator.
-     *
-     * @param JwtBundle $bundle    The token bundle to validate
-     * @param JwtValidator|null  $validator Optional custom validator
-     *
-     * @throws PayloadException If payload-related validation fails
-     * @throws TokenException   If token structure or format is invalid
-     */
-    private function assertValidBundle(JwtBundle $bundle, ?JwtValidator $validator = null): void
-    {
-        $validator ??= new JwtValidator();
-        $validator->assertValidBundle($bundle);
     }
 }

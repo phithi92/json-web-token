@@ -19,14 +19,19 @@ use function is_file;
 final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurationProvider
 {
     private const CONFIG_FILE = __DIR__ . '/../../../resources/algorithms.php';
+    private const EMPTY_CONFIG = [];
 
-    /**
-     * @var array<string,array<string, array<string, array<string, mixed>>>>
-     */
+    /** @var array<string,array<string, array<string, array<string, mixed>>>> */
     private static array $cache = [];
+
+    /** @var array<string,array<string, bool>> */
+    private static array $supportedAlgorithmsCache = [];
 
     /** @var array<string, array<string, array<string, mixed>>> Configuration for algorithms. */
     private readonly array $config;
+
+    /** @var array<string, bool> */
+    private readonly array $supportedAlgorithms;
 
     /**
      * Loads algorithm configuration from the given PHP file.
@@ -39,7 +44,11 @@ final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurat
      */
     public function __construct(string $configFile = self::CONFIG_FILE, bool $forceReload = false)
     {
-        $this->config = $this->loadedAndValidatedConfiguration($configFile, $forceReload);
+        $cacheKey = $configFile;
+
+        $this->config = $this->loadedAndValidatedConfiguration($cacheKey, $forceReload);
+        $this->supportedAlgorithms = self::$supportedAlgorithmsCache[$cacheKey]
+            ??= array_fill_keys(array_keys($this->config), true);
     }
 
     /**
@@ -47,12 +56,12 @@ final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurat
      */
     public function get(string $algorithm): array
     {
-        return $this->config[$algorithm] ?? [];
+        return $this->config[$algorithm] ?? self::EMPTY_CONFIG;
     }
 
     public function isSupported(string $algorithm): bool
     {
-        return isset($this->config[$algorithm]);
+        return isset($this->supportedAlgorithms[$algorithm]);
     }
 
     /**
@@ -73,7 +82,7 @@ final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurat
             throw new AlgorithmConfigFileNotFoundException($configFile);
         }
 
-        $config = include $configFile;
+        $config = require $configFile;
 
         self::assertValidConfiguration($config, $configFile);
 
@@ -86,6 +95,10 @@ final class PhpFileAlgorithmConfigurationProvider implements AlgorithmConfigurat
      */
     private static function assertValidConfiguration(mixed $config, string $configFile): void
     {
+        if (isset(self::$cache[$configFile])) {
+            return;
+        }
+
         if (! is_array($config)) {
             throw new InvalidAlgorithmConfigFormatException(
                 sprintf('Configuration file "%s" must return an array.', $configFile)

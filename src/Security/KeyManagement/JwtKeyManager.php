@@ -127,9 +127,9 @@ final class JwtKeyManager
     /**
      * Checks whether any key exists for the given key identifier.
      */
-    public function hasKey(string $kid): bool
+    public function hasKey(string $kid, ?KeyRole $role = null): bool
     {
-        return $this->keyStore->hasKey($kid);
+        return $this->keyStore->hasKey($kid, $role);
     }
 
     /**

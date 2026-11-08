@@ -73,7 +73,7 @@ final class JwtPayload implements JsonSerializable
     {
         return $this->claims;
     }
-    
+
     /**
      * Checks whether the payload contains any claims.
      *
@@ -307,10 +307,10 @@ final class JwtPayload implements JsonSerializable
      *
      * NumericDate according to RFC 7519.
      */
-    public function getIssuedAt(): int|float|null
+    public function getIssuedAt(): int|null
     {
         $issued = $this->getClaim('iat');
-        return is_int($issued) || is_float($issued) ? $issued : null;
+        return is_int($issued) ? $issued : null;
     }
 
     public function setExpiration(string $interval): self
@@ -329,10 +329,10 @@ final class JwtPayload implements JsonSerializable
         return $this->setClaimTimestamp('nbf', $dateTime);
     }
 
-    public function getNotBefore(): int|float|null
+    public function getNotBefore(): int|null
     {
         $nbf = $this->getClaim('nbf');
-        return is_int($nbf) || is_float($nbf) ? $nbf : null;
+        return is_int($nbf) ? $nbf : null;
     }
 
     /**

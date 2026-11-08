@@ -45,9 +45,9 @@ final class JwtPayloadCodec
      *
      * @throws InvalidFormatException If the payload structure or claim types are invalid.
      */
-    public function decode(mixed $claims, ?JwtPayload $payload = null): JwtPayload
+    public static function decode(mixed $claims, ?JwtPayload $payload = null): JwtPayload
     {
-        $this->assertValidPayloadStructure($claims);
+        static::assertValidPayloadStructure($claims);
 
         /** @var array<string, mixed> $claims */
         $payload ??= new JwtPayload();
@@ -75,7 +75,7 @@ final class JwtPayloadCodec
      *
      * @return array<string, mixed> Associative array representation of the payload.
      */
-    public function encode(JwtPayload $payload): array
+    public static function encode(JwtPayload $payload): array
     {
         return $payload->toArray();
     }
@@ -91,7 +91,7 @@ final class JwtPayloadCodec
      *
      * @throws InvalidFormatException
      */
-    private function assertValidPayloadStructure(mixed $data): void
+    private static function assertValidPayloadStructure(mixed $data): void
     {
         if (! is_array($data)) {
             throw new InvalidFormatException('Decoded JWT payload must be an object (assoc array).');
@@ -102,7 +102,7 @@ final class JwtPayloadCodec
                 throw new InvalidFormatException('All JWT claim keys must be strings.');
             }
 
-            if (! $this->isValidPayloadValue($value)) {
+            if (! self::isValidPayloadValue($value)) {
                 throw new InvalidFormatException(
                     sprintf("JWT claim value for key '%s' must be a valid JSON value.", $key)
                 );
@@ -159,7 +159,7 @@ final class JwtPayloadCodec
     /**
      * Validate whether a value can be represented as JSON.
      */
-    private function isValidPayloadValue(mixed $v): bool
+    private static function isValidPayloadValue(mixed $v): bool
     {
         try {
             json_encode($v, JSON_THROW_ON_ERROR);

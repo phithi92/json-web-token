@@ -42,7 +42,7 @@ final class DateClaimHelper
      */
     public function __construct(?DateTimeImmutable $dateTime = null)
     {
-        $this->dateTimeImmutable = $dateTime ?? (new UtcClock())->now();
+        $this->dateTimeImmutable = $dateTime ?? UtcClock::nowStatic();
     }
 
     /**
@@ -98,7 +98,7 @@ final class DateClaimHelper
 
         return new DateTimeImmutable('now', $timezone);
     }
-    
+
     public function isValidTimeClaim(string $key, mixed $value): bool
     {
         if (!isset(DateClaimHelper::TIME_CLAIMS[$key])) {
@@ -115,11 +115,11 @@ final class DateClaimHelper
                 $dt = $this->dateTimeImmutable->modify($value);
                 $timestamp = $dt->getTimestamp();
                 return $timestamp > 0 && $timestamp <= PHP_INT_MAX;
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 return false;
             }
         }
-        
+
         return false;
     }
 
