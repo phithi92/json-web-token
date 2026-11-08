@@ -4,29 +4,33 @@ declare(strict_types=1);
 
 namespace Phithi92\JsonWebToken\Token\Service;
 
-use LogicException;
 use Phithi92\JsonWebToken\Exceptions\Token\JtiDenialRequiresExpirationException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingJwtIdException;
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
+use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
+use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenReissuer;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Reader\JwtTokenReader;
 use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
+use Phithi92\JsonWebToken\Token\Service\Cache\JwtServiceCache;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
+use RuntimeException;
 
 final class JwtTokenService
 {
-    private ?JwtPayloadCodec $payloadCodec = null;
+    private readonly JwtValidator $validator;
+
+    private readonly JwtServiceCache $cache;
 
     public function __construct(
-        private readonly JwtTokenCreator $creator,
-        private readonly JwtTokenReader $reader,
-        private readonly JwtClaimsValidationService $claimsValidator,
-        private readonly JwtTokenReissuer $reissuer,
+        JwtValidator $validator,
+        ?JwtServiceCache $cache = null
     ) {
+        $this->validator = $validator;
+        $this->cache = $cache ?? new JwtServiceCache();
     }
 
     /**
@@ -38,7 +42,6 @@ final class JwtTokenService
      * @param non-empty-string $algorithm JWT signing algorithm
      * @param JwtKeyManager $manager Key management instance
      * @param JwtPayload|null $payload Optional claims payload
-     * @param JwtValidator|null $validator Optional validator (uses creator's default if null)
      * @param string|null $kid Optional key identifier
      *
      * @return JwtBundle Validated JWT bundle
@@ -47,10 +50,14 @@ final class JwtTokenService
         string $algorithm,
         JwtKeyManager $manager,
         ?JwtPayload $payload = null,
-        ?JwtValidator $validator = null,
         ?string $kid = null,
     ): JwtBundle {
-        return $this->creator->createToken($algorithm, $manager, $payload, $validator, $kid);
+        if ($payload instanceof JwtPayload) {
+            $this->validator->assertValid($payload);
+        }
+
+        return $this->resolveIssuer($manager)
+            ->issue($algorithm, $payload, $kid);
     }
 
     /**
@@ -62,7 +69,6 @@ final class JwtTokenService
      * @param non-empty-string $algorithm JWT signing algorithm
      * @param JwtKeyManager $manager Key management instance
      * @param array<non-empty-string, mixed> $claims JWT claims as key-value pairs
-     * @param JwtValidator|null $validator Optional validator (uses creator's default if null)
      * @param string|null $kid Optional key identifier
      *
      * @return JwtBundle Validated JWT bundle
@@ -71,10 +77,11 @@ final class JwtTokenService
         string $algorithm,
         JwtKeyManager $manager,
         array $claims,
-        ?JwtValidator $validator = null,
         ?string $kid = null,
     ): JwtBundle {
-        return $this->creator->createTokenFromArray($algorithm, $manager, $claims, $validator, $kid);
+        $payload = JwtPayloadCodec::decode($claims);
+
+        return $this->createToken($algorithm, $manager, $payload, $kid);
     }
 
     /**
@@ -102,7 +109,8 @@ final class JwtTokenService
         ?JwtPayload $payload = null,
         ?string $kid = null,
     ): JwtBundle {
-        return $this->creator->createTokenWithoutClaimValidation($algorithm, $manager, $payload, $kid);
+        return $this->resolveIssuer($manager)
+            ->createTokenWithoutClaimValidation($algorithm, $payload, $kid);
     }
 
     /**
@@ -114,7 +122,6 @@ final class JwtTokenService
      * @param non-empty-string $algorithm JWT signing algorithm (e.g., 'HS256', 'RS256')
      * @param JwtKeyManager $manager Key management instance providing signing keys
      * @param JwtPayload|null $payload Optional claims payload to include in the token
-     * @param JwtValidator|null $validator Optional validator instance (uses default if null)
      * @param string|null $kid Optional key identifier for key rotation scenarios
      *
      * @return non-empty-string JWT in JWS Compact Serialization format
@@ -123,12 +130,11 @@ final class JwtTokenService
         string $algorithm,
         JwtKeyManager $manager,
         ?JwtPayload $payload = null,
-        ?JwtValidator $validator = null,
         ?string $kid = null,
     ): string {
-        $bundle = $this->createToken($algorithm, $manager, $payload, $validator, $kid);
+        $bundle = $this->createToken($algorithm, $manager, $payload, $kid);
 
-        return $this->serializeBundle($bundle);
+        return JwtBundleCodec::serialize($bundle);
     }
 
     /**
@@ -140,7 +146,6 @@ final class JwtTokenService
      * @param non-empty-string $algorithm JWT signing algorithm (e.g., 'HS256', 'RS256')
      * @param JwtKeyManager $manager Key management instance providing signing keys
      * @param array<string,mixed>|null $claims Optional claims payload to include in the token
-     * @param JwtValidator|null $validator Optional validator instance (uses default if null)
      * @param string|null $kid Optional key identifier for key rotation scenarios
      *
      * @return non-empty-string JWT in JWS Compact Serialization format
@@ -149,16 +154,16 @@ final class JwtTokenService
         string $algorithm,
         JwtKeyManager $manager,
         ?array $claims = null,
-        ?JwtValidator $validator = null,
         ?string $kid = null,
     ): string {
-        $this->payloadCodec ??= new JwtPayloadCodec();
+        
+        $bundle = $this->createTokenFromArray($algorithm, $manager, $claims, $kid);
+        
+        return JwtBundleCodec::serialize($bundle);
 
-        $payload = $this->payloadCodec->decode($claims);
-
-        $bundle = $this->createToken($algorithm, $manager, $payload, $validator, $kid);
-
-        return $this->serializeBundle($bundle);
+//        $payload = JwtPayloadCodec::decode($claims);
+//
+//        return $this->createTokenString($algorithm, $manager, $payload, $kid);
     }
 
     /**
@@ -172,16 +177,15 @@ final class JwtTokenService
      *
      * @param non-empty-string $token Encrypted JWT in JWE Compact Serialization format (RFC 7516)
      * @param JwtKeyManager $manager Key management instance providing decryption keys
-     * @param JwtValidator|null $validator Optional validator instance (uses default if null)
      *
      * @return JwtBundle Decrypted and validated JWT bundle
      */
     public function decryptToken(
         string $token,
-        JwtKeyManager $manager,
-        ?JwtValidator $validator = null,
+        JwtKeyManager $manager
     ): JwtBundle {
-        return $this->reader->decryptToken($token, $manager, $validator);
+        return $this->resolveDecryptor($manager)
+            ->decrypt($token);
     }
 
     /**
@@ -208,9 +212,10 @@ final class JwtTokenService
      */
     public function decryptTokenWithoutClaimValidation(
         string $token,
-        JwtKeyManager $manager,
+        JwtKeyManager $manager
     ): JwtBundle {
-        return $this->reader->decryptTokenWithoutClaimValidation($token, $manager);
+        return $this->resolveDecryptor($manager)
+            ->decryptWithoutClaimValidation($token);
     }
 
     /**
@@ -224,15 +229,12 @@ final class JwtTokenService
      * - Critical header parameters (if present)
      *
      * @param JwtBundle $bundle The JWT bundle containing payload to validate
-     * @param JwtValidator $validator Validator instance with configured rules
      *
      * @return bool True if all claims pass validation, false otherwise
      */
-    public function validateTokenClaims(
-        JwtBundle $bundle,
-        JwtValidator $validator,
-    ): bool {
-        return $validator->isValid($bundle->getPayload());
+    public function validateTokenClaims(JwtBundle $bundle): bool
+    {
+        return $this->validator->isValid($bundle->getPayload());
     }
 
     /**
@@ -251,16 +253,17 @@ final class JwtTokenService
      *
      * @param string $token The raw JWT string to validate
      * @param JwtKeyManager $manager Key manager used to verify and decode the token
-     * @param JwtValidator|null $validator Optional validator with custom rules
      *
      * @return bool True if all claims pass validation, false otherwise
      */
     public function validateTokenClaimsFromToken(
         string $token,
-        JwtKeyManager $manager,
-        ?JwtValidator $validator = null,
+        JwtKeyManager $manager
     ): bool {
-        return $this->claimsValidator->validateTokenClaims($token, $manager, $validator);
+        $bundle = $this->resolveDecryptor($manager)
+            ->decrypt($token);
+
+        return $this->validateTokenClaims($bundle);
     }
 
     /**
@@ -277,7 +280,6 @@ final class JwtTokenService
      * @param string $interval Interval specification string
      *                                     (e.g., 'PT1H' for 1 hour, 'P1D' for 1 day)
      * @param JwtKeyManager $manager Key management instance for decryption and reissuing
-     * @param JwtValidator|null $validator Optional validator instance (skips validation if null)
      *
      * @return JwtBundle New JWT bundle with updated expiration
      */
@@ -285,9 +287,9 @@ final class JwtTokenService
         string $token,
         string $interval,
         JwtKeyManager $manager,
-        ?JwtValidator $validator = null,
     ): JwtBundle {
-        return $this->reissuer->reissueBundleFromToken($token, $interval, $manager, $validator);
+        return $this->resolveReissuer()
+            ->reissueBundleFromToken($token, $interval, $manager);
     }
 
     /**
@@ -301,7 +303,6 @@ final class JwtTokenService
      * @param string $interval Date interval specification used to shift time-based claims
      * @param JwtBundle $bundle The original JWT bundle to reissue
      * @param JwtKeyManager $manager Key manager used to sign the reissued token
-     * @param JwtValidator|null $validator Optional validator applied during reissue
      *
      * @return JwtBundle The newly reissued JWT bundle
      */
@@ -309,9 +310,9 @@ final class JwtTokenService
         string $interval,
         JwtBundle $bundle,
         JwtKeyManager $manager,
-        ?JwtValidator $validator = null,
     ): JwtBundle {
-        return $this->reissuer->reissueBundle($interval, $bundle, $manager, $validator);
+        return $this->resolveReissuer()
+            ->reissueBundle($interval, $bundle, $manager);
     }
 
     /**
@@ -323,23 +324,17 @@ final class JwtTokenService
      *
      * @param string $jwtId The JWT ID (jti) to deny
      * @param int $ttl Time-to-live in seconds for which the JWT ID is denied
-     * @param JwtValidator $validator Validator providing the JWT ID validator
      */
-    public function denyJwtId(string $jwtId, int $ttl, JwtValidator $validator): void
+    public function denyJwtId(string $jwtId, int $ttl): void
     {
-        $jwtIdValidator = $validator->getJwtIdValidator();
-        if ($jwtIdValidator === null) {
-            throw new LogicException(
+        if ($this->validator->getJwtIdValidator() === null) {
+            throw new RuntimeException(
                 'Cannot deny JWT ID: no JWT ID validator is configured. ' .
                 'Please ensure JwtValidator is properly initialized with a JwtIdValidator.'
             );
         }
 
-        if ($ttl <= 0) {
-            return;
-        }
-
-        $jwtIdValidator->deny(new JwtIdInput($jwtId), $ttl);
+        $this->validator->getJwtIdValidator()->deny(new JwtIdInput($jwtId), $ttl);
     }
 
     /**
@@ -351,28 +346,34 @@ final class JwtTokenService
      * token is already expired, the call is ignored.
      *
      * @param JwtBundle $bundle The JWT bundle whose JWT ID should be denied
-     * @param JwtValidator $validator Validator providing the JWT ID validator
      */
-    public function denyBundle(JwtBundle $bundle, JwtValidator $validator): void
+    public function denyBundle(JwtBundle $bundle): void
     {
         $jwtId = $bundle->getPayload()->getJwtId();
         if ($jwtId === null) {
             throw new MissingJwtIdException();
         }
 
-        $exp = $bundle->getPayload()->getExpiration();
-        if ($exp === null) {
+        $timestamp = $bundle->getPayload()->getExpiration();
+        if ($timestamp === null) {
             throw new JtiDenialRequiresExpirationException();
         }
 
-        $this->denyJwtId($jwtId, (int) $exp, $validator);
+        $this->denyJwtId($jwtId, $timestamp);
     }
 
-    /**
-     * @return non-empty-string
-     */
-    private function serializeBundle(JwtBundle $bundle): string
+    private function resolveDecryptor(JwtKeyManager $manager): JwtTokenDecryptor
     {
-        return JwtBundleCodec::serialize($bundle);
+        return $this->cache->getDecryptor($manager, $this->validator);
+    }
+
+    private function resolveReissuer(): JwtTokenReissuer
+    {
+        return $this->cache->getReissuer();
+    }
+
+    private function resolveIssuer(JwtKeyManager $manager): JwtTokenIssuer
+    {
+        return $this->cache->getIssuer($manager);
     }
 }

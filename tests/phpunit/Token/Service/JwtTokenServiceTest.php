@@ -6,21 +6,15 @@ namespace Tests\phpunit\Token\Service;
 
 use LogicException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingJwtIdException;
-use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenDecryptorFactory;
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenIssuerFactory;
-use Phithi92\JsonWebToken\Token\Issuer\JwtTokenReissuer;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Reader\JwtTokenReader;
 use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
-use Phithi92\JsonWebToken\Token\Service\JwtClaimsValidationService;
-use Phithi92\JsonWebToken\Token\Service\JwtTokenCreator;
 use Phithi92\JsonWebToken\Token\Service\JwtTokenService;
 use Phithi92\JsonWebToken\Token\Validator\JwtIdValidatorInterface;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class JwtTokenServiceTest extends TestCase
 {
@@ -37,33 +31,7 @@ final class JwtTokenServiceTest extends TestCase
         // Wichtig: Validator mit Registry erstellen
         $validator = new JwtValidator(jwtIdValidator: $registry);
 
-        // Wichtig: denselben Validator in alle Abhängigkeiten injizieren,
-        // damit der Service (egal welchen Pfad er nutzt) den Mock verwendet.
-        $creator = new JwtTokenCreator(
-            new JwtTokenIssuerFactory(),
-            new JwtPayloadCodec(),
-            $validator
-        );
-
-        $reader = new JwtTokenReader(new JwtTokenDecryptorFactory());
-
-        $claimsValidation = new JwtClaimsValidationService(
-            $reader,
-            $validator
-        );
-
-        $reissuer = new JwtTokenReissuer(
-            new JwtPayloadCodec(),
-            $validator,
-            new JwtTokenIssuerFactory()
-        );
-
-        $service = new JwtTokenService(
-            $creator,
-            $reader,
-            $claimsValidation,
-            $reissuer
-        );
+        $service = new JwtTokenService($validator);
 
         $now = time();
         $payload = (new JwtPayload())
@@ -85,15 +53,7 @@ final class JwtTokenServiceTest extends TestCase
 
         $validator = new JwtValidator(jwtIdValidator: $registry);
 
-        $service = new JwtTokenService(
-            new JwtTokenCreator(new JwtTokenIssuerFactory(), new JwtPayloadCodec(), new JwtValidator()),
-            new JwtTokenReader(new JwtTokenDecryptorFactory()),
-            new JwtClaimsValidationService(
-                new JwtTokenReader(new JwtTokenDecryptorFactory()),
-                new JwtValidator()
-            ),
-            new JwtTokenReissuer(new JwtPayloadCodec(), new JwtValidator(), new JwtTokenIssuerFactory())
-        );
+        $service = new JwtTokenService($validator);
 
         $payload = (new JwtPayload())->setClaimTimestamp('exp', time() + 600);
         $bundle = new JwtBundle((new JwtHeader())->setAlgorithm('HS256'), $payload);
@@ -102,22 +62,14 @@ final class JwtTokenServiceTest extends TestCase
         $service->denyBundle($bundle, $validator);
 
         $this->expectException(LogicException::class);
-        $service->denyJwtId(123, time() + 2, new JwtValidator());
+        $service->denyJwtId(123, time() + 2);
     }
 
     public function testThrowExceptionWithoutJwtIdValidator(): void
     {
         $validator = new JwtValidator();
 
-        $service = new JwtTokenService(
-            new JwtTokenCreator(new JwtTokenIssuerFactory(), new JwtPayloadCodec(), new JwtValidator()),
-            new JwtTokenReader(new JwtTokenDecryptorFactory()),
-            new JwtClaimsValidationService(
-                new JwtTokenReader(new JwtTokenDecryptorFactory()),
-                $validator
-            ),
-            new JwtTokenReissuer(new JwtPayloadCodec(), $validator, new JwtTokenIssuerFactory())
-        );
+        $service = new JwtTokenService($validator);
 
         $payload = (new JwtPayload())
             ->setJwtId(new JwtIdInput('token-id'))
@@ -125,7 +77,7 @@ final class JwtTokenServiceTest extends TestCase
 
         $bundle = new JwtBundle((new JwtHeader())->setAlgorithm('HS256'), $payload);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(RuntimeException::class);
         $service->denyJwtId('token-id', time() + 2, new JwtValidator());
     }
 }

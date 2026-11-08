@@ -7,12 +7,10 @@ namespace Tests\phpunit\Token\Service;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingJwtIdException;
 use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenDecryptorFactory;
+use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Reader\JwtTokenReader;
-use Phithi92\JsonWebToken\Token\Service\JwtClaimsValidationService;
-use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
+use Phithi92\JsonWebToken\Token\Validator\InMemoryJtiValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
@@ -23,7 +21,7 @@ final class JwtClaimsValidationServiceTest extends TestCaseWithSecrets
     /**
      * @dataProvider supportedAlgorithmProvider
      */
-    public function testValidateTokenClaimsUsesReaderAndValidator(string $algorithm): void
+    public function testValidateTokenClaimsUsesDecryptorAndValidator(string $algorithm): void
     {
         $issuer = new JwtTokenIssuer($this->manager);
         $payload = (new JwtPayload())
@@ -32,12 +30,12 @@ final class JwtClaimsValidationServiceTest extends TestCaseWithSecrets
         $bundle = $issuer->issue($algorithm, $payload);
         $token = JwtBundleCodec::serialize($bundle);
 
-        $reader = new JwtTokenReader(new JwtTokenDecryptorFactory());
         $validator = new JwtValidator(expectedIssuer: 'issuer');
+        $decryptor = new JwtTokenDecryptor($this->manager, $validator);
 
-        $service = new JwtClaimsValidationService($reader, $validator);
+        $decryptedBundle = $decryptor->decrypt($token, $this->manager);
 
-        $this->assertTrue($service->validateTokenClaims($token, $this->manager));
+        $this->assertTrue($validator->isValid($decryptedBundle->getPayload()));
     }
 
     /**
@@ -49,36 +47,16 @@ final class JwtClaimsValidationServiceTest extends TestCaseWithSecrets
         $payload = (new JwtPayload())
             ->setIssuer('issuer')
             ->addClaim('sub', 'user');
-        $token = JwtBundleCodec::serialize($issuer->issue($algorithm, $payload));
+        $bundle = JwtBundleCodec::serialize($issuer->issue($algorithm, $payload));
 
-        $reader = new JwtTokenReader(new JwtTokenDecryptorFactory());
         $defaultValidator = new JwtValidator(expectedIssuer: 'another-issuer');
 
-        $service = new JwtClaimsValidationService($reader, $defaultValidator);
+        $decryptor = new JwtTokenDecryptor($this->manager, $defaultValidator);
 
-        $this->assertFalse($service->validateTokenClaims($token, $this->manager));
+        $decryptedBundle = $decryptor->decryptWithoutClaimValidation($bundle);
+
+        $this->assertFalse($defaultValidator->isValid($decryptedBundle->getPayload()));
     }
-
-    /**
-     * @dataProvider supportedAlgorithmProvider
-     */
-    public function testValidateTokenClaimsPrefersProvidedValidatorOverDefault(string $algorithm): void
-    {
-        $issuer = new JwtTokenIssuer($this->manager);
-        $payload = (new JwtPayload())
-            ->setIssuer('issuer')
-            ->addClaim('sub', 'user');
-        $token = JwtBundleCodec::serialize($issuer->issue($algorithm, $payload));
-
-        $reader = new JwtTokenReader(new JwtTokenDecryptorFactory());
-        $defaultValidator = new JwtValidator(expectedIssuer: 'another-issuer');
-        $providedValidator = new JwtValidator(expectedIssuer: 'issuer');
-
-        $service = new JwtClaimsValidationService($reader, $defaultValidator);
-
-        $this->assertTrue($service->validateTokenClaims($token, $this->manager, $providedValidator));
-    }
-
 
     /**
      * @dataProvider supportedAlgorithmProvider
@@ -92,10 +70,13 @@ final class JwtClaimsValidationServiceTest extends TestCaseWithSecrets
             ->addClaim('sub', 'user');
         $token = JwtBundleCodec::serialize($issuer->issue($algorithm, $payload));
 
-        $reader = new JwtTokenReader(new JwtTokenDecryptorFactory());
-        $service = new JwtClaimsValidationService($reader, new JwtValidator(expectedIssuer: 'issuer'));
+        $validator = new JwtValidator(expectedIssuer: 'issuer');
 
-        $this->assertFalse($service->validateTokenClaims($token, $this->manager));
+        $decryptor = new JwtTokenDecryptor($this->manager, $validator);
+
+        $decryptedBundle = $decryptor->decryptWithoutClaimValidation($token);
+
+        $this->assertFalse($validator->isValid($decryptedBundle->getPayload()));
     }
 
     /**
@@ -109,15 +90,17 @@ final class JwtClaimsValidationServiceTest extends TestCaseWithSecrets
             ->addClaim('sub', 'user');
         $token = JwtBundleCodec::serialize($issuer->issue($algorithm, $payload));
 
-        $reader = new JwtTokenReader(new JwtTokenDecryptorFactory());
         $validator = new JwtValidator(
             expectedIssuer: 'issuer',
-            jwtIdValidator: new InMemoryJwtIdValidator()
+            jwtIdValidator: new InMemoryJtiValidator()
         );
-        $service = new JwtClaimsValidationService($reader, $validator);
+
+        $decryptor = new JwtTokenDecryptor($this->manager, $validator);
+
+        $decryptedBundle = $decryptor->decryptWithoutClaimValidation($token);
 
         $this->expectException(MissingJwtIdException::class);
-        $service->validateTokenClaims($token, $this->manager);
+        $validator->assertValid($decryptedBundle->getPayload());
     }
 
     /**
@@ -143,10 +126,11 @@ final class JwtClaimsValidationServiceTest extends TestCaseWithSecrets
             $token = implode('.', [$header, $tamperedPayload, $signature]);
         }
 
-        $reader = new JwtTokenReader(new JwtTokenDecryptorFactory());
-        $service = new JwtClaimsValidationService($reader, new JwtValidator(expectedIssuer: 'issuer'));
+        $validator = new JwtValidator();
+
+        $decryptor = new JwtTokenDecryptor($this->manager, $validator);
 
         $this->expectException(InvalidTokenException::class);
-        $service->validateTokenClaims($token, $this->manager);
+        $decryptedBundle = $decryptor->decryptWithoutClaimValidation($token);
     }
 }
