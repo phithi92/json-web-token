@@ -6,11 +6,12 @@ namespace Phithi92\JsonWebToken\Token\Factory;
 
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
 final class JwtTokenDecryptorFactory implements JwtTokenDecryptorFactoryInterface
 {
-    public function createDecryptor(JwtKeyManager $manager): JwtTokenDecryptor
+    public function createDecryptor(JwtKeyManager $manager, JwtValidator $validator): JwtTokenDecryptor
     {
-        return new JwtTokenDecryptor(manager: $manager);
+        return new JwtTokenDecryptor($manager, $validator);
     }
 }

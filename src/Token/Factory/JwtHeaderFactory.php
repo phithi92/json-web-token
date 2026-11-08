@@ -9,14 +9,10 @@ use Phithi92\JsonWebToken\Exceptions\Token\UnresolvableKeyException;
 use Phithi92\JsonWebToken\Token\JwtHeader;
 use Phithi92\JsonWebToken\Token\JwtTokenKind;
 
-use function implode;
-
 final class JwtHeaderFactory
 {
-    /**
-     * Separator used when deriving a default KID from algorithm components.
-     */
     private const KID_PART_SEPARATOR = '/';
+    private const ALG_DIRECT_KEY    = 'dir';
 
     /**
      * Builds a JwtHeader and ensures the KID can be resolved.
@@ -36,19 +32,10 @@ final class JwtHeaderFactory
 
         $resolvedKid = $kid ?? $this->deriveDefaultKid($alg, $enc);
 
-        return $this->buildHeader($typ, $resolvedKid, $alg, $enc);
-    }
-
-    private function buildHeader(
-        JwtTokenKind $typ,
-        string $kid,
-        string $alg,
-        ?string $enc,
-    ): JwtHeader {
-        $header = (new JwtHeader())
-            ->setType($typ->value)
-            ->setAlgorithm($alg)
-            ->setKid($kid);
+        $header = new JwtHeader();
+        $header->setType($typ->value);
+        $header->setAlgorithm($alg);
+        $header->setKid($resolvedKid);
 
         if ($enc !== null && $enc !== '') {
             $header->setEnc($enc);
@@ -57,21 +44,22 @@ final class JwtHeaderFactory
         return $header;
     }
 
-    private function deriveDefaultKid(
-        string $alg,
-        ?string $enc,
-        string $separator = self::KID_PART_SEPARATOR,
-    ): string {
-        $parts = [];
+    /**
+     * Derives a default KID from algorithm and optional encryption components.
+     *
+     * For a maximum of two parts, direct string concatenation avoids
+     * the overhead of array allocation and implode().
+     */
+    private function deriveDefaultKid(string $alg, ?string $enc): string
+    {
+        $hasEnc = $enc !== null && $enc !== '';
 
-        if ($alg !== 'dir') {
-            $parts[] = $alg;
+        if ($alg === self::ALG_DIRECT_KEY) {
+            return $hasEnc ? $enc : '';
         }
 
-        if ($enc !== null && $enc !== '') {
-            $parts[] = $enc;
-        }
-
-        return implode($separator, $parts);
+        return $hasEnc
+            ? $alg . self::KID_PART_SEPARATOR . $enc
+            : $alg;
     }
 }
