@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use PDO;
 use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 
-final class PdoJwtIdValidator implements JwtIdValidatorInterface
+final class PdoJwtIdValidator extends AbstractJwtIdValidator
 {
     private const TYPE_DENY = 'deny';
     private const TYPE_ALLOW = 'allow';
@@ -41,21 +41,21 @@ final class PdoJwtIdValidator implements JwtIdValidatorInterface
         return true;
     }
 
-    public function deny(JwtIdInput $jwtId, int $ttl): void
+    public function deny(JwtIdInput $jwtId, int $timestamp): void
     {
         $this->store(
             (string) $jwtId,
             self::TYPE_DENY,
-            $ttl
+            $timestamp
         );
     }
 
-    public function allow(JwtIdInput $jwtId, int $ttl): void
+    public function allow(JwtIdInput $jwtId, int $timestamp): void
     {
         $this->store(
             (string) $jwtId,
             self::TYPE_ALLOW,
-            $ttl
+            $timestamp
         );
     }
 
@@ -88,8 +88,10 @@ final class PdoJwtIdValidator implements JwtIdValidatorInterface
         return $stmt->fetchColumn() !== false;
     }
 
-    private function store(string $jwtId, string $type, int $ttl): void
+    private function store(string $jwtId, string $type, int $timestamp): void
     {
+        $ttl = $this->ttlFromTimestamp($timestamp);
+
         $expiresAt = (new DateTimeImmutable())
             ->modify('+' . $ttl . ' seconds')
             ->format('Y-m-d H:i:s');

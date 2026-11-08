@@ -16,7 +16,7 @@ use Phithi92\JsonWebToken\Exceptions\Token\MissingJwtIdException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
-use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
+use Phithi92\JsonWebToken\Token\Validator\InMemoryJtiValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use PHPUnit\Framework\TestCase;
 
@@ -81,7 +81,7 @@ final class JwtValidatorTest extends TestCase
             2,
             ['customClaim' => 'abc'],
             // allow-list aktiv (useAllowList = true), token-123 ist erlaubt
-            new InMemoryJwtIdValidator(['token-123'], null, true)
+            new InMemoryJtiValidator(['token-123'], null, true)
         );
 
         $validator->assertValid($payload);
@@ -178,7 +178,7 @@ final class JwtValidatorTest extends TestCase
             clockSkew: 0,
             expectedClaims: [],
             // allow-list aktiv, token-1 ist NICHT erlaubt -> Exception
-            jwtIdValidator: new InMemoryJwtIdValidator(['token-2'], null, true)
+            jwtIdValidator: new InMemoryJtiValidator(['token-2'], null, true)
         );
 
         $this->expectException(InvalidJwtIdException::class);
@@ -194,7 +194,7 @@ final class JwtValidatorTest extends TestCase
             clockSkew: 0,
             expectedClaims: [],
             // allow-list aktiv, token-1 ist NICHT erlaubt -> isValid false
-            jwtIdValidator: new InMemoryJwtIdValidator(['token-2'], null, true)
+            jwtIdValidator: new InMemoryJtiValidator(['token-2'], null, true)
         );
 
         $this->assertFalse($validator->isValid($payload));
@@ -209,7 +209,7 @@ final class JwtValidatorTest extends TestCase
             clockSkew: 0,
             expectedClaims: [],
             // allow-list aktiv -> fehlende jti ist NICHT erlaubt
-            jwtIdValidator: new InMemoryJwtIdValidator(['token-1'], null, true)
+            jwtIdValidator: new InMemoryJtiValidator(['token-1'], null, true)
         );
 
         $this->expectException(MissingJwtIdException::class);
@@ -227,7 +227,7 @@ final class JwtValidatorTest extends TestCase
             clockSkew: 0,
             expectedClaims: [],
             // allow-list aus -> fehlende jti ist erlaubt (sofern nicht explizit required)
-            jwtIdValidator: new InMemoryJwtIdValidator(null, ['token-1'], false)
+            jwtIdValidator: new InMemoryJtiValidator(null, ['token-1'], false)
         );
 
         $validator->assertValid($payload);
@@ -244,7 +244,7 @@ final class JwtValidatorTest extends TestCase
             clockSkew: 0,
             expectedClaims: [],
             // deny-list aktiv, allow-list aus -> token-1 abgelehnt
-            jwtIdValidator: new InMemoryJwtIdValidator(null, ['token-1'], false)
+            jwtIdValidator: new InMemoryJtiValidator(null, ['token-1'], false)
         );
 
         $this->expectException(InvalidJwtIdException::class);

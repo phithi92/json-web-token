@@ -86,25 +86,41 @@ final class RedisJwtIdValidatorTest extends TestCase
 
     public function test_deny_sets_expected_key_with_ttl(): void
     {
+        $expiresAt = time() + 123;
+
         $redis = $this->createMock(Redis::class);
         $redis->expects(self::once())
             ->method('setex')
-            ->with('jwt:deny:abc', 123, '1');
+            ->with(
+                'jwt:deny:abc',
+                $this->callback(function ($ttl) {
+                    return $ttl <= 123 && $ttl > 0;
+                }),
+                '1'
+            );
 
         $sut = new RedisJwtIdValidator($redis, false);
 
-        $sut->deny(new JwtIdInput('abc'), 123);
+        $sut->deny(new JwtIdInput('abc'), $expiresAt);
     }
 
     public function test_allow_sets_expected_key_with_ttl(): void
     {
+        $expiresAt = time() + 456;
+
         $redis = $this->createMock(Redis::class);
         $redis->expects(self::once())
             ->method('setex')
-            ->with('jwt:allow:abc', 456, '1');
+            ->with(
+                'jwt:allow:abc',
+                $this->callback(function ($ttl) {
+                    return $ttl <= 456 && $ttl > 0;
+                }),
+                '1'
+            );
 
         $sut = new RedisJwtIdValidator($redis, true);
 
-        $sut->allow(new JwtIdInput('abc'), 456);
+        $sut->allow(new JwtIdInput('abc'), $expiresAt);
     }
 }

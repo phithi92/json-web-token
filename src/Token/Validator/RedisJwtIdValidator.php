@@ -7,7 +7,7 @@ namespace Phithi92\JsonWebToken\Token\Validator;
 use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 use Redis;
 
-final class RedisJwtIdValidator implements JwtIdValidatorInterface
+final class RedisJwtIdValidator extends AbstractJwtIdValidator
 {
     private const DENY_PREFIX = 'jwt:deny:';
     private const ALLOW_PREFIX = 'jwt:allow:';
@@ -40,20 +40,20 @@ final class RedisJwtIdValidator implements JwtIdValidatorInterface
         return true;
     }
 
-    public function deny(JwtIdInput $jwtId, int $ttl): void
+    public function deny(JwtIdInput $jwtId, int $timestamp): void
     {
         $this->redis->setex(
             self::DENY_PREFIX . (string) $jwtId,
-            $ttl,
+            $this->ttlFromTimestamp($timestamp),
             '1'
         );
     }
 
-    public function allow(JwtIdInput $jwtId, int $ttl): void
+    public function allow(JwtIdInput $jwtId, int $timestamp): void
     {
         $this->redis->setex(
             self::ALLOW_PREFIX . $jwtId,
-            $ttl,
+            $this->ttlFromTimestamp($timestamp),
             '1'
         );
     }

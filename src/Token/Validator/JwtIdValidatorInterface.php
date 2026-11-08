@@ -12,7 +12,9 @@ interface JwtIdValidatorInterface
 
     public function useAllowList(): bool;
 
-    public function allow(JwtIdInput $jwtId, int $ttl): void;
+    public function allow(JwtIdInput $jwtId, int $untilTimestamp): void;
 
-    public function deny(JwtIdInput $jwtId, int $ttl): void;
+    public function deny(JwtIdInput $jwtId, int $untilTimestamp): void;
+
+    public function ttlFromTimestamp(int $untilTimestamp): int;
 }

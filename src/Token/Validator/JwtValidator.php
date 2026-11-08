@@ -19,6 +19,7 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingJwtIdException;
 use Phithi92\JsonWebToken\Exceptions\Token\MissingPrivateClaimException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
+use Phithi92\JsonWebToken\Token\Helper\UtcClock;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
@@ -26,9 +27,7 @@ use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
 use function in_array;
 use function is_array;
 use function is_int;
-use function is_null;
 use function is_string;
-use function time;
 
 /**
  * JwtValidator provides validation logic for standard JWT claims.
@@ -56,12 +55,6 @@ final class JwtValidator
      * @var array<string, scalar|null>
      */
     private array $expectedClaims;
-
-    /**
-     * Frozen timestamp for one validation run.
-     * Set in isValid()/assertValid(), cleared afterwards.
-     */
-    private ?int $currentTime = null;
 
     /**
      * JwtValidator constructor.
@@ -102,35 +95,13 @@ final class JwtValidator
      */
     public function isValid(JwtPayload $payload): bool
     {
-        $this->currentTime = time();
-
-        try {
-            if ($this->isValidPrivateClaims($payload) === false) {
-                return false;
-            }
-            if ($this->isNotExpired($payload) === false) {
-                return false;
-            }
-            if ($this->isNotBeforeValid($payload) === false) {
-                return false;
-            }
-            if ($this->isIssuedAtValid($payload) === false) {
-                return false;
-            }
-            if ($this->isValidIssuer($payload) === false) {
-                return false;
-            }
-            if ($this->isValidAudience($payload) === false) {
-                return false;
-            }
-            if ($this->isValidJwtId($payload) === false) {
-                return false;
-            }
-
-            return true;
-        } finally {
-            $this->currentTime = null;
-        }
+        return $this->isValidPrivateClaims($payload)
+            && $this->isNotExpired($payload)
+            && $this->isNotBeforeValid($payload)
+            && $this->isIssuedAtValid($payload)
+            && $this->isValidIssuer($payload)
+            && $this->isValidAudience($payload)
+            && $this->isValidJwtId($payload);
     }
 
     /**
@@ -141,7 +112,7 @@ final class JwtValidator
     public function isNotExpired(JwtPayload $payload): bool
     {
         $exp = $payload->getExpiration();
-        return $exp === null || ($exp + $this->clockSkew) > $this->now();
+        return $exp === null || $this->isNotYetExpired($exp);
     }
 
     /**
@@ -152,7 +123,7 @@ final class JwtValidator
     public function isNotBeforeValid(JwtPayload $payload): bool
     {
         $nbf = $payload->getNotBefore();
-        return $nbf === null || ($nbf - $this->clockSkew) <= $this->now();
+        return $nbf === null || $this->isAlreadyReached($nbf);
     }
 
     /**
@@ -163,7 +134,7 @@ final class JwtValidator
     public function isIssuedAtValid(JwtPayload $payload): bool
     {
         $iat = $payload->getIssuedAt();
-        return $iat === null || ($iat - $this->clockSkew) <= $this->now();
+        return $iat === null || $this->isAlreadyReached($iat);
     }
 
     /**
@@ -189,15 +160,16 @@ final class JwtValidator
 
         $aud = $payload->getAudience();
 
-        return is_array($aud)
-            ? in_array($this->expectedAudience, $aud, true)
-            : $aud === $this->expectedAudience;
+        return $this->audienceMatches($aud);
     }
 
     /**
-     * Validates the "jti" (JWT ID) claim against the expected value.
+     * Validates the "jti" (JWT ID) claim against the configured validator.
      *
-     * @return bool True if JWT ID matches or is not enforced.
+     * Skipped if no JTI validator is configured.
+     *
+     * @throws MissingJwtIdException If a JTI validator is configured but the claim is absent.
+     * @return bool True if the JTI is allowed, false if denied.
      */
     public function isValidJwtId(JwtPayload $payload): bool
     {
@@ -205,11 +177,13 @@ final class JwtValidator
             return true;
         }
 
-        if ($payload->getJwtId() === null) {
+        $jti = $payload->getJwtId();
+        if ($jti === null) {
+            // hier
             throw new MissingJwtIdException();
         }
 
-        return $this->jwtIdValidator->isAllowed(new JwtIdInput($payload->getJwtId()));
+        return $this->jwtIdValidator->isAllowed(new JwtIdInput($jti));
     }
 
     public function getJwtIdValidator(): ?JwtIdValidatorInterface
@@ -236,19 +210,13 @@ final class JwtValidator
      */
     public function assertValid(JwtPayload $payload): void
     {
-        $this->currentTime = time();
-
-        try {
-            $this->assertValidPrivateClaims($payload);
-            $this->assertNotExpired($payload);
-            $this->assertNotBeforeValid($payload);
-            $this->assertIssuedAtValid($payload);
-            $this->assertValidIssuer($payload);
-            $this->assertValidAudience($payload);
-            $this->assertValidJwtId($payload);
-        } finally {
-            $this->currentTime = null;
-        }
+        $this->assertValidPrivateClaims($payload);
+        $this->assertNotExpired($payload);
+        $this->assertNotBeforeValid($payload);
+        $this->assertIssuedAtValid($payload);
+        $this->assertValidIssuer($payload);
+        $this->assertValidAudience($payload);
+        $this->assertValidJwtId($payload);
     }
 
     /**
@@ -292,7 +260,7 @@ final class JwtValidator
     public function assertValidPrivateClaims(JwtPayload $payload): void
     {
         foreach ($this->expectedClaims as $key => $expectedValue) {
-            if (! is_string($expectedValue) && ! is_int($expectedValue) && ! is_null($expectedValue)) {
+            if (! is_string($expectedValue) && ! is_int($expectedValue) && $expectedValue !== null) {
                 throw new LogicException('Misconfigured private claim value type');
             }
 
@@ -332,7 +300,7 @@ final class JwtValidator
             throw new NotBeforeOlderThanIatException();
         }
 
-        if ($nbf - $this->clockSkew > $this->now()) {
+        if (! $this->isAlreadyReached($nbf)) {
             throw new NotYetValidException();
         }
     }
@@ -356,7 +324,7 @@ final class JwtValidator
      */
     public function assertValidIssuer(JwtPayload $payload): void
     {
-        if ($this->expectedIssuer !== null && $payload->getIssuer() !== $this->expectedIssuer) {
+        if (! $this->isValidIssuer($payload)) {
             $resolvedIssuer = $payload->getIssuer() ?? 'Not set in Payload';
             throw new InvalidIssuerException($this->expectedIssuer, $resolvedIssuer);
         }
@@ -369,17 +337,7 @@ final class JwtValidator
      */
     public function assertValidAudience(JwtPayload $payload): void
     {
-        if ($this->expectedAudience === null) {
-            return;
-        }
-
-        $aud = $payload->getAudience();
-
-        $valid = is_array($aud)
-            ? in_array($this->expectedAudience, $aud, true)
-            : $aud === $this->expectedAudience;
-
-        if (! $valid) {
+        if (! $this->isValidAudience($payload)) {
             throw new InvalidAudienceException();
         }
     }
@@ -396,9 +354,33 @@ final class JwtValidator
         }
     }
 
-    private function now(): int
+    private function audienceMatches(string|array|null $aud): bool
     {
-        return $this->currentTime ?? time();
+        return is_array($aud)
+            ? in_array($this->expectedAudience, $aud, true)
+            : $aud === $this->expectedAudience;
+    }
+
+    /**
+     * Returns true if the given expiry timestamp has NOT yet been exceeded.
+     * Used for "exp" claim validation.
+     *
+     * timestamp + skew > now
+     */
+    private function isNotYetExpired(int $timestamp): bool
+    {
+        return ($timestamp + $this->clockSkew) > UtcClock::nowTimestampStatic();
+    }
+
+    /**
+     * Returns true if the given activation timestamp has already been reached.
+     * Used for "nbf" and "iat" claim validation.
+     *
+     * timestamp - skew <= now
+     */
+    private function isAlreadyReached(int $timestamp): bool
+    {
+        return ($timestamp - $this->clockSkew) <= UtcClock::nowTimestampStatic();
     }
 
     private function validateClaim(string $key, JwtPayload $payload, string|int|null $expectedValue): void
