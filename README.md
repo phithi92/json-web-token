@@ -2,20 +2,20 @@
 
 # JSON Web Token (JWT) Library
 
-**Security-first JWT implementation for PHP 8.2+.**  
+**Security-first JWT implementation for PHP 8.2+.**
 Create, sign, encrypt, decrypt, validate, and reissue JSON Web Tokens with explicit key management and strict defaults.
 
-Supports **JWS** and **JWE**, a pluggable algorithm registry, and fine-grained claim validation—without hiding security decisions behind magic defaults.
+The library supports both **JWS** and **JWE**, uses a pluggable algorithm registry, and keeps security decisions visible instead of hiding them behind magic defaults.
 
 ---
 
-## Highlights
+## What this library gives you
 
-- ✅ RFC-compliant (JWS, JWE, JWA, JWT, JWK)
-- 🔐 Secure-by-default claim validation and key handling
-- 🧩 Clear separation of concerns (keys, payloads, algorithms, validation)
-- 🔁 Built-in reissue / refresh workflows
-- 🧪 Explicit *testing-only* escape hatches
+- ✅ RFC-compliant JWT, JWS, JWE, JWA, and JWK-related workflows
+- 🔐 Explicit key, passphrase, algorithm, and `kid` handling
+- 🧩 Separate building blocks for keys, payloads, token processing, and claim validation
+- 🔁 Built-in reissue / refresh support
+- 🧪 Clearly marked unsafe methods for testing and tooling only
 
 ---
 
@@ -28,19 +28,16 @@ composer require phithi92/json-web-token:^2.0
 ### Requirements
 
 - PHP **8.2+**
-- OpenSSL extension (required)
+- OpenSSL extension
 - `phpseclib/phpseclib` (installed automatically)
 
 ---
 
 ## Interoperability
 
-Tokens produced by this library are fully RFC-compliant and interoperable
-with other JWT implementations across different languages and platforms.
+Tokens produced by this library are standards-compliant and can be exchanged with other JWT libraries as long as the same algorithms, keys, and claims are used.
 
-No proprietary headers, claims, or encoding shortcuts are introduced.
-As long as the same algorithms, keys, and claims are used, tokens can be
-safely exchanged with other standards-compliant JWT stacks.
+The library does not introduce proprietary headers, custom encodings, or non-standard token formats.
 
 ---
 
@@ -55,51 +52,67 @@ safely exchanged with other standards-compliant JWT stacks.
 
 ---
 
-## Architecture Overview
+## How the library is structured
 
-```
-JwtKeyManager        → keys, algorithms, passphrases
-JwtPayload           → claims & type-safe helpers
-JwtTokenService      → create / decrypt / reissue
-JwtValidator         → issuer, audience, claims, replay protection
-JwtBundle            → parsed token aggregate
+### Main components
+
+```text
+JwtKeyManager        → keys, passphrases, algorithm metadata, kid resolution
+JwtPayload           → claims and type-safe helpers
+JwtValidator         → issuer, audience, time, private claims, replay protection
+JwtTokenService      → issue, serialize, read, decrypt, validate, reissue
+JwtBundle            → parsed token aggregate (header + payload + crypto parts)
 ```
 
-Each component is usable independently, but the default factory wires everything safely for you.
+### Mental model
+
+A typical workflow looks like this:
+
+1. Register key material in `JwtKeyManager`.
+2. Build claims with `JwtPayload` or pass an array.
+3. Define validation rules with `JwtValidator`.
+4. Create or read tokens through `JwtTokenService`.
+5. Optionally deny a `jti` after use to prevent replay.
+
+If you only want one entry point, use `JwtTokenServiceFactory::createDefault()`.
 
 ---
 
-## `JwtTokenService` Default Wiring (`createDefault()`)
+## Default service wiring
 
-`JwtTokenServiceFactory::createDefault()` is intentionally opinionated and builds a **consistent default dependency graph** so all operations share the same baseline behavior.
+`JwtTokenServiceFactory::createDefault()` builds a fresh, opinionated service graph for one library instance.
 
-Internally, it creates:
+It creates:
 
-- one shared `JwtValidator` instance (default: no expected issuer/audience, no clock skew, no private-claim expectations, no JTI registry)
+- one shared `JwtValidator` instance
+  - defaults: no expected issuer, no expected audience, no clock skew,
+    no private-claim expectations, no JTI registry
 - one `JwtPayloadCodec`
 - one `JwtTokenIssuerFactory`
 - one `JwtTokenDecryptorFactory`
-- one `JwtTokenCreator` (with the shared default validator)
+- one `JwtTokenCreator`
 - one `JwtTokenReader`
-- one `JwtClaimsValidationService` (with the shared default validator)
-- one `JwtTokenReissuer` (with the shared default validator)
+- one `JwtClaimsValidationService`
+- one `JwtTokenReissuer`
 
-This means:
+Important behavior:
 
-- Passing `null` as validator uses the shared default validator of this service instance.
-- `createDefault()` returns a **fresh service graph per call** (instances are not reused globally).
-- Claim validation is only as strict as your configured `JwtValidator`; for production you should usually pass an explicit validator with issuer/audience/JTI expectations.
+- Passing `null` as validator uses the shared default validator from that service instance.
+- Each `createDefault()` call returns a **new** dependency graph.
+- Production code should usually provide an explicit `JwtValidator` with issuer, audience, and optional JTI requirements.
 
-> `createTokenWithoutClaimValidation()` and `decryptTokenWithoutClaimValidation()` are intentionally unsafe escape hatches for tests/tooling.
+> `createTokenWithoutClaimValidation()` and `decryptTokenWithoutClaimValidation()` are intentionally unsafe escape hatches for tests and tooling.
 
 ---
 
-## Quick Start
+## Quick start
 
-### 1) Configure Keys / Algorithms
+### 1) Register keys and secrets
 
-`JwtKeyManager` holds all keys in memory. **Asymmetric keys must be PEM-encoded.**
-Symmetric secrets (HMAC, `dir`) live in the passphrase store.
+`JwtKeyManager` stores all key material in memory.
+
+- **Asymmetric keys** must be PEM-encoded.
+- **Symmetric secrets** (for HMAC or direct encryption) are stored as passphrases.
 
 ```php
 use Phithi92\JsonWebToken\Security\KeyManagement\JwtKeyManager;
@@ -117,22 +130,14 @@ $manager->addPassphrase(
     kid: 'main-key'
 );
 
-// For symmetric algorithms (HS*, dir/A*GCM), register a shared secret
+// For symmetric algorithms such as HS256 or direct AES-GCM
 $manager->addPassphrase(
     passphrase: getenv('JWT_SHARED_SECRET'),
     kid: 'HS256'
 );
 ```
 
-> If no `kid` is provided when issuing tokens, one is derived from the JOSE header
-> (e.g. `RS256`, `RSA-OAEP-256.A256GCM`). Make sure the corresponding key is registered
-> under that `kid`, or pass a `kid` explicitly.
-
----
-
-### 2) Build a Payload
-
-`JwtPayload` provides helpers for standard claims and strict validation.
+### 2) Build the payload
 
 ```php
 use Phithi92\JsonWebToken\Token\JwtPayload;
@@ -146,16 +151,15 @@ $payload = (new JwtPayload())
     ->addClaim('role', 'admin');
 ```
 
-Time-based helper setters such as `setIssuedAt()` and `setExpiration()` accept date/time strings, for example:
+Time helper methods such as `setIssuedAt()` and `setExpiration()` accept:
 
-- `"now"`
-- Relative strings (`+15 minutes`)
-- Absolute datetime strings (`2026-01-01T00:00:00+00:00`)
+- `'now'`
+- relative strings such as `'+15 minutes'`
+- absolute values such as `'2026-01-01T00:00:00+00:00'`
 
-> ℹ️ JWT `iat`, `nbf`, and `exp` are NumericDate values (seconds since Unix epoch in UTC).
-> Always generate and compare timestamps in UTC to avoid timezone drift.
+JWT time claims (`iat`, `nbf`, `exp`) are NumericDate values, so generate and compare them in UTC.
 
-If you want to set UNIX timestamps directly, use `setClaimTimestamp()`:
+If you already have timestamps, set them directly:
 
 ```php
 $payload
@@ -163,16 +167,25 @@ $payload
     ->setClaimTimestamp('exp', time() + 900);
 ```
 
----
+### 3) Define validation rules
 
-### 3) Create & Serialize a Token
+```php
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
+
+$validator = new JwtValidator(
+    expectedIssuer: 'https://issuer.example',
+    expectedAudience: 'https://service.example',
+    clockSkew: 0,
+    expectedClaims: ['role' => 'admin']
+);
+```
+
+### 4) Create a token
 
 ```php
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenServiceFactory;
-use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 
-$service   = JwtTokenServiceFactory::createDefault();
-$validator = new JwtValidator();
+$service = JwtTokenServiceFactory::createDefault();
 
 $token = $service->createTokenString(
     algorithm: 'RS256',
@@ -183,21 +196,25 @@ $token = $service->createTokenString(
 );
 ```
 
-You may also issue tokens directly from an array of claims:
+You can also create tokens from a plain claims array:
 
 ```php
 $bundle = $service->createTokenFromArray(
     algorithm: 'RS256',
     manager: $manager,
-    claims: ['iss' => 'https://issuer.example', 'exp' => time() + 900],
+    claims: [
+        'iss' => 'https://issuer.example',
+        'aud' => 'https://service.example',
+        'exp' => time() + 900,
+    ],
     validator: $validator,
     kid: 'main-key'
 );
 ```
 
----
+If you want the compact string directly from an array, use `createTokenStringFromArray()`.
 
-### 4) Read (verify/decrypt) & Validate
+### 5) Read, verify, or decrypt a token
 
 ```php
 $bundle = $service->decryptToken(
@@ -209,10 +226,12 @@ $bundle = $service->decryptToken(
 $payload = $bundle->getPayload();
 ```
 
-For JWS tokens this verifies the signature and reads the payload.
-For JWE tokens this decrypts and then validates claims.
+Behavior depends on the token type:
 
-#### Claim-Only Validation
+- For **JWS**, the library verifies the signature and returns the parsed bundle.
+- For **JWE**, the library decrypts the token and then validates the claims.
+
+### 6) Validate claims separately
 
 ```php
 $isValid = $service->validateTokenClaims(
@@ -221,38 +240,90 @@ $isValid = $service->validateTokenClaims(
 );
 ```
 
-> ⚠️ `*WithoutClaimValidation()` methods exist **only** for tests or tooling.
+> Methods ending in `WithoutClaimValidation()` exist only for tests or tooling.
 
-### 5) Business Rules & Replay Protection
+### 7) Reissue a token
 
-`JwtValidator` can enforce issuer, audience, private claims **and** protect against JWT replay attacks via a pluggable JWT ID registry.
+```php
+$newBundle = $service->reissueBundle(
+    interval: '+30 minutes',
+    bundle: $bundle,
+    manager: $manager,
+    validator: $validator
+);
+```
 
-### `jti` (JWT ID) Deep Dive
+The original bundle stays unchanged.
 
-`jti` is the token identifier claim used to uniquely track a token and support replay prevention.
+---
+
+## Choosing algorithms and `kid`s
+
+The algorithm controls which key material must exist in `JwtKeyManager`.
+
+### JWS algorithms
+
+- **HMAC:** `HS256`, `HS384`, `HS512`
+- **RSA:** `RS256`, `RS384`, `RS512`
+- **RSA-PSS:** `PS256`, `PS384`, `PS512`
+- **ECDSA:** `ES256`, `ES384`, `ES512`
+
+### JWE algorithms
+
+- **RSA-OAEP + AES-GCM:** `RSA-OAEP/A256GCM`, `RSA-OAEP-256/A256GCM`
+- **Direct AES-GCM:** `A128GCM`, `A192GCM`, `A256GCM`
+
+The identifiers map to handlers via `resources/algorithms.php`.
+
+### `kid` resolution rules
+
+If you do not pass a `kid` while issuing, the library derives one from the JOSE header, for example:
+
+- `RS256`
+- `RSA-OAEP-256.A256GCM`
+
+Make sure the required key or passphrase was registered under that identifier, or pass a `kid` explicitly.
+
+Recommendation: pin both the algorithm and the `kid` per client or integration.
+
+> Prefer **RSA-PSS** for new RSA signatures and **AES-GCM** for authenticated encryption.
+
+---
+
+## Claim validation and replay protection
+
+`JwtValidator` can enforce:
+
+- issuer (`iss`)
+- audience (`aud`)
+- time-based claims (`exp`, `nbf`, `iat`)
+- private claims
+- JWT ID (`jti`) checks through a pluggable registry
+
+### `jti` behavior
+
+`jti` is the token identifier claim used for replay protection.
 
 #### Validation behavior
 
 - Without a `JwtIdValidatorInterface`, `jti` is optional and not checked.
 - If a `JwtIdValidatorInterface` is configured, tokens **must** contain `jti`.
-- The validator then checks whether the `jti` is allowed by the configured backend (in-memory, Redis, PDO).
+- The configured backend decides whether that `jti` is allowed.
 
-#### Auto-generation behavior during issuing
+#### Issuing behavior
 
-When issuing via `JwtTokenService::createToken()` / `createTokenFromArray()` and the chosen validator has a JTI validator configured:
+When issuing with `createToken()` or `createTokenFromArray()` and the chosen validator has a JTI validator configured:
 
-- if `jti` is missing, a new random `jti` is generated automatically
-- this generated `jti` is pre-registered as allowed
-- if `exp` is missing in that situation, issuing fails (because JTI tracking needs expiry context)
+- a missing `jti` is generated automatically
+- the generated `jti` is pre-registered as allowed
+- issuing fails if `exp` is missing, because replay tracking needs expiry context
 
 Practical recommendation:
 
-- Set `jti` and `exp` explicitly for all tokens that should be replay-protected.
-- Use `denyBundle()` after successful one-time use to invalidate the token ID for the remaining token lifetime.
+- Set `jti` and `exp` explicitly for replay-protected tokens.
+- Call `denyBundle()` after successful one-time use.
 
-#### InMemoryJwtIdValidator
-
-`InMemoryJwtIdValidator` is a simple, deterministic implementation intended for tests, demos, and short‑lived processes.
+### In-memory example
 
 ```php
 use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
@@ -271,49 +342,31 @@ $validator = new JwtValidator(
 );
 ```
 
-##### How `useAllowList` works
+#### How `useAllowList` works
 
-- **`useAllowList = true`**  
-  Only JWT IDs present in `allowList` are accepted.  
-  Useful for **single‑use tokens**, login flows, or explicit grants.
+- **`useAllowList = true`**<br>Only JWT IDs in `allowList` are accepted.<br>Good for single-use flows or explicit grants.
 
-- **`useAllowList = false` (default)**  
-  All JWT IDs are accepted **unless** they appear in `denyList`.  
-  Suitable for classic access tokens with revocation support.
+- **`useAllowList = false`**<br>All JWT IDs are accepted unless they appear in `denyList`.<br>Good for classic access tokens with revocation support.
 
-When a token is successfully validated, the service can deny its JWT ID to prevent replay:
+After successful validation you can deny the bundle's `jti`:
 
 ```php
 $service->denyBundle($bundle, $validator);
 ```
 
-> ⚠️ `InMemoryJwtIdValidator` is process‑local and non‑persistent.  
-> Use Redis or PDO validators for production replay protection.
+> `InMemoryJwtIdValidator` is process-local and not persistent. Use Redis or PDO-based validators for production replay protection.
 
-#### Storage backends for JTI replay protection
+### Available JTI backends
 
-- `InMemoryJwtIdValidator`: ideal for tests and local demos; state is process-local.
-- `RedisJwtIdValidator`: distributed runtime deny/allow lists with TTL support.
-- `PdoJwtIdValidator`: relational persistence (requires `jwt_id_list` table with expiry column).
-
-### 6) Refresh / Reissue Tokens
-
-```php
-$newBundle = $service->reissueBundle(
-    interval: '+30 minutes',
-    bundle: $bundle,
-    manager: $manager,
-    validator: $validator
-);
-```
-
-The original bundle remains untouched.
+- `InMemoryJwtIdValidator`: good for tests and local demos
+- `RedisJwtIdValidator`: distributed allow/deny lists with TTL support
+- `PdoJwtIdValidator`: relational persistence (`jwt_id_list` table with an expiry column)
 
 ---
 
-## Error Handling Patterns
+## Error handling
 
-When issuing, parsing, decrypting, or validating tokens, prefer catching **specific exception types first** and only then falling back to a generic handler.
+Catch specific exception types first and fall back to a generic handler only at the boundary of your application.
 
 ```php
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
@@ -334,62 +387,43 @@ try {
         validator: $validator
     );
 
-    // Optional extra claim validation step
     $service->validateTokenClaims($bundle, $validator);
-
-} catch (ExpiredPayloadException|NotYetValidException $e) {
-    // 401: token is time-invalid (expired or not active yet)
-} catch (InvalidIssuerException|InvalidAudienceException $e) {
+} catch (ExpiredPayloadException | NotYetValidException $e) {
+    // 401: token is time-invalid
+} catch (InvalidIssuerException | InvalidAudienceException $e) {
     // 403: token is valid but not intended for this API/context
-} catch (SignatureVerificationException|DecryptionException $e) {
-    // 401: signature/JWE auth check failed
-} catch (MalformedTokenException|InvalidTokenException|UnsupportedTokenTypeException $e) {
+} catch (SignatureVerificationException | DecryptionException $e) {
+    // 401: signature or JWE auth check failed
+} catch (MalformedTokenException | InvalidTokenException | UnsupportedTokenTypeException $e) {
     // 400: structurally invalid or unsupported token
 } catch (PassphraseNotFoundException $e) {
     // 500: server-side key configuration problem
 }
 ```
 
-### Recommended Mapping (API-friendly)
+### Recommended HTTP mapping
 
-- **400 Bad Request**: malformed token, missing parts, unsupported format/type
-- **401 Unauthorized**: invalid signature, failed decryption/auth tag, expired or not-yet-valid token
-- **403 Forbidden**: issuer/audience/private-claim mismatch
-- **500 Internal Server Error**: missing key material, passphrase, or other server misconfiguration
+- **400 Bad Request**: malformed token, missing parts, unsupported type or format
+- **401 Unauthorized**: invalid signature, failed decryption, expired token, not-yet-valid token
+- **403 Forbidden**: issuer, audience, or private-claim mismatch
+- **500 Internal Server Error**: missing keys, passphrases, or other server misconfiguration
 
-### Security Best Practices for Error Responses
+### Error response best practices
 
-- Return a **generic client message** (e.g. `"Invalid or expired token"`) to avoid leaking verification details.
-- Log the exact exception message internally with request correlation IDs.
-- Do not include secrets, raw token content, or key identifiers in public error payloads unless required.
-
----
-
-## Supported Algorithms
-
-Identifiers map to handlers via `resources/algorithms.php`.
-
-### JWS (signing)
-- **HMAC:** `HS256` · `HS384` · `HS512`
-- **RSA:** `RS256` · `RS384` · `RS512`
-- **RSA-PSS:** `PS256` · `PS384` · `PS512`
-- **ECDSA:** `ES256` · `ES384` · `ES512`
-
-### JWE (encryption)
-- **RSA-OAEP + AES-GCM:** `RSA-OAEP/A256GCM` · `RSA-OAEP-256/A256GCM`
-- **Direct AES-GCM:** `A128GCM` · `A192GCM` · `A256GCM`
-
-> Prefer **RSA-PSS** for new RSA signatures and **AES-GCM** for authenticated encryption. Pin algorithms per client.
+- Return a generic client-facing message such as `Invalid or expired token`.
+- Log the precise exception internally.
+- Avoid exposing secrets, raw token content, or sensitive key details in public responses.
 
 ---
 
-## Security Best Practices
+## Security checklist
 
 - 🔑 Never commit keys or passphrases
-- 🔒 Always validate issuer & audience
+- 🔒 Always validate issuer and audience in production
 - ⏱ Use short expiration windows
 - 📌 Pin algorithms and `kid`s per client
 - 🧯 Catch domain-specific exceptions only
+- 🧪 Treat `*WithoutClaimValidation()` methods as test-only APIs
 
 ---
 
@@ -397,7 +431,7 @@ Identifiers map to handlers via `resources/algorithms.php`.
 
 ```bash
 composer install
-composer run keys   # generate test keys
+composer run keys
 composer run test
 composer run analyse
 ```
@@ -405,6 +439,7 @@ composer run analyse
 ---
 
 ## License
+
 Released under the MIT License. See [LICENSE](LICENSE).
 
 ## Support the project
