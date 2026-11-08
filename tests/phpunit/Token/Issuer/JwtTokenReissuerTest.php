@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\phpunit\Token\Issuer;
 
-use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Factory\JwtTokenIssuerFactory;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenReissuer;
 use Phithi92\JsonWebToken\Token\JwtPayload;
-use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Tests\phpunit\TestCaseWithSecrets;
 
 final class JwtTokenReissuerTest extends TestCaseWithSecrets
@@ -29,11 +27,7 @@ final class JwtTokenReissuerTest extends TestCaseWithSecrets
         $issuer = new JwtTokenIssuer($this->manager);
         $bundle = $issuer->issue($algorithm, $payload);
 
-        $reissuer = new JwtTokenReissuer(
-            new JwtPayloadCodec(),
-            new JwtValidator(),
-            new JwtTokenIssuerFactory()
-        );
+        $reissuer = new JwtTokenReissuer(new JwtTokenIssuerFactory());
 
         $reissued = $reissuer->reissueBundle('+1 minutes', $bundle, $this->manager);
 

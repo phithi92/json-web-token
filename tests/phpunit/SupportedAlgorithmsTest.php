@@ -6,6 +6,7 @@ use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\JwtBundle;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Tests\Helpers\KeyProvider;
 use Tests\Helpers\TokenStorage;
 
@@ -47,7 +48,7 @@ class SupportedAlgorithmsTest extends TestCaseWithSecrets
     {
         $token = TokenStorage::read($algorithm);
 
-        $service = new JwtTokenDecryptor($this->manager);
+        $service = new JwtTokenDecryptor($this->manager, new JwtValidator());
         $bundle = $service->decrypt($token);
 
         $this->assertInstanceOf(JwtBundle::class, $bundle);

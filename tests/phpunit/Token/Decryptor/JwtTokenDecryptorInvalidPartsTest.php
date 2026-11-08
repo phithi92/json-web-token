@@ -10,6 +10,7 @@ use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Phithi92\JsonWebToken\Utilities\Base64UrlEncoder;
 use Phithi92\JsonWebToken\Utilities\JsonEncoder;
 use Tests\phpunit\TestCaseWithSecrets;
@@ -33,7 +34,7 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
         $parts = explode('.', $token);
         $parts[1] = Base64UrlEncoder::encode(JsonEncoder::encode(['sub' => 'hacker']));
 
-        $decryptor = new JwtTokenDecryptor($this->manager);
+        $decryptor = new JwtTokenDecryptor($this->manager, new JwtValidator());
 
         try {
             $decryptor->decrypt(implode('.', $parts));
@@ -56,7 +57,7 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
         $parts = explode('.', $token);
         $parts[2] = Base64UrlEncoder::encode('tampered-signature');
 
-        $decryptor = new JwtTokenDecryptor($this->manager);
+        $decryptor = new JwtTokenDecryptor($this->manager, new JwtValidator());
 
         try {
             $decryptor->decrypt(implode('.', $parts));
@@ -82,7 +83,7 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
 
         $parts[2] = Base64UrlEncoder::encode('ass');
 
-        $decryptor = new JwtTokenDecryptor($this->manager);
+        $decryptor = new JwtTokenDecryptor($this->manager, new JwtValidator());
 
         $this->expectException(InvalidTokenException::class);
         $this->expectExceptionMessage($msg);
@@ -103,7 +104,7 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
         $tamperedCiphertext = 'tampered-ciphertext';
         $parts[3] = Base64UrlEncoder::encode($tamperedCiphertext);
 
-        $decryptor = new JwtTokenDecryptor($this->manager);
+        $decryptor = new JwtTokenDecryptor($this->manager, new JwtValidator());
 
         try {
             $decryptor->decrypt(implode('.', $parts));
@@ -127,7 +128,7 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
         $parts = explode('.', $token);
         $parts[4] = Base64UrlEncoder::encode(str_repeat('a', 16));
 
-        $decryptor = new JwtTokenDecryptor($this->manager);
+        $decryptor = new JwtTokenDecryptor($this->manager, new JwtValidator());
 
         $this->expectException(InvalidTokenException::class);
         $this->expectExceptionMessageMatches('/^Invalid token: Decrypt Payload Failed/');
@@ -150,7 +151,7 @@ final class JwtTokenDecryptorInvalidPartsTest extends TestCaseWithSecrets
         $parts = explode('.', $token);
         $parts[3] = Base64UrlEncoder::encode('tampered-ciphertext');
 
-        $decryptor = new JwtTokenDecryptor($this->manager);
+        $decryptor = new JwtTokenDecryptor($this->manager, new JwtValidator());
 
         try {
             $decryptor->decrypt(implode('.', $parts));

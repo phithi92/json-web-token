@@ -8,9 +8,14 @@ use Phithi92\JsonWebToken\Exceptions\Token\InvalidJwtIdException;
 use Phithi92\JsonWebToken\Exceptions\Token\InvalidTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\MalformedTokenException;
 use Phithi92\JsonWebToken\Exceptions\Token\TokenException;
+use Phithi92\JsonWebToken\Security\KeyRole;
+use Phithi92\JsonWebToken\Token\Codec\JwtBundleCodec;
+use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Decryptor\JwtTokenDecryptor;
+use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\JwtBundle;
 use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
+use Phithi92\JsonWebToken\Token\Validator\InMemoryJtiValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use PhpBench\Attributes as Bench;
 
@@ -22,26 +27,68 @@ use function assert;
 #[Bench\ParamProviders('provideAlgs')]
 class BenchSupportedAlgorithms extends BenchmarkBase
 {
-    public function benchCreate(array $params): void
+    public function provideAlgs(): array
     {
-        $this->getValidToken($params['alg']);
+        $algorithms = parent::provideAlgs();
+
+        $validatorUseAllowList = new JwtValidator(
+            jwtIdValidator: new InMemoryJtiValidator(useAllowList: true)
+        );
+
+        foreach ($algorithms as &$params) {
+            $alg = $params['alg'];
+
+            $params['token'] = $this->getValidToken($alg);
+            $params['invalidToken'] = $this->getInvalidToken($alg);
+            $params['expiredToken'] = $this->getExpiredToken($alg);
+            $params['protectedToken'] = $this->getReplayProtectedToken($alg, $validatorUseAllowList);
+
+            if ($this->getManager()->hasPassphrase($alg)) {
+                $params['passphrase'] = $this->getManager()->getPassphrase($alg);
+            }
+
+            if ($this->getManager()->hasKey($alg, KeyRole::Public)) {
+                $params['public_key'] = $this->getManager()->getKeyMetadata($alg, KeyRole::Public)->pem();
+            }
+
+            if ($this->getManager()->hasKey($alg, KeyRole::Private)) {
+                $params['private_key'] = $this->getManager()->getKeyMetadata($alg, KeyRole::Private)->pem();
+            }
+        }
+
+        return $algorithms;
+    }
+
+    public function benchSign(array $params): void
+    {
+        $alg = $params['alg'];
+
+        $manager = $this->getManager();
+        $issuer = new JwtTokenIssuer($manager);
+
+        $payload = JwtPayloadCodec::decode(['role' => 'admin']);
+        $bundle = $issuer->issue($alg, $payload);
+        JwtBundleCodec::serialize($bundle);
     }
 
     public function benchVerify(array $params): void
     {
-        $token = $this->getValidToken($params['alg']);
+        $token = $params['token'];
+        $manager = $this->getManager();
+        $decryptor = new JwtTokenDecryptor($manager, new JwtValidator());
 
-        $c = new JwtTokenDecryptor($this->getManager());
-        $c->decrypt($token);
+        $decryptor->decrypt($token);
     }
 
     public function benchExpired(array $params): void
     {
-        $token = $this->getExpiredToken($params['alg']);
+        $token = $params['expiredToken'];
+        $manager = $this->getManager();
+        $decryptor = new JwtTokenDecryptor($manager, new JwtValidator());
+
 
         try {
-            $c = new JwtTokenDecryptor($this->getManager());
-            $c->decrypt($token);
+            $decryptor->decrypt($token);
         } catch (PayloadException $e) {
             assert($e instanceof ExpiredPayloadException);
         }
@@ -49,11 +96,13 @@ class BenchSupportedAlgorithms extends BenchmarkBase
 
     public function benchInvalid(array $params): void
     {
-        $token = $this->getInvalidToken($params['alg']);
+        $token = $params['invalidToken'];
+        $manager = $this->getManager();
+        $decryptor = new JwtTokenDecryptor($manager, new JwtValidator());
+
 
         try {
-            $c = new JwtTokenDecryptor($this->getManager());
-            $c->decrypt($token);
+            $decryptor->decrypt($token);
         } catch (TokenException $e) {
 
             if (
@@ -67,15 +116,19 @@ class BenchSupportedAlgorithms extends BenchmarkBase
 
     public function benchReplayProtected(array $params): void
     {
-        $validator = $this->createReplayValidator();
-        $c = new JwtTokenDecryptor($this->getManager());
-        $token = $this->getReplayProtectedToken($params['alg'], $validator);
+        $token = $params['protectedToken'];
+        $manager = $this->getManager();
 
-        $bundle = $c->decrypt($token, $validator);
+        $validator = $this->createReplayValidator();
+
+        $decryptor = new JwtTokenDecryptor($manager, $validator);
+
+
+        $bundle = $decryptor->decrypt($token);
         $this->denyBundle($bundle, $validator);
 
         try {
-            $c->decrypt($token, $validator);
+            $decryptor->decrypt($token);
         } catch (InvalidJwtIdException $e) {
             assert($e instanceof InvalidJwtIdException);
         }

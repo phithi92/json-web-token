@@ -8,7 +8,7 @@ use Phithi92\JsonWebToken\Token\Codec\JwtPayloadCodec;
 use Phithi92\JsonWebToken\Token\Issuer\JwtTokenIssuer;
 use Phithi92\JsonWebToken\Token\JwtPayload;
 use Phithi92\JsonWebToken\Token\Serializer\JwtIdInput;
-use Phithi92\JsonWebToken\Token\Validator\InMemoryJwtIdValidator;
+use Phithi92\JsonWebToken\Token\Validator\InMemoryJtiValidator;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Tests\Helpers\KeyProvider;
 
@@ -50,7 +50,7 @@ abstract class BenchmarkBase
     protected function getExpiredToken(string $alg): string
     {
         if (!isset($this->cache['expired'][$alg])) {
-            $payload = (new JwtPayloadCodec())->decode([
+            $payload = JwtPayloadCodec::decode([
                 'iat' => time() - 7200,
                 'exp' => time() - 3600,
             ]);
@@ -68,8 +68,6 @@ abstract class BenchmarkBase
     protected function getValidToken(string $alg): string
     {
         if (!isset($this->cache['valid'][$alg]) || false === is_string($this->cache['valid'][$alg])) {
-            $manager = $this->getManager();
-
             $payload = new JwtPayload();
 
             $additionalPayload = [
@@ -122,19 +120,27 @@ abstract class BenchmarkBase
         $payload->addClaim('exp', time() + 3600);
         $payload->setJwtId($idInput);
 
-        $ttl = $payload->getExpiration();
+        $timestamp = $payload->getExpiration();
 
-        $validator->getJwtIdValidator()->allow($idInput, $ttl);
+        $validator
+                ->getJwtIdValidator()
+                ->allow($idInput, $timestamp);
 
-        $c = new JwtTokenIssuer($this->getManager());
-        $bundle = $c->issue($alg, $payload);
+        $issuer = new JwtTokenIssuer($this->getManager());
+        $bundle = $issuer->issue($alg, $payload);
 
         return JwtBundleCodec::serialize($bundle);
     }
 
-    protected function createReplayValidator(): JwtValidator
+    protected function createReplayValidator(bool $useAllowList = true): JwtValidator
     {
-        return new JwtValidator(jwtIdValidator: new InMemoryJwtIdValidator(useAllowList: true));
+        if ($useAllowList) {
+            return new JwtValidator(
+                jwtIdValidator: new InMemoryJtiValidator(useAllowList: true)
+            );
+        }
+
+        return new JwtValidator();
     }
 
     protected function getManager(): JwtKeyManager

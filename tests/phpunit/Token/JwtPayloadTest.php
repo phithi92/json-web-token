@@ -84,17 +84,6 @@ final class JwtPayloadTest extends TestCase
         self::assertSame(['app-a', 'app-b'], $aud);
     }
 
-    public function testSetClaimTimestampAllowsFloatForTimeClaims(): void
-    {
-        $payload = new JwtPayload();
-
-        $payload->setClaimTimestamp('iat', 123.456);
-
-        $iat = $payload->getIssuedAt();
-        self::assertIsFloat($iat);
-        self::assertSame(123.456, $iat);
-    }
-
     public function testSetIssuedAtFromStringResultsInNumericDate(): void
     {
         $payload = new JwtPayload();

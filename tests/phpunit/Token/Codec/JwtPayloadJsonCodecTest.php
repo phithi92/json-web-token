@@ -16,8 +16,7 @@ final class JwtPayloadJsonCodecTest extends TestCase
     {
         $jsonCodec = new JwtPayloadJsonCodec();
 
-        $payloadCodec = new JwtPayloadCodec();
-        $payload = $payloadCodec->decode([
+        $payload = JwtPayloadCodec::decode([
             'sub' => '1234567890',
             'name' => 'John Doe',
             'admin' => true,
@@ -36,8 +35,6 @@ final class JwtPayloadJsonCodecTest extends TestCase
 
     public function testDecodeHydratesNewPayload(): void
     {
-        $codec = new JwtPayloadJsonCodec();
-
         $data = [
             'sub' => '123',
             'roles' => ['user', 'admin'],
@@ -46,7 +43,7 @@ final class JwtPayloadJsonCodecTest extends TestCase
 
         $json = json_encode($data, JSON_THROW_ON_ERROR);
 
-        $payload = $codec->decode($json);
+        $payload = JwtPayloadJsonCodec::decodeStatic($json);
 
         self::assertInstanceOf(JwtPayload::class, $payload);
         self::assertSame($data, $payload->toArray());
@@ -54,24 +51,19 @@ final class JwtPayloadJsonCodecTest extends TestCase
 
     public function testDecodeThrowsMalformedTokenExceptionOnInvalidJson(): void
     {
-        $codec = new JwtPayloadJsonCodec();
-
         $this->expectException(MalformedTokenException::class);
         $this->expectExceptionMessage('Token payload is not valid JSON');
 
-        $codec->decode('{"sub": "123",'); // invalid JSON
+        JwtPayloadJsonCodec::decodeStatic('{"sub": "123",'); // invalid JSON
     }
 
     public function testDecodeIntoPopulatesTargetInstance(): void
     {
-        $codec = new JwtPayloadJsonCodec();
-
         $json = json_encode(['foo' => 'bar', 'n' => 1], JSON_THROW_ON_ERROR);
 
-        $payloadCodec = new JwtPayloadCodec();
-        $target = $payloadCodec->decode(['foo' => 'old', 'keep' => 'value']);
+        $target = JwtPayloadCodec::decode(['foo' => 'old', 'keep' => 'value']);
 
-        $codec->decodeInto($json, $target);
+        JwtPayloadJsonCodec::decodeStaticInto($json, $target);
 
         // Erwartung: Zielinstanz wurde mit JSON-Daten befüllt.
         // (Ob "keep" erhalten bleibt oder überschrieben wird, hängt von JwtPayloadCodec::decode ab.
@@ -83,8 +75,7 @@ final class JwtPayloadJsonCodecTest extends TestCase
 
     public function testEncodeStaticDelegatesToInstance(): void
     {
-        $p = new JwtPayloadCodec();
-        $payload = $p->decode(['a' => 1]);
+        $payload = JwtPayloadCodec::decode(['a' => 1]);
 
         $json = JwtPayloadJsonCodec::encodeStatic($payload);
 
@@ -109,8 +100,7 @@ final class JwtPayloadJsonCodecTest extends TestCase
     {
         $json = json_encode(['x' => 'y'], JSON_THROW_ON_ERROR);
 
-        $payloadCodec = new JwtPayloadCodec();
-        $target = $payloadCodec->decode([]);
+        $target = JwtPayloadCodec::decode([]);
 
         JwtPayloadJsonCodec::decodeStaticInto($json, $target);
 
@@ -119,8 +109,6 @@ final class JwtPayloadJsonCodecTest extends TestCase
 
     public function testDecodeRespectsCustomDepthForDeepJson(): void
     {
-        $codec = new JwtPayloadJsonCodec();
-
         $deep = ['a' => ['b' => ['c' => ['d' => ['e' => ['f' => 'g']]]]]]; // depth > 6 je nach Zählweise
 
         $json = json_encode($deep, JSON_THROW_ON_ERROR);
@@ -129,6 +117,6 @@ final class JwtPayloadJsonCodecTest extends TestCase
         $this->expectException(MalformedTokenException::class);
         $this->expectExceptionMessage('Token payload is not valid JSON');
 
-        $codec->decode($json, 2);
+        JwtPayloadJsonCodec::decodeStatic($json);
     }
 }

@@ -6,8 +6,8 @@ namespace Tests\phpunit\Interop;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use Phithi92\JsonWebToken\Token\Factory\JwtTokenServiceFactory;
 use Phithi92\JsonWebToken\Token\JwtPayload;
+use Phithi92\JsonWebToken\Token\Service\JwtTokenService;
 use Phithi92\JsonWebToken\Token\Validator\JwtValidator;
 use Tests\Helpers\PemProvider;
 use Tests\phpunit\TestCaseWithSecrets;
@@ -37,8 +37,7 @@ final class FirebaseJwtInteropTest extends TestCaseWithSecrets
 
         $bundle = $this->service()->decryptToken(
             token: $token,
-            manager: $this->manager,
-            validator: $this->validator()
+            manager: $this->manager
         );
 
         $payload = $bundle->getPayload();
@@ -59,8 +58,7 @@ final class FirebaseJwtInteropTest extends TestCaseWithSecrets
 
         $bundle = $this->service()->decryptToken(
             token: $token,
-            manager: $this->manager,
-            validator: $this->validator()
+            manager: $this->manager
         );
 
         $payload = $bundle->getPayload();
@@ -78,7 +76,6 @@ final class FirebaseJwtInteropTest extends TestCaseWithSecrets
             algorithm: 'HS256',
             manager: $this->manager,
             payload: $this->buildPayload(self::BASE_CLAIMS),
-            validator: $this->validator(),
             // kid omitted => derived from algorithm ("HS256") per README
         );
 
@@ -97,8 +94,7 @@ final class FirebaseJwtInteropTest extends TestCaseWithSecrets
         $token = $this->service()->createTokenString(
             algorithm: 'RS256',
             manager: $this->manager,
-            payload: $this->buildPayload(self::BASE_CLAIMS),
-            validator: $this->validator(),
+            payload: $this->buildPayload(self::BASE_CLAIMS)
             // kid omitted => derived from algorithm ("RS256") per README
         );
 
@@ -123,8 +119,7 @@ final class FirebaseJwtInteropTest extends TestCaseWithSecrets
 
         $bundle = $this->service()->decryptToken(
             token: $token,
-            manager: $this->manager,
-            validator: $this->validator()
+            manager: $this->manager
         );
 
         $this->assertSame($claims['aud'], $bundle->getPayload()->getClaim('aud'));
@@ -139,8 +134,7 @@ final class FirebaseJwtInteropTest extends TestCaseWithSecrets
         $token = $this->service()->createTokenString(
             algorithm: 'HS256',
             manager: $this->manager,
-            payload: $this->buildPayload($claims),
-            validator: $this->validator(),
+            payload: $this->buildPayload($claims)
         );
 
         $secret = PemProvider::getPassphrase('hmac/hs256');
@@ -161,8 +155,7 @@ final class FirebaseJwtInteropTest extends TestCaseWithSecrets
         $this->expectException(Throwable::class);
         $this->service()->decryptToken(
             token: $token,
-            manager: $this->manager,
-            validator: $this->validator()
+            manager: $this->manager
         );
     }
 
@@ -176,24 +169,18 @@ final class FirebaseJwtInteropTest extends TestCaseWithSecrets
         $token = JWT::encode($claims, $secret, 'HS256');
 
         $this->expectException(Throwable::class);
-        $this->service()->decryptToken(
+
+        $service = new JwtTokenService(new JwtValidator(expectedIssuer: 'known-issuer'));
+
+        $service->decryptToken(
             token: $token,
-            manager: $this->manager,
-            validator: $this->validator()
+            manager: $this->manager
         );
     }
 
-    private function service()
+    private function service(): JwtTokenService
     {
-        return JwtTokenServiceFactory::createDefault();
-    }
-
-    private function validator(): JwtValidator
-    {
-        return new JwtValidator(
-            expectedIssuer: self::ISSUER,
-            expectedAudience: self::AUDIENCE
-        );
+        return new JwtTokenService(new JwtValidator());
     }
 
     private function buildPayload(array $claims): JwtPayload
